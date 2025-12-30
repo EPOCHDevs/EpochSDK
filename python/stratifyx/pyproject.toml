@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["stratifyx", "stratifyx.core", "stratifyx.dashboard", "stratifyx.documentation", "stratifyx.errors", "stratifyx.health", "stratifyx.metadata", "stratifyx.script_validation", "stratifyx.studies", "stratifyx.studies_account", "stratifyx.studies_analytics", "stratifyx.studies_definitions", "stratifyx.studies_event_markers", "stratifyx.studies_events", "stratifyx.studies_executions", "stratifyx.studies_metrics", "stratifyx.studies_monte_carlo", "stratifyx.studies_orders", "stratifyx.studies_performance", "stratifyx.studies_positions", "stratifyx.studies_tables", "stratifyx.types"]
+packages = ["stratifyx", "stratifyx.core", "stratifyx.documentation", "stratifyx.errors", "stratifyx.health", "stratifyx.metadata", "stratifyx.script_validation", "stratifyx.studies", "stratifyx.studies_account", "stratifyx.studies_analytics", "stratifyx.studies_definitions", "stratifyx.studies_event_markers", "stratifyx.studies_events", "stratifyx.studies_executions", "stratifyx.studies_metrics", "stratifyx.studies_monte_carlo", "stratifyx.studies_orders", "stratifyx.studies_performance", "stratifyx.studies_positions", "stratifyx.studies_tables", "stratifyx.types"]
 
 [tool.setuptools.package-dir]
 stratifyx = "."
