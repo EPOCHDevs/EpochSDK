@@ -1,0 +1,43 @@
+{
+  "name": "@epochlab/lezer-epochscript",
+  "version": "1.0.0",
+  "description": "Lezer grammar for EpochScript (CodeMirror 6 integration)",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "lezer-generator src/epochscript.grammar -o src/parser && rollup -c",
+    "build:grammar": "lezer-generator src/epochscript.grammar -o src/parser",
+    "test": "node test/test.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "lezer",
+    "parser",
+    "codemirror",
+    "epochscript",
+    "finance",
+    "dsl"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@lezer/generator": "^1.7.0",
+    "rollup": "^4.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0"
+  },
+  "dependencies": {
+    "@lezer/lr": "^1.4.0",
+    "@lezer/highlight": "^1.2.0"
+  },
+  "peerDependencies": {
+    "@codemirror/language": "^6.0.0"
+  },
+  "files": [
+    "dist",
+    "src/epochscript.grammar"
+  ]
+}

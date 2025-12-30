@@ -1,0 +1,42 @@
+{
+  "name": "tree-sitter-epochscript",
+  "version": "1.0.0",
+  "description": "Tree-sitter grammar for EpochScript, a Python-like DSL for financial strategies",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "keywords": [
+    "parser",
+    "lexer",
+    "tree-sitter",
+    "epochscript",
+    "finance",
+    "dsl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/epochlab/tree-sitter-epochscript"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^8.0.0",
+    "node-gyp-build": "^4.8.0"
+  },
+  "devDependencies": {
+    "prebuildify": "^6.0.0",
+    "tree-sitter-cli": "^0.24.7"
+  },
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp rebuild",
+    "build-wasm": "tree-sitter build --wasm",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse"
+  },
+  "files": [
+    "grammar.js",
+    "binding.gyp",
+    "prebuilds/**",
+    "bindings/node/*",
+    "queries/*",
+    "src/**"
+  ]
+}

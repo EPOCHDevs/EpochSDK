@@ -1,0 +1,33 @@
+{
+  "grammars": [
+    {
+      "name": "epochscript",
+      "camelcase": "Epochscript",
+      "scope": "source.epochscript",
+      "path": ".",
+      "file-types": [
+        "epoch",
+        "es"
+      ],
+      "highlights": "queries/highlights.scm",
+      "locals": "queries/locals.scm",
+      "injection-regex": "^epochscript$"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "license": "MIT",
+    "description": "Tree-sitter grammar for EpochScript, a Python-like DSL for financial strategies",
+    "links": {
+      "repository": "https://github.com/epochlab/tree-sitter-epochscript"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "cliVersion": "3.30.0",
+  "generatorName": "fernapi/fern-python-sdk",
+  "generatorVersion": "4.46.6",
+  "generatorConfig": {
+    "package_name": "stratifyx",
+    "client_class_name": "StratifyX",
+    "client": {
+      "exported_filename": "client.py"
+    },
+    "extra_dependencies": {
+      "httpx": ">=0.24.0"
+    },
+    "pydantic_config": {
+      "version": "v2",
+      "use_pydantic_field_aliases": true
+    }
+  }
+}

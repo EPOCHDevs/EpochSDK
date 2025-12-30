@@ -1,0 +1,541 @@
+================================================================================
+Arithmetic - addition and subtraction
+================================================================================
+
+x = a + b - c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (binary_expression
+        (expression
+          (binary_expression
+            (expression
+              (identifier))
+            (additive_operator)
+            (expression
+              (identifier))))
+        (additive_operator)
+        (expression
+          (identifier))))))
+
+================================================================================
+Arithmetic - multiplication and division
+================================================================================
+
+x = a * b / c % d
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (binary_expression
+        (expression
+          (binary_expression
+            (expression
+              (binary_expression
+                (expression
+                  (identifier))
+                (multiplicative_operator)
+                (expression
+                  (identifier))))
+            (multiplicative_operator)
+            (expression
+              (identifier))))
+        (multiplicative_operator)
+        (expression
+          (identifier))))))
+
+================================================================================
+Arithmetic - power (right associative)
+================================================================================
+
+x = 2 ** 3 ** 4
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (power_expression
+        (expression
+          (integer))
+        (expression
+          (power_expression
+            (expression
+              (integer))
+            (expression
+              (integer))))))))
+
+================================================================================
+Arithmetic - precedence
+================================================================================
+
+x = 1 + 2 * 3 ** 4
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (binary_expression
+        (expression
+          (integer))
+        (additive_operator)
+        (expression
+          (binary_expression
+            (expression
+              (integer))
+            (multiplicative_operator)
+            (expression
+              (power_expression
+                (expression
+                  (integer))
+                (expression
+                  (integer))))))))))
+
+================================================================================
+Comparison operators
+================================================================================
+
+x = a < b
+y = a > b
+z = a <= b
+w = a >= b
+v = a == b
+u = a != b
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier)))))
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier)))))
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier)))))
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier)))))
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier)))))
+  (assignment_statement
+    (identifier)
+    (expression
+      (comparison_expression
+        (expression
+          (identifier))
+        (comparison_operator)
+        (expression
+          (identifier))))))
+
+================================================================================
+Boolean AND
+================================================================================
+
+x = a and b and c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (and_expression
+        (expression
+          (and_expression
+            (expression
+              (identifier))
+            (expression
+              (identifier))))
+        (expression
+          (identifier))))))
+
+================================================================================
+Boolean OR
+================================================================================
+
+x = a or b or c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (or_expression
+        (expression
+          (or_expression
+            (expression
+              (identifier))
+            (expression
+              (identifier))))
+        (expression
+          (identifier))))))
+
+================================================================================
+Boolean NOT
+================================================================================
+
+x = not a
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (not_expression
+        (expression
+          (identifier))))))
+
+================================================================================
+Boolean precedence (and binds tighter than or)
+================================================================================
+
+x = a or b and c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (or_expression
+        (expression
+          (identifier))
+        (expression
+          (and_expression
+            (expression
+              (identifier))
+            (expression
+              (identifier))))))))
+
+================================================================================
+Unary negation
+================================================================================
+
+x = -a
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (unary_expression
+        (expression
+          (identifier))))))
+
+================================================================================
+Ternary expression
+================================================================================
+
+x = 1 if condition else 0
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (ternary_expression
+        (expression
+          (integer))
+        (expression
+          (identifier))
+        (expression
+          (integer))))))
+
+================================================================================
+Nested ternary (right associative)
+================================================================================
+
+x = a if c1 else b if c2 else c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (ternary_expression
+        (expression
+          (identifier))
+        (expression
+          (identifier))
+        (expression
+          (ternary_expression
+            (expression
+              (identifier))
+            (expression
+              (identifier))
+            (expression
+              (identifier))))))))
+
+================================================================================
+Parenthesized expression
+================================================================================
+
+x = (a + b) * c
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (binary_expression
+        (expression
+          (parenthesized_expression
+            (expression
+              (binary_expression
+                (expression
+                  (identifier))
+                (additive_operator)
+                (expression
+                  (identifier))))))
+        (multiplicative_operator)
+        (expression
+          (identifier))))))
+
+================================================================================
+Attribute access
+================================================================================
+
+x = obj.attr
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (attribute_expression
+        (expression
+          (identifier))
+        (identifier)))))
+
+================================================================================
+Chained attribute access
+================================================================================
+
+x = obj.attr1.attr2
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (attribute_expression
+        (expression
+          (attribute_expression
+            (expression
+              (identifier))
+            (identifier)))
+        (identifier)))))
+
+================================================================================
+Subscript access
+================================================================================
+
+x = arr[0]
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (subscript_expression
+        (expression
+          (identifier))
+        (expression
+          (integer))))))
+
+================================================================================
+Simple function call
+================================================================================
+
+x = func()
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (identifier))
+        (argument_list)))))
+
+================================================================================
+Function call with positional args
+================================================================================
+
+x = func(a, b, c)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (identifier))
+        (argument_list
+          (expression
+            (identifier))
+          (expression
+            (identifier))
+          (expression
+            (identifier)))))))
+
+================================================================================
+Function call with keyword args
+================================================================================
+
+x = func(a=1, b=2)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (identifier))
+        (argument_list
+          (keyword_argument
+            (identifier)
+            (expression
+              (integer)))
+          (keyword_argument
+            (identifier)
+            (expression
+              (integer))))))))
+
+================================================================================
+Two-stage call pattern
+================================================================================
+
+x = sma(period=20)(src.c)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (keyword_argument
+                (identifier)
+                (expression
+                  (integer))))))
+        (argument_list
+          (expression
+            (attribute_expression
+              (expression
+                (identifier))
+              (identifier))))))))
+
+================================================================================
+Two-stage call with empty inputs
+================================================================================
+
+x = market_data_source(timeframe="1D")()
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (keyword_argument
+                (identifier)
+                (expression
+                  (string
+                    (string_content_double)))))))
+        (argument_list)))))
+
+================================================================================
+Two-stage call with multiple inputs
+================================================================================
+
+x = agg_max()(a, b, c)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list)))
+        (argument_list
+          (expression
+            (identifier))
+          (expression
+            (identifier))
+          (expression
+            (identifier)))))))

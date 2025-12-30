@@ -1,0 +1,346 @@
+// EpochScript Grammar for Lezer (CodeMirror 6)
+// =============================================
+//
+// This grammar mirrors tree-sitter-epochscript exactly.
+// EpochScript is a constrained Python-like DSL for financial strategies.
+//
+// Key features:
+// - Timeframe literals: 1D, 4H, 15Min (pandas-style, no quotes)
+// - Pipeline operator: src.c | sma(20)
+// - Lag operator: src.c >> 1 (previous values)
+// - Lead operator: src.c << 1 (future values)
+// - Two-stage call pattern: component(options)(inputs)
+// - Built-in schema types as reserved keywords
+//
+// Built-in Functions (use fn(args) syntax, NOT fn()(args)):
+// ---------------------------------------------------------
+// Unary math functions (single input):
+//   abs, acos, asin, atan, ceil, cos, cosh, exp, floor, ln, log10,
+//   round, sin, sinh, sqrt, tan, tanh, todeg, torad, trunc
+//
+// Binary signal functions (two inputs):
+//   crossover(a, b)  - true when a crosses above b
+//   crossunder(a, b) - true when a crosses below b
+//   crossany(a, b)   - true when a crosses b in any direction
+//
+// Example:
+//   result = abs(price - sma(20)(price))  // Correct
+//   signal = crossover(fast_ma, slow_ma)  // Correct
+//   wrong = abs()(price)                  // ERROR - built-ins don't use ()()
+
+@top Module { statement* }
+
+@skip { space | Comment }
+
+// ============================================================================
+// STATEMENTS
+// ============================================================================
+
+statement {
+  AssignmentStatement |
+  ExpressionStatement
+}
+
+AssignmentStatement {
+  assignmentTarget "=" expression
+}
+
+assignmentTarget {
+  Identifier |
+  TuplePattern
+}
+
+TuplePattern {
+  Identifier ("," Identifier)+ ","?
+}
+
+ExpressionStatement {
+  expression
+}
+
+// ============================================================================
+// EXPRESSIONS
+// ============================================================================
+
+expression {
+  PipelineExpression |
+  TernaryExpression |
+  OrExpression |
+  AndExpression |
+  NotExpression |
+  ComparisonExpression |
+  LagExpression |
+  LeadExpression |
+  BinaryExpression |
+  UnaryExpression |
+  PowerExpression |
+  CallExpression |
+  AttributeExpression |
+  SubscriptExpression |
+  ParenthesizedExpression |
+  BuiltinType |
+  BuiltinFunction |
+  Identifier |
+  Timeframe |
+  Number |
+  String |
+  Boolean |
+  None |
+  ListLiteral |
+  TupleLiteral |
+  DictLiteral
+}
+
+// Pipeline: src.c | sma(period=20)
+// Transforms to: sma(period=20)(src.c)
+PipelineExpression {
+  expression !pipeline "|" expression
+}
+
+// Lag: src.c >> 1 (get previous values)
+// Transforms to: lag(period=1)(src.c)
+LagExpression {
+  expression !shift ">>" expression
+}
+
+// Lead: src.c << 1 (get future values)
+// Transforms to: lag(period=-1)(src.c)
+LeadExpression {
+  expression !shift "<<" expression
+}
+
+// Ternary: value if condition else other
+TernaryExpression {
+  expression !ternary kw<"if"> expression kw<"else"> expression
+}
+
+// Boolean OR
+OrExpression {
+  expression !or kw<"or"> expression
+}
+
+// Boolean AND
+AndExpression {
+  expression !and kw<"and"> expression
+}
+
+// Boolean NOT
+NotExpression {
+  !not kw<"not"> expression
+}
+
+// Comparison: a < b, a > b, etc.
+ComparisonExpression {
+  expression !compare ComparisonOp expression
+}
+
+ComparisonOp {
+  "<" | ">" | "<=" | ">=" | "==" | "!="
+}
+
+// Binary arithmetic
+BinaryExpression {
+  expression !add ("+" | "-") expression |
+  expression !mul ("*" | "/" | "%") expression
+}
+
+// Unary negation
+UnaryExpression {
+  !unary ("-" | "+") expression
+}
+
+// Power: base ** exponent
+PowerExpression {
+  expression !power "**" expression
+}
+
+// Function call
+CallExpression {
+  expression !call ArgumentList
+}
+
+// Attribute access: obj.attr
+AttributeExpression {
+  expression !member "." Identifier
+}
+
+// Subscript: arr[index]
+SubscriptExpression {
+  expression !subscript "[" expression "]"
+}
+
+// Parenthesized expression
+ParenthesizedExpression {
+  "(" expression ")"
+}
+
+// ============================================================================
+// ARGUMENT LIST
+// ============================================================================
+
+ArgumentList {
+  "(" (argument ("," argument)* ","?)? ")"
+}
+
+argument {
+  KeywordArgument |
+  expression
+}
+
+KeywordArgument {
+  Identifier "=" expression
+}
+
+// ============================================================================
+// CONTAINER LITERALS
+// ============================================================================
+
+ListLiteral {
+  "[" (expression ("," expression)* ","?)? "]"
+}
+
+// Tuple: (a, b) or (a,) or ()
+TupleLiteral {
+  "(" ")" |
+  "(" expression "," ")" |
+  "(" expression ("," expression)+ ","? ")"
+}
+
+DictLiteral {
+  "{" (DictPair ("," DictPair)* ","?)? "}"
+}
+
+// Dict keys can be identifiers or strings (for schema constructors)
+DictPair {
+  (Identifier | String) ":" expression
+}
+
+// ============================================================================
+// BUILT-IN TYPES (Reserved Keywords)
+// ============================================================================
+
+BuiltinType {
+  @specialize[@name=BuiltinType]<Identifier,
+    "Time" | "Duration" | "Session" | "SessionAnchor" |
+    "EventMarkerSchema" | "SqlStatement" | "TableReportSchema" | "CardColumnSchema"
+  >
+}
+
+// ============================================================================
+// BUILT-IN FUNCTIONS (use fn(args) syntax, not fn()(args))
+// ============================================================================
+
+BuiltinFunction {
+  @specialize[@name=BuiltinFunction]<Identifier,
+    // Unary math functions
+    "abs" | "acos" | "asin" | "atan" | "ceil" | "cos" | "cosh" |
+    "exp" | "floor" | "ln" | "log10" | "round" | "sin" | "sinh" |
+    "sqrt" | "tan" | "tanh" | "todeg" | "torad" | "trunc" |
+    // Unary data functions
+    "ffill" |
+    // Binary signal functions
+    "crossover" | "crossunder" | "crossany" |
+    // N-ary functions
+    "coalesce" | "conditional_select"
+  >
+}
+
+// ============================================================================
+// TOKENS
+// ============================================================================
+
+@tokens {
+  // Whitespace
+  space { @whitespace+ }
+
+  // Comments
+  Comment { "#" ![\n]* }
+
+  // Timeframe literals (pandas offset style)
+  // Order matters: more specific patterns first
+  Timeframe {
+    // Minutes with "Min" suffix: 1Min, 5Min, 15Min
+    $[1-9] $[0-9]* "Min" |
+    // Weekly with day anchor and optional ordinal: 1W-MON, 1W-FRI-Last
+    $[1-9] $[0-9]* "W-" ("SUN" | "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT") ("-" ("1st" | "2nd" | "3rd" | "4th" | "Last"))? |
+    // Month/Quarter/Year with Start/End: 1ME, 1MS, 1QE, 1QS, 1YE, 1YS
+    $[1-9] $[0-9]* $[MQY] $[SE] |
+    // Basic: 1D, 4H, 1W, 1M, 1Q, 1Y (seconds, hours, days, weeks, months, quarters, years)
+    $[1-9] $[0-9]* $[sHDWMQY]
+  }
+
+  // Identifiers
+  Identifier { $[a-zA-Z_] $[a-zA-Z0-9_]* }
+
+  // Numbers
+  Number {
+    // Integer
+    "0" |
+    $[1-9] $[0-9]* |
+    // Float - must have digits before dot to avoid conflict with . operator
+    $[0-9]+ "." $[0-9]* |
+    // Float - scientific
+    $[0-9]+ $[eE] $[+-]? $[0-9]+ |
+    $[0-9]+ "." $[0-9]* $[eE] $[+-]? $[0-9]+
+  }
+
+  // Strings
+  String {
+    // Triple quoted (must come first for priority)
+    "'''" (!['] | "'" !['] | "''" !['])* "'''" |
+    '"""' (!["] | '"' !["] | '""' !["])* '"""' |
+    // Single quoted
+    "'" (!['\\\n] | "\\" _)* "'" |
+    '"' (!["\\\n] | "\\" _)* '"'
+  }
+
+  // Boolean
+  Boolean { "True" | "False" }
+
+  // None
+  None { "None" }
+
+  // Operators and punctuation
+  "(" ")" "[" "]" "{" "}" "," ":" "." "="
+  "+" "-" "*" "/" "%" "**"
+  "<" ">" "<=" ">=" "==" "!="
+  "|" ">>" "<<"
+
+  // Precedence for tokens (more specific first)
+  @precedence { Timeframe, Number, Identifier }
+  @precedence { Boolean, Identifier }
+  @precedence { None, Identifier }
+}
+
+// ============================================================================
+// KEYWORDS
+// ============================================================================
+
+kw<term> { @specialize[@name={term}]<Identifier, term> }
+
+// ============================================================================
+// PRECEDENCE
+// ============================================================================
+
+@precedence {
+  call @left,
+  subscript @left,
+  member @left,
+  power @right,
+  unary @right,
+  mul @left,
+  add @left,
+  shift @left,
+  compare @left,
+  not @right,
+  and @left,
+  or @left,
+  ternary @right,
+  pipeline @left
+}
+
+// ============================================================================
+// EXTERNAL TOKENS (optional - for advanced error recovery)
+// ============================================================================
+
+@detectDelim

@@ -1,0 +1,48 @@
+{
+    "name": "@epochlab/epoch-protos",
+    "version": "2.0.10",
+    "description": "TypeScript definitions generated from Protocol Buffers for EpochFolio models",
+    "type": "module",
+    "main": "src/protos.js",
+    "types": "src/protos.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist/",
+        "prepublishOnly": "npm run clean && npm run build"
+    },
+    "keywords": [
+        "protobuf",
+        "typescript",
+        "epochfolio",
+        "financial",
+        "portfolio",
+        "analytics"
+    ],
+    "author": "EpochLab <dev@epochlab.ai>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/epochlab/epoch-protos.git"
+    },
+    "bugs": {
+        "url": "https://github.com/epochlab/epoch-protos/issues"
+    },
+    "homepage": "https://github.com/epochlab/epoch-protos#readme",
+    "dependencies": {
+        "google-protobuf": "^3.21.0",
+        "protobufjs": "^7.2.6"
+    },
+    "devDependencies": {
+        "@types/google-protobuf": "^3.15.0",
+        "protobufjs-cli": "^1.1.2",
+        "typescript": "^5.0.0"
+    },
+    "files": [
+        "dist/",
+        "*.d.ts",
+        "*.js"
+    ],
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org/"
+    }
+}

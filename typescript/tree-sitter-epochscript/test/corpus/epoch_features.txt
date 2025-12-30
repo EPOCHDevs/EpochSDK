@@ -1,0 +1,263 @@
+================================================================================
+Pipeline Operator - simple
+================================================================================
+
+result = src.c | sma(period=20)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (pipeline_expression
+        (expression
+          (attribute_expression
+            (expression
+              (identifier))
+            (identifier)))
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (keyword_argument
+                (identifier)
+                (expression
+                  (integer))))))))))
+
+================================================================================
+Pipeline Operator - chained
+================================================================================
+
+result = src.c | sma(period=10) | zscore(window=20)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (pipeline_expression
+        (expression
+          (pipeline_expression
+            (expression
+              (attribute_expression
+                (expression
+                  (identifier))
+                (identifier)))
+            (expression
+              (call_expression
+                (expression
+                  (identifier))
+                (argument_list
+                  (keyword_argument
+                    (identifier)
+                    (expression
+                      (integer))))))))
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (keyword_argument
+                (identifier)
+                (expression
+                  (integer))))))))))
+
+================================================================================
+Positional first arg (single option shorthand)
+================================================================================
+
+result = sma(20)(src.c)
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (expression
+                (integer)))))
+        (argument_list
+          (expression
+            (attribute_expression
+              (expression
+                (identifier))
+              (identifier))))))))
+
+================================================================================
+Lag Operator
+================================================================================
+
+prev = src.c >> 1
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (lag_expression
+        (expression
+          (attribute_expression
+            (expression
+              (identifier))
+            (identifier)))
+        (expression
+          (integer))))))
+
+================================================================================
+Built-in Types
+================================================================================
+
+schema = EventMarkerSchema(title="Test")
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (builtin_type))
+        (argument_list
+          (keyword_argument
+            (identifier)
+            (expression
+              (string
+                (string_content_double)))))))))
+
+================================================================================
+Subscript indexing
+================================================================================
+
+first = result[0]
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (subscript_expression
+        (expression
+          (identifier))
+        (expression
+          (integer))))))
+
+================================================================================
+Timeframe in call
+================================================================================
+
+src = market_data_source(timeframe=1D)()
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (call_expression
+            (expression
+              (identifier))
+            (argument_list
+              (keyword_argument
+                (identifier)
+                (expression
+                  (timeframe))))))
+        (argument_list)))))
+
+================================================================================
+Dict literal - empty
+================================================================================
+
+schema = CardColumnSchema(color_map={})
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (builtin_type))
+        (argument_list
+          (keyword_argument
+            (identifier)
+            (expression
+              (dict_literal))))))))
+
+================================================================================
+Dict literal - with entries
+================================================================================
+
+schema = CardColumnSchema(color_map={Success: ["active"], Error: ["inactive"]})
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (builtin_type))
+        (argument_list
+          (keyword_argument
+            (identifier)
+            (expression
+              (dict_literal
+                (dict_entry
+                  (identifier)
+                  (expression
+                    (list_literal
+                      (expression
+                        (string
+                          (string_content_double))))))
+                (dict_entry
+                  (identifier)
+                  (expression
+                    (list_literal
+                      (expression
+                        (string
+                          (string_content_double))))))))))))))
+
+================================================================================
+Dict literal - string keys
+================================================================================
+
+schema = CardColumnSchema(color_map={"Success": ["active"]})
+
+--------------------------------------------------------------------------------
+
+(module
+  (assignment_statement
+    (identifier)
+    (expression
+      (call_expression
+        (expression
+          (builtin_type))
+        (argument_list
+          (keyword_argument
+            (identifier)
+            (expression
+              (dict_literal
+                (dict_entry
+                  (string
+                    (string_content_double))
+                  (expression
+                    (list_literal
+                      (expression
+                        (string
+                          (string_content_double))))))))))))))
