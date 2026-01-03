@@ -36,19 +36,19 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SeriesInfo = void 0;
+exports.RenderingSchema = void 0;
 const core = __importStar(require("../../core"));
-const MetaDataArgDefinitionMapping_1 = require("./MetaDataArgDefinitionMapping");
-const RenderingSchema_1 = require("./RenderingSchema");
-exports.SeriesInfo = core.serialization.object({
-    id: core.serialization.string(),
-    type: core.serialization.string(),
-    name: core.serialization.string(),
-    dataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    templateDataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    zIndex: core.serialization.number(),
-    yAxis: core.serialization.number(),
-    linkedTo: core.serialization.string().optionalNullable(),
-    configOptions: MetaDataArgDefinitionMapping_1.MetaDataArgDefinitionMapping,
-    renderingSchema: RenderingSchema_1.RenderingSchema.optional(),
-});
+const GenericSchema_1 = require("./GenericSchema");
+const BoxSchema_1 = require("./BoxSchema");
+const TrendlineSchema_1 = require("./TrendlineSchema");
+const SessionSchema_1 = require("./SessionSchema");
+const ZoneSchema_1 = require("./ZoneSchema");
+const CandlestickSchema_1 = require("./CandlestickSchema");
+exports.RenderingSchema = core.serialization.undiscriminatedUnion([
+    GenericSchema_1.GenericSchema,
+    BoxSchema_1.BoxSchema,
+    TrendlineSchema_1.TrendlineSchema,
+    SessionSchema_1.SessionSchema,
+    ZoneSchema_1.ZoneSchema,
+    CandlestickSchema_1.CandlestickSchema,
+]);

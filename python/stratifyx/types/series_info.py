@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
 from .meta_data_arg_definition_mapping import MetaDataArgDefinitionMapping
+from .rendering_schema import RenderingSchema
 
 
 class SeriesInfo(UniversalBaseModel):
@@ -17,5 +18,6 @@ class SeriesInfo(UniversalBaseModel):
     y_axis: int = pydantic.Field(alias="yAxis")
     linked_to: typing.Optional[str] = pydantic.Field(alias="linkedTo", default=None)
     config_options: MetaDataArgDefinitionMapping = pydantic.Field(alias="configOptions")
+    rendering_schema: typing.Optional[RenderingSchema] = pydantic.Field(alias="renderingSchema", default=None)
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

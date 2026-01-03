@@ -36,19 +36,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SeriesInfo = void 0;
+exports.CandlestickSchema = void 0;
 const core = __importStar(require("../../core"));
-const MetaDataArgDefinitionMapping_1 = require("./MetaDataArgDefinitionMapping");
-const RenderingSchema_1 = require("./RenderingSchema");
-exports.SeriesInfo = core.serialization.object({
-    id: core.serialization.string(),
-    type: core.serialization.string(),
-    name: core.serialization.string(),
-    dataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    templateDataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    zIndex: core.serialization.number(),
-    yAxis: core.serialization.number(),
-    linkedTo: core.serialization.string().optionalNullable(),
-    configOptions: MetaDataArgDefinitionMapping_1.MetaDataArgDefinitionMapping,
-    renderingSchema: RenderingSchema_1.RenderingSchema.optional(),
+exports.CandlestickSchema = core.serialization.object({
+    showRoundTrips: core.serialization.boolean(),
+    upColor: core.serialization.unknown().optional(),
+    downColor: core.serialization.unknown().optional(),
 });

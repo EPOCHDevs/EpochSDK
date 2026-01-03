@@ -5,6 +5,7 @@ import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
 import { MetaDataArgDefinitionMapping } from "./MetaDataArgDefinitionMapping";
+import { RenderingSchema } from "./RenderingSchema";
 export declare const SeriesInfo: core.serialization.ObjectSchema<serializers.SeriesInfo.Raw, StratifyX.SeriesInfo>;
 export declare namespace SeriesInfo {
     interface Raw {
@@ -17,5 +18,6 @@ export declare namespace SeriesInfo {
         yAxis: number;
         linkedTo?: (string | null) | null;
         configOptions: MetaDataArgDefinitionMapping.Raw;
+        renderingSchema?: RenderingSchema.Raw | null;
     }
 }

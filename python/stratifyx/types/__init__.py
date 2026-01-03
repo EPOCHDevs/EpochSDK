@@ -8,18 +8,22 @@ from importlib import import_module
 if typing.TYPE_CHECKING:
     from .algorithm_base_meta_data import AlgorithmBaseMetaData
     from .any_json import AnyJson
+    from .area_range_spec import AreaRangeSpec
     from .arrow_table_row import ArrowTableRow
     from .arrow_table_rows import ArrowTableRows
     from .asset_specification import AssetSpecification
     from .asset_specification_asset_class import AssetSpecificationAssetClass
     from .asset_specification_data import AssetSpecificationData
     from .asset_specification_data_asset_class import AssetSpecificationDataAssetClass
+    from .box_schema import BoxSchema
+    from .candlestick_schema import CandlestickSchema
     from .card_column_schema import CardColumnSchema
     from .category_meta_data import CategoryMetaData
     from .chart_pane_metadata import ChartPaneMetadata
     from .chart_y_axis import ChartYAxis
     from .column_filter_metadata import ColumnFilterMetadata
     from .column_filter_metadata_type import ColumnFilterMetadataType
+    from .column_spec import ColumnSpec
     from .custom_fields_option import CustomFieldsOption
     from .data_info_per_asset import DataInfoPerAsset
     from .data_option import DataOption
@@ -39,6 +43,8 @@ if typing.TYPE_CHECKING:
     from .futures_continuation_meta_data import FuturesContinuationMetaData
     from .generic_alias_spec import GenericAliasSpec
     from .generic_event import GenericEvent
+    from .generic_schema import GenericSchema
+    from .h_line_spec import HLineSpec
     from .id_response import IdResponse
     from .index_constituent import IndexConstituent
     from .index_constituents_data import IndexConstituentsData
@@ -47,6 +53,7 @@ if typing.TYPE_CHECKING:
     from .job_list_item_status import JobListItemStatus
     from .job_period import JobPeriod
     from .lifecycle_event import LifecycleEvent
+    from .line_spec import LineSpec
     from .log_event import LogEvent
     from .log_level import LogLevel
     from .logical_operator import LogicalOperator
@@ -71,11 +78,14 @@ if typing.TYPE_CHECKING:
     from .paginated_logs_response import PaginatedLogsResponse
     from .paginated_table_response import PaginatedTableResponse
     from .pagination_info import PaginationInfo
+    from .plot_band_spec import PlotBandSpec
     from .polygon_metadata import PolygonMetadata
     from .position_row import PositionRow
     from .position_rows import PositionRows
     from .progress_event import ProgressEvent
+    from .rendering_schema import RenderingSchema
     from .scalar_json import ScalarJson
+    from .scatter_spec import ScatterSpec
     from .select_option import SelectOption
     from .selector_data_response import SelectorDataResponse
     from .selector_meta import SelectorMeta
@@ -85,6 +95,7 @@ if typing.TYPE_CHECKING:
     from .series_info import SeriesInfo
     from .session_anchor_value import SessionAnchorValue
     from .session_range import SessionRange
+    from .session_schema import SessionSchema
     from .session_type_value import SessionTypeValue
     from .strategy_config_meta_data import StrategyConfigMetaData
     from .study_definition import StudyDefinition
@@ -109,24 +120,30 @@ if typing.TYPE_CHECKING:
     from .trade_analytics_chart_meta_data import TradeAnalyticsChartMetaData
     from .transform_category_meta_data import TransformCategoryMetaData
     from .transforms_meta_data import TransformsMetaData
+    from .trendline_schema import TrendlineSchema
     from .tuple_output_spec import TupleOutputSpec
     from .tuple_output_spec_size import TupleOutputSpecSize
     from .visibility_selector import VisibilitySelector
+    from .zone_schema import ZoneSchema
 _dynamic_imports: typing.Dict[str, str] = {
     "AlgorithmBaseMetaData": ".algorithm_base_meta_data",
     "AnyJson": ".any_json",
+    "AreaRangeSpec": ".area_range_spec",
     "ArrowTableRow": ".arrow_table_row",
     "ArrowTableRows": ".arrow_table_rows",
     "AssetSpecification": ".asset_specification",
     "AssetSpecificationAssetClass": ".asset_specification_asset_class",
     "AssetSpecificationData": ".asset_specification_data",
     "AssetSpecificationDataAssetClass": ".asset_specification_data_asset_class",
+    "BoxSchema": ".box_schema",
+    "CandlestickSchema": ".candlestick_schema",
     "CardColumnSchema": ".card_column_schema",
     "CategoryMetaData": ".category_meta_data",
     "ChartPaneMetadata": ".chart_pane_metadata",
     "ChartYAxis": ".chart_y_axis",
     "ColumnFilterMetadata": ".column_filter_metadata",
     "ColumnFilterMetadataType": ".column_filter_metadata_type",
+    "ColumnSpec": ".column_spec",
     "CustomFieldsOption": ".custom_fields_option",
     "DataInfoPerAsset": ".data_info_per_asset",
     "DataOption": ".data_option",
@@ -146,6 +163,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FuturesContinuationMetaData": ".futures_continuation_meta_data",
     "GenericAliasSpec": ".generic_alias_spec",
     "GenericEvent": ".generic_event",
+    "GenericSchema": ".generic_schema",
+    "HLineSpec": ".h_line_spec",
     "IdResponse": ".id_response",
     "IndexConstituent": ".index_constituent",
     "IndexConstituentsData": ".index_constituents_data",
@@ -154,6 +173,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "JobListItemStatus": ".job_list_item_status",
     "JobPeriod": ".job_period",
     "LifecycleEvent": ".lifecycle_event",
+    "LineSpec": ".line_spec",
     "LogEvent": ".log_event",
     "LogLevel": ".log_level",
     "LogicalOperator": ".logical_operator",
@@ -178,11 +198,14 @@ _dynamic_imports: typing.Dict[str, str] = {
     "PaginatedLogsResponse": ".paginated_logs_response",
     "PaginatedTableResponse": ".paginated_table_response",
     "PaginationInfo": ".pagination_info",
+    "PlotBandSpec": ".plot_band_spec",
     "PolygonMetadata": ".polygon_metadata",
     "PositionRow": ".position_row",
     "PositionRows": ".position_rows",
     "ProgressEvent": ".progress_event",
+    "RenderingSchema": ".rendering_schema",
     "ScalarJson": ".scalar_json",
+    "ScatterSpec": ".scatter_spec",
     "SelectOption": ".select_option",
     "SelectorDataResponse": ".selector_data_response",
     "SelectorMeta": ".selector_meta",
@@ -192,6 +215,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "SeriesInfo": ".series_info",
     "SessionAnchorValue": ".session_anchor_value",
     "SessionRange": ".session_range",
+    "SessionSchema": ".session_schema",
     "SessionTypeValue": ".session_type_value",
     "StrategyConfigMetaData": ".strategy_config_meta_data",
     "StudyDefinition": ".study_definition",
@@ -216,9 +240,11 @@ _dynamic_imports: typing.Dict[str, str] = {
     "TradeAnalyticsChartMetaData": ".trade_analytics_chart_meta_data",
     "TransformCategoryMetaData": ".transform_category_meta_data",
     "TransformsMetaData": ".transforms_meta_data",
+    "TrendlineSchema": ".trendline_schema",
     "TupleOutputSpec": ".tuple_output_spec",
     "TupleOutputSpecSize": ".tuple_output_spec_size",
     "VisibilitySelector": ".visibility_selector",
+    "ZoneSchema": ".zone_schema",
 }
 
 
@@ -246,18 +272,22 @@ def __dir__():
 __all__ = [
     "AlgorithmBaseMetaData",
     "AnyJson",
+    "AreaRangeSpec",
     "ArrowTableRow",
     "ArrowTableRows",
     "AssetSpecification",
     "AssetSpecificationAssetClass",
     "AssetSpecificationData",
     "AssetSpecificationDataAssetClass",
+    "BoxSchema",
+    "CandlestickSchema",
     "CardColumnSchema",
     "CategoryMetaData",
     "ChartPaneMetadata",
     "ChartYAxis",
     "ColumnFilterMetadata",
     "ColumnFilterMetadataType",
+    "ColumnSpec",
     "CustomFieldsOption",
     "DataInfoPerAsset",
     "DataOption",
@@ -277,6 +307,8 @@ __all__ = [
     "FuturesContinuationMetaData",
     "GenericAliasSpec",
     "GenericEvent",
+    "GenericSchema",
+    "HLineSpec",
     "IdResponse",
     "IndexConstituent",
     "IndexConstituentsData",
@@ -285,6 +317,7 @@ __all__ = [
     "JobListItemStatus",
     "JobPeriod",
     "LifecycleEvent",
+    "LineSpec",
     "LogEvent",
     "LogLevel",
     "LogicalOperator",
@@ -309,11 +342,14 @@ __all__ = [
     "PaginatedLogsResponse",
     "PaginatedTableResponse",
     "PaginationInfo",
+    "PlotBandSpec",
     "PolygonMetadata",
     "PositionRow",
     "PositionRows",
     "ProgressEvent",
+    "RenderingSchema",
     "ScalarJson",
+    "ScatterSpec",
     "SelectOption",
     "SelectorDataResponse",
     "SelectorMeta",
@@ -323,6 +359,7 @@ __all__ = [
     "SeriesInfo",
     "SessionAnchorValue",
     "SessionRange",
+    "SessionSchema",
     "SessionTypeValue",
     "StrategyConfigMetaData",
     "StudyDefinition",
@@ -347,7 +384,9 @@ __all__ = [
     "TradeAnalyticsChartMetaData",
     "TransformCategoryMetaData",
     "TransformsMetaData",
+    "TrendlineSchema",
     "TupleOutputSpec",
     "TupleOutputSpecSize",
     "VisibilitySelector",
+    "ZoneSchema",
 ]

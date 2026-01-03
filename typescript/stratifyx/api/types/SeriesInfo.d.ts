@@ -12,4 +12,5 @@ export interface SeriesInfo {
     yAxis: number;
     linkedTo?: string | null;
     configOptions: StratifyX.MetaDataArgDefinitionMapping;
+    renderingSchema?: StratifyX.RenderingSchema;
 }

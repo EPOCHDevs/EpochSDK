@@ -36,19 +36,22 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SeriesInfo = void 0;
+exports.GenericSchema = void 0;
 const core = __importStar(require("../../core"));
-const MetaDataArgDefinitionMapping_1 = require("./MetaDataArgDefinitionMapping");
-const RenderingSchema_1 = require("./RenderingSchema");
-exports.SeriesInfo = core.serialization.object({
-    id: core.serialization.string(),
-    type: core.serialization.string(),
-    name: core.serialization.string(),
-    dataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    templateDataMapping: core.serialization.record(core.serialization.string(), core.serialization.string()),
-    zIndex: core.serialization.number(),
-    yAxis: core.serialization.number(),
-    linkedTo: core.serialization.string().optionalNullable(),
-    configOptions: MetaDataArgDefinitionMapping_1.MetaDataArgDefinitionMapping,
-    renderingSchema: RenderingSchema_1.RenderingSchema.optional(),
+const LineSpec_1 = require("./LineSpec");
+const HLineSpec_1 = require("./HLineSpec");
+const ScatterSpec_1 = require("./ScatterSpec");
+const ColumnSpec_1 = require("./ColumnSpec");
+const AreaRangeSpec_1 = require("./AreaRangeSpec");
+const PlotBandSpec_1 = require("./PlotBandSpec");
+exports.GenericSchema = core.serialization.object({
+    lines: core.serialization.list(LineSpec_1.LineSpec).optional(),
+    hLines: core.serialization.list(HLineSpec_1.HLineSpec).optional(),
+    scatter: core.serialization.list(ScatterSpec_1.ScatterSpec).optional(),
+    columns: core.serialization.list(ColumnSpec_1.ColumnSpec).optional(),
+    areaRanges: core.serialization.list(AreaRangeSpec_1.AreaRangeSpec).optional(),
+    plotBands: core.serialization.list(PlotBandSpec_1.PlotBandSpec).optional(),
+    separatePanel: core.serialization.boolean().optional(),
+    yMin: core.serialization.number().optionalNullable(),
+    yMax: core.serialization.number().optionalNullable(),
 });
