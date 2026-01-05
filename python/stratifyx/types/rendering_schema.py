@@ -3,10 +3,9 @@
 import typing
 
 from .box_schema import BoxSchema
-from .candlestick_schema import CandlestickSchema
 from .generic_schema import GenericSchema
 from .session_schema import SessionSchema
 from .trendline_schema import TrendlineSchema
 from .zone_schema import ZoneSchema
 
-RenderingSchema = typing.Union[GenericSchema, BoxSchema, TrendlineSchema, SessionSchema, ZoneSchema, CandlestickSchema]
+RenderingSchema = typing.Union[GenericSchema, BoxSchema, TrendlineSchema, SessionSchema, ZoneSchema]

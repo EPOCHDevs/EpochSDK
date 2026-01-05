@@ -38,13 +38,15 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BoxSchema = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
 exports.BoxSchema = core.serialization.object({
+    indexColumn: core.serialization.string().optional(),
     topKey: core.serialization.string(),
     bottomKey: core.serialization.string(),
     signalKey: core.serialization.string().optional(),
     endIndexKey: core.serialization.string().optional(),
-    bullColor: core.serialization.unknown().optional(),
-    bearColor: core.serialization.unknown().optional(),
+    bullColor: Color_1.Color.optional(),
+    bearColor: Color_1.Color.optional(),
     opacity: core.serialization.number().optional(),
     showLabel: core.serialization.boolean().optional(),
     labelText: core.serialization.string().optional(),

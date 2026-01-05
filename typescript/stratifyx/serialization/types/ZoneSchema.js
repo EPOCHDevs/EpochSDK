@@ -38,9 +38,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZoneSchema = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
 exports.ZoneSchema = core.serialization.object({
+    indexColumn: core.serialization.string().optional(),
     valueKey: core.serialization.string(),
-    color: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
     opacity: core.serialization.number().optional(),
     position: core.serialization.string().optional(),
 });

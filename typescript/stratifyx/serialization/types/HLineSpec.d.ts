@@ -4,13 +4,15 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
+import { DashStyle } from "./DashStyle";
 export declare const HLineSpec: core.serialization.ObjectSchema<serializers.HLineSpec.Raw, StratifyX.HLineSpec>;
 export declare namespace HLineSpec {
     interface Raw {
         y: number;
         label?: (string | null) | null;
-        color?: unknown | null;
-        dashStyle?: unknown | null;
+        color?: Color.Raw | null;
+        dashStyle?: DashStyle.Raw | null;
         lineWidth?: (number | null) | null;
     }
 }

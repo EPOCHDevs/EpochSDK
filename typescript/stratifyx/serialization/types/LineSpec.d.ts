@@ -4,13 +4,15 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
+import { DashStyle } from "./DashStyle";
 export declare const LineSpec: core.serialization.ObjectSchema<serializers.LineSpec.Raw, StratifyX.LineSpec>;
 export declare namespace LineSpec {
     interface Raw {
         dataKey: string;
         name: string;
-        color?: unknown | null;
-        dashStyle?: unknown | null;
+        color?: Color.Raw | null;
+        dashStyle?: DashStyle.Raw | null;
         lineWidth?: (number | null) | null;
         step?: boolean | null;
         enableMarkers?: boolean | null;

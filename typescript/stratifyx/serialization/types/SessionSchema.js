@@ -38,11 +38,14 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SessionSchema = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
+const DashStyle_1 = require("./DashStyle");
 exports.SessionSchema = core.serialization.object({
+    indexColumn: core.serialization.string().optional(),
     activeKey: core.serialization.string(),
     highKey: core.serialization.string(),
     lowKey: core.serialization.string(),
-    color: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
     opacity: core.serialization.number().optional(),
-    borderStyle: core.serialization.unknown().optional(),
+    borderStyle: DashStyle_1.DashStyle.optional(),
 });

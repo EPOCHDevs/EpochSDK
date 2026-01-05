@@ -38,10 +38,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AreaRangeSpec = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
 exports.AreaRangeSpec = core.serialization.object({
     upperKey: core.serialization.string(),
     lowerKey: core.serialization.string(),
     name: core.serialization.string().optionalNullable(),
-    color: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
     opacity: core.serialization.number().optionalNullable(),
 });

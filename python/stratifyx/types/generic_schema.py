@@ -5,6 +5,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
 from .area_range_spec import AreaRangeSpec
+from .candlestick_spec import CandlestickSpec
 from .column_spec import ColumnSpec
 from .h_line_spec import HLineSpec
 from .line_spec import LineSpec
@@ -14,7 +15,12 @@ from .scatter_spec import ScatterSpec
 
 class GenericSchema(UniversalBaseModel):
     """
-    Generic rendering schema for indicators (lines, scatter, columns, etc.)
+    Generic rendering schema for indicators (lines, scatter, columns, etc.). Also handles candlestick and volume when present.
+    """
+
+    index_column: typing.Optional[str] = pydantic.Field(alias="indexColumn", default=None)
+    """
+    Column name for index/timestamp data
     """
 
     lines: typing.Optional[typing.List[LineSpec]] = None
@@ -23,8 +29,49 @@ class GenericSchema(UniversalBaseModel):
     columns: typing.Optional[typing.List[ColumnSpec]] = None
     area_ranges: typing.Optional[typing.List[AreaRangeSpec]] = pydantic.Field(alias="areaRanges", default=None)
     plot_bands: typing.Optional[typing.List[PlotBandSpec]] = pydantic.Field(alias="plotBands", default=None)
+    candlestick: typing.Optional[CandlestickSpec] = pydantic.Field(default=None)
+    """
+    OHLC candlestick chart (pane 0)
+    """
+
     separate_panel: typing.Optional[bool] = pydantic.Field(alias="separatePanel", default=None)
+    """
+    Render in separate panel vs overlay
+    """
+
     y_min: typing.Optional[float] = pydantic.Field(alias="yMin", default=None)
+    """
+    Fixed Y-axis minimum
+    """
+
     y_max: typing.Optional[float] = pydantic.Field(alias="yMax", default=None)
+    """
+    Fixed Y-axis maximum
+    """
+
+    title: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Chart title (for timeseries_chart plotKind)
+    """
+
+    y_axis_label: typing.Optional[str] = pydantic.Field(alias="yAxisLabel", default=None)
+    """
+    Y-axis label
+    """
+
+    stacked: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Stack multiple series
+    """
+
+    stack_type: typing.Optional[str] = pydantic.Field(alias="stackType", default=None)
+    """
+    Stack type: 'normal' or 'percent'
+    """
+
+    chart_type: typing.Optional[str] = pydantic.Field(alias="chartType", default=None)
+    """
+    Chart type: 'line', 'area', 'spline', 'arearange', 'errorbar', 'scatter'
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

@@ -4,13 +4,15 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
+from .dash_style import DashStyle
 
 
 class HLineSpec(UniversalBaseModel):
     y: float
     label: typing.Optional[str] = None
-    color: typing.Optional[typing.Any] = None
-    dash_style: typing.Optional[typing.Any] = pydantic.Field(alias="dashStyle", default=None)
+    color: typing.Optional[Color] = None
+    dash_style: typing.Optional[DashStyle] = pydantic.Field(alias="dashStyle", default=None)
     line_width: typing.Optional[int] = pydantic.Field(alias="lineWidth", default=None)
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

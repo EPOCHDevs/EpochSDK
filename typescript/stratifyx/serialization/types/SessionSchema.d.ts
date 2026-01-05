@@ -4,14 +4,17 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
+import { DashStyle } from "./DashStyle";
 export declare const SessionSchema: core.serialization.ObjectSchema<serializers.SessionSchema.Raw, StratifyX.SessionSchema>;
 export declare namespace SessionSchema {
     interface Raw {
+        indexColumn?: string | null;
         activeKey: string;
         highKey: string;
         lowKey: string;
-        color?: unknown | null;
+        color?: Color.Raw | null;
         opacity?: number | null;
-        borderStyle?: unknown | null;
+        borderStyle?: DashStyle.Raw | null;
     }
 }

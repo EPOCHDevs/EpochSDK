@@ -4,13 +4,15 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
+from .marker_symbol import MarkerSymbol
 
 
 class ScatterSpec(UniversalBaseModel):
     data_key: str = pydantic.Field(alias="dataKey")
     name: str
-    color: typing.Optional[typing.Any] = None
-    symbol: typing.Optional[typing.Any] = None
+    color: typing.Optional[Color] = None
+    symbol: typing.Optional[MarkerSymbol] = None
     radius: typing.Optional[int] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

@@ -4,13 +4,14 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
 
 
 class PlotBandSpec(UniversalBaseModel):
     from_: float = pydantic.Field(alias="from")
     to: float
     label: typing.Optional[str] = None
-    color: typing.Optional[typing.Any] = None
+    color: typing.Optional[Color] = None
     opacity: typing.Optional[float] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

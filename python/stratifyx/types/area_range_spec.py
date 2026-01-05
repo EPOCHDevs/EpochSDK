@@ -4,13 +4,14 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
 
 
 class AreaRangeSpec(UniversalBaseModel):
     upper_key: str = pydantic.Field(alias="upperKey")
     lower_key: str = pydantic.Field(alias="lowerKey")
     name: typing.Optional[str] = None
-    color: typing.Optional[typing.Any] = None
+    color: typing.Optional[Color] = None
     opacity: typing.Optional[float] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

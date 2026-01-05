@@ -36,10 +36,6 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CandlestickSchema = void 0;
+exports.MarkerSymbol = void 0;
 const core = __importStar(require("../../core"));
-exports.CandlestickSchema = core.serialization.object({
-    showRoundTrips: core.serialization.boolean(),
-    upColor: core.serialization.unknown().optional(),
-    downColor: core.serialization.unknown().optional(),
-});
+exports.MarkerSymbol = core.serialization.enum_(["Circle", "Square", "Diamond", "Triangle", "TriangleDown"]);

@@ -38,10 +38,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PlotBandSpec = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
 exports.PlotBandSpec = core.serialization.object({
     from: core.serialization.number(),
     to: core.serialization.number(),
     label: core.serialization.string().optionalNullable(),
-    color: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
     opacity: core.serialization.number().optionalNullable(),
 });

@@ -16,15 +16,17 @@ if typing.TYPE_CHECKING:
     from .asset_specification_data import AssetSpecificationData
     from .asset_specification_data_asset_class import AssetSpecificationDataAssetClass
     from .box_schema import BoxSchema
-    from .candlestick_schema import CandlestickSchema
+    from .candlestick_spec import CandlestickSpec
     from .card_column_schema import CardColumnSchema
     from .category_meta_data import CategoryMetaData
     from .chart_pane_metadata import ChartPaneMetadata
     from .chart_y_axis import ChartYAxis
+    from .color import Color
     from .column_filter_metadata import ColumnFilterMetadata
     from .column_filter_metadata_type import ColumnFilterMetadataType
     from .column_spec import ColumnSpec
     from .custom_fields_option import CustomFieldsOption
+    from .dash_style import DashStyle
     from .data_info_per_asset import DataInfoPerAsset
     from .data_option import DataOption
     from .date_period_config import DatePeriodConfig
@@ -57,6 +59,7 @@ if typing.TYPE_CHECKING:
     from .log_event import LogEvent
     from .log_level import LogLevel
     from .logical_operator import LogicalOperator
+    from .marker_symbol import MarkerSymbol
     from .message_response import MessageResponse
     from .meta_data_arg_definition_mapping import MetaDataArgDefinitionMapping
     from .meta_data_arg_ref import MetaDataArgRef
@@ -136,15 +139,17 @@ _dynamic_imports: typing.Dict[str, str] = {
     "AssetSpecificationData": ".asset_specification_data",
     "AssetSpecificationDataAssetClass": ".asset_specification_data_asset_class",
     "BoxSchema": ".box_schema",
-    "CandlestickSchema": ".candlestick_schema",
+    "CandlestickSpec": ".candlestick_spec",
     "CardColumnSchema": ".card_column_schema",
     "CategoryMetaData": ".category_meta_data",
     "ChartPaneMetadata": ".chart_pane_metadata",
     "ChartYAxis": ".chart_y_axis",
+    "Color": ".color",
     "ColumnFilterMetadata": ".column_filter_metadata",
     "ColumnFilterMetadataType": ".column_filter_metadata_type",
     "ColumnSpec": ".column_spec",
     "CustomFieldsOption": ".custom_fields_option",
+    "DashStyle": ".dash_style",
     "DataInfoPerAsset": ".data_info_per_asset",
     "DataOption": ".data_option",
     "DatePeriodConfig": ".date_period_config",
@@ -177,6 +182,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "LogEvent": ".log_event",
     "LogLevel": ".log_level",
     "LogicalOperator": ".logical_operator",
+    "MarkerSymbol": ".marker_symbol",
     "MessageResponse": ".message_response",
     "MetaDataArgDefinitionMapping": ".meta_data_arg_definition_mapping",
     "MetaDataArgRef": ".meta_data_arg_ref",
@@ -280,15 +286,17 @@ __all__ = [
     "AssetSpecificationData",
     "AssetSpecificationDataAssetClass",
     "BoxSchema",
-    "CandlestickSchema",
+    "CandlestickSpec",
     "CardColumnSchema",
     "CategoryMetaData",
     "ChartPaneMetadata",
     "ChartYAxis",
+    "Color",
     "ColumnFilterMetadata",
     "ColumnFilterMetadataType",
     "ColumnSpec",
     "CustomFieldsOption",
+    "DashStyle",
     "DataInfoPerAsset",
     "DataOption",
     "DatePeriodConfig",
@@ -321,6 +329,7 @@ __all__ = [
     "LogEvent",
     "LogLevel",
     "LogicalOperator",
+    "MarkerSymbol",
     "MessageResponse",
     "MetaDataArgDefinitionMapping",
     "MetaDataArgRef",

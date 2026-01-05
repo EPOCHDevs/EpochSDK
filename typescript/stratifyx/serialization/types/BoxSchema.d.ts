@@ -4,15 +4,17 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
 export declare const BoxSchema: core.serialization.ObjectSchema<serializers.BoxSchema.Raw, StratifyX.BoxSchema>;
 export declare namespace BoxSchema {
     interface Raw {
+        indexColumn?: string | null;
         topKey: string;
         bottomKey: string;
         signalKey?: string | null;
         endIndexKey?: string | null;
-        bullColor?: unknown | null;
-        bearColor?: unknown | null;
+        bullColor?: Color.Raw | null;
+        bearColor?: Color.Raw | null;
         opacity?: number | null;
         showLabel?: boolean | null;
         labelText?: string | null;

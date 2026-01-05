@@ -4,15 +4,18 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
+import { DashStyle } from "./DashStyle";
 export declare const TrendlineSchema: core.serialization.ObjectSchema<serializers.TrendlineSchema.Raw, StratifyX.TrendlineSchema>;
 export declare namespace TrendlineSchema {
     interface Raw {
+        indexColumn?: string | null;
         signalKey?: string | null;
         levelKey: string;
         endIndexKey: string;
-        bullColor?: unknown | null;
-        bearColor?: unknown | null;
-        dashStyle?: unknown | null;
+        bullColor?: Color.Raw | null;
+        bearColor?: Color.Raw | null;
+        dashStyle?: DashStyle.Raw | null;
         lineWidth?: number | null;
         showLabel?: boolean | null;
     }

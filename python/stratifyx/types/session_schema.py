@@ -4,6 +4,8 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
+from .dash_style import DashStyle
 
 
 class SessionSchema(UniversalBaseModel):
@@ -11,11 +13,28 @@ class SessionSchema(UniversalBaseModel):
     Session rendering schema for trading sessions
     """
 
+    index_column: typing.Optional[str] = pydantic.Field(alias="indexColumn", default=None)
+    """
+    Column name for index/timestamp data
+    """
+
     active_key: str = pydantic.Field(alias="activeKey")
+    """
+    Boolean column for session active
+    """
+
     high_key: str = pydantic.Field(alias="highKey")
+    """
+    Column for session high
+    """
+
     low_key: str = pydantic.Field(alias="lowKey")
-    color: typing.Optional[typing.Any] = None
+    """
+    Column for session low
+    """
+
+    color: typing.Optional[Color] = None
     opacity: typing.Optional[float] = None
-    border_style: typing.Optional[typing.Any] = pydantic.Field(alias="borderStyle", default=None)
+    border_style: typing.Optional[DashStyle] = pydantic.Field(alias="borderStyle", default=None)
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

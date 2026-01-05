@@ -4,11 +4,13 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
 export declare const ZoneSchema: core.serialization.ObjectSchema<serializers.ZoneSchema.Raw, StratifyX.ZoneSchema>;
 export declare namespace ZoneSchema {
     interface Raw {
+        indexColumn?: string | null;
         valueKey: string;
-        color?: unknown | null;
+        color?: Color.Raw | null;
         opacity?: number | null;
         position?: string | null;
     }

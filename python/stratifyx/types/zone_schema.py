@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
 
 
 class ZoneSchema(UniversalBaseModel):
@@ -11,9 +12,21 @@ class ZoneSchema(UniversalBaseModel):
     Zone rendering schema for time-based background zones
     """
 
+    index_column: typing.Optional[str] = pydantic.Field(alias="indexColumn", default=None)
+    """
+    Column name for index/timestamp data
+    """
+
     value_key: str = pydantic.Field(alias="valueKey")
-    color: typing.Optional[typing.Any] = None
+    """
+    Boolean column for zone active
+    """
+
+    color: typing.Optional[Color] = None
     opacity: typing.Optional[float] = None
-    position: typing.Optional[str] = None
+    position: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    'background', 'top', or 'bottom'
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

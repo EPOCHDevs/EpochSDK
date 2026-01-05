@@ -4,13 +4,14 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
 export declare const PlotBandSpec: core.serialization.ObjectSchema<serializers.PlotBandSpec.Raw, StratifyX.PlotBandSpec>;
 export declare namespace PlotBandSpec {
     interface Raw {
         from: number;
         to: number;
         label?: (string | null) | null;
-        color?: unknown | null;
+        color?: Color.Raw | null;
         opacity?: (number | null) | null;
     }
 }

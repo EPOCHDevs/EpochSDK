@@ -9,8 +9,7 @@ import { BoxSchema } from "./BoxSchema";
 import { TrendlineSchema } from "./TrendlineSchema";
 import { SessionSchema } from "./SessionSchema";
 import { ZoneSchema } from "./ZoneSchema";
-import { CandlestickSchema } from "./CandlestickSchema";
 export declare const RenderingSchema: core.serialization.Schema<serializers.RenderingSchema.Raw, StratifyX.RenderingSchema>;
 export declare namespace RenderingSchema {
-    type Raw = GenericSchema.Raw | BoxSchema.Raw | TrendlineSchema.Raw | SessionSchema.Raw | ZoneSchema.Raw | CandlestickSchema.Raw;
+    type Raw = GenericSchema.Raw | BoxSchema.Raw | TrendlineSchema.Raw | SessionSchema.Raw | ZoneSchema.Raw;
 }

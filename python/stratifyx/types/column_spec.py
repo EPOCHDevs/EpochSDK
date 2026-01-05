@@ -4,12 +4,13 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
 
 
 class ColumnSpec(UniversalBaseModel):
     data_key: str = pydantic.Field(alias="dataKey")
     name: str
-    color: typing.Optional[typing.Any] = None
-    negative_color: typing.Optional[typing.Any] = pydantic.Field(alias="negativeColor", default=None)
+    color: typing.Optional[Color] = None
+    negative_color: typing.Optional[Color] = pydantic.Field(alias="negativeColor", default=None)
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

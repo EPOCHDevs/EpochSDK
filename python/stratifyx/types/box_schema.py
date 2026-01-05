@@ -4,6 +4,7 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
 
 
 class BoxSchema(UniversalBaseModel):
@@ -11,14 +12,38 @@ class BoxSchema(UniversalBaseModel):
     Box rendering schema for FVG, Order Blocks, Gaps, Liquidity zones
     """
 
+    index_column: typing.Optional[str] = pydantic.Field(alias="indexColumn", default=None)
+    """
+    Column name for index/timestamp data
+    """
+
     top_key: str = pydantic.Field(alias="topKey")
+    """
+    Column name for box top
+    """
+
     bottom_key: str = pydantic.Field(alias="bottomKey")
+    """
+    Column name for box bottom
+    """
+
     signal_key: typing.Optional[str] = pydantic.Field(alias="signalKey", default=None)
+    """
+    Column name for signal (triggers box creation)
+    """
+
     end_index_key: typing.Optional[str] = pydantic.Field(alias="endIndexKey", default=None)
-    bull_color: typing.Optional[typing.Any] = pydantic.Field(alias="bullColor", default=None)
-    bear_color: typing.Optional[typing.Any] = pydantic.Field(alias="bearColor", default=None)
+    """
+    Column name for box end index (null = extend)
+    """
+
+    bull_color: typing.Optional[Color] = pydantic.Field(alias="bullColor", default=None)
+    bear_color: typing.Optional[Color] = pydantic.Field(alias="bearColor", default=None)
     opacity: typing.Optional[float] = None
     show_label: typing.Optional[bool] = pydantic.Field(alias="showLabel", default=None)
     label_text: typing.Optional[str] = pydantic.Field(alias="labelText", default=None)
+    """
+    Empty = use PlotKind name
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

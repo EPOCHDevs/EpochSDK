@@ -4,13 +4,15 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
+import { MarkerSymbol } from "./MarkerSymbol";
 export declare const ScatterSpec: core.serialization.ObjectSchema<serializers.ScatterSpec.Raw, StratifyX.ScatterSpec>;
 export declare namespace ScatterSpec {
     interface Raw {
         dataKey: string;
         name: string;
-        color?: unknown | null;
-        symbol?: unknown | null;
+        color?: Color.Raw | null;
+        symbol?: MarkerSymbol.Raw | null;
         radius?: (number | null) | null;
     }
 }

@@ -44,14 +44,22 @@ const ScatterSpec_1 = require("./ScatterSpec");
 const ColumnSpec_1 = require("./ColumnSpec");
 const AreaRangeSpec_1 = require("./AreaRangeSpec");
 const PlotBandSpec_1 = require("./PlotBandSpec");
+const CandlestickSpec_1 = require("./CandlestickSpec");
 exports.GenericSchema = core.serialization.object({
+    indexColumn: core.serialization.string().optional(),
     lines: core.serialization.list(LineSpec_1.LineSpec).optional(),
     hLines: core.serialization.list(HLineSpec_1.HLineSpec).optional(),
     scatter: core.serialization.list(ScatterSpec_1.ScatterSpec).optional(),
     columns: core.serialization.list(ColumnSpec_1.ColumnSpec).optional(),
     areaRanges: core.serialization.list(AreaRangeSpec_1.AreaRangeSpec).optional(),
     plotBands: core.serialization.list(PlotBandSpec_1.PlotBandSpec).optional(),
+    candlestick: CandlestickSpec_1.CandlestickSpec.optional(),
     separatePanel: core.serialization.boolean().optional(),
     yMin: core.serialization.number().optionalNullable(),
     yMax: core.serialization.number().optionalNullable(),
+    title: core.serialization.string().optionalNullable(),
+    yAxisLabel: core.serialization.string().optionalNullable(),
+    stacked: core.serialization.boolean().optional(),
+    stackType: core.serialization.string().optionalNullable(),
+    chartType: core.serialization.string().optionalNullable(),
 });

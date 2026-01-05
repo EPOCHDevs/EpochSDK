@@ -38,9 +38,10 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ColumnSpec = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
 exports.ColumnSpec = core.serialization.object({
     dataKey: core.serialization.string(),
     name: core.serialization.string(),
-    color: core.serialization.unknown().optional(),
-    negativeColor: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
+    negativeColor: Color_1.Color.optional(),
 });

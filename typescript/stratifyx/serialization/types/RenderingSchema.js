@@ -43,12 +43,4 @@ const BoxSchema_1 = require("./BoxSchema");
 const TrendlineSchema_1 = require("./TrendlineSchema");
 const SessionSchema_1 = require("./SessionSchema");
 const ZoneSchema_1 = require("./ZoneSchema");
-const CandlestickSchema_1 = require("./CandlestickSchema");
-exports.RenderingSchema = core.serialization.undiscriminatedUnion([
-    GenericSchema_1.GenericSchema,
-    BoxSchema_1.BoxSchema,
-    TrendlineSchema_1.TrendlineSchema,
-    SessionSchema_1.SessionSchema,
-    ZoneSchema_1.ZoneSchema,
-    CandlestickSchema_1.CandlestickSchema,
-]);
+exports.RenderingSchema = core.serialization.undiscriminatedUnion([GenericSchema_1.GenericSchema, BoxSchema_1.BoxSchema, TrendlineSchema_1.TrendlineSchema, SessionSchema_1.SessionSchema, ZoneSchema_1.ZoneSchema]);

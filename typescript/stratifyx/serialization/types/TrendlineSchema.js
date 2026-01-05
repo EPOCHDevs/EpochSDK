@@ -38,13 +38,16 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TrendlineSchema = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
+const DashStyle_1 = require("./DashStyle");
 exports.TrendlineSchema = core.serialization.object({
+    indexColumn: core.serialization.string().optional(),
     signalKey: core.serialization.string().optional(),
     levelKey: core.serialization.string(),
     endIndexKey: core.serialization.string(),
-    bullColor: core.serialization.unknown().optional(),
-    bearColor: core.serialization.unknown().optional(),
-    dashStyle: core.serialization.unknown().optional(),
+    bullColor: Color_1.Color.optional(),
+    bearColor: Color_1.Color.optional(),
+    dashStyle: DashStyle_1.DashStyle.optional(),
     lineWidth: core.serialization.number().optional(),
     showLabel: core.serialization.boolean().optional(),
 });

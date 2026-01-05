@@ -3,6 +3,6 @@
  */
 import * as StratifyX from "../index";
 /**
- * Union type covering all PlotKind rendering schemas
+ * Union type covering all PlotKind rendering schemas. GenericSchema handles most indicators including candlesticks via embedded CandlestickSpec.
  */
-export type RenderingSchema = StratifyX.GenericSchema | StratifyX.BoxSchema | StratifyX.TrendlineSchema | StratifyX.SessionSchema | StratifyX.ZoneSchema | StratifyX.CandlestickSchema;
+export type RenderingSchema = StratifyX.GenericSchema | StratifyX.BoxSchema | StratifyX.TrendlineSchema | StratifyX.SessionSchema | StratifyX.ZoneSchema;

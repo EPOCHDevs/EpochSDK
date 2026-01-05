@@ -4,13 +4,15 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
+from .dash_style import DashStyle
 
 
 class LineSpec(UniversalBaseModel):
     data_key: str = pydantic.Field(alias="dataKey")
     name: str
-    color: typing.Optional[typing.Any] = None
-    dash_style: typing.Optional[typing.Any] = pydantic.Field(alias="dashStyle", default=None)
+    color: typing.Optional[Color] = None
+    dash_style: typing.Optional[DashStyle] = pydantic.Field(alias="dashStyle", default=None)
     line_width: typing.Optional[int] = pydantic.Field(alias="lineWidth", default=None)
     step: typing.Optional[bool] = None
     enable_markers: typing.Optional[bool] = pydantic.Field(alias="enableMarkers", default=None)

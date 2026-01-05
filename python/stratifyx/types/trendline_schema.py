@@ -4,6 +4,8 @@ import typing
 
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
+from .color import Color
+from .dash_style import DashStyle
 
 
 class TrendlineSchema(UniversalBaseModel):
@@ -11,12 +13,29 @@ class TrendlineSchema(UniversalBaseModel):
     Trendline rendering schema for BOS/CHOCH, chart patterns
     """
 
+    index_column: typing.Optional[str] = pydantic.Field(alias="indexColumn", default=None)
+    """
+    Column name for index/timestamp data
+    """
+
     signal_key: typing.Optional[str] = pydantic.Field(alias="signalKey", default=None)
+    """
+    Column for signal (1=bull, -1=bear, 0=none)
+    """
+
     level_key: str = pydantic.Field(alias="levelKey")
+    """
+    Column for Y-axis level
+    """
+
     end_index_key: str = pydantic.Field(alias="endIndexKey")
-    bull_color: typing.Optional[typing.Any] = pydantic.Field(alias="bullColor", default=None)
-    bear_color: typing.Optional[typing.Any] = pydantic.Field(alias="bearColor", default=None)
-    dash_style: typing.Optional[typing.Any] = pydantic.Field(alias="dashStyle", default=None)
+    """
+    Column for line end index
+    """
+
+    bull_color: typing.Optional[Color] = pydantic.Field(alias="bullColor", default=None)
+    bear_color: typing.Optional[Color] = pydantic.Field(alias="bearColor", default=None)
+    dash_style: typing.Optional[DashStyle] = pydantic.Field(alias="dashStyle", default=None)
     line_width: typing.Optional[int] = pydantic.Field(alias="lineWidth", default=None)
     show_label: typing.Optional[bool] = pydantic.Field(alias="showLabel", default=None)
 

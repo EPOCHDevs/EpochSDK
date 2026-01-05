@@ -4,12 +4,13 @@
 import * as serializers from "../index";
 import * as StratifyX from "../../api/index";
 import * as core from "../../core";
+import { Color } from "./Color";
 export declare const ColumnSpec: core.serialization.ObjectSchema<serializers.ColumnSpec.Raw, StratifyX.ColumnSpec>;
 export declare namespace ColumnSpec {
     interface Raw {
         dataKey: string;
         name: string;
-        color?: unknown | null;
-        negativeColor?: unknown | null;
+        color?: Color.Raw | null;
+        negativeColor?: Color.Raw | null;
     }
 }

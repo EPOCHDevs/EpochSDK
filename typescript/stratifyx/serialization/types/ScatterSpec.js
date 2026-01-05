@@ -38,10 +38,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScatterSpec = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
+const MarkerSymbol_1 = require("./MarkerSymbol");
 exports.ScatterSpec = core.serialization.object({
     dataKey: core.serialization.string(),
     name: core.serialization.string(),
-    color: core.serialization.unknown().optional(),
-    symbol: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
+    symbol: MarkerSymbol_1.MarkerSymbol.optional(),
     radius: core.serialization.number().optionalNullable(),
 });

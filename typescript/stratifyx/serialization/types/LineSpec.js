@@ -38,11 +38,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LineSpec = void 0;
 const core = __importStar(require("../../core"));
+const Color_1 = require("./Color");
+const DashStyle_1 = require("./DashStyle");
 exports.LineSpec = core.serialization.object({
     dataKey: core.serialization.string(),
     name: core.serialization.string(),
-    color: core.serialization.unknown().optional(),
-    dashStyle: core.serialization.unknown().optional(),
+    color: Color_1.Color.optional(),
+    dashStyle: DashStyle_1.DashStyle.optional(),
     lineWidth: core.serialization.number().optionalNullable(),
     step: core.serialization.boolean().optional(),
     enableMarkers: core.serialization.boolean().optional(),

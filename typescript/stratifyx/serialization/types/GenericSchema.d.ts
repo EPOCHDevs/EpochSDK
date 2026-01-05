@@ -10,17 +10,25 @@ import { ScatterSpec } from "./ScatterSpec";
 import { ColumnSpec } from "./ColumnSpec";
 import { AreaRangeSpec } from "./AreaRangeSpec";
 import { PlotBandSpec } from "./PlotBandSpec";
+import { CandlestickSpec } from "./CandlestickSpec";
 export declare const GenericSchema: core.serialization.ObjectSchema<serializers.GenericSchema.Raw, StratifyX.GenericSchema>;
 export declare namespace GenericSchema {
     interface Raw {
+        indexColumn?: string | null;
         lines?: LineSpec.Raw[] | null;
         hLines?: HLineSpec.Raw[] | null;
         scatter?: ScatterSpec.Raw[] | null;
         columns?: ColumnSpec.Raw[] | null;
         areaRanges?: AreaRangeSpec.Raw[] | null;
         plotBands?: PlotBandSpec.Raw[] | null;
+        candlestick?: CandlestickSpec.Raw | null;
         separatePanel?: boolean | null;
         yMin?: (number | null) | null;
         yMax?: (number | null) | null;
+        title?: (string | null) | null;
+        yAxisLabel?: (string | null) | null;
+        stacked?: boolean | null;
+        stackType?: (string | null) | null;
+        chartType?: (string | null) | null;
     }
 }

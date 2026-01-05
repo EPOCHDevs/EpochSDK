@@ -3,16 +3,33 @@
  */
 import * as StratifyX from "../index";
 /**
- * Generic rendering schema for indicators (lines, scatter, columns, etc.)
+ * Generic rendering schema for indicators (lines, scatter, columns, etc.). Also handles candlestick and volume when present.
  */
 export interface GenericSchema {
+    /** Column name for index/timestamp data */
+    indexColumn?: string;
     lines?: StratifyX.LineSpec[];
     hLines?: StratifyX.HLineSpec[];
     scatter?: StratifyX.ScatterSpec[];
     columns?: StratifyX.ColumnSpec[];
     areaRanges?: StratifyX.AreaRangeSpec[];
     plotBands?: StratifyX.PlotBandSpec[];
+    /** OHLC candlestick chart (pane 0) */
+    candlestick?: StratifyX.CandlestickSpec;
+    /** Render in separate panel vs overlay */
     separatePanel?: boolean;
+    /** Fixed Y-axis minimum */
     yMin?: number | null;
+    /** Fixed Y-axis maximum */
     yMax?: number | null;
+    /** Chart title (for timeseries_chart plotKind) */
+    title?: string | null;
+    /** Y-axis label */
+    yAxisLabel?: string | null;
+    /** Stack multiple series */
+    stacked?: boolean;
+    /** Stack type: 'normal' or 'percent' */
+    stackType?: string | null;
+    /** Chart type: 'line', 'area', 'spline', 'arearange', 'errorbar', 'scatter' */
+    chartType?: string | null;
 }
