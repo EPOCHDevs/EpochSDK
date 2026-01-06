@@ -46,4 +46,5 @@ exports.ScatterSpec = core.serialization.object({
     color: Color_1.Color.optional(),
     symbol: MarkerSymbol_1.MarkerSymbol.optional(),
     radius: core.serialization.number().optionalNullable(),
+    priceScaleId: core.serialization.string().optionalNullable(),
 });

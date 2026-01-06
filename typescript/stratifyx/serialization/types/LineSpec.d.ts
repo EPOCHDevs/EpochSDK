@@ -6,6 +6,7 @@ import * as StratifyX from "../../api/index";
 import * as core from "../../core";
 import { Color } from "./Color";
 import { DashStyle } from "./DashStyle";
+import { LineInterpolation } from "./LineInterpolation";
 export declare const LineSpec: core.serialization.ObjectSchema<serializers.LineSpec.Raw, StratifyX.LineSpec>;
 export declare namespace LineSpec {
     interface Raw {
@@ -16,5 +17,7 @@ export declare namespace LineSpec {
         lineWidth?: (number | null) | null;
         step?: boolean | null;
         enableMarkers?: boolean | null;
+        priceScaleId?: (string | null) | null;
+        interpolation?: LineInterpolation.Raw | null;
     }
 }

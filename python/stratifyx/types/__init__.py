@@ -55,6 +55,7 @@ if typing.TYPE_CHECKING:
     from .job_list_item_status import JobListItemStatus
     from .job_period import JobPeriod
     from .lifecycle_event import LifecycleEvent
+    from .line_interpolation import LineInterpolation
     from .line_spec import LineSpec
     from .log_event import LogEvent
     from .log_level import LogLevel
@@ -178,6 +179,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "JobListItemStatus": ".job_list_item_status",
     "JobPeriod": ".job_period",
     "LifecycleEvent": ".lifecycle_event",
+    "LineInterpolation": ".line_interpolation",
     "LineSpec": ".line_spec",
     "LogEvent": ".log_event",
     "LogLevel": ".log_level",
@@ -325,6 +327,7 @@ __all__ = [
     "JobListItemStatus",
     "JobPeriod",
     "LifecycleEvent",
+    "LineInterpolation",
     "LineSpec",
     "LogEvent",
     "LogLevel",

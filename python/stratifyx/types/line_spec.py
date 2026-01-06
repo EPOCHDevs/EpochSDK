@@ -6,6 +6,7 @@ import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
 from .color import Color
 from .dash_style import DashStyle
+from .line_interpolation import LineInterpolation
 
 
 class LineSpec(UniversalBaseModel):
@@ -14,7 +15,20 @@ class LineSpec(UniversalBaseModel):
     color: typing.Optional[Color] = None
     dash_style: typing.Optional[DashStyle] = pydantic.Field(alias="dashStyle", default=None)
     line_width: typing.Optional[int] = pydantic.Field(alias="lineWidth", default=None)
-    step: typing.Optional[bool] = None
+    step: typing.Optional[bool] = pydantic.Field(default=None)
+    """
+    Step line (use interpolation for more options)
+    """
+
     enable_markers: typing.Optional[bool] = pydantic.Field(alias="enableMarkers", default=None)
+    price_scale_id: typing.Optional[str] = pydantic.Field(alias="priceScaleId", default=None)
+    """
+    Custom price scale (e.g., 'volume' for volume overlays)
+    """
+
+    interpolation: typing.Optional[LineInterpolation] = pydantic.Field(default=None)
+    """
+    Line rendering mode (overrides step)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

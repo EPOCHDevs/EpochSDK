@@ -78,6 +78,7 @@ export * from "./ChartYAxis";
 export * from "./Color";
 export * from "./DashStyle";
 export * from "./MarkerSymbol";
+export * from "./LineInterpolation";
 export * from "./LineSpec";
 export * from "./HLineSpec";
 export * from "./ScatterSpec";

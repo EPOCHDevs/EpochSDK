@@ -14,5 +14,6 @@ export declare namespace ScatterSpec {
         color?: Color.Raw | null;
         symbol?: MarkerSymbol.Raw | null;
         radius?: (number | null) | null;
+        priceScaleId?: (string | null) | null;
     }
 }

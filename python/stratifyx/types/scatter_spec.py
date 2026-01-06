@@ -14,5 +14,9 @@ class ScatterSpec(UniversalBaseModel):
     color: typing.Optional[Color] = None
     symbol: typing.Optional[MarkerSymbol] = None
     radius: typing.Optional[int] = None
+    price_scale_id: typing.Optional[str] = pydantic.Field(alias="priceScaleId", default=None)
+    """
+    Custom price scale (e.g., 'volume' for volume overlays)
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

@@ -8,6 +8,11 @@ export interface LineSpec {
     color?: StratifyX.Color;
     dashStyle?: StratifyX.DashStyle;
     lineWidth?: number | null;
+    /** Step line (use interpolation for more options) */
     step?: boolean;
     enableMarkers?: boolean;
+    /** Custom price scale (e.g., 'volume' for volume overlays) */
+    priceScaleId?: string | null;
+    /** Line rendering mode (overrides step) */
+    interpolation?: StratifyX.LineInterpolation;
 }

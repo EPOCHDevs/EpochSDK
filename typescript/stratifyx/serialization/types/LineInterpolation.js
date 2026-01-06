@@ -36,19 +36,6 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LineSpec = void 0;
+exports.LineInterpolation = void 0;
 const core = __importStar(require("../../core"));
-const Color_1 = require("./Color");
-const DashStyle_1 = require("./DashStyle");
-const LineInterpolation_1 = require("./LineInterpolation");
-exports.LineSpec = core.serialization.object({
-    dataKey: core.serialization.string(),
-    name: core.serialization.string(),
-    color: Color_1.Color.optional(),
-    dashStyle: DashStyle_1.DashStyle.optional(),
-    lineWidth: core.serialization.number().optionalNullable(),
-    step: core.serialization.boolean().optional(),
-    enableMarkers: core.serialization.boolean().optional(),
-    priceScaleId: core.serialization.string().optionalNullable(),
-    interpolation: LineInterpolation_1.LineInterpolation.optional(),
-});
+exports.LineInterpolation = core.serialization.enum_(["Linear", "Step", "StepBefore", "StepAfter", "Curved"]);

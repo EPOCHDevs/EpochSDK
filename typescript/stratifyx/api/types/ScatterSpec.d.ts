@@ -8,4 +8,6 @@ export interface ScatterSpec {
     color?: StratifyX.Color;
     symbol?: StratifyX.MarkerSymbol;
     radius?: number | null;
+    /** Custom price scale (e.g., 'volume' for volume overlays) */
+    priceScaleId?: string | null;
 }

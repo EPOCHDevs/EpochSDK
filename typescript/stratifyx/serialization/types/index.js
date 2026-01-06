@@ -94,6 +94,7 @@ __exportStar(require("./ChartYAxis"), exports);
 __exportStar(require("./Color"), exports);
 __exportStar(require("./DashStyle"), exports);
 __exportStar(require("./MarkerSymbol"), exports);
+__exportStar(require("./LineInterpolation"), exports);
 __exportStar(require("./LineSpec"), exports);
 __exportStar(require("./HLineSpec"), exports);
 __exportStar(require("./ScatterSpec"), exports);
