@@ -52,4 +52,7 @@ no private wheel or registry credentials are copied into this public repository.
 Existing generated packages and the old sync script are retained. They are
 historical snapshots, not the dependency source for the new wrapper. Current
 native SDK generation and publication remain with EpochBackend.
+The `python/epoch-protos/` and `typescript/epoch-protos/` folders are discarded
+legacy artifacts; the current contracts, SDK and MCP do not use them, and the
+old sync script no longer updates them.
 See [the historical package notes](docs/legacy-packages.md).

@@ -1,8 +1,13 @@
 # Historical package snapshots
 
-These are the original repository instructions and snapshots. New Epoch SDK
+These are historical repository instructions and snapshots. New Epoch SDK
 clients consume the versioned StratifyX packages produced by EpochBackend;
 the old sync script is not the new integration-client build path.
+
+`python/epoch-protos/` and `typescript/epoch-protos/` are discarded legacy
+artifacts. They are not dependencies or a source for the current shared contract,
+SDK or MCP. Their installation instructions and old sync steps have been removed;
+the folders remain only as historical material.
 
 # Epoch SDK
 
@@ -16,8 +21,6 @@ Public SDKs and libraries for the Epoch platform.
 # StratifyX SDK
 pip install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=python/stratifyx
 
-# Epoch Protos
-pip install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=python/epoch-protos
 ```
 
 ### TypeScript/JavaScript
@@ -25,9 +28,6 @@ pip install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=python/ep
 ```bash
 # StratifyX SDK
 npm install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=typescript/stratifyx
-
-# Epoch Protos
-npm install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=typescript/epoch-protos
 
 # Tree-sitter grammar
 npm install git+https://github.com/EPOCHDevs/EpochSDK.git#subdirectory=typescript/tree-sitter-epochscript
@@ -43,11 +43,9 @@ For local development, link directly to the package folders:
 ```bash
 # Python - install in editable mode
 pip install -e /home/ubuntu/EpochSDK/python/stratifyx
-pip install -e /home/ubuntu/EpochSDK/python/epoch-protos
 
 # npm - use file: protocol
 npm install file:/home/ubuntu/EpochSDK/typescript/stratifyx
-npm install file:/home/ubuntu/EpochSDK/typescript/epoch-protos
 ```
 
 ## Packages
@@ -57,14 +55,12 @@ npm install file:/home/ubuntu/EpochSDK/typescript/epoch-protos
 | Package | Description |
 |---------|-------------|
 | `stratifyx` | StratifyX Python SDK |
-| `epoch-protos` | Protocol Buffer definitions |
 
 ### TypeScript
 
 | Package | Description |
 |---------|-------------|
 | `stratifyx` | StratifyX TypeScript SDK |
-| `epoch-protos` | Protocol Buffer definitions |
 | `tree-sitter-epochscript` | Tree-sitter grammar for EpochScript |
 | `lezer-epochscript` | Lezer grammar for CodeMirror 6 |
 

@@ -1,6 +1,6 @@
 #!/bin/bash
-# Sync SDKs from EpochBackend to EpochSDK
-# Run this script to update the SDK copies
+# Legacy snapshot sync from EpochBackend to EpochSDK.
+# Current clients consume versioned SDK packages; discarded epoch-protos are excluded.
 # Note: Uses rsync to preserve .git directories in TypeScript packages
 
 set -e
@@ -17,18 +17,12 @@ echo "=== Python Packages ==="
 echo "  Syncing stratifyx..."
 rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.egg-info' "$BACKEND_DIR/sdks/stratifyx-python-sdk/" "$SCRIPT_DIR/python/stratifyx/"
 
-echo "  Syncing epoch-protos..."
-rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.egg-info' "$BACKEND_DIR/packages/epoch-protos/python/" "$SCRIPT_DIR/python/epoch-protos/"
-
 # TypeScript packages (use rsync to preserve .git directories)
 echo ""
 echo "=== TypeScript Packages ==="
 
 echo "  Syncing stratifyx..."
 rsync -av --delete --exclude='.git' "$BACKEND_DIR/sdks/stratifyx-typescript-sdk/" "$SCRIPT_DIR/typescript/stratifyx/"
-
-echo "  Syncing epoch-protos..."
-rsync -av --delete --exclude='.git' "$BACKEND_DIR/packages/epoch-protos/typescript/" "$SCRIPT_DIR/typescript/epoch-protos/"
 
 echo "  Syncing tree-sitter-epochscript..."
 rm -rf "$SCRIPT_DIR/typescript/tree-sitter-epochscript"

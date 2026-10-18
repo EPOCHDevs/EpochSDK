@@ -8,7 +8,9 @@
   native REST APIs, controllers, persistence and native SDK generation. Graph
   server implementations belong to their service repository, not a client SDK.
 - Do not hand-edit or restore historical generated packages as new client
-  dependencies. Existing legacy snapshots are retained for compatibility/history.
+  dependencies. Existing generated SDK snapshots are retained for history.
+- `python/epoch-protos/` and `typescript/epoch-protos/` are discarded legacy
+  artifacts. Do not use, sync, publish or revive them for the SDK/MCP work.
 - Use the installed, versioned native SDK and keep its closed model types through
   request handling. Validate untrusted wire inputs before invoking services.
 - Run shared contract checks and the affected language tests. Distinguish schema
