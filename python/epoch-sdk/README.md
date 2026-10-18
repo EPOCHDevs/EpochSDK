@@ -89,12 +89,14 @@ epoch-api-check --backend-url "$EPOCH_BACKEND_URL" --graph-url "$EPOCH_GRAPH_URL
 
 The command uses the actual generated StratifyX health client and LangGraph
 assistant discovery client. It starts no thread, study, ingestion or engine job,
-prints no credentials, and returns nonzero for missing capabilities. A public
-health response proves connectivity only, **not** authenticated attempt access.
-Once the matching native SDK is available, pass `--attempt-id` for an existing
-caller-owned record to check that read as well; connectivity alone never passes
-the complete check.
-Use `EPOCH_ACCESS_TOKEN`/`LANGGRAPH_API_KEY` in the process environment when needed;
+prints no credentials, and returns nonzero for missing capabilities. It defaults
+to the existing `epoch-ai` graph; use `--graph-id` or `EPOCH_GRAPH_ID` for another
+registered graph. A public health response proves connectivity only. Pass
+`--study-id` for an existing caller-owned definition and configure a bearer token
+to check protected Backend access as well; connectivity alone never passes the
+complete check. This diagnostic creates no thread or execution. The optional
+`--attempt-id` checks the older draft controller only when explicitly requested.
+Use `EPOCH_TOKEN` (or `EPOCH_ACCESS_TOKEN`) and `LANGGRAPH_API_KEY` in the environment;
 credentials must not be put in URLs. This package does not load another
 application's `.env` or mutate its installed SDK.
 
