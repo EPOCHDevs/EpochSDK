@@ -305,6 +305,35 @@ def test_execution_order_alone_never_selects_a_primary_answer() -> None:
     asyncio.run(scenario())
 
 
+def test_checkpoint_default_null_reference_fields_allow_an_execution_free_answer() -> None:
+    async def scenario() -> None:
+        reference = {**published("unused"), "primary_execution_id": None, "study_id": None}
+        async with clients([{"published_response": reference}]) as (client, _, backend_calls):
+            result = await client.run("A brief explanation")
+            assert isinstance(result, PublishedAnswer)
+            assert result.response.primary_execution_id is None
+            assert result.response.study_id is None
+            assert not backend_calls
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("invalid", [{"response_id": None}, {"study_id": "study-one"}])
+def test_checkpoint_null_normalization_keeps_required_and_paired_source_validation(invalid) -> None:
+    async def scenario() -> None:
+        reference = {
+            **published("unused"),
+            "primary_execution_id": None,
+            "study_id": None,
+            **invalid,
+        }
+        async with clients([{"published_response": reference}]) as (client, _, _):
+            with pytest.raises(ValueError):
+                await client.run("A brief explanation")
+
+    asyncio.run(scenario())
+
+
 def test_a_second_clarification_round_preserves_its_updated_questions_and_request() -> None:
     async def scenario() -> None:
         second_interrupt = copy.deepcopy(INTERRUPT)

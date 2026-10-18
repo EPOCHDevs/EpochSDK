@@ -14,7 +14,7 @@ from uuid import uuid4
 import httpx
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, RunCreateMetadata
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
 
@@ -135,6 +135,7 @@ class NoExecution(Closed):
     handle: WorkflowHandle
     reason: str
     publication_failed: bool = False
+    publication_error: DomainError | None = None
     execution_id: str | None = None
     reply: str = ""
 
@@ -182,6 +183,41 @@ class _State(BaseModel):
     interrupts: list[GraphInterrupt] = Field(
         default_factory=list[GraphInterrupt], alias="__interrupt__"
     )
+
+    @field_validator("published_response", mode="before")
+    @classmethod
+    def checkpoint_response(cls, value: object) -> ResponseReference | None:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            # Native checkpoint serialization includes default null metadata.
+            # Normalize only the known optional reference fields at this boundary.
+            raw = cast(dict[str, object], value)
+            value = {
+                key: item
+                for key, item in raw.items()
+                if key not in {"primary_execution_id", "study_id"} or item is not None
+            }
+        return ResponseReference.model_validate(value)
+
+    @field_validator("publication_error", mode="before")
+    @classmethod
+    def checkpoint_error(cls, value: object) -> DomainError | None:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            raw = cast(dict[str, object], value)
+            optional = {
+                "gaps",
+                "questions",
+                "recommended_task",
+                "data_requirements",
+                "access_requirements",
+            }
+            value = {
+                key: item for key, item in raw.items() if key not in optional or item is not None
+            }
+        return DomainError.model_validate(value)
 
     def reply(self) -> str:
         for message in reversed(self.messages):
@@ -507,7 +543,10 @@ class SupervisorClient:
             return PublishedAnswer(handle=handle, response=reference)
         if state.publication_error is not None:
             return NoExecution(
-                handle=handle, reason=state.publication_error.message, publication_failed=True
+                handle=handle,
+                reason=state.publication_error.message,
+                publication_failed=True,
+                publication_error=state.publication_error,
             )
         outcomes = [
             value

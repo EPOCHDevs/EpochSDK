@@ -57,7 +57,12 @@ def saved_response():
 
 @asynccontextmanager
 async def clients(
-    *, interrupt=False, missing_response=False, terminal_failure=False, no_execution=False
+    *,
+    interrupt=False,
+    missing_response=False,
+    terminal_failure=False,
+    no_execution=False,
+    publication_error=None,
 ):
     def answer():
         value = saved_response()
@@ -161,6 +166,16 @@ async def clients(
                         "execution_id": "new",
                     }
                 }
+            if publication_error is not None:
+                result.pop("published_response")
+                result["publication_error"] = {
+                    **publication_error,
+                    "gaps": None,
+                    "questions": None,
+                    "recommended_task": None,
+                    "data_requirements": None,
+                    "access_requirements": None,
+                }
             if interrupt and waits == 1:
                 result = {
                     "authority_turn_id": "user-turn:" + REQUEST_ID,
@@ -262,6 +277,37 @@ def test_engine_completion_alone_cannot_certify_response_success(option, code):
             with pytest.raises(ResearchError) as reopened:
                 await EpochClient(sdk.supervisor).research_status(REQUEST_ID)
             assert reopened.value.response == error.value.response
+            assert graph_calls == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("mode", ["sdk", "mcp"])
+def test_publication_service_failure_keeps_its_code_in_fresh_request_reads(mode):
+    failure = {
+        "code": "TEMPORARILY_UNAVAILABLE",
+        "message": "Epoch could not confirm the saved answer.",
+        "retryable": False,
+    }
+
+    async def scenario():
+        async with clients(publication_error=failure) as (sdk, records, graph_calls, _):
+            if mode == "sdk":
+                with pytest.raises(ResearchError) as raised:
+                    await sdk.research(RunRequest.model_validate(REQUEST))
+                assert raised.value.error.to_wire() == failure
+            else:
+                async with Client(create_server(sdk.supervisor)) as mcp:
+                    result = await mcp.call_tool("epoch_research", {"request": REQUEST})
+                    assert result.structured_content["error"] == failure
+                    assert result.structured_content["request_id"] == REQUEST_ID
+            assert records["phase"] == "failed"
+            assert records["error"]["error"] == failure
+            assert "response_version" not in records
+            graph_calls.clear()
+            with pytest.raises(ResearchError) as reopened:
+                await EpochClient(sdk.supervisor).research_status(REQUEST_ID)
+            assert reopened.value.error.to_wire() == failure
             assert graph_calls == []
 
     asyncio.run(scenario())

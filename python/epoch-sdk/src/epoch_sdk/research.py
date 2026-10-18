@@ -309,14 +309,13 @@ class EpochClient:
     async def _fail(
         self,
         record: SdkRequestRecord,
-        code: Literal["EXECUTION_FAILED", "OUTPUT_VALIDATION_FAILED"],
-        message: str,
+        error: DomainError,
         execution_id: str | None = None,
     ) -> ResearchError:
         failure = ResearchFailure.model_validate(
             {
                 "request_id": record.request_id,
-                "error": {"code": code, "message": message, "retryable": False},
+                "error": error.to_wire(),
                 **({"execution_id": execution_id} if execution_id is not None else {}),
             }
         )
@@ -352,15 +351,24 @@ class EpochClient:
         if isinstance(outcome, NoExecution):
             raise await self._fail(
                 record,
-                "OUTPUT_VALIDATION_FAILED" if outcome.publication_failed else "EXECUTION_FAILED",
-                outcome.reason,
+                outcome.publication_error
+                or DomainError(
+                    code="OUTPUT_VALIDATION_FAILED"
+                    if outcome.publication_failed
+                    else "EXECUTION_FAILED",
+                    message=outcome.reason,
+                    retryable=False,
+                ),
                 outcome.execution_id,
             )
         if not isinstance(outcome, PublishedAnswer):
             raise await self._fail(
                 record,
-                "OUTPUT_VALIDATION_FAILED",
-                "Research completion requires an explicit published answer.",
+                DomainError(
+                    code="OUTPUT_VALIDATION_FAILED",
+                    message="Research completion requires an explicit published answer.",
+                    retryable=False,
+                ),
             )
         reference = outcome.response
         try:
@@ -371,16 +379,22 @@ class EpochClient:
             if error.error.code == "NOT_FOUND":
                 raise await self._fail(
                     record,
-                    "OUTPUT_VALIDATION_FAILED",
-                    "The published answer reference is not saved.",
+                    DomainError(
+                        code="OUTPUT_VALIDATION_FAILED",
+                        message="The published answer reference is not saved.",
+                        retryable=False,
+                    ),
                     reference.primary_execution_id,
                 ) from error
             raise
         if response.reference() != reference:
             raise await self._fail(
                 record,
-                "OUTPUT_VALIDATION_FAILED",
-                "Published answer reference differs from storage.",
+                DomainError(
+                    code="OUTPUT_VALIDATION_FAILED",
+                    message="Published answer reference differs from storage.",
+                    retryable=False,
+                ),
             )
         if response.primary_execution_id is None:
             record = await self.backend.sdk_requests.update_sdk_request(
