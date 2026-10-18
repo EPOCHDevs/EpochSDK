@@ -23,6 +23,7 @@ from urllib.parse import urlsplit
 import httpx
 from epoch_sdk import EpochError, ErrorResponse, RunRequest
 from epoch_sdk.output_validation import (
+    Cell,
     JsonValueOutput,
     TableValue,
     TextValue,
@@ -39,6 +40,7 @@ from epoch_sdk.research import (
 from epoch_sdk.responses import (
     ResearchResponseContent,
     ResponseReference,
+    ResponseTablePage,
     SavedResearchResponse,
 )
 from epoch_sdk.supervisor import Answers, ChosenExecution, InProgress, NeedsInput
@@ -73,6 +75,8 @@ class Case(BaseModel):
             self.expected_table, self.expected_json,
             TextValue(name=text[0].name, type="text", format=text[0].format, value="Expected text"),
         ])
+        if self.expected_table.rows is None:
+            raise ValueError("A proof case must register complete expected table rows")
         if self.request.parameters is None or self.request.parameters.period is None:
             raise ValueError("Provide an explicit native period for the saved-study reuse check")
         return self
@@ -295,23 +299,40 @@ def load_case(path: Path) -> Case:
     return Case.model_validate(parse_json(path.read_text()))
 
 
-def verify_values(case: Case, result: ResearchCompleted) -> None:
+def verify_values(
+    case: Case,
+    result: ResearchCompleted,
+    *,
+    table: TableValue | None = None,
+) -> None:
     response = result.response
     if response.content.declarations != case.request.outputs:
         raise AssertionError("The completed answer changed the accepted declarations")
     values = {item.name: item for item in response.content.outputs}
-    if values[case.expected_table.name] != case.expected_table:
-        raise AssertionError("Actual saved table values differ from the registered case")
+    actual_table = values[case.expected_table.name]
+    if isinstance(actual_table, TableValue) and actual_table.source is not None:
+        if table is None:
+            raise AssertionError(
+                "Read all referenced table pages before checking actual values"
+            )
+        actual_table = table
+    if actual_table != case.expected_table:
+        raise AssertionError(
+            "Actual saved table values differ from the registered case"
+        )
     if values[case.expected_json.name] != case.expected_json:
         raise AssertionError("Actual JSON values differ from the registered case")
     texts = [item for item in values.values() if isinstance(item, TextValue)]
     if len(texts) != 1 or not texts[0].value.strip():
         raise AssertionError("The requested explanation is missing")
     if (
-        result.reusable_study is None or result.reusable_study.study_id != response.study_id
+        result.reusable_study is None
+        or result.reusable_study.study_id != response.study_id
         or result.reusable_study.source_execution_id != response.primary_execution_id
     ):
-        raise AssertionError("Reusable study and saved answer refer to different executions")
+        raise AssertionError(
+            "Reusable study and saved answer refer to different executions"
+        )
 
 
 def connect(graph_url: str, backend_url: str, token: str) -> EpochClient:
@@ -348,6 +369,77 @@ async def mcp_call(client: Client, name: str, arguments: dict):
             raise ResearchError(error)
         raise EpochError(error.error, execution_id=error.execution_id)
     return data
+
+
+async def read_case_table(
+    mode: str,
+    backend_url: str,
+    token: str,
+    case: Case,
+    result: ResearchCompleted,
+) -> TableValue:
+    """Read every pinned table page; a reference or preview is not value proof."""
+    saved = result.response
+    table = next(
+        part for part in saved.content.outputs if part.name == case.expected_table.name
+    )
+    if not isinstance(table, TableValue):
+        raise TypeError("The requested table was not published")
+    if table.source is None:
+        return table
+    source = table.source
+    rows: list[list[Cell]] = []
+
+    def accept(page: ResponseTablePage) -> None:
+        if (
+            page.response_id != saved.response_id
+            or page.version != saved.version
+            or page.name != table.name
+            or page.columns != table.columns
+            or page.total_rows != source.row_count
+            or page.offset != len(rows)
+        ):
+            raise AssertionError(
+                "A table page differs from its saved source or continuation"
+            )
+        rows.extend(page.rows)
+
+    graph_url = "http://127.0.0.1:1"
+    if mode == "sdk":
+        client = connect(graph_url, backend_url, token)
+        try:
+            async for page in client.iter_response_table(
+                saved.response_id,
+                table.name,
+                version=saved.version,
+            ):
+                accept(page)
+        finally:
+            await client.aclose()
+    else:
+        async with mcp_client(graph_url, backend_url, token) as client:
+            offset = 0
+            while True:
+                page = ResponseTablePage.model_validate(
+                    await mcp_call(
+                        client,
+                        "epoch_response_table",
+                        {
+                            "response_id": saved.response_id,
+                            "name": table.name,
+                            "version": saved.version,
+                            "offset": offset,
+                            "page_size": 1000,
+                        },
+                    )
+                )
+                accept(page)
+                if page.next_offset is None:
+                    break
+                offset = page.next_offset
+    if len(rows) != source.row_count:
+        raise AssertionError("The proof did not read the complete referenced table")
+    return TableValue(name=table.name, type="table", schema=table.columns, rows=rows)
 
 
 async def research(
@@ -640,7 +732,9 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
         verify_resume_trace(previous_trace, receipt.trace, no_new_discovery=case.no_new_discovery_on_resume)
         receipt.checks.append("clarification-retains-thread-and-tool-history")
     receipt.checks.append("native-tool-sequence-and-model-usage")
-    verify_values(case, result)
+    table = await read_case_table(args.mode, backend_url, token, case, result)
+    verify_values(case, result, table=table)
+    receipt.checks.append("complete-table-values-read")
     receipt.checks.extend(["actual-values", "exact-execution-linkage"])
     await fresh_read(args.mode, backend_url, token, result)
     receipt.checks.append("fresh-read-without-graph")

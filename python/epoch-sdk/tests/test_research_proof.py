@@ -4,12 +4,15 @@ import json
 import os
 import subprocess
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
 import pytest
 
+from epoch_sdk.output_validation import TableReference, TableValue
 from epoch_sdk.research import ResearchCompleted
+from epoch_sdk.responses import ResponseTablePage
 
 ROOT = Path(__file__).resolve().parents[3]
 SPEC = importlib.util.spec_from_file_location(
@@ -72,6 +75,84 @@ def test_registered_case_checks_actual_values_and_native_identity():
     bad.reusable_study = bad.reusable_study.model_copy(update={"study_id": "another-study"})
     with pytest.raises(AssertionError, match="different executions"):
         proof.verify_values(case, bad)
+
+
+@pytest.mark.parametrize("mode", ["sdk", "mcp"])
+@pytest.mark.parametrize("wrong_revision", [False, True])
+def test_referenced_case_checks_every_pinned_page(monkeypatch, mode, wrong_revision):
+    case = proof.load_case(CASE)
+    result = completed(case)
+    expected = case.expected_table
+    result.response.content.outputs[0] = TableValue(
+        name=expected.name,
+        type="table",
+        schema=expected.columns,
+        source=TableReference(
+            execution_id="execution-one",
+            table="computed_sales",
+            field_ids=[column.name for column in expected.columns],
+            row_count=len(expected.rows),
+        ),
+    )
+    with pytest.raises(AssertionError, match="Read all referenced"):
+        proof.verify_values(case, result)
+    calls = []
+
+    def page(offset):
+        return ResponseTablePage(
+            response_id=result.response.response_id,
+            version=2 if wrong_revision else result.response.version,
+            name=expected.name,
+            type="table",
+            schema=expected.columns,
+            rows=expected.rows[offset : offset + 1],
+            offset=offset,
+            total_rows=len(expected.rows),
+            next_offset=offset + 1 if offset + 1 < len(expected.rows) else None,
+        )
+
+    class Sdk:
+        async def iter_response_table(self, response_id, name, *, version):
+            assert response_id == result.response.response_id
+            assert name == expected.name and version == 1
+            for offset in range(len(expected.rows)):
+                calls.append(offset)
+                yield page(offset)
+
+        async def aclose(self):
+            pass
+
+    def connect(graph, backend, token):
+        assert graph == "http://127.0.0.1:1"
+        return Sdk()
+
+    @asynccontextmanager
+    async def mcp_client(graph, backend, token):
+        assert graph == "http://127.0.0.1:1"
+        yield object()
+
+    async def mcp_call(client, name, arguments):
+        assert name == "epoch_response_table"
+        assert arguments["response_id"] == result.response.response_id
+        assert arguments["name"] == expected.name and arguments["version"] == 1
+        offset = arguments["offset"]
+        calls.append(offset)
+        return page(offset).to_wire()
+
+    monkeypatch.setattr(proof, "connect", connect)
+    monkeypatch.setattr(proof, "mcp_client", mcp_client)
+    monkeypatch.setattr(proof, "mcp_call", mcp_call)
+    if wrong_revision:
+        with pytest.raises(AssertionError, match="saved source"):
+            asyncio.run(
+                proof.read_case_table(mode, "https://backend.invalid", "fixture", case, result)
+            )
+    else:
+        actual = asyncio.run(
+            proof.read_case_table(mode, "https://backend.invalid", "fixture", case, result)
+        )
+        assert calls == list(range(len(expected.rows)))
+        proof.verify_values(case, result, table=actual)
 
 
 def test_describe_is_offline_and_cannot_claim_real_analysis(tmp_path):
