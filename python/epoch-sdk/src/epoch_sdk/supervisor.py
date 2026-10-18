@@ -400,7 +400,6 @@ class SupervisorClient:
                 break
             offset = page.next_offset
 
-
     def conversation_url(self, thread_id: str) -> str | None:
         if self.ui_url is None:
             return None

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -21,7 +21,7 @@ from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import Contract, DomainError, ErrorResponse, RunRequest
 from .errors import EpochError
-from .responses import SavedResearchResponse
+from .responses import ResponseTablePage, SavedResearchResponse
 from .supervisor import (
     Answers,
     ChosenExecution,
@@ -150,6 +150,38 @@ class EpochClient:
 
     async def aclose(self) -> None:
         await self.supervisor.aclose()
+
+    async def response(
+        self, response_id: str, *, version: int | None = None
+    ) -> SavedResearchResponse:
+        """Read a saved answer directly from Backend."""
+        return await self.supervisor.response(response_id, version=version)
+
+    async def response_table(
+        self,
+        response_id: str,
+        name: str,
+        *,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> ResponseTablePage:
+        return await self.supervisor.response_table(
+            response_id, name, version=version, offset=offset, page_size=page_size
+        )
+
+    async def iter_response_table(
+        self,
+        response_id: str,
+        name: str,
+        *,
+        version: int | None = None,
+        page_size: int = 1000,
+    ) -> AsyncIterator[ResponseTablePage]:
+        async for page in self.supervisor.iter_response_table(
+            response_id, name, version=version, page_size=page_size
+        ):
+            yield page
 
     async def execute_saved(
         self,

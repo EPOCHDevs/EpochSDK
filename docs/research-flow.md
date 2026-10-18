@@ -1,6 +1,6 @@
 # One query, one published answer
 
-Notebook SDK, MCP and ordinary EpochAI conversations share the existing
+The Python SDK, MCP and ordinary EpochAI conversations share the existing
 checkpointed supervisor. Research and prepared-study execution remain separate
 operations. Research submits a query, discovers/builds when necessary, reviews
 actual results and publishes one answer. Questions pause the same thread.
@@ -38,8 +38,10 @@ Authoring owns computations and complete persisted relations; the supervisor own
 the reviewed interpretation. Response tables do not require dashboard exhibits.
 `inspect_response_sources` reads native saved-output metadata directly.
 `ResponseTableSource` identifies an exact native DESCRIBE relation and physical
-fields. Backend reads that bounded complete projection; the model supplies neither
-SQL nor rows. JSON/text parts use evidence the caller has read. Existing dashboard
+fields. Backend validates the complete projection and saves its reference; the model
+supplies neither SQL nor rows. Clients read all rows in bounded pages. Bind native
+`order_by` keys explicitly for requested rankings or chronology. JSON/text parts use
+evidence the caller has read. Existing dashboard
 exhibits may still serve the dashboard's own purpose. A response does not mandate
 another dashboard Markdown narrative or execution-summary report.
 
@@ -54,15 +56,20 @@ Current native routes:
 | LangGraph | Native state, run/wait and interrupt/resume |
 | EpochSDK/MCP | Wrap native LangGraph and generated StratifyX clients |
 
-Notebook methods are `EpochClient.research`, `resume_research`, `research_status`
+The same Python SDK works in notebooks, scripts and applications. Its methods are
+`EpochClient.research`, `resume_research`, `research_status`
 and the separate `execute_saved`/`execution`. MCP exposes the same methods through
 `epoch_research`, `epoch_resume_research`, `epoch_research_status`,
 `epoch_execute_saved` and `epoch_execution`. `epoch_response` reads by answer ID;
 `epoch_publish_response` names the original query/thread and optional primary
 execution. It starts neither an agent nor a job.
 
-Native table reads and saved responses remain bounded to 10,000 rows per table and
-4 MiB. Invalid, ambiguous, incomplete or oversized output fails explicitly. Schema
+New table answers carry saved-source references, with no 10,000-row total-table
+ceiling. Use `response_table` / `iter_response_table` on either client, or MCP
+`epoch_response_table`, to read pages of up to 10,000 rows and 4 MiB. Saved answer
+JSON remains bounded to 4 MiB. Older inline-row answers retain their saved order
+and remain readable. See [table access](response-tables.md). Invalid, ambiguous,
+incomplete or oversized output fails explicitly. Schema
 validation does not certify analytical correctness or prose compliance.
 
 ## Platform handoff
@@ -81,5 +88,5 @@ The illustrative combined `/v1/run` contract remains historical design material;
 no extra deployed proxy is introduced. Automatic multi-study merging, recovery
 workers, retention, custom presentation and new response transforms remain deferred.
 The user approved the structure review, and the local model/engine cases now pass
-through notebook SDK and MCP. See [the verification record](verification-2026-10-18.md)
+through the Python SDK and MCP. See [the verification record](verification-2026-10-18.md)
 for the cases, error checks and rollout boundaries.
