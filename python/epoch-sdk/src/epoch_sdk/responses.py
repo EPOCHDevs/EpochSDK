@@ -117,32 +117,47 @@ async def assemble_response(
         assert execution_id is not None
         source = next(item for item in sources if item.name == declaration.name)
         data = bytearray()
-        async with backend.research_responses.with_raw_response.read_research_response_table(
-            execution_id,
-            table=source.table,
-            field_ids=source.field_ids,
-            request_options={"max_retries": 0},
-        ) as response:
-            async for chunk in response.data:
-                transferred_bytes += len(chunk)
-                if transferred_bytes > 4 * 1024 * 1024:
-                    raise EpochError(
-                        DomainError(
-                            code="FETCH_LIMIT_EXCEEDED",
-                            message="Complete response tables exceed 4 MiB.",
-                            retryable=False,
-                        ),
-                        execution_id=execution_id,
-                    )
-                data.extend(chunk)
-        value, expanded = decode_saved_table(
-            bytes(data),
-            declaration,
-            source.field_ids,
-            execution_id,
-            max_rows=10000,
-            max_bytes=4 * 1024 * 1024 - expanded_bytes,
-        )
+        try:
+            async with backend.research_responses.with_raw_response.read_research_response_table(
+                execution_id,
+                table=source.table,
+                field_ids=source.field_ids,
+                request_options={"max_retries": 0},
+            ) as response:
+                async for chunk in response.data:
+                    transferred_bytes += len(chunk)
+                    if transferred_bytes > 4 * 1024 * 1024:
+                        raise EpochError(
+                            DomainError(
+                                code="FETCH_LIMIT_EXCEEDED",
+                                message="Complete response tables exceed 4 MiB.",
+                                retryable=False,
+                            ),
+                            execution_id=execution_id,
+                        )
+                    data.extend(chunk)
+        except ApiError as error:
+            raise _native_error(error, execution_id) from error
+        try:
+            value, expanded = decode_saved_table(
+                bytes(data),
+                declaration,
+                source.field_ids,
+                execution_id,
+                max_rows=10000,
+                max_bytes=4 * 1024 * 1024 - expanded_bytes,
+            )
+        except EpochError:
+            raise
+        except (ValueError, TypeError, OSError) as error:
+            raise EpochError(
+                DomainError(
+                    code="OUTPUT_VALIDATION_FAILED",
+                    message="Stored relation is not a valid complete Arrow table.",
+                    retryable=False,
+                ),
+                execution_id=execution_id,
+            ) from error
         expanded_bytes += expanded
         values.append(value)
     by_name = {value.name: value for value in values}

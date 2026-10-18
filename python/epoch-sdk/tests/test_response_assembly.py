@@ -112,3 +112,21 @@ def test_native_physical_types_are_checked():
                 )
 
     asyncio.run(scenario())
+
+
+def test_native_table_access_failure_keeps_its_domain_error():
+    async def scenario():
+        async with backend(denied=True) as (native, _):
+            with pytest.raises(EpochError) as error:
+                await assemble_response(
+                    native,
+                    "run-one",
+                    "study-one",
+                    manifest().declarations,
+                    parts(),
+                    table_sources=[source()],
+                )
+            assert error.value.error.code == "NOT_FOUND"
+            assert error.value.execution_id == "run-one"
+
+    asyncio.run(scenario())
