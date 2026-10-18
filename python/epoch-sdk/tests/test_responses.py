@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from epoch_sdk import EpochError
-from epoch_sdk.responses import SavedResearchResponse
+from epoch_sdk.responses import ResponseTablePage, SavedResearchResponse
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -64,6 +64,28 @@ def test_a_table_cannot_mix_inline_rows_and_a_reference() -> None:
     value["content"]["outputs"][0]["rows"] = []
     with pytest.raises(ValueError):
         SavedResearchResponse.model_validate(value)
+
+
+def test_a_terminal_page_requires_an_explicit_null_continuation() -> None:
+    value = {
+        "response_id": "answer",
+        "version": 1,
+        "name": "results",
+        "type": "table",
+        "schema": [{"name": "label", "type": "string"}],
+        "rows": [],
+        "offset": 0,
+        "total_rows": 0,
+        "next_offset": None,
+    }
+    page = ResponseTablePage.model_validate(value)
+    assert page.to_wire()["next_offset"] is None
+    schema = ResponseTablePage.model_json_schema()
+    assert "next_offset" in schema["required"]
+    assert {"type": "null"} in schema["properties"]["next_offset"]["anyOf"]
+    del value["next_offset"]
+    with pytest.raises(ValueError):
+        ResponseTablePage.model_validate(value)
 
 
 def test_an_answer_revision_does_not_change_the_native_execution_reference() -> None:
