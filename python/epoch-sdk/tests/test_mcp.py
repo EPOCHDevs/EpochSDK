@@ -30,6 +30,7 @@ def test_mcp_round_trip_keeps_the_pending_thread_and_resumes_via_the_sdk() -> No
                 "epoch_research",
                 "epoch_research_status",
                 "epoch_resume_research",
+                "epoch_execution",
             }
             waiting = await mcp.call_tool(
                 "epoch_run", {"task": "Compare sales", "thread_id": THREAD}
@@ -82,6 +83,12 @@ def test_mcp_reuses_a_saved_study_without_calling_the_supervisor() -> None:
             assert result.structured_content is not None
             assert result.structured_content["execution"]["id"] == "fresh-execution"
             assert result.structured_content["execution"]["status"] == "queued"
+            observed = await mcp.call_tool(
+                "epoch_execution", {"execution_id": "fresh-execution"},
+            )
+            assert not observed.is_error
+            assert observed.structured_content["id"] == "fresh-execution"
+            assert observed.structured_content["status"] == "queued"
             assert graph_calls == []
 
     asyncio.run(scenario())

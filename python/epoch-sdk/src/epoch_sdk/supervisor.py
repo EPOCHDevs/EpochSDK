@@ -297,6 +297,17 @@ class SupervisorClient:
         """Read the same saved answer from notebook code or MCP."""
         return await read_response(self.backend, execution_id, version=version)
 
+    async def execution(self, execution_id: str) -> JobListItem:
+        """Read a native execution, including jobs started without a graph handle."""
+        if not execution_id.strip() or execution_id != execution_id.strip():
+            raise ValueError("Provide an exact nonblank execution identity")
+        job = await self.backend.studies_executions.get_execution_by_id(
+            execution_id, request_options={"max_retries": 0},
+        )
+        if job.id != execution_id:
+            raise ValueError("Backend returned a different execution identity")
+        return job
+
     def conversation_url(self, thread_id: str) -> str | None:
         if self.ui_url is None:
             return None

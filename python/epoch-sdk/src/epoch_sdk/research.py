@@ -17,6 +17,7 @@ from stratifyx import (
     SdkRequestRuntime,
 )
 from stratifyx.core.api_error import ApiError
+from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import Contract, DomainError, ErrorResponse, RunRequest
 from .errors import EpochError
@@ -130,6 +131,14 @@ class EpochClient:
     ) -> ChosenExecution:
         """Execute prepared work directly; never start research or discovery."""
         return await self.supervisor.execute_saved(reference, period=period, execution=execution)
+
+    async def execution(self, execution_id: str) -> JobListItem:
+        """Read queued/running/completed native status without a supervisor call."""
+        try:
+            async with _boundary(None):
+                return await self.supervisor.execution(execution_id)
+        except EpochError as error:
+            raise EpochError(error.error, execution_id=execution_id) from error
 
     @staticmethod
     def _handle(record: SdkRequestRecord) -> WorkflowHandle:

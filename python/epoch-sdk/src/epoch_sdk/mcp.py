@@ -99,6 +99,27 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_research_status", structured_output=True)(research_status)
     server.tool(name="epoch_resume_research", structured_output=True)(resume_research)
 
+    async def execution(execution_id: str) -> CallToolResult:
+        """Read a native execution's status after epoch_execute_saved or research.
+        Use the returned execution ID; this starts no supervisor, discovery or job.
+        Engine completion alone does not certify requested output values.
+        """
+        try:
+            job = await research_client.execution(execution_id)
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(
+                    error=error.error, execution_id=execution_id,
+                ).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text=f"Execution is {job.status.value}.")],
+            structured_content=job.model_dump(mode="json", by_alias=True, exclude_unset=True),
+        )
+
+    server.tool(name="epoch_execution", structured_output=True)(execution)
+
     async def run(task: str, thread_id: str | None = None) -> CallToolResult:
         """Communicate with Epoch's existing supervisor. A needs_input result retains
         the thread and contains questions; answer them with epoch_resume or open

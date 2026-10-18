@@ -54,7 +54,9 @@ Recommendations are shown as advice; the client does not choose answers.
 
 MCP exposes these same operations as `epoch_research`, `epoch_resume_research`
 and `epoch_research_status`. `epoch_execute_saved` is the separate direct
-prepared-study action. `epoch_response` and `epoch_publish_response` also let a
+prepared-study action. `EpochClient.execution` / `epoch_execution` read its native
+status by execution ID without an agent call. `epoch_response` and
+`epoch_publish_response` also let a
 researcher read or revise an answer after analysis without invoking the supervisor.
 The older `epoch_run`/`epoch_resume` communication tools remain available and do
 not promise named-output conformance on their own.
