@@ -31,9 +31,16 @@
       "type": "string"
     },
     "next_offset": {
-      "minimum": 0,
-      "title": "Next Offset",
-      "type": "integer"
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Offset"
     },
     "offset": {
       "minimum": 0,

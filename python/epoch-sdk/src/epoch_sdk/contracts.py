@@ -37,7 +37,7 @@ class Contract(BaseModel):
         if isinstance(value, Mapping):
             for name, field in cls.model_fields.items():
                 key = field.alias or name
-                if key in value and value[key] is None:
+                if not field.is_required() and key in value and value[key] is None:
                     raise ValueError(f"Omit '{key}' instead of supplying null")
         return original
 
@@ -46,8 +46,12 @@ class Contract(BaseModel):
         cls, schema: CoreSchema, handler: GetJsonSchemaHandler
     ) -> JsonSchemaValue:
         result = handler(schema)
-        # Omission is optional; explicit null is not part of these wire fields.
-        for value in result.get("properties", {}).values():
+        # Optional metadata is omitted rather than null. Required nullable
+        # values, such as a page's terminal continuation, keep their null type.
+        required = set(result.get("required", []))
+        for name, value in result.get("properties", {}).items():
+            if name in required:
+                continue
             alternatives = value.get("anyOf", [])
             non_null = [item for item in alternatives if item != {"type": "null"}]
             if alternatives and len(non_null) != len(alternatives):
