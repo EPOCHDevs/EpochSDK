@@ -17,8 +17,13 @@ import time
 from pathlib import Path
 
 import httpx
+from epoch_sdk.contracts import TableOutputRequest
 from epoch_sdk.mcp import create_server
-from epoch_sdk.responses import ResearchResponseContent
+from epoch_sdk.responses import (
+    ResearchResponseContent,
+    ResponseTableSource,
+    assemble_response,
+)
 from epoch_sdk.supervisor import SupervisorClient
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
@@ -45,7 +50,48 @@ async def verify(url: str) -> None:
                 "content"
             ]
         )
-        first = await sdk.publish_response("query-one", content, thread_id="thread-one", primary_execution_id="native-one")
+        # The native fixture intentionally registers no dashboard controller.
+        # Reading the complete source succeeds independently of any exhibit.
+        selected = await assemble_response(
+            backend,
+            "native-one",
+            "study-one",
+            [
+                TableOutputRequest(
+                    name="sales",
+                    type="table",
+                    schema=[
+                        {
+                            "name": "year",
+                            "type": "int64",
+                            "description": "Calendar year",
+                        },
+                        {
+                            "name": "sales",
+                            "type": "float64",
+                            "nullable": True,
+                            "unit": "USD",
+                        },
+                    ],
+                )
+            ],
+            [],
+            table_sources=[
+                ResponseTableSource(
+                    name="sales", table="computed_sales", field_ids=["year", "sales"]
+                )
+            ],
+        )
+        assert selected.outputs[0].to_wire()["rows"] == [
+            ["9007199254740993", 12.5],
+            ["2025", None],
+        ]
+        first = await sdk.publish_response(
+            "query-one",
+            content,
+            thread_id="thread-one",
+            primary_execution_id="native-one",
+        )
         assert first.version == 1 and first.content == content
         # A fresh SDK object reads the native record; it owns no response cache.
         fresh = SupervisorClient(
@@ -58,7 +104,9 @@ async def verify(url: str) -> None:
         )
         assert await fresh.response(first.response_id) == first
         async with Client(create_server(fresh)) as mcp:
-            read = await mcp.call_tool("epoch_response", {"response_id": first.response_id})
+            read = await mcp.call_tool(
+                "epoch_response", {"response_id": first.response_id}
+            )
             assert not read.is_error and read.structured_content == first.to_wire()
             changed = content.to_wire()
             changed["outputs"][2]["value"] = (
@@ -67,7 +115,9 @@ async def verify(url: str) -> None:
             updated = await mcp.call_tool(
                 "epoch_publish_response",
                 {
-                    "request_id": "query-one", "thread_id": "thread-one", "primary_execution_id": "native-one",
+                    "request_id": "query-one",
+                    "thread_id": "thread-one",
+                    "primary_execution_id": "native-one",
                     "expected_version": 1,
                     "content": changed,
                 },
@@ -80,7 +130,9 @@ async def verify(url: str) -> None:
             stale = await mcp.call_tool(
                 "epoch_publish_response",
                 {
-                    "request_id": "query-one", "thread_id": "thread-one", "primary_execution_id": "native-one",
+                    "request_id": "query-one",
+                    "thread_id": "thread-one",
+                    "primary_execution_id": "native-one",
                     "expected_version": 1,
                     "content": changed,
                 },
