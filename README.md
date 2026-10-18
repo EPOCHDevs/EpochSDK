@@ -1,5 +1,13 @@
 # Epoch SDK
 
+Research with an explicit output contract through `EpochClient.research`,
+`resume_research` and `research_status`. The result includes a saved response with
+the requested named table, JSON and text parts. Both notebooks and MCP use this
+flow; `execute_saved` remains a separate direct Backend action.
+
+See [the research flow](docs/research-flow.md) for the current API, ownership and
+validation limits. The older communication adapter remains available.
+
 Public, multi-language clients for Epoch analysis workflows. Epoch SDK wraps
 LangGraph SDK and the generated StratifyX SDK; MCP uses the same client behavior.
 

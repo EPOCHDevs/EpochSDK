@@ -8,8 +8,9 @@ import os
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent
 
-from .contracts import ErrorResponse, RunParameters
+from .contracts import Contract, ErrorResponse, RunParameters, RunRequest
 from .errors import EpochError
+from .research import EpochClient, ResearchCompleted, ResearchError, ResearchResult
 from .responses import ResearchResponseContent
 from .saved_outputs import SavedOutputManifest
 from .supervisor import (
@@ -43,6 +44,60 @@ def _result(value: SupervisorResult) -> CallToolResult:
 
 def create_server(client: SupervisorClient) -> MCPServer:
     server = MCPServer("Epoch")
+    research_client = EpochClient(client)
+
+    def research_result(value: ResearchResult) -> CallToolResult:
+        if isinstance(value, NeedsInput):
+            text = value.feedback()
+        elif isinstance(value, ResearchCompleted):
+            text = f"Research complete: saved response revision {value.response.version}."
+        elif isinstance(value, InProgress):
+            text = "Research is still running. Read epoch_research_status for this request."
+        else:
+            text = "The request was accepted and has no attached supervisor run yet."
+        return CallToolResult(
+            content=[TextContent(type="text", text=text)],
+            structured_content=value.to_wire() if isinstance(value, Contract)
+            else value.model_dump(mode="json", by_alias=True),
+        )
+
+    def research_error(error: EpochError) -> CallToolResult:
+        response = error.response if isinstance(error, ResearchError) else ErrorResponse(error=error.error)
+        return CallToolResult(
+            content=[TextContent(type="text", text=str(error))], structured_content=response.to_wire(),
+        )
+
+    async def research(request: RunRequest, thread_id: str | None = None) -> CallToolResult:
+        """Research through Epoch's existing supervisor and receive a validated saved
+        response with the requested named table/JSON/text parts. Clarification returns
+        questions and a resumable handle. Prepared-work execution is a separate action.
+        """
+        try:
+            return research_result(await research_client.research(request, thread_id=thread_id))
+        except EpochError as error:
+            return research_error(error)
+
+    async def research_status(request_id: str) -> CallToolResult:
+        """Read the accepted research request using a fresh client. A completed
+        request reads its pinned response revision directly; starts no graph run.
+        """
+        try:
+            return research_result(await research_client.research_status(request_id))
+        except EpochError as error:
+            return research_error(error)
+
+    async def resume_research(waiting: NeedsInput, responses: dict[str, Answers]) -> CallToolResult:
+        """Answer research interrupts and continue the same checkpoint to its saved
+        response. Copy interrupt IDs and zero-based answer indices from needs_input.
+        """
+        try:
+            return research_result(await research_client.resume_research(waiting, responses))
+        except EpochError as error:
+            return research_error(error)
+
+    server.tool(name="epoch_research", structured_output=True)(research)
+    server.tool(name="epoch_research_status", structured_output=True)(research_status)
+    server.tool(name="epoch_resume_research", structured_output=True)(resume_research)
 
     async def run(task: str, thread_id: str | None = None) -> CallToolResult:
         """Communicate with Epoch's existing supervisor. A needs_input result retains

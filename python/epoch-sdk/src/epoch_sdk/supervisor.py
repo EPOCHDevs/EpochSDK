@@ -7,7 +7,7 @@ Selecting an engine execution is separate from validating its requested outputs.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal, Protocol, TypedDict, cast
+from typing import Literal, NotRequired, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 
@@ -210,6 +210,7 @@ class _UserMessage(TypedDict):
 
 class _SupervisorInput(TypedDict):
     messages: list[_UserMessage]
+    sdk_request_id: NotRequired[str]
 
 
 class _RunsWait(Protocol):
@@ -316,6 +317,13 @@ class SupervisorClient:
     async def run(self, task: str, *, thread_id: str | None = None) -> SupervisorResult:
         if not task.strip():
             raise ValueError("Task must not be blank")
+        handle = await self.prepare(thread_id)
+        return await self._wait(handle, task=task)
+
+    async def prepare(
+        self, thread_id: str | None, *, request_id: str | None = None,
+    ) -> WorkflowHandle:
+        """Resolve a native thread before attaching the accepted Backend record."""
         if thread_id is None:
             thread = await self.graph.threads.create()
             thread_id = thread["thread_id"]
@@ -325,14 +333,21 @@ class SupervisorClient:
             before = _State.model_validate(snapshot["values"] or {})
             if snapshot["interrupts"] or before.interrupts:
                 raise ValueError("This thread is waiting for input; resume its existing handle")
-        handle = WorkflowHandle(
+        return WorkflowHandle(
             thread_id=thread_id,
-            request_id=str(uuid4()),
+            request_id=request_id or str(uuid4()),
             assistant_id=self.assistant_id,
             execution_ids_before=before.execution_ids,
             outcome_ids_before=list(before.next_action_outcomes),
         )
-        return await self._wait(handle, task=task)
+
+    async def submit(
+        self, handle: WorkflowHandle, task: str, *, sdk_request_id: str | None = None,
+    ) -> SupervisorResult:
+        """Submit a prepared turn after its owning request/runtime is persisted."""
+        if not task.strip():
+            raise ValueError("Task must not be blank")
+        return await self._wait(handle, task=task, sdk_request_id=sdk_request_id)
 
     async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
         expected = {item.id for item in waiting.interrupts}
@@ -371,7 +386,8 @@ class SupervisorClient:
         return await self._wait(waiting.handle, command=Command(resume=resume))
 
     async def _wait(
-        self, handle: WorkflowHandle, *, task: str | None = None, command: Command | None = None
+        self, handle: WorkflowHandle, *, task: str | None = None,
+        command: Command | None = None, sdk_request_id: str | None = None,
     ) -> SupervisorResult:
         current = handle
 
@@ -379,15 +395,19 @@ class SupervisorClient:
             nonlocal current
             current = current.model_copy(update={"run_id": metadata["run_id"]})
 
+        graph_input: _SupervisorInput | None = None
+        if task is not None:
+            graph_input = {"messages": [{"role": "user", "id": handle.request_id, "content": task}]}
+            if sdk_request_id is not None:
+                graph_input["sdk_request_id"] = sdk_request_id
+
         # Input/command belong to the native LangGraph transport. User prose is
         # supplied once; a resume sends only the pending answer command.
         state = _State.model_validate(
             await cast(_RunsWait, self.graph.runs).wait(
                 handle.thread_id,
                 handle.assistant_id,
-                input={"messages": [{"role": "user", "id": handle.request_id, "content": task}]}
-                if task is not None
-                else None,
+                input=graph_input,
                 command=command,
                 metadata={"epoch_sdk_request_id": handle.request_id},
                 durability="sync",

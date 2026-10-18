@@ -2514,7 +2514,7 @@
     }
   },
   "info": {
-    "description": "Language-neutral Epoch integration contract shared by SDK clients and MCP. Native Backend APIs and LangGraph remain separate services; the SDK wraps their native clients. The illustrative REST bindings do not assert another gateway. Core persistence/controllers, study binding and validation are required. Additional recovery/retries and retention engineering follow separately.",
+    "description": "Shared language-neutral Epoch data models. The /v1 bindings are earlier illustrative proposals, not deployed service routes. The current prototype separates notebook/MCP research from prepared-study execution and uses native LangGraph interrupt/resume. Backend owns requests, studies, executions and saved response revisions; EpochSDK orchestrates native clients. See docs/research-flow.md and the generated Backend OpenAPI for current operations.",
     "title": "Epoch Integration API",
     "version": "0.9.0-draft"
   },
@@ -4420,7 +4420,8 @@
     },
     "/v1/run": {
       "post": {
-        "description": "Resolve an explicit saved-study/execution reference through Backend, or find/build one compatible study. Kept graph checkpoints preserve discovery, building and explicit revisions; save one exact study/version binding and resolved parameters before execution. Suitable saved studies execute directly through StratifyX. Backend owns study/run records; extend existing persistence only for demonstrated pre-build gaps. Clarification ends the attempt with guidance and never calls interrupt(). The public acceptance mapping and safe retries remain implementation work.",
+        "deprecated": true,
+        "description": "Historical combined-run proposal, superseded for the current prototype. Use EpochClient.research or MCP epoch_research for discovery/build/analysis and the separate execute_saved action for prepared work. Clarification pauses the existing checkpointed supervisor and resumes with native answers. Backend accepted requests pin a completed execution and response revision. These illustrative /v1 routes and idempotency header are not deployed native APIs. See docs/research-flow.md.",
         "operationId": "run",
         "parameters": [
           {
