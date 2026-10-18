@@ -39,11 +39,12 @@ The saved research response API serves both notebook users and MCP agents. Use
 `SupervisorClient.publish_response(request_id, content, thread_id=thread_id, primary_execution_id=execution_id, expected_version=0)`
 after analysis, then `response(response_id, version=...)` to read the same
 Backend-owned answer. A response contains named table, JSON and text parts and
-their declarations; updates create another revision for that exact execution.
+their declarations; updates create another revision of that answer. Another query may reuse the
+same execution while retaining a different answer.
 MCP exposes `epoch_publish_response` and `epoch_response` over the same methods.
 This publication path starts no agent or engine job. It requires the generated
-StratifyX 3.3.0rc2 response API. Automatic supervisor response production and complete
-live research integration remain unfinished.
+StratifyX 3.3.0rc2 response API. The existing supervisor publication tool is integrated in EpochAI #752. Complete
+real research integration proof remains pending.
 
 ## Development checks
 
