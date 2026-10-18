@@ -241,6 +241,43 @@ def create_server(client: SupervisorClient) -> MCPServer:
         )
 
     server.tool(name="epoch_response", structured_output=True)(response)
+
+    async def response_table(
+        response_id: str,
+        name: str,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> CallToolResult:
+        """Read a table page; follow next_offset until absent for all rows.
+
+        The total table has no fixed row ceiling. This reads Backend only;
+        it starts neither an agent nor a study execution.
+        """
+        try:
+            page = await client.response_table(
+                response_id, name, version=version, offset=offset, page_size=page_size
+            )
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(error=error.error).to_wire(),
+            )
+        except ValueError as error:
+            from .contracts import DomainError
+
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(
+                    error=DomainError(code="INVALID_REQUEST", message=str(error), retryable=False)
+                ).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text="Table page ready.")],
+            structured_content=page.to_wire(),
+        )
+
+    server.tool(name="epoch_response_table", structured_output=True)(response_table)
     server.tool(name="epoch_publish_response", structured_output=True)(publish)
     return server
 

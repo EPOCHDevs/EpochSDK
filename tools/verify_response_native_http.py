@@ -82,10 +82,50 @@ async def verify(url: str) -> None:
                 )
             ],
         )
-        assert selected.outputs[0].model_dump(mode="json", by_alias=True)["rows"] == [
-            ["9007199254740993", 12.5],
-            ["2025", None],
+        assert selected.to_wire()["outputs"][0]["source"] == {
+            "execution_id": "native-one",
+            "table": "computed_sales",
+            "field_ids": ["year", "sales"],
+            "row_count": 2,
+        }
+        selected_answer = await sdk.publish_response(
+            "selected-table",
+            selected,
+            thread_id="thread-one",
+            primary_execution_id="native-one",
+        )
+        page = await sdk.response_table(
+            selected_answer.response_id, "sales", page_size=1
+        )
+        assert page.rows == [["2025", None]] and page.next_offset == 1
+        page = await sdk.response_table(
+            selected_answer.response_id, "sales", offset=1, page_size=1
+        )
+        assert page.rows == [["9007199254740993", 12.5]] and page.next_offset is None
+
+        # Large, non-temporal tables retain repeated labels and requested ranking.
+        large = json.loads(
+            (ROOT / "contracts/research-response-reference.example.json").read_text()
+        )["content"]
+        large["outputs"][0]["source"]["execution_id"] = "native-one"
+        large["outputs"][0]["source"]["order_by"] = [
+            {"field_id": "value", "descending": True}
         ]
+        large_answer = await sdk.publish_response(
+            "large-table",
+            ResearchResponseContent.model_validate(large),
+            thread_id="thread-one",
+            primary_execution_id="native-one",
+        )
+        all_rows = []
+        async for page in sdk.iter_response_table(
+            large_answer.response_id, "results", page_size=5000
+        ):
+            assert page.total_rows == 25003 and len(page.rows) <= 5000
+            all_rows.extend(page.rows)
+        assert [int(row[1]) for row in all_rows] == list(range(25002, -1, -1))
+        assert all(row[0] == ("B" if int(row[1]) % 2 else "A") for row in all_rows)
+        assert len(json.dumps(large_answer.to_wire())) < 4096
         execution_free = ResearchResponseContent.model_validate(
             {
                 "declarations": [
@@ -117,6 +157,27 @@ async def verify(url: str) -> None:
         )
         assert await fresh.response(first.response_id) == first
         async with Client(create_server(fresh)) as mcp:
+            gathered = []
+            offset = 0
+            while True:
+                native_page = await mcp.call_tool(
+                    "epoch_response_table",
+                    {
+                        "response_id": large_answer.response_id,
+                        "name": "results",
+                        "version": 1,
+                        "offset": offset,
+                        "page_size": 5000,
+                    },
+                )
+                assert not native_page.is_error
+                data = native_page.structured_content
+                assert data["version"] == 1 and data["total_rows"] == 25003
+                gathered.extend(data["rows"])
+                if data["next_offset"] is None:
+                    break
+                offset = data["next_offset"]
+            assert gathered == all_rows
             read = await mcp.call_tool(
                 "epoch_response", {"response_id": first.response_id}
             )
@@ -216,7 +277,11 @@ def main() -> None:
         "native_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "native_sdk_release": SDK_RELEASE,
         "checks": [
-            "complete-native-table-without-dashboard",
+            "native-table-reference-without-dashboard",
+            "int64-null-pages",
+            "sdk-complete-25003-row-ranked-traversal",
+            "mcp-complete-25003-row-ranked-traversal",
+            "bounded-answer-metadata",
             "execution-free-json-null-answer",
             "notebook-publication",
             "fresh-sdk-read",

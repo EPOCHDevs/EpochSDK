@@ -1,0 +1,37 @@
+{
+  "response_id": "rsp_2222222222222222222222222222222222222222222222222222222222222222",
+  "request_id": "example_query",
+  "thread_id": "example_thread",
+  "version": 1,
+  "primary_execution_id": "example_execution",
+  "study_id": "example_study",
+  "published_at_ms": 0,
+  "content": {
+    "declarations": [
+      {
+        "name": "results",
+        "type": "table",
+        "schema": [
+          {"name": "label", "type": "string", "description": "Row category; labels may repeat"},
+          {"name": "value", "type": "int64"}
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "results",
+        "type": "table",
+        "schema": [
+          {"name": "label", "type": "string", "description": "Row category; labels may repeat"},
+          {"name": "value", "type": "int64"}
+        ],
+        "source": {
+          "execution_id": "example_execution",
+          "table": "computed_results",
+          "field_ids": ["label", "value"],
+          "row_count": 25003
+        }
+      }
+    ]
+  }
+}

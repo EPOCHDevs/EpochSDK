@@ -3,24 +3,29 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import Field, model_validator
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 
 from .contracts import (
+    Column,
     Contract,
     DomainError,
     ErrorCode,
     NonBlank,
+    OutputName,
     OutputRequest,
     TableOutputRequest,
 )
 from .errors import EpochError
 from .output_validation import (
+    Cell,
     JsonValueOutput,
     OutputValue,
+    TableOrder,
+    TableReference,
     TableValue,
     TextValue,
     validate_outputs,
@@ -30,7 +35,7 @@ type InterpretedOutput = Annotated[JsonValueOutput | TextValue, Field(discrimina
 
 
 class ResearchResponseContent(Contract):
-    """Complete bounded selected values; never a preview presented as complete."""
+    """Answer values or native table references; a preview is never a full table."""
 
     declarations: Annotated[list[OutputRequest], Field(min_length=1)]
     outputs: Annotated[list[OutputValue], Field(min_length=1)]
@@ -64,6 +69,19 @@ class SavedResearchResponse(ResponseReference):
     published_at_ms: Annotated[int, Field(ge=0)]
     content: ResearchResponseContent
 
+    @model_validator(mode="after")
+    def table_sources(self) -> Self:
+        for value in self.content.outputs:
+            if (
+                isinstance(value, TableValue)
+                and value.source is not None
+                and (
+                    value.source.execution_id != self.primary_execution_id or self.study_id is None
+                )
+            ):
+                raise ValueError("Referenced tables must use the answer's primary execution")
+        return self
+
     def reference(self) -> ResponseReference:
         return ResponseReference.model_validate(
             {
@@ -80,6 +98,220 @@ class ResponseTableSource(Contract):
     name: NonBlank
     table: NonBlank
     field_ids: Annotated[list[NonBlank], Field(min_length=1)]
+    order_by: list[TableOrder] = Field(
+        default_factory=list,
+        description="Native field IDs and directions that honor requested ranking or chronology.",
+    )
+
+
+class ResponseTablePage(Contract):
+    """One bounded page of a saved answer's table, never an implicit full result."""
+
+    response_id: NonBlank
+    version: Annotated[int, Field(ge=1)]
+    name: OutputName
+    type: Literal["table"]
+    columns: list[Column] = Field(alias="schema")
+    rows: list[list[Cell]]
+    offset: Annotated[int, Field(ge=0)]
+    total_rows: Annotated[int, Field(ge=0, le=9007199254740991)]
+    next_offset: Annotated[int, Field(ge=0)] | None
+
+    @model_validator(mode="after")
+    def actual_page(self) -> Self:
+        if len(self.rows) > max(0, self.total_rows - self.offset):
+            raise ValueError("Table page exceeds the declared remaining row count")
+        end = self.offset + len(self.rows)
+        if not self.rows and self.offset < self.total_rows:
+            raise ValueError("A nonfinal table page must make progress")
+        if self.next_offset != (end if end < self.total_rows else None):
+            raise ValueError("Table continuation differs from its returned rows")
+        validate_outputs(
+            [TableOutputRequest(name=self.name, type="table", schema=self.columns)],
+            [TableValue(name=self.name, type="table", schema=self.columns, rows=self.rows)],
+        )
+        return self
+
+
+async def _native_page(
+    backend: AsyncStratifyX,
+    execution_id: str,
+    declaration: TableOutputRequest,
+    source: ResponseTableSource,
+    offset: int,
+    page_size: int,
+) -> tuple[TableValue, int]:
+    from stratifyx import ResearchResponseTableOrder
+
+    from .saved_outputs import decode_saved_table
+
+    if type(offset) is not int or not 0 <= offset <= 9007199254740991:
+        raise ValueError("Provide a nonnegative safe row offset")
+    if type(page_size) is not int or not 1 <= page_size <= 10000:
+        raise ValueError("A transfer page contains between 1 and 10000 rows")
+    data = bytearray()
+    try:
+        async with backend.research_responses.with_raw_response.read_research_response_table(
+            execution_id,
+            table=source.table,
+            field_ids=source.field_ids,
+            offset=offset,
+            page_size=page_size,
+            order_by=[
+                ResearchResponseTableOrder(field_id=item.field_id, descending=item.descending)
+                for item in source.order_by
+            ],
+            request_options={"max_retries": 0},
+        ) as response:
+            headers = {name.lower(): value for name, value in response.headers.items()}
+            try:
+                total = int(headers["x-arrow-total-rows"])
+                returned = int(headers["x-arrow-returned-rows"])
+                start = int(headers["x-arrow-row-offset"])
+            except (KeyError, ValueError) as error:
+                raise EpochError(
+                    DomainError(
+                        code="OUTPUT_VALIDATION_FAILED",
+                        message="Backend did not supply valid table-page metadata.",
+                        retryable=False,
+                    ),
+                    execution_id=execution_id,
+                ) from error
+            if (
+                not 0 <= total <= 9007199254740991
+                or start != offset
+                or returned < 0
+                or returned > min(page_size, max(0, total - offset))
+                or (returned == 0 and offset < total)
+            ):
+                raise EpochError(
+                    DomainError(
+                        code="OUTPUT_VALIDATION_FAILED",
+                        message="Backend table-page metadata is inconsistent.",
+                        retryable=False,
+                    ),
+                    execution_id=execution_id,
+                )
+            async for chunk in response.data:
+                if len(data) + len(chunk) > 4 * 1024 * 1024:
+                    raise EpochError(
+                        DomainError(
+                            code="FETCH_LIMIT_EXCEEDED",
+                            message="Request a smaller table page.",
+                            retryable=False,
+                        ),
+                        execution_id=execution_id,
+                    )
+                data.extend(chunk)
+    except ApiError as error:
+        raise _native_error(error, execution_id) from error
+    try:
+        value, _ = decode_saved_table(
+            bytes(data),
+            declaration,
+            source.field_ids,
+            execution_id,
+            max_rows=page_size,
+            max_bytes=4 * 1024 * 1024,
+        )
+    except (ValueError, TypeError, OSError) as error:
+        raise EpochError(
+            DomainError(
+                code="OUTPUT_VALIDATION_FAILED",
+                message="Backend returned an invalid Arrow table page.",
+                retryable=False,
+            ),
+            execution_id=execution_id,
+        ) from error
+    if value.rows is None or len(value.rows) != returned:
+        raise EpochError(
+            DomainError(
+                code="OUTPUT_VALIDATION_FAILED",
+                message="Table-page row count differs from its Arrow data.",
+                retryable=False,
+            ),
+            execution_id=execution_id,
+        )
+    validate_outputs([declaration], [value], execution_id=execution_id)
+    return value, total
+
+
+async def read_response_table_page(
+    backend: AsyncStratifyX,
+    response: SavedResearchResponse,
+    name: str,
+    *,
+    offset: int = 0,
+    page_size: int = 1000,
+) -> ResponseTablePage:
+    """Read a pinned table without graph/model work or a whole-table JSON copy."""
+    if type(offset) is not int or not 0 <= offset <= 9007199254740991:
+        raise ValueError("Provide a nonnegative safe row offset")
+    if type(page_size) is not int or not 1 <= page_size <= 10000:
+        raise ValueError("A transfer page contains between 1 and 10000 rows")
+    value = next((part for part in response.content.outputs if part.name == name), None)
+    declaration = next((part for part in response.content.declarations if part.name == name), None)
+    if not isinstance(value, TableValue) or not isinstance(declaration, TableOutputRequest):
+        raise EpochError(
+            DomainError(
+                code="INVALID_REQUEST",
+                message="Choose a declared table in this saved answer.",
+                retryable=False,
+            )
+        )
+    if value.source is None:
+        assert value.rows is not None
+        total = len(value.rows)
+        table = TableValue(
+            name=name,
+            type="table",
+            schema=value.columns,
+            rows=value.rows[offset : offset + page_size],
+        )
+    else:
+        source = value.source
+        table, total = await _native_page(
+            backend,
+            source.execution_id,
+            declaration,
+            ResponseTableSource(
+                name=name, table=source.table, field_ids=source.field_ids, order_by=source.order_by
+            ),
+            offset,
+            page_size,
+        )
+        if total != source.row_count:
+            raise EpochError(
+                DomainError(
+                    code="INVALID_STATE",
+                    message="The saved table's row count changed.",
+                    retryable=False,
+                ),
+                execution_id=source.execution_id,
+            )
+    assert table.rows is not None
+    end = offset + len(table.rows)
+    result = ResponseTablePage(
+        response_id=response.response_id,
+        version=response.version,
+        name=table.name,
+        type="table",
+        schema=table.columns,
+        rows=table.rows,
+        offset=offset,
+        total_rows=total,
+        next_offset=end if end < total else None,
+    )
+    if len(result.model_dump_json(by_alias=True, exclude_unset=True).encode()) > 4 * 1024 * 1024:
+        raise EpochError(
+            DomainError(
+                code="FETCH_LIMIT_EXCEEDED",
+                message="Request a smaller table page.",
+                retryable=False,
+            ),
+            execution_id=response.primary_execution_id,
+        )
+    return result
 
 
 async def assemble_response(
@@ -91,14 +323,12 @@ async def assemble_response(
     *,
     table_sources: list[ResponseTableSource] | None = None,
 ) -> ResearchResponseContent:
-    """Read complete native relations without requiring dashboard exhibits.
+    """Bind native relations without requiring dashboard exhibits or copying all rows.
 
     A caller identifies exact DESCRIBE relations and fields. Backend reads the
     complete bounded projection, independently of dashboard layout. JSON/text
     interpretations use evidence read by the caller. No engine work is started.
     """
-    from .saved_outputs import decode_saved_table
-
     non_tables: list[OutputRequest] = [
         item for item in declarations if not isinstance(item, TableOutputRequest)
     ]
@@ -111,55 +341,23 @@ async def assemble_response(
         raise ValueError("Provide exactly one native table source per requested table")
     if tables and (not execution_id or not study_id):
         raise ValueError("Native response tables require a selected execution and study")
-    expanded_bytes = 0
-    transferred_bytes = 0
     for declaration in tables:
         assert execution_id is not None
         source = next(item for item in sources if item.name == declaration.name)
-        data = bytearray()
-        try:
-            async with backend.research_responses.with_raw_response.read_research_response_table(
-                execution_id,
-                table=source.table,
-                field_ids=source.field_ids,
-                request_options={"max_retries": 0},
-            ) as response:
-                async for chunk in response.data:
-                    transferred_bytes += len(chunk)
-                    if transferred_bytes > 4 * 1024 * 1024:
-                        raise EpochError(
-                            DomainError(
-                                code="FETCH_LIMIT_EXCEEDED",
-                                message="Complete response tables exceed 4 MiB.",
-                                retryable=False,
-                            ),
-                            execution_id=execution_id,
-                        )
-                    data.extend(chunk)
-        except ApiError as error:
-            raise _native_error(error, execution_id) from error
-        try:
-            value, expanded = decode_saved_table(
-                bytes(data),
-                declaration,
-                source.field_ids,
-                execution_id,
-                max_rows=10000,
-                max_bytes=4 * 1024 * 1024 - expanded_bytes,
+        _, total = await _native_page(backend, execution_id, declaration, source, 0, 1)
+        reference = TableReference(
+            execution_id=execution_id,
+            table=source.table,
+            field_ids=source.field_ids,
+            row_count=total,
+        )
+        if source.order_by:
+            reference.order_by = source.order_by
+        values.append(
+            TableValue(
+                name=declaration.name, type="table", schema=declaration.columns, source=reference
             )
-        except EpochError:
-            raise
-        except (ValueError, TypeError, OSError) as error:
-            raise EpochError(
-                DomainError(
-                    code="OUTPUT_VALIDATION_FAILED",
-                    message="Stored relation is not a valid complete Arrow table.",
-                    retryable=False,
-                ),
-                execution_id=execution_id,
-            ) from error
-        expanded_bytes += expanded
-        values.append(value)
+        )
     by_name = {value.name: value for value in values}
     return ResearchResponseContent(
         declarations=declarations,
@@ -215,15 +413,6 @@ async def publish_response(
     ):
         raise ValueError("Provide query/thread identities and a nonnegative response version")
     checked = ResearchResponseContent.model_validate(content.to_wire())
-    if any(isinstance(item, TableValue) and len(item.rows) > 10000 for item in checked.outputs):
-        raise EpochError(
-            DomainError(
-                code="FETCH_LIMIT_EXCEEDED",
-                message="A response table exceeds 10000 rows.",
-                retryable=False,
-            ),
-            execution_id=primary_execution_id,
-        )
     if len(json.dumps(checked.to_wire(), ensure_ascii=False).encode()) > 4 * 1024 * 1024:
         raise EpochError(
             DomainError(

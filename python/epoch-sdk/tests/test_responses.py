@@ -48,6 +48,24 @@ def test_null_is_data_in_a_nullable_json_response() -> None:
     assert response.to_wire()["content"]["outputs"][1]["value"] is None
 
 
+def test_reference_answers_keep_large_row_counts_and_reject_mismatched_execution() -> None:
+    value = json.loads((ROOT / "contracts/research-response-reference.example.json").read_text())
+    saved = SavedResearchResponse.model_validate(value)
+    assert saved.to_wire() == value
+    assert value["content"]["outputs"][0]["source"]["row_count"] == 25003
+    assert "rows" not in saved.to_wire()["content"]["outputs"][0]
+    value["content"]["outputs"][0]["source"]["execution_id"] = "another-execution"
+    with pytest.raises(ValueError):
+        SavedResearchResponse.model_validate(value)
+
+
+def test_a_table_cannot_mix_inline_rows_and_a_reference() -> None:
+    value = json.loads((ROOT / "contracts/research-response-reference.example.json").read_text())
+    value["content"]["outputs"][0]["rows"] = []
+    with pytest.raises(ValueError):
+        SavedResearchResponse.model_validate(value)
+
+
 def test_an_answer_revision_does_not_change_the_native_execution_reference() -> None:
     first = SavedResearchResponse.model_validate(example())
     value = copy.deepcopy(example())

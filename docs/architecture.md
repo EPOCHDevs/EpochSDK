@@ -9,14 +9,16 @@ Building/research and application execution against prepared work are separate
 actions. A single run does not implicitly combine training, dataset publication
 and serving. Existing direct native execution remains a distinct SDK/MCP action.
 
-The response API is a shared Backend-owned answer document for an exact
-execution, containing named table, JSON and text parts. Notebook code and the
+The response API is a shared Backend-owned answer document for an exact query,
+containing named table, JSON and text parts. Notebook code and the
 existing supervisor can publish after analysis through the same API. Each edit
-creates a new response revision; another execution has another response. Tables
+creates a new response revision; different queries may reuse one execution. Tables
 keep exact columns/types and annotations, JSON uses standard JSON Schema, and
-text keeps its requested format. Publication validates complete selected values,
-with explicit bounds of 4 MiB and 10,000 rows per response table. It never turns
-a truncated preview into a complete answer.
+text keeps its requested format. New table answers reference saved relations;
+Backend validates the complete projection before publication. Clients page rows
+directly from Backend. The 10,000-row/4-MiB bounds apply to a transfer page, with
+no fixed total-table row ceiling. Saved answer JSON remains bounded to 4 MiB.
+Older inline-row answers remain readable. See [table access](response-tables.md).
 
 Response production is: compute, read actual results, assemble the requested
 parts, validate, publish, then return the saved response. JSON/text response

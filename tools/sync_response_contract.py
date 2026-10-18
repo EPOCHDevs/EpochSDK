@@ -7,11 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python/epoch-sdk/src"))
-from epoch_sdk.responses import SavedResearchResponse
+from epoch_sdk.responses import ResponseTablePage, SavedResearchResponse
 
 
-def project():
-    schema = SavedResearchResponse.model_json_schema()
+def project(model=SavedResearchResponse):
+    schema = model.model_json_schema()
     shared = {
         "Column",
         "TableOutputRequest",
@@ -45,11 +45,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    path = ROOT / "contracts/research-response.schema.json"
-    text = json.dumps(project(), indent=2, sort_keys=True) + "\n"
-    if args.check:
-        if path.read_text() != text:
-            raise SystemExit("Saved answer schema differs from the source-owned model")
-    else:
-        path.write_text(text)
+    for filename, model in (
+        ("research-response.schema.json", SavedResearchResponse),
+        ("research-response-table-page.schema.json", ResponseTablePage),
+    ):
+        path = ROOT / "contracts" / filename
+        text = json.dumps(project(model), indent=2, sort_keys=True) + "\n"
+        if args.check:
+            if path.read_text() != text:
+                raise SystemExit(f"{filename} differs from the source-owned model")
+        else:
+            path.write_text(text)
     print("Saved answer contract agrees with the model")

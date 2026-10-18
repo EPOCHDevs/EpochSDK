@@ -69,7 +69,7 @@
     },
     "ResearchResponseContent": {
       "additionalProperties": false,
-      "description": "Complete bounded selected values; never a preview presented as complete.",
+      "description": "Answer values or native table references; a preview is never a full table.",
       "properties": {
         "declarations": {
           "items": {
@@ -113,8 +113,105 @@
       "title": "ResearchResponseContent",
       "type": "object"
     },
+    "TableOrder": {
+      "additionalProperties": false,
+      "properties": {
+        "descending": {
+          "default": false,
+          "title": "Descending",
+          "type": "boolean"
+        },
+        "field_id": {
+          "minLength": 1,
+          "title": "Field Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_id"
+      ],
+      "title": "TableOrder",
+      "type": "object"
+    },
+    "TableReference": {
+      "additionalProperties": false,
+      "description": "A projection of one immutable execution relation, read in bounded pages.",
+      "properties": {
+        "execution_id": {
+          "minLength": 1,
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "field_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Field Ids",
+          "type": "array"
+        },
+        "order_by": {
+          "items": {
+            "$ref": "#/$defs/TableOrder"
+          },
+          "title": "Order By",
+          "type": "array"
+        },
+        "row_count": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "table": {
+          "minLength": 1,
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "execution_id",
+        "table",
+        "field_ids",
+        "row_count"
+      ],
+      "title": "TableReference",
+      "type": "object"
+    },
     "TableValue": {
       "additionalProperties": false,
+      "oneOf": [
+        {
+          "not": {
+            "required": [
+              "source"
+            ]
+          },
+          "properties": {
+            "rows": {
+              "type": "array"
+            }
+          },
+          "required": [
+            "rows"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "rows"
+            ]
+          },
+          "properties": {
+            "source": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "source"
+          ]
+        }
+      ],
       "properties": {
         "name": {
           "maxLength": 100,
@@ -123,14 +220,22 @@
           "type": "string"
         },
         "rows": {
-          "items": {
-            "items": {
-              "$ref": "#/$defs/Cell"
+          "anyOf": [
+            {
+              "items": {
+                "items": {
+                  "$ref": "#/$defs/Cell"
+                },
+                "type": "array"
+              },
+              "type": "array"
             },
-            "type": "array"
-          },
-          "title": "Rows",
-          "type": "array"
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rows"
         },
         "schema": {
           "items": {
@@ -138,6 +243,17 @@
           },
           "title": "Schema",
           "type": "array"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TableReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "type": {
           "const": "table",
@@ -148,8 +264,7 @@
       "required": [
         "name",
         "type",
-        "schema",
-        "rows"
+        "schema"
       ],
       "title": "TableValue",
       "type": "object"

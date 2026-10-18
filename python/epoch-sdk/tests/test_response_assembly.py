@@ -37,9 +37,6 @@ async def backend(*, denied=False, bad_type=False):
             else pa.array([12.5, None], type=pa.float64()),
         }
     )
-    sink = pa.BufferOutputStream()
-    with pa.ipc.new_stream(sink, table.schema) as writer:
-        writer.write_table(table)
 
     def respond(request):
         calls.append(request)
@@ -48,10 +45,24 @@ async def backend(*, denied=False, bad_type=False):
         assert json.loads(request.content) == {
             "table": "computed_sales",
             "field_ids": ["year", "sales"],
+            "offset": 0,
+            "page_size": 1,
+            "order_by": [],
         }
         if denied:
             return httpx.Response(404, json={"message": "Not found"})
-        return httpx.Response(200, content=sink.getvalue().to_pybytes())
+        sink = pa.BufferOutputStream()
+        with pa.ipc.new_stream(sink, table.schema) as writer:
+            writer.write_table(table.slice(0, 1))
+        return httpx.Response(
+            200,
+            content=sink.getvalue().to_pybytes(),
+            headers={
+                "X-Arrow-Total-Rows": "2",
+                "X-Arrow-Returned-Rows": "1",
+                "X-Arrow-Row-Offset": "0",
+            },
+        )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
         yield (
@@ -60,7 +71,7 @@ async def backend(*, denied=False, bad_type=False):
         )
 
 
-def test_complete_relation_does_not_require_any_dashboard_exhibit():
+def test_reference_does_not_copy_the_complete_relation_or_require_a_dashboard_exhibit():
     async def scenario():
         async with backend() as (native, calls):
             result = await assemble_response(
@@ -71,10 +82,14 @@ def test_complete_relation_does_not_require_any_dashboard_exhibit():
                 parts(),
                 table_sources=[source()],
             )
-            assert result.outputs[0].model_dump(mode="json", by_alias=True)["rows"] == [
-                ["9007199254740993", 12.5],
-                ["2025", None],
-            ]
+            output = result.to_wire()["outputs"][0]
+            assert "rows" not in output
+            assert output["source"] == {
+                "execution_id": "run-one",
+                "table": "computed_sales",
+                "field_ids": ["year", "sales"],
+                "row_count": 2,
+            }
             assert len(calls) == 1
 
     asyncio.run(scenario())

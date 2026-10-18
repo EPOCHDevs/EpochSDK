@@ -17,6 +17,13 @@ the caller-owned JSON value. Readers must supply the complete bounded result
 or report a limit/error; validating five preview rows does not certify the rest
 of a table. This function validates types and structure, not analytical truth.
 
+New table answers may instead contain a typed native source reference. The
+Python validator checks that reference and its declared column mapping; Backend
+validates types/nullability across the complete native projection before saving
+it. Each later page is also checked as it is decoded. See
+[table access](response-tables.md). A schema probe or UI preview alone is never
+the whole-table validation gate.
+
 `saved_outputs.read_saved_outputs` connects the validator to explicit native
 saved-artifact bindings. It reads through StratifyX and exposes the same behavior
 through `SupervisorClient.outputs` and MCP `epoch_outputs`. See
