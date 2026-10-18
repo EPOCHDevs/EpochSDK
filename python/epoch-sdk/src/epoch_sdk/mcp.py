@@ -249,7 +249,7 @@ def create_server(client: SupervisorClient) -> MCPServer:
         offset: int = 0,
         page_size: int = 1000,
     ) -> CallToolResult:
-        """Read a table page; follow next_offset until absent for all rows.
+        """Read a table page; follow next_offset until null for all rows.
 
         The total table has no fixed row ceiling. This reads Backend only;
         it starts neither an agent nor a study execution.
