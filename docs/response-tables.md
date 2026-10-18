@@ -19,6 +19,8 @@ page_size=1000)` returns a typed page containing its answer ID/version, `schema`
 `offset`, `total_rows` and `next_offset` (null at the end). Each page contains
 actual typed `rows`; it is explicitly a page, not the entire answer table.
 MCP exposes the same action as `epoch_response_table`.
+For manual SDK or MCP pagination, pass the first page's returned `version` on
+every following page so later answer edits cannot change the selected table.
 
 The same Python SDK can traverse every page from a notebook, script or application
 without collecting the whole table in RAM:
