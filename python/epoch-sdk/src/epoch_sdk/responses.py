@@ -9,9 +9,24 @@ from pydantic import Field, model_validator
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 
-from .contracts import Contract, DomainError, ErrorCode, NonBlank, OutputRequest
+from .contracts import (
+    Contract,
+    DomainError,
+    ErrorCode,
+    NonBlank,
+    OutputRequest,
+    TableOutputRequest,
+)
 from .errors import EpochError
-from .output_validation import OutputValue, TableValue, validate_outputs
+from .output_validation import (
+    JsonValueOutput,
+    OutputValue,
+    TableValue,
+    TextValue,
+    validate_outputs,
+)
+
+type InterpretedOutput = Annotated[JsonValueOutput | TextValue, Field(discriminator="type")]
 
 
 class ResearchResponseContent(Contract):
@@ -34,6 +49,46 @@ class SavedResearchResponse(Contract):
     version: Annotated[int, Field(ge=1)]
     published_at_ms: Annotated[int, Field(ge=0)]
     content: ResearchResponseContent
+
+
+async def assemble_response(
+    backend: AsyncStratifyX,
+    execution_id: str,
+    study_id: str,
+    declarations: list[OutputRequest],
+    interpreted: list[InterpretedOutput],
+) -> ResearchResponseContent:
+    """Combine complete native tables with the researcher's JSON/text answer.
+
+    Table rows are read from the exact declared native exhibit IDs, never supplied
+    by a model or copied from a preview. JSON/text are interpretations of evidence
+    read by the caller; conformance validation cannot certify their factual truth.
+    This helper starts no agent and submits no engine work.
+    """
+    from .output_handoff import output_manifest
+    from .saved_outputs import read_saved_outputs
+
+    non_tables: list[OutputRequest] = [
+        item for item in declarations if not isinstance(item, TableOutputRequest)
+    ]
+    # Reject missing/extra names and types before performing any native I/O.
+    values: list[OutputValue] = validate_outputs(non_tables, list(interpreted))
+    tables: list[OutputRequest] = [
+        item for item in declarations if isinstance(item, TableOutputRequest)
+    ]
+    if tables:
+        schema = await backend.studies_dashboard.get_dashboard_schema_chart_specs_table_specs_card_values(
+            execution_id, category="ALL", request_options={"max_retries": 0},
+        )
+        manifest = output_manifest(
+            schema, execution_id=execution_id, study_id=study_id, declarations=tables,
+        )
+        saved = await read_saved_outputs(backend, manifest, max_bytes=4 * 1024 * 1024)
+        values.extend(saved.outputs)
+    by_name = {value.name: value for value in values}
+    return ResearchResponseContent(
+        declarations=declarations, outputs=[by_name[item.name] for item in declarations],
+    )
 
 
 def _native_error(error: ApiError, execution_id: str) -> EpochError:
