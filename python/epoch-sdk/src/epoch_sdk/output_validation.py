@@ -1,4 +1,4 @@
-"""Validate materialized named outputs before declaring an analysis successful."""
+"""Validate named output values and native table-reference structure."""
 
 from __future__ import annotations
 
@@ -178,10 +178,10 @@ def validate_outputs(
     *,
     execution_id: str | None = None,
 ) -> list[OutputValue]:
-    """Require every named output and validate the actual values, not a preview.
+    """Require every named output and validate supplied values or reference shape.
 
-    Readers must materialize the complete bounded result or report a limit/error;
-    passing a preview here cannot certify an unavailable remainder.
+    Native references require Backend's complete-projection validation at
+    publication. Validating a reference or a page does not certify other rows.
     """
     expected = {output.name: output for output in declarations}
     actual = {output.name: output for output in values}
