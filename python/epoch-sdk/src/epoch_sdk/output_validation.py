@@ -9,11 +9,20 @@ from typing import Annotated, Literal
 
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError as JsonValidationError
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 from referencing import Registry
 
 from .contracts import (
     Column,
+    Contract,
     DomainError,
     JsonOutputRequest,
     OutputName,
@@ -34,10 +43,57 @@ class MaterializedOutput(BaseModel):
 type Cell = str | int | float | bool | None
 
 
+class TableOrder(Contract):
+    field_id: str = Field(min_length=1)
+    descending: bool = False
+
+
+class TableReference(Contract):
+    """A projection of one immutable execution relation, read in bounded pages."""
+
+    execution_id: str = Field(min_length=1)
+    table: str = Field(min_length=1)
+    field_ids: list[str] = Field(min_length=1)
+    row_count: int = Field(ge=0, le=9007199254740991)
+    order_by: list[TableOrder] = Field(default_factory=list)
+
+    @field_validator("field_ids")
+    @classmethod
+    def exact_fields(cls, value: list[str]) -> list[str]:
+        if any(not field for field in value) or len(value) != len(set(value)):
+            raise ValueError("Table fields must be nonempty and unique")
+        return value
+
+
 class TableValue(MaterializedOutput):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "oneOf": [
+                {
+                    "required": ["rows"],
+                    "properties": {"rows": {"type": "array"}},
+                    "not": {"required": ["source"]},
+                },
+                {
+                    "required": ["source"],
+                    "properties": {"source": {"type": "object"}},
+                    "not": {"required": ["rows"]},
+                },
+            ]
+        }
+    )
     type: Literal["table"]
     columns: list[Column] = Field(alias="schema")
-    rows: list[list[Cell]]
+    rows: list[list[Cell]] | None = None
+    source: TableReference | None = None
+
+    @model_validator(mode="after")
+    def one_representation(self) -> TableValue:
+        if (self.rows is None) == (self.source is None):
+            raise ValueError("A table has either complete inline rows or a saved source reference")
+        if {"rows", "source"} <= self.model_fields_set:
+            raise ValueError("Omit the unused table representation instead of sending null")
+        return self
 
 
 class JsonValueOutput(MaterializedOutput):
@@ -145,7 +201,9 @@ def validate_outputs(
                 for column in declaration.columns
             ] != [column.model_dump(by_alias=True, exclude_none=True) for column in value.columns]:
                 raise _fail(f"Output {name}: ordered columns and annotations differ.", execution_id)
-            for index, row in enumerate(value.rows):
+            if value.source is not None and len(value.source.field_ids) != len(value.columns):
+                raise _fail(f"Output {name}: source fields differ from its columns.", execution_id)
+            for index, row in enumerate(value.rows or []):
                 if len(row) != len(declaration.columns) or any(
                     not _valid_cell(column, cell)
                     for column, cell in zip(declaration.columns, row, strict=False)

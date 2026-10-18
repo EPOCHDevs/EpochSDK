@@ -6,7 +6,7 @@ Selecting an engine execution is separate from validating its requested outputs.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import Literal, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
@@ -20,9 +20,11 @@ from stratifyx.types.job_list_item import JobListItem
 
 from .responses import (
     ResearchResponseContent,
+    ResponseTablePage,
     SavedResearchResponse,
     publish_response,
     read_response,
+    read_response_table_page,
 )
 from .saved_outputs import SavedOutputManifest, ValidatedSavedOutputs, read_saved_outputs
 
@@ -301,6 +303,41 @@ class SupervisorClient:
         self, response_id: str, *, version: int | None = None
     ) -> SavedResearchResponse:
         return await read_response(self.backend, response_id, version=version)
+
+    async def response_table(
+        self,
+        response_id: str,
+        name: str,
+        *,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> ResponseTablePage:
+        """Read one page of an answer's table directly from Backend."""
+        saved = await self.response(response_id, version=version)
+        return await read_response_table_page(
+            self.backend, saved, name, offset=offset, page_size=page_size
+        )
+
+    async def iter_response_table(
+        self,
+        response_id: str,
+        name: str,
+        *,
+        version: int | None = None,
+        page_size: int = 1000,
+    ) -> AsyncIterator[ResponseTablePage]:
+        """Pin the answer revision once and traverse its complete table."""
+        saved = await self.response(response_id, version=version)
+        offset = 0
+        while True:
+            page = await read_response_table_page(
+                self.backend, saved, name, offset=offset, page_size=page_size
+            )
+            yield page
+            if page.next_offset is None:
+                break
+            offset = page.next_offset
 
     def conversation_url(self, thread_id: str) -> str | None:
         if self.ui_url is None:
