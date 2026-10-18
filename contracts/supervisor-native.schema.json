@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "source": {
+    "repository": "EPOCHDevs/EpochAI",
+    "path": "agent_src/common/ask_user.py",
+    "commit": "74e3764a445c33ec164e654cb646e0cc3c6c0a8d",
+    "sha256": "dd3e237c77691997c7fab1232b07f57005c8fdb4bf6c282719c57a849c9840c9"
+  },
+  "schemas": {
+    "AskUser": {
+      "$defs": {
+        "QuestionOptionWire": {
+          "properties": {
+            "label": {
+              "title": "Label",
+              "type": "string"
+            },
+            "recommended": {
+              "title": "Recommended",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "label",
+            "recommended"
+          ],
+          "title": "QuestionOptionWire",
+          "type": "object"
+        },
+        "QuestionWire": {
+          "properties": {
+            "question": {
+              "title": "Question",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
+            },
+            "options": {
+              "items": {
+                "$ref": "#/$defs/QuestionOptionWire"
+              },
+              "title": "Options",
+              "type": "array"
+            },
+            "multi_select": {
+              "title": "Multi Select",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "question",
+            "description",
+            "options",
+            "multi_select"
+          ],
+          "title": "QuestionWire",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "type": {
+          "const": "ask_user",
+          "title": "Type",
+          "type": "string"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/$defs/QuestionWire"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "tool_call_id": {
+          "title": "Tool Call Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "questions",
+        "tool_call_id"
+      ],
+      "title": "AskUserInterruptPayload",
+      "type": "object"
+    },
+    "Answers": {
+      "$defs": {
+        "UserAnswer": {
+          "additionalProperties": false,
+          "description": "A user's answer to a question.",
+          "properties": {
+            "question_index": {
+              "title": "Question Index",
+              "type": "integer"
+            },
+            "selected_indices": {
+              "items": {
+                "type": "integer"
+              },
+              "title": "Selected Indices",
+              "type": "array"
+            },
+            "free_form_input": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Free Form Input"
+            }
+          },
+          "required": [
+            "question_index"
+          ],
+          "title": "UserAnswer",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Response containing user answers.",
+      "properties": {
+        "answers": {
+          "items": {
+            "$ref": "#/$defs/UserAnswer"
+          },
+          "title": "Answers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "answers"
+      ],
+      "title": "AskUserResponse",
+      "type": "object"
+    }
+  }
+}

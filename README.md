@@ -17,10 +17,14 @@ Backend REST controllers, business persistence and native StratifyX generation
 remain in EpochBackend. Graph server implementations live with their services.
 This repository does not turn one language implementation into the API authority.
 
-The initial Python package implements strict request/error contracts and a
-native-client access checker. The complete analysis/SDK/MCP flow is still being
-implemented. Package registry publication is separate; this change publishes
-source, not a completed service or a released PyPI package.
+The Python package supplies strict request/error contracts, actual-value output
+validation, a native-client access checker and a thin stateful supervisor/MCP
+adapter. The adapter returns native clarification questions and supports resuming
+the same thread or executing a saved study directly through Backend. See the
+[SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The complete
+named-output analysis flow and real-service proof are still being implemented.
+Package registry publication is separate; this is public source, not a released
+PyPI package.
 
 ## Development checks
 
@@ -36,7 +40,7 @@ For Python runtime tests, install a reviewed versioned StratifyX wheel from its
 normal package workflow, then:
 
 ```bash
-python -m pip install 'python/epoch-sdk[clients,test]'
+python -m pip install 'python/epoch-sdk[mcp,test]'
 python tools/check_python_contracts.py
 python -m pytest python/epoch-sdk/tests
 ```

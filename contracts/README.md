@@ -3,7 +3,16 @@
 `openapi.json` is the language-neutral API contract for Epoch SDK clients and MCP.
 It defines the eight logical operations, requests, named outputs, acceptance and
 domain errors. Its REST paths are illustrative bindings, not another deployed
-gateway. All language implementations conform to this contract.
+gateway. It is the earlier v0.9 draft: its separate-attempt and terminal-only
+clarification bindings need reconciliation with the current stateful supervisor
+direction before they can define the full analysis adapter.
+
+`supervisor-native.schema.json` snapshots the current supervisor's owned
+interrupt/answer wire without importing or running its application. It is an
+interoperability input for language wrappers, not a second agent protocol.
+Regenerate/check it with `tools/snapshot_supervisor_wire.py --epoch-ai PATH
+[--check]` against a reviewed EpochAI checkout. The source commit and file hash
+are recorded; ordinary component tests require only the checked-in snapshot.
 
 `native-parameters.json` is the projection of the native Backend parameter
 schemas used by the integration contract. Native API schema generation remains

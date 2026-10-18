@@ -1,0 +1,489 @@
+"""Stateful communication with the existing supervisor through the native SDKs.
+
+This adapter does not define a new agent, checkpoint store, or execution registry.
+Selecting an engine execution is separate from validating its requested outputs.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Literal, Protocol, TypedDict, cast
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from uuid import uuid4
+
+import httpx
+from langgraph_sdk.client import LangGraphClient
+from langgraph_sdk.schema import Command, RunCreateMetadata
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
+from stratifyx.types.job_list_item import JobListItem
+
+
+class Closed(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+
+class QuestionOption(Closed):
+    label: str
+    recommended: bool
+
+
+class Question(Closed):
+    question: str
+    description: str
+    options: list[QuestionOption]
+    multi_select: bool
+
+
+class AskUser(Closed):
+    """Source wire: EpochAI agent_src/common/ask_user.py::AskUserInterruptPayload."""
+
+    type: Literal["ask_user"]
+    questions: list[Question]
+    tool_call_id: str
+
+
+class GraphInterrupt(Closed):
+    # Configured LangGraph assistants own arbitrary interrupt values. Recognized
+    # Epoch ask_user values are decoded into the closed model by ask_user().
+    id: str
+    value: JsonValue
+    response_schema: dict[str, JsonValue] | None = None
+
+    def ask_user(self) -> AskUser:
+        return AskUser.model_validate(self.value)
+
+
+class Answer(Closed):
+    question_index: int
+    selected_indices: list[int] = Field(default_factory=list[int])
+    free_form_input: str | None = None
+
+
+class Answers(Closed):
+    """Source wire: EpochAI agent_src/common/ask_user.py::AskUserResponse."""
+
+    answers: list[Answer]
+
+
+class WorkflowHandle(Closed):
+    thread_id: str
+    request_id: str
+    assistant_id: str
+    run_id: str | None = None
+    execution_ids_before: list[str] = Field(default_factory=list)
+    outcome_ids_before: list[str] = Field(default_factory=list)
+
+
+class NeedsInput(Closed):
+    status: Literal["needs_input"] = "needs_input"
+    handle: WorkflowHandle
+    interrupts: list[GraphInterrupt]
+    conversation_url: str | None = None
+
+    def feedback(self) -> str:
+        lines = ["The workflow is waiting for input."]
+        for item in self.interrupts:
+            if not isinstance(item.value, dict) or item.value.get("type") != "ask_user":
+                lines.append("Open the conversation to respond to this interrupt.")
+                continue
+            for question in item.ask_user().questions:
+                lines.append(question.question)
+                if question.description:
+                    lines.append(question.description)
+                for index, option in enumerate(question.options):
+                    suffix = " (recommended)" if option.recommended else ""
+                    lines.append(f"{index + 1}. {option.label}{suffix}")
+        if self.conversation_url:
+            lines.append(f"Continue: {self.conversation_url}")
+        return "\n".join(lines)
+
+
+class SavedStudy(Closed):
+    study_id: str
+    source_execution_id: str
+    thread_id: str | None = None
+
+
+class ChosenExecution(Closed):
+    # Engine completion does not certify requested output schemas or correctness.
+    status: Literal["execution_selected"] = "execution_selected"
+    handle: WorkflowHandle | None = None
+    execution: JobListItem
+    reusable_study: SavedStudy
+    reply: str = ""
+
+
+class NoExecution(Closed):
+    status: Literal["no_execution"] = "no_execution"
+    handle: WorkflowHandle
+    reason: str
+    reply: str = ""
+
+
+class InProgress(Closed):
+    status: Literal["in_progress"] = "in_progress"
+    handle: WorkflowHandle
+
+
+type SupervisorResult = NeedsInput | ChosenExecution | NoExecution | InProgress
+
+
+class _Outcome(BaseModel):
+    """Read-only projection of EpochAI's next_action_evidence owner contract."""
+
+    model_config = ConfigDict(extra="ignore", strict=True)
+    tool_call_id: str
+    tool_name: Literal["build_study", "run_study", "run_monte_carlo", "tune_study"]
+    subject: str | None
+    status: Literal[
+        "saved", "completed", "failed", "cancelled", "not_started", "infeasible", "unknown"
+    ]
+    detail: str
+    execution_id: str | None = None
+
+
+class _Message(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    type: str | None = None
+    role: str | None = None
+    # Model providers own rich/multimodal content; only text is displayed here.
+    content: JsonValue = ""
+
+
+class _State(BaseModel):
+    """Finite consumer projection; unused native state is never rewritten."""
+
+    model_config = ConfigDict(extra="ignore", strict=True, populate_by_name=True)
+    execution_ids: list[str] = Field(default_factory=list)
+    next_action_outcomes: dict[str, _Outcome] = Field(default_factory=dict)
+    messages: list[_Message] = Field(default_factory=list[_Message])
+    authority_turn_id: str | None = None
+    interrupts: list[GraphInterrupt] = Field(
+        default_factory=list[GraphInterrupt], alias="__interrupt__"
+    )
+
+    def reply(self) -> str:
+        for message in reversed(self.messages):
+            if message.type != "ai" and message.role != "assistant":
+                continue
+            if isinstance(message.content, str):
+                return message.content
+            if isinstance(message.content, list):
+                texts: list[str] = []
+                for block in message.content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        text = block.get("text")
+                        if isinstance(text, str):
+                            texts.append(text)
+                return "\n".join(texts)
+        return ""
+
+
+def _api_url(value: str) -> str:
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme not in ("http", "https")
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+    ):
+        raise ValueError("Provide an HTTP(S) endpoint without URL credentials")
+    if parsed.query or parsed.fragment:
+        raise ValueError("API endpoints must not contain query strings or fragments")
+    return value.rstrip("/")
+
+
+class _UserMessage(TypedDict):
+    role: Literal["user"]
+    id: str
+    content: str
+
+
+class _SupervisorInput(TypedDict):
+    messages: list[_UserMessage]
+
+
+class _RunsWait(Protocol):
+    # langgraph-sdk 0.4.4 implements durability at runtime, but omits it from
+    # wait()'s overload declarations. Keep this narrow native-boundary shim.
+    async def wait(
+        self,
+        thread_id: str,
+        assistant_id: str,
+        *,
+        input: _SupervisorInput | None,
+        command: Command | None,
+        metadata: dict[str, str],
+        durability: Literal["sync"],
+        on_disconnect: Literal["continue"],
+        multitask_strategy: Literal["reject"],
+        on_run_created: Callable[[RunCreateMetadata], None],
+    ) -> object: ...
+
+
+class SupervisorClient:
+    def __init__(
+        self,
+        graph: LangGraphClient,
+        backend: AsyncStratifyX,
+        *,
+        assistant_id: str = "epoch-ai",
+        ui_url: str | None = None,
+    ) -> None:
+        self.graph = graph
+        self.backend = backend
+        self.assistant_id = assistant_id
+        self.ui_url = ui_url
+        self._owned_http: list[httpx.AsyncClient] = []
+
+    @classmethod
+    def connect(
+        cls,
+        *,
+        graph_url: str,
+        backend_url: str,
+        token: str,
+        assistant_id: str = "epoch-ai",
+        ui_url: str | None = None,
+    ) -> SupervisorClient:
+        graph_url = _api_url(graph_url)
+        backend_url = _api_url(backend_url)
+        graph_http = httpx.AsyncClient(
+            base_url=graph_url, headers={"Authorization": f"Bearer {token}"}, timeout=None
+        )
+        backend_http = httpx.AsyncClient(timeout=30.0)
+        client = cls(
+            LangGraphClient(graph_http),
+            AsyncStratifyX(base_url=backend_url, token=token, httpx_client=backend_http),
+            assistant_id=assistant_id,
+            ui_url=ui_url,
+        )
+        client._owned_http = [graph_http, backend_http]
+        return client
+
+    async def aclose(self) -> None:
+        for http in self._owned_http:
+            await http.aclose()
+
+    def conversation_url(self, thread_id: str) -> str | None:
+        if self.ui_url is None:
+            return None
+        parsed = urlsplit(self.ui_url)
+        if (
+            parsed.scheme not in ("http", "https")
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
+            raise ValueError("Provide a UI URL without embedded credentials")
+        query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        query["threadId"] = thread_id  # EpochPortal's existing route parameter.
+        return urlunsplit(
+            (parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment)
+        )
+
+    async def run(self, task: str, *, thread_id: str | None = None) -> SupervisorResult:
+        if not task.strip():
+            raise ValueError("Task must not be blank")
+        if thread_id is None:
+            thread = await self.graph.threads.create()
+            thread_id = thread["thread_id"]
+            before = _State()
+        else:
+            snapshot = await self.graph.threads.get_state(thread_id)
+            before = _State.model_validate(snapshot["values"] or {})
+            if snapshot["interrupts"] or before.interrupts:
+                raise ValueError("This thread is waiting for input; resume its existing handle")
+        handle = WorkflowHandle(
+            thread_id=thread_id,
+            request_id=str(uuid4()),
+            assistant_id=self.assistant_id,
+            execution_ids_before=before.execution_ids,
+            outcome_ids_before=list(before.next_action_outcomes),
+        )
+        return await self._wait(handle, task=task)
+
+    async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
+        expected = {item.id for item in waiting.interrupts}
+        if not expected:
+            raise ValueError("There are no pending interrupts to resume")
+        if responses.keys() != expected:
+            raise ValueError("Provide answers for exactly the pending interrupt ids")
+        resume: dict[str, JsonValue] = {}
+        for item in waiting.interrupts:
+            questions = item.ask_user().questions
+            answers = responses[item.id]
+            used: set[int] = set()
+            for answer in answers.answers:
+                index = answer.question_index
+                if index in used or index < 0 or index >= len(questions):
+                    raise ValueError("Question index is duplicated or out of range")
+                used.add(index)
+                question = questions[index]
+                selected = answer.selected_indices
+                if len(set(selected)) != len(selected) or any(
+                    i < 0 or i >= len(question.options) for i in selected
+                ):
+                    raise ValueError("Option index is duplicated or out of range")
+                if not question.multi_select and (
+                    len(selected) > 1 or (selected and answer.free_form_input)
+                ):
+                    raise ValueError("Single-select answers accept one option or free-form input")
+                if answer.free_form_input and (
+                    not answer.free_form_input.strip()
+                    or answer.free_form_input != answer.free_form_input.strip()
+                ):
+                    raise ValueError("Free-form input must be exact and non-blank")
+            if used != set(range(len(questions))):
+                raise ValueError("Provide an answer row for every question; an empty row skips it")
+            resume[item.id] = answers.model_dump(mode="json", exclude_unset=True)
+        return await self._wait(waiting.handle, command=Command(resume=resume))
+
+    async def _wait(
+        self, handle: WorkflowHandle, *, task: str | None = None, command: Command | None = None
+    ) -> SupervisorResult:
+        current = handle
+
+        def created(metadata: RunCreateMetadata) -> None:
+            nonlocal current
+            current = current.model_copy(update={"run_id": metadata["run_id"]})
+
+        # Input/command belong to the native LangGraph transport. User prose is
+        # supplied once; a resume sends only the pending answer command.
+        state = _State.model_validate(
+            await cast(_RunsWait, self.graph.runs).wait(
+                handle.thread_id,
+                handle.assistant_id,
+                input={"messages": [{"role": "user", "id": handle.request_id, "content": task}]}
+                if task is not None
+                else None,
+                command=command,
+                metadata={"epoch_sdk_request_id": handle.request_id},
+                durability="sync",
+                on_disconnect="continue",
+                multitask_strategy="reject",
+                on_run_created=created,
+            )
+        )
+        return await self._select(current, state)
+
+    async def status(self, handle: WorkflowHandle) -> SupervisorResult:
+        """Read this request after a human resumes in the UI; start no graph run."""
+        thread = await self.graph.threads.get(handle.thread_id)
+        if thread["status"] == "busy":
+            return InProgress(handle=handle)
+        snapshot = await self.graph.threads.get_state(handle.thread_id)
+        state = _State.model_validate(snapshot["values"] or {})
+        if snapshot["interrupts"]:
+            state = state.model_copy(
+                update={
+                    "interrupts": [
+                        GraphInterrupt.model_validate(item) for item in snapshot["interrupts"]
+                    ]
+                }
+            )
+        self._check_request(handle, state)
+        if thread["status"] == "error":
+            return NoExecution(
+                handle=handle,
+                reason="The graph run failed; no completed supervisor result is available.",
+                reply=state.reply(),
+            )
+        if snapshot["next"] and not state.interrupts:
+            return InProgress(handle=handle)
+        return await self._select(handle, state)
+
+    @staticmethod
+    def _check_request(handle: WorkflowHandle, state: _State) -> None:
+        # EpochAI's owner middleware stamps the stable HumanMessage identity.
+        # A retained handle must not silently read a later, unrelated UI task.
+        if state.authority_turn_id not in (None, f"user-turn:{handle.request_id}"):
+            raise ValueError("This thread has moved to another request; use its current handle")
+
+    async def _select(self, handle: WorkflowHandle, state: _State) -> SupervisorResult:
+        self._check_request(handle, state)
+        if state.interrupts:
+            return NeedsInput(
+                handle=handle,
+                interrupts=state.interrupts,
+                conversation_url=self.conversation_url(handle.thread_id),
+            )
+        outcomes = [
+            value
+            for key, value in state.next_action_outcomes.items()
+            if key not in handle.outcome_ids_before
+        ]
+        runs = [value for value in outcomes if value.tool_name != "build_study"]
+        execution_id = runs[-1].execution_id if runs else None
+        if not runs:
+            new_ids = [
+                value for value in state.execution_ids if value not in handle.execution_ids_before
+            ]
+            execution_id = new_ids[-1] if new_ids else None
+        if outcomes and outcomes[-1].tool_name == "build_study" and outcomes[-1].status != "saved":
+            execution_id = None
+        if not execution_id:
+            return NoExecution(
+                handle=handle,
+                reason=outcomes[-1].detail
+                if outcomes
+                else "The supervisor returned no new Backend execution for this request.",
+                reply=state.reply(),
+            )
+        execution = await self.backend.studies_executions.get_execution_by_id(
+            execution_id, request_options={"max_retries": 0}
+        )
+        if execution.id != execution_id or not execution.definition_id.strip():
+            raise ValueError("Backend returned a different execution identity")
+        return ChosenExecution(
+            handle=handle,
+            execution=execution,
+            reply=state.reply(),
+            reusable_study=SavedStudy(
+                study_id=execution.definition_id,
+                source_execution_id=execution.id,
+                thread_id=handle.thread_id,
+            ),
+        )
+
+    async def execute_saved(
+        self,
+        reference: SavedStudy,
+        *,
+        period: DatePeriodConfig,
+        execution: ExecutionOptions | None = None,
+    ) -> ChosenExecution:
+        definition = await self.backend.studies_definitions.get_a_study_definition_by_id(
+            reference.study_id, request_options={"max_retries": 0}
+        )
+        if definition.authoring_origin.value != "agent":
+            raise ValueError("Workflow reuse requires an immutable agent-authored study")
+        if execution is None:
+            accepted = await self.backend.studies_executions.start_execute_a_study(
+                id=reference.study_id,
+                period=period,
+                thread_id=reference.thread_id,
+                request_options={"max_retries": 0},
+            )
+        else:
+            accepted = await self.backend.studies_executions.start_execute_a_study(
+                id=reference.study_id,
+                period=period,
+                execution=execution,
+                thread_id=reference.thread_id,
+                request_options={"max_retries": 0},
+            )
+        result = await self.backend.studies_executions.get_execution_by_id(
+            accepted.id, request_options={"max_retries": 0}
+        )
+        if result.id != accepted.id or result.definition_id != reference.study_id:
+            raise ValueError("Backend execution does not match the saved study")
+        return ChosenExecution(
+            execution=result,
+            reusable_study=SavedStudy(
+                study_id=reference.study_id,
+                source_execution_id=result.id,
+                thread_id=reference.thread_id,
+            ),
+        )
