@@ -71,7 +71,7 @@ def test_complete_relation_does_not_require_any_dashboard_exhibit():
                 parts(),
                 table_sources=[source()],
             )
-            assert result.outputs[0].to_wire()["rows"] == [
+            assert result.outputs[0].model_dump(mode="json", by_alias=True)["rows"] == [
                 ["9007199254740993", 12.5],
                 ["2025", None],
             ]
