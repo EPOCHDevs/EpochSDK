@@ -207,7 +207,7 @@ def _cell(value: object, column: Column, execution_id: str) -> Cell:
 def decode_saved_table(
     data: bytes,
     declaration: TableOutputRequest,
-    binding: TableBinding,
+    field_ids: list[str],
     execution_id: str,
     *,
     max_rows: int,
@@ -222,10 +222,10 @@ def decode_saved_table(
     stream = ipc.open_stream(data) if file is None else None
     assert file is not None or stream is not None
     schema = file.schema if file is not None else cast(_StreamReader, stream).schema
-    if len(binding.field_ids) != len(declaration.columns):
+    if len(field_ids) != len(declaration.columns):
         raise _invalid("Table binding must identify each output column exactly once.", execution_id)
     positions: list[int] = []
-    for field_id, column in zip(binding.field_ids, declaration.columns, strict=True):
+    for field_id, column in zip(field_ids, declaration.columns, strict=True):
         if schema.names.count(field_id) != 1:
             raise _invalid(f"Stored field {field_id} is missing or duplicated.", execution_id)
         index = schema.names.index(field_id)
@@ -365,7 +365,7 @@ async def read_saved_outputs(
                 value, expanded = decode_saved_table(
                     bytes(data),
                     declaration,
-                    binding,
+                    binding.field_ids,
                     execution_id,
                     max_rows=max_rows,
                     max_bytes=max_bytes - expanded_bytes,

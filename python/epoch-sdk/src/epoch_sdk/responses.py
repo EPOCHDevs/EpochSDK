@@ -97,7 +97,7 @@ async def assemble_response(
     complete bounded projection, independently of dashboard layout. JSON/text
     interpretations use evidence read by the caller. No engine work is started.
     """
-    from .saved_outputs import TableBinding, decode_saved_table
+    from .saved_outputs import decode_saved_table
 
     non_tables: list[OutputRequest] = [
         item for item in declarations if not isinstance(item, TableOutputRequest)
@@ -135,17 +135,10 @@ async def assemble_response(
                         execution_id=execution_id,
                     )
                 data.extend(chunk)
-        binding = TableBinding(
-            name=declaration.name,
-            type="table",
-            category="response",
-            table_index=0,
-            field_ids=source.field_ids,
-        )
         value, expanded = decode_saved_table(
             bytes(data),
             declaration,
-            binding,
+            source.field_ids,
             execution_id,
             max_rows=10000,
             max_bytes=4 * 1024 * 1024 - expanded_bytes,
