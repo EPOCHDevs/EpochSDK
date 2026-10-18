@@ -8,6 +8,9 @@ flow; `execute_saved` remains a separate direct Backend action.
 See [the research flow](docs/research-flow.md) for the current API, ownership and
 validation limits. The older communication adapter remains available.
 
+The local notebook/MCP cases and their scope are recorded in
+[the October 18 verification](docs/verification-2026-10-18.md).
+
 Public, multi-language clients for Epoch analysis workflows. Epoch SDK wraps
 LangGraph SDK and the generated StratifyX SDK; MCP uses the same client behavior.
 

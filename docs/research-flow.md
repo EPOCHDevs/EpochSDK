@@ -80,4 +80,6 @@ tree belong to the new-design work.
 The illustrative combined `/v1/run` contract remains historical design material;
 no extra deployed proxy is introduced. Automatic multi-study merging, recovery
 workers, retention, custom presentation and new response transforms remain deferred.
-The user's review gate still applies before real model/engine research proof.
+The user approved the structure review, and the local model/engine cases now pass
+through notebook SDK and MCP. See [the verification record](verification-2026-10-18.md)
+for the cases, error checks and rollout boundaries.
