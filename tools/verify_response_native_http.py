@@ -50,8 +50,8 @@ async def verify(url: str) -> None:
                 "content"
             ]
         )
-        # The native fixture intentionally registers no dashboard controller.
-        # Reading the complete source succeeds independently of any exhibit.
+        # The native fixture supplies a computed relation without dashboard exhibits.
+        # Reading the complete source succeeds independently of presentation.
         selected = await assemble_response(
             backend,
             "native-one",
@@ -86,6 +86,19 @@ async def verify(url: str) -> None:
             ["9007199254740993", 12.5],
             ["2025", None],
         ]
+        execution_free = ResearchResponseContent.model_validate(
+            {
+                "declarations": [
+                    {"name": "answer", "type": "json", "schema": {"type": "null"}}
+                ],
+                "outputs": [{"name": "answer", "type": "json", "value": None}],
+            }
+        )
+        ordinary = await sdk.publish_response(
+            "ordinary-query", execution_free, thread_id="thread-one"
+        )
+        assert ordinary.primary_execution_id is None and ordinary.study_id is None
+        assert (await sdk.response(ordinary.response_id)).content == execution_free
         first = await sdk.publish_response(
             "query-one",
             content,
@@ -203,6 +216,8 @@ def main() -> None:
         "native_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "native_sdk_release": SDK_RELEASE,
         "checks": [
+            "complete-native-table-without-dashboard",
+            "execution-free-json-null-answer",
             "notebook-publication",
             "fresh-sdk-read",
             "mcp-read",
