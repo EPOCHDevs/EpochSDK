@@ -72,6 +72,7 @@ def test_mcp_round_trip_keeps_the_pending_thread_and_resumes_via_the_sdk() -> No
                 "epoch_research_status",
                 "epoch_resume_research",
                 "epoch_execution",
+                "epoch_response_table",
             }
             waiting = await mcp.call_tool(
                 "epoch_run", {"task": "Compare sales", "thread_id": THREAD}
