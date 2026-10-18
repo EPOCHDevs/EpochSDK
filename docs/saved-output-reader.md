@@ -71,6 +71,25 @@ with placeholder identities, not a live run. A schema check alone cannot prove
 the source belongs to the accepted request. Backend publication and the
 supervisor handoff must establish that association.
 
+## Deterministic output handoff
+
+`epoch_sdk.output_handoff.output_manifest` creates that mapping from a native
+`DashboardSchema` and the accepted declarations. For tables, the study author
+must emit `exhibit_id` equal to the declared output name and preserve the declared
+column labels in order. The helper binds the resulting physical field IDs. For
+JSON/text it requires the exact producer Markdown block ID equal to the output
+name. Output descriptions and column/field annotations remain in the accepted
+declarations.
+
+The helper rejects missing IDs, duplicate IDs, changed column labels and a wrong
+category with `OUTPUT_VALIDATION_FAILED`. Display titles never fill a missing
+identity. Pass the resulting manifest to `client.outputs` for actual-value
+validation; creating a mapping alone does not validate stored values.
+
+This is the deterministic handoff component, not a new resolver agent. Automatic
+request propagation to the existing supervisor, producing the declared artifacts
+and saving the mapping in Backend still need to be connected and verified.
+
 ## Value preservation and limits
 
 Integer outputs use decimal strings, preserving int64 values beyond JavaScript's

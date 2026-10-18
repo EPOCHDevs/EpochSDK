@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 
 import pytest
 from stratifyx.types.dashboard_schema import DashboardSchema
-from test_saved_outputs import dashboard, manifest
+from test_saved_outputs import dashboard, manifest, native_backend
 
 from epoch_sdk import EpochError
 from epoch_sdk.output_handoff import output_manifest
+from epoch_sdk.output_validation import TableValue
+from epoch_sdk.saved_outputs import read_saved_outputs
 
 
 def named_schema() -> dict:
@@ -71,3 +74,33 @@ def test_missing_or_ambiguous_output_identity_is_a_defined_failure(change: str) 
         )
     assert error.value.error.code == "OUTPUT_VALIDATION_FAILED"
     assert error.value.execution_id == "run-one"
+
+
+@pytest.mark.parametrize("invalid_json", [False, True])
+def test_native_mapping_feeds_actual_value_validation(invalid_json: bool) -> None:
+    async def scenario() -> None:
+        schema = named_schema()
+        if invalid_json:
+            schema["content"]["markdown"][0]["markdown"] = '{"total":"not a number"}'
+        mapping = output_manifest(
+            DashboardSchema.model_validate(schema),
+            execution_id="run-one",
+            study_id="study-one",
+            declarations=manifest().declarations,
+        )
+        async with native_backend(schema=schema) as (backend, calls):
+            if invalid_json:
+                with pytest.raises(EpochError) as error:
+                    await read_saved_outputs(backend, mapping)
+                assert error.value.error.code == "OUTPUT_VALIDATION_FAILED"
+                assert error.value.execution_id == "run-one"
+            else:
+                result = await read_saved_outputs(backend, mapping)
+                assert result.declarations == mapping.declarations
+                table = result.outputs[0]
+                assert isinstance(table, TableValue)
+                assert table.rows == [["9007199254740993", 12.5], ["2025", None]]
+            assert all(item.method == "GET" for item in calls)
+            assert len([item for item in calls if item.url.path.endswith("/dashboard/schema")]) == 1
+
+    asyncio.run(scenario())
