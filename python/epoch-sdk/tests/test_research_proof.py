@@ -10,6 +10,8 @@ from pathlib import Path
 import httpx
 import pytest
 
+from epoch_sdk import EpochError
+from epoch_sdk.contracts import DomainError
 from epoch_sdk.output_validation import TableReference, TableValue
 from epoch_sdk.research import ResearchCompleted
 from epoch_sdk.responses import ResponseTablePage
@@ -23,6 +25,29 @@ proof = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = proof
 SPEC.loader.exec_module(proof)
 CASE = ROOT / "examples/research-service-proof.case.json"
+
+
+def test_mcp_cleanup_preserves_the_domain_error_for_the_receipt(monkeypatch):
+    class GroupingClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, kind, error, traceback):
+            if error is not None:
+                raise ExceptionGroup("MCP cleanup", [error])
+
+    monkeypatch.setattr(proof, "Client", lambda *args, **kwargs: GroupingClient())
+    failure = EpochError(DomainError(
+        code="TEMPORARILY_UNAVAILABLE", message="Model unavailable", retryable=True,
+    ))
+
+    async def scenario():
+        async with proof.mcp_client("https://graph.invalid", "https://backend.invalid", "fixture"):
+            raise failure
+
+    with pytest.raises(EpochError) as caught:
+        asyncio.run(scenario())
+    assert caught.value is failure
 
 
 def completed(case):

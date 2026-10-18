@@ -354,8 +354,16 @@ async def mcp_client(graph_url: str, backend_url: str, token: str) -> AsyncItera
     server = StdioServerParameters(
         command=sys.executable, args=["-m", "epoch_sdk.mcp"], env=env,
     )
+    failure: EpochError | None = None
     async with Client(server, read_timeout_seconds=None) as client:
-        yield client
+        try:
+            yield client
+        except EpochError as error:
+            # AnyIO groups an exception crossing MCP cleanup. Close the client
+            # normally, then preserve the domain failure for the proof receipt.
+            failure = error
+    if failure is not None:
+        raise failure
 
 
 async def mcp_call(client: Client, name: str, arguments: dict):
