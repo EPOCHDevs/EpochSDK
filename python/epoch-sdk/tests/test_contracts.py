@@ -125,6 +125,20 @@ def test_reversed_period_is_a_semantic_error() -> None:
         )
 
 
+def test_native_no_slippage_model_survives_request_parsing_and_wire_validation() -> None:
+    wire = {
+        **request(),
+        "parameters": {"execution": {"slippage": {"model": {"type": "None", "args": {}}}}},
+    }
+    parsed = parse_request(RunRequest, json.dumps(wire))
+    assert parsed.to_wire() == wire
+    assert parsed.parameters is not None and parsed.parameters.execution is not None
+    assert parsed.parameters.execution.slippage is not None
+    assert parsed.parameters.execution.slippage.model is not None
+    assert parsed.parameters.execution.slippage.model.type == "None"
+    wire_validator("RunRequest").validate(wire)
+
+
 def test_duplicate_output_and_column_names_fail() -> None:
     with pytest.raises(ValidationError, match="Output names"):
         RunRequest.model_validate({**request(), "outputs": [table(), table()]})

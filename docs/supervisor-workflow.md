@@ -6,7 +6,7 @@ the declared named-output API to saved results or certify analytical correctness
 No real service run is claimed by the component tests. Review the agent shape
 and handoffs before exercising a real analysis or ingestion run.
 
-Install a reviewed, versioned StratifyX wheel through its normal distribution
+Install a reviewed StratifyX 3.2.0rc1 or later wheel through its normal distribution
 workflow, then install this source in an isolated Python 3.12 environment:
 
 ```bash

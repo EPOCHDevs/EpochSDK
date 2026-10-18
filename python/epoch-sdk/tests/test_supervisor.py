@@ -286,6 +286,55 @@ def test_new_thread_is_kept_and_last_new_execution_is_selected() -> None:
     asyncio.run(scenario())
 
 
+def test_a_second_clarification_round_preserves_its_updated_questions_and_request() -> None:
+    async def scenario() -> None:
+        second_interrupt = copy.deepcopy(INTERRUPT)
+        second_interrupt["value"]["tool_call_id"] = "ask-two"
+        second_interrupt["value"]["questions"][0]["question"] = "Which comparison?"
+        second_interrupt["value"]["questions"][0]["options"] = [
+            {"label": "Revenue", "recommended": False},
+            {"label": "Margin", "recommended": True},
+        ]
+        replies = [
+            {"__interrupt__": [INTERRUPT]},
+            {"__interrupt__": [second_interrupt]},
+            {"execution_ids": ["final"]},
+        ]
+        async with clients(replies) as (client, calls, _):
+            first = await client.run("Compare sales")
+            assert isinstance(first, NeedsInput)
+            second = await client.resume(
+                first,
+                {
+                    "interrupt-one": Answers(
+                        answers=[Answer(question_index=0, selected_indices=[0])]
+                    )
+                },
+            )
+            assert isinstance(second, NeedsInput)
+            assert "Which comparison?" in second.feedback()
+            assert "Margin (recommended)" in second.feedback()
+            assert second.handle.request_id == first.handle.request_id
+            # Do not deduplicate a later round merely because an interrupt ID
+            # repeats. Resume the currently returned questions and checkpoint.
+            restored = NeedsInput.model_validate_json(second.model_dump_json())
+            result = await client.resume(
+                restored,
+                {
+                    "interrupt-one": Answers(
+                        answers=[Answer(question_index=0, selected_indices=[1])]
+                    )
+                },
+            )
+            assert isinstance(result, ChosenExecution)
+            assert result.execution.id == "final"
+            submissions = [json.loads(call.content) for call in calls if call.method == "POST"]
+            assert len([item for item in submissions if "input" in item]) == 1
+            assert len([item for item in submissions if "command" in item]) == 2
+
+    asyncio.run(scenario())
+
+
 def test_no_new_execution_never_returns_an_old_success() -> None:
     async def scenario() -> None:
         async with clients(
