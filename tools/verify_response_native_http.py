@@ -82,7 +82,7 @@ async def verify(url: str) -> None:
                 )
             ],
         )
-        assert selected.outputs[0].to_wire()["rows"] == [
+        assert selected.outputs[0].model_dump(mode="json", by_alias=True)["rows"] == [
             ["9007199254740993", 12.5],
             ["2025", None],
         ]
