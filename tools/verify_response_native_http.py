@@ -45,7 +45,7 @@ async def verify(url: str) -> None:
                 "content"
             ]
         )
-        first = await sdk.publish_response("native-one", content)
+        first = await sdk.publish_response("query-one", content, thread_id="thread-one", primary_execution_id="native-one")
         assert first.version == 1 and first.content == content
         # A fresh SDK object reads the native record; it owns no response cache.
         fresh = SupervisorClient(
@@ -56,9 +56,9 @@ async def verify(url: str) -> None:
                 httpx_client=backend_http,
             ),
         )
-        assert await fresh.response("native-one") == first
+        assert await fresh.response(first.response_id) == first
         async with Client(create_server(fresh)) as mcp:
-            read = await mcp.call_tool("epoch_response", {"execution_id": "native-one"})
+            read = await mcp.call_tool("epoch_response", {"response_id": first.response_id})
             assert not read.is_error and read.structured_content == first.to_wire()
             changed = content.to_wire()
             changed["outputs"][2]["value"] = (
@@ -67,20 +67,20 @@ async def verify(url: str) -> None:
             updated = await mcp.call_tool(
                 "epoch_publish_response",
                 {
-                    "execution_id": "native-one",
+                    "request_id": "query-one", "thread_id": "thread-one", "primary_execution_id": "native-one",
                     "expected_version": 1,
                     "content": changed,
                 },
             )
             assert not updated.is_error and updated.structured_content["version"] == 2
             old = await mcp.call_tool(
-                "epoch_response", {"execution_id": "native-one", "version": 1}
+                "epoch_response", {"response_id": first.response_id, "version": 1}
             )
             assert not old.is_error and old.structured_content == first.to_wire()
             stale = await mcp.call_tool(
                 "epoch_publish_response",
                 {
-                    "execution_id": "native-one",
+                    "request_id": "query-one", "thread_id": "thread-one", "primary_execution_id": "native-one",
                     "expected_version": 1,
                     "content": changed,
                 },
@@ -99,7 +99,7 @@ async def verify(url: str) -> None:
         )
         async with Client(create_server(other)) as mcp:
             denied = await mcp.call_tool(
-                "epoch_response", {"execution_id": "native-one"}
+                "epoch_response", {"response_id": first.response_id}
             )
             assert (
                 not denied.is_error

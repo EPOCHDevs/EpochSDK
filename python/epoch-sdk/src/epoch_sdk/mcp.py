@@ -107,47 +107,46 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_status", structured_output=True)(status)
     server.tool(name="epoch_outputs", structured_output=True)(outputs)
 
-    async def response(execution_id: str, version: int | None = None) -> CallToolResult:
-        """Read one saved response document containing named table, JSON and text
-        parts. An optional version reads an earlier answer revision. Starts no job.
-        """
+    async def response(response_id: str, version: int | None = None) -> CallToolResult:
+        """Read a published answer by its own identity and optional immutable revision."""
         try:
-            saved = await client.response(execution_id, version=version)
+            saved = await client.response(response_id, version=version)
         except EpochError as error:
             return CallToolResult(
                 content=[TextContent(type="text", text=str(error))],
-                structured_content=ErrorResponse(
-                    error=error.error, execution_id=execution_id
-                ).to_wire(),
+                structured_content=ErrorResponse(error=error.error).to_wire(),
             )
         return CallToolResult(
-            content=[TextContent(type="text", text=f"Saved response revision {saved.version}.")],
+            content=[TextContent(type="text", text="Answer ready.")],
             structured_content=saved.to_wire(),
         )
 
     async def publish(
-        execution_id: str, content: ResearchResponseContent, expected_version: int = 0
+        request_id: str,
+        thread_id: str,
+        content: ResearchResponseContent,
+        primary_execution_id: str | None = None,
+        expected_version: int = 0,
     ) -> CallToolResult:
-        """Save a complete selected research answer after a completed execution.
-        Supply declared table/JSON/text parts and their actual values. Do not
-        publish a truncated preview or invent values to meet a schema. To update
-        the answer, supply its current version; earlier revisions remain readable.
+        """Publish one answer for this query. Different queries may use the same run.
+        Values must be complete. Edits retain the original query/thread and use
+        its expected revision; no new agent or engine work is started.
         """
         try:
             saved = await client.publish_response(
-                execution_id, content, expected_version=expected_version
+                request_id,
+                content,
+                thread_id=thread_id,
+                primary_execution_id=primary_execution_id,
+                expected_version=expected_version,
             )
         except EpochError as error:
             return CallToolResult(
                 content=[TextContent(type="text", text=str(error))],
-                structured_content=ErrorResponse(
-                    error=error.error, execution_id=execution_id
-                ).to_wire(),
+                structured_content=ErrorResponse(error=error.error).to_wire(),
             )
         return CallToolResult(
-            content=[
-                TextContent(type="text", text=f"Published response revision {saved.version}.")
-            ],
+            content=[TextContent(type="text", text="Answer ready.")],
             structured_content=saved.to_wire(),
         )
 

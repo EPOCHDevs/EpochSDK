@@ -1,69 +1,114 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from contextlib import asynccontextmanager
 
+import httpx
+import pyarrow as pa
 import pytest
-from test_saved_outputs import dashboard, manifest, native_backend
+from stratifyx import AsyncStratifyX
+from test_saved_outputs import manifest
 
 from epoch_sdk import EpochError
-from epoch_sdk.output_validation import JsonValueOutput, TableValue, TextValue
-from epoch_sdk.responses import assemble_response
+from epoch_sdk.output_validation import JsonValueOutput, TextValue
+from epoch_sdk.responses import ResponseTableSource, assemble_response
 
 
-def interpreted():
+def parts():
     return [
         JsonValueOutput(name="totals", type="json", value={"total": 12.5}),
         TextValue(name="report", type="text", format="markdown", value="Sales were USD 12.5."),
     ]
 
 
-def native_schema():
-    result = dashboard()
-    result["tables"][0]["id"] = "sales"
-    result["tables"][0]["columns"][0]["name"] = "year"
-    result["tables"][0]["columns"][1]["name"] = "sales"
-    # Interpretation need not be embedded in a native Markdown block.
-    result["content"] = None
-    return result
+def source():
+    return ResponseTableSource(name="sales", table="computed_sales", field_ids=["year", "sales"])
 
 
-def test_assembly_reads_complete_native_table_and_preserves_interpreted_parts():
+@asynccontextmanager
+async def backend(*, denied=False, bad_type=False):
+    calls = []
+    table = pa.table(
+        {
+            "year": pa.array([9007199254740993, 2025], type=pa.int64()),
+            "sales": pa.array(["bad", None])
+            if bad_type
+            else pa.array([12.5, None], type=pa.float64()),
+        }
+    )
+    sink = pa.BufferOutputStream()
+    with pa.ipc.new_stream(sink, table.schema) as writer:
+        writer.write_table(table)
+
+    def respond(request):
+        calls.append(request)
+        assert request.url.path == "/api/v1/studies/executions/run-one/response-tables"
+        assert request.method == "POST"
+        assert json.loads(request.content) == {
+            "table": "computed_sales",
+            "field_ids": ["year", "sales"],
+        }
+        if denied:
+            return httpx.Response(404, json={"message": "Not found"})
+        return httpx.Response(200, content=sink.getvalue().to_pybytes())
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
+        yield (
+            AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=http),
+            calls,
+        )
+
+
+def test_complete_relation_does_not_require_any_dashboard_exhibit():
     async def scenario():
-        async with native_backend(schema=native_schema()) as (backend, calls):
+        async with backend() as (native, calls):
             result = await assemble_response(
-                backend, "run-one", "study-one", manifest().declarations, interpreted(),
+                native,
+                "run-one",
+                "study-one",
+                manifest().declarations,
+                parts(),
+                table_sources=[source()],
             )
-        table = result.outputs[0]
-        assert isinstance(table, TableValue)
-        assert table.rows == [["9007199254740993", 12.5], ["2025", None]]
-        assert table.columns[0].description == "Calendar year"
-        assert result.outputs[1:] == interpreted()
-        assert all(item.method == "GET" for item in calls)
+            assert result.outputs[0].to_wire()["rows"] == [
+                ["9007199254740993", 12.5],
+                ["2025", None],
+            ]
+            assert len(calls) == 1
 
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("parts", [[], interpreted()[:1], interpreted() * 2])
-def test_missing_or_duplicate_interpretations_fail_before_native_io(parts):
+@pytest.mark.parametrize("sources", [[], [source(), source()]])
+def test_missing_or_duplicate_table_sources_fail_before_io(sources):
     async def scenario():
-        async with native_backend() as (backend, calls):
-            with pytest.raises(EpochError):
+        async with backend() as (native, calls):
+            with pytest.raises(ValueError):
                 await assemble_response(
-                    backend, "run-one", "study-one", manifest().declarations, parts,
+                    native,
+                    "run-one",
+                    "study-one",
+                    manifest().declarations,
+                    parts(),
+                    table_sources=sources,
                 )
             assert not calls
 
     asyncio.run(scenario())
 
 
-def test_wrong_native_exhibit_cannot_be_published_under_a_requested_table_name():
+def test_native_physical_types_are_checked():
     async def scenario():
-        async with native_backend(schema=dashboard()) as (backend, calls):
-            with pytest.raises(EpochError) as error:
+        async with backend(bad_type=True) as (native, _):
+            with pytest.raises(EpochError):
                 await assemble_response(
-                    backend, "run-one", "study-one", manifest().declarations, interpreted(),
+                    native,
+                    "run-one",
+                    "study-one",
+                    manifest().declarations,
+                    parts(),
+                    table_sources=[source()],
                 )
-            assert error.value.error.code == "OUTPUT_VALIDATION_FAILED"
-            assert not any("/dashboard/data/" in item.url.path for item in calls)
 
     asyncio.run(scenario())
