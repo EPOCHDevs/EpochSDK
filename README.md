@@ -28,13 +28,13 @@ Package registry publication is separate; this is public source, not a released
 PyPI package.
 
 The saved research response API serves both notebook users and MCP agents. Use
-`SupervisorClient.publish_response(execution_id, content, expected_version=0)`
-after analysis, then `response(execution_id, version=...)` to read the same
+`SupervisorClient.publish_response(request_id, content, thread_id=thread_id, primary_execution_id=execution_id, expected_version=0)`
+after analysis, then `response(response_id, version=...)` to read the same
 Backend-owned answer. A response contains named table, JSON and text parts and
 their declarations; updates create another revision for that exact execution.
 MCP exposes `epoch_publish_response` and `epoch_response` over the same methods.
 This publication path starts no agent or engine job. It requires the generated
-StratifyX 3.3 response API. Automatic supervisor response production and complete
+StratifyX 3.3.0rc2 response API. Automatic supervisor response production and complete
 live research integration remain unfinished.
 
 ## Development checks
@@ -73,3 +73,7 @@ The `python/epoch-protos/` and `typescript/epoch-protos/` folders are discarded
 legacy artifacts; the current contracts, SDK and MCP do not use them, and the
 old sync script no longer updates them.
 See [the historical package notes](docs/legacy-packages.md).
+
+One query publishes one answer with its own identity and revisions. Different queries
+can reuse the same execution. Complete native response tables use exact relation
+and field sources, independently of dashboard exhibits.

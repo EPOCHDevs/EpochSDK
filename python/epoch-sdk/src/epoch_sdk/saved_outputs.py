@@ -204,7 +204,7 @@ def _cell(value: object, column: Column, execution_id: str) -> Cell:
     raise _invalid(f"Output column {column.name} has an unsupported stored value.", execution_id)
 
 
-def _table(
+def decode_saved_table(
     data: bytes,
     declaration: TableOutputRequest,
     binding: TableBinding,
@@ -362,7 +362,7 @@ async def read_saved_outputs(
                         )
                     data.extend(chunk)
             try:
-                value, expanded = _table(
+                value, expanded = decode_saved_table(
                     bytes(data),
                     declaration,
                     binding,
