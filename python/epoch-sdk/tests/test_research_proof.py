@@ -27,7 +27,11 @@ def completed(case):
         {
             "status": "succeeded",
             "request_id": "request-one",
-            "reusable_study": {"study_id": "study-one", "source_execution_id": "execution-one"},
+            "reusable_study": {
+                "study_id": "study-one",
+                "source_execution_id": "execution-one",
+                "thread_id": "thread-one",
+            },
             "response": {
                 "response_id": "rsp_" + "1" * 64,
                 "request_id": "request-one",
@@ -257,3 +261,138 @@ def test_native_trace_rejects_an_unrelated_current_user_turn(monkeypatch):
         asyncio.run(
             proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "request-one")
         )
+
+
+@pytest.mark.parametrize("mode", ["sdk", "mcp"])
+@pytest.mark.parametrize("fault", [None, "mutable-pin", "new-answer"])
+def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
+    monkeypatch, mode, fault
+):
+    """Exercise the verifier over actual generated HTTP and MCP clients."""
+    import copy
+    from contextlib import asynccontextmanager
+
+    from langgraph_sdk.client import LangGraphClient
+    from mcp import Client
+    from stratifyx import AsyncStratifyX
+
+    from epoch_sdk.mcp import create_server
+    from epoch_sdk.research import EpochClient
+    from epoch_sdk.supervisor import SupervisorClient
+
+    case = proof.load_case(CASE)
+    original = completed(case)
+    saved = original.response.to_wire()
+    versions = {1: copy.deepcopy(saved)}
+    calls = []
+    expected_thread = saved["thread_id"]
+    request_record = {
+        "request_id": original.request_id,
+        "version": 2,
+        "created_at_ms": 1,
+        "updated_at_ms": 1,
+        "phase": "outputs_recorded",
+        "request": case.request.to_wire(),
+        "runtime": {
+            "thread_id": expected_thread,
+            "assistant_id": "epoch-ai",
+            "execution_ids_before": [],
+            "outcome_ids_before": [],
+        },
+        "current_execution_id": saved["primary_execution_id"],
+        "response_id": saved["response_id"],
+        "response_version": 1,
+    }
+
+    def backend(request):
+        calls.append(request)
+        assert request.headers["Authorization"] == "Bearer fixture"
+        if request.method == "POST":
+            assert request.url.path == "/api/v1/research/requests/request-one/response"
+            body = json.loads(request.content)
+            assert body["expected_version"] == 1
+            assert body["thread_id"] == expected_thread
+            assert body["primary_execution_id"] == saved["primary_execution_id"]
+            updated = copy.deepcopy(saved)
+            updated.update(version=2, published_at_ms=2, content=body["content"])
+            if fault == "new-answer":
+                updated["response_id"] = "rsp_" + "2" * 64
+            versions[2] = updated
+            return httpx.Response(200, json=updated)
+        if request.url.path == "/api/v1/integration/requests/request-one":
+            result = copy.deepcopy(request_record)
+            if fault == "mutable-pin":
+                result["response_version"] = 2
+            return httpx.Response(200, json=result)
+        assert request.url.path == "/api/v1/research/responses/" + saved["response_id"]
+        version = (
+            int(request.url.params["version"]) if "version" in request.url.params else max(versions)
+        )
+        return httpx.Response(200, json=versions[version])
+
+    def no_graph(request):
+        raise AssertionError("Answer revision/pinned reads must not invoke LangGraph")
+
+    async def scenario():
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+            httpx.AsyncClient(transport=httpx.MockTransport(no_graph)) as graph_http,
+        ):
+            native = AsyncStratifyX(
+                base_url="https://backend.invalid", token="fixture", httpx_client=native_http
+            )
+            supervisor = SupervisorClient(LangGraphClient(graph_http), native)
+            client = EpochClient(supervisor)
+
+            def connect(graph_url, backend_url, token):
+                assert graph_url == "http://127.0.0.1:1"
+                return client
+
+            @asynccontextmanager
+            async def mcp_client(graph_url, backend_url, token):
+                assert graph_url == "http://127.0.0.1:1"
+                async with Client(create_server(supervisor)) as mcp:
+                    yield mcp
+
+            monkeypatch.setattr(proof, "connect", connect)
+            monkeypatch.setattr(proof, "mcp_client", mcp_client)
+            receipt = proof.Receipt(
+                mode=mode,
+                case_sha256="1" * 64,
+                recorded_at="2026-10-18T00:00:00Z",
+                checks=[],
+                epoch_sdk_version="fixture",
+                langgraph_sdk_version="fixture",
+                stratifyx_version="fixture",
+                native_sdk_backend_sha="2" * 40,
+                native_sdk_openapi_digest="sha256:" + "3" * 64,
+            )
+            if fault:
+                with pytest.raises((AssertionError, ExceptionGroup)) as failure:
+                    await proof.revise_and_verify(
+                        mode, "https://backend.invalid", "fixture", original, receipt
+                    )
+                error = failure.value
+                if isinstance(error, ExceptionGroup):
+                    matched, unrelated = error.split(AssertionError)
+                    assert matched is not None and unrelated is None
+                    message = repr(matched)
+                else:
+                    message = str(error)
+                assert "identity" in message or "pinned" in message
+                assert not receipt.real_analysis_proven
+            else:
+                await proof.revise_and_verify(
+                    mode, "https://backend.invalid", "fixture", original, receipt
+                )
+                assert receipt.revised_response.response_id == original.response.response_id
+                assert receipt.revised_response.version == 2
+                assert len(receipt.revised_content_sha256) == 64
+                assert receipt.checks == [
+                    "post-analysis-revision-without-graph",
+                    "original-request-still-pinned-after-edit",
+                ]
+                assert versions[2]["content"]["outputs"][:2] == saved["content"]["outputs"][:2]
+                assert sum(request.method == "POST" for request in calls) == 1
+
+    asyncio.run(scenario())

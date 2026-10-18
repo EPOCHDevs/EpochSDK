@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import hashlib
 import importlib.metadata
+import json
 import os
 import sys
 from collections.abc import AsyncIterator
@@ -35,10 +36,21 @@ from epoch_sdk.research import (
     ResearchFailure,
     ResearchResult,
 )
+from epoch_sdk.responses import (
+    ResearchResponseContent,
+    ResponseReference,
+    SavedResearchResponse,
+)
 from epoch_sdk.supervisor import Answers, ChosenExecution, InProgress, NeedsInput
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client, StdioServerParameters
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    model_validator,
+)
 from stratifyx._release import SDK_RELEASE
 
 
@@ -146,6 +158,8 @@ class Receipt(BaseModel):
     recorded_at: str
     result: ResearchResult | ResearchFailure | None = None
     reused_execution: ChosenExecution | None = None
+    revised_response: ResponseReference | None = None
+    revised_content_sha256: str | None = None
     checks: list[str]
     epoch_sdk_version: str
     langgraph_sdk_version: str
@@ -383,6 +397,150 @@ async def fresh_read(
         raise AssertionError("A fresh client did not return the same pinned answer")
 
 
+def revision_content(saved: SavedResearchResponse) -> ResearchResponseContent:
+    """Edit only the explanation, preserving the computed parts and declarations."""
+    texts = [part for part in saved.content.outputs if isinstance(part, TextValue)]
+    if len(texts) != 1:
+        raise AssertionError("The registered revision proof requires one explanation")
+    original = texts[0]
+    changed = original.model_copy(
+        update={
+            "value": original.value
+            + "\n\nPublication check: this revision changes only the explanation, not the computed values."
+        }
+    )
+    return ResearchResponseContent(
+        declarations=saved.content.declarations,
+        outputs=[
+            changed if part.name == original.name else part
+            for part in saved.content.outputs
+        ],
+    )
+
+
+def verify_revision(
+    before: SavedResearchResponse,
+    after: SavedResearchResponse,
+    content: ResearchResponseContent,
+) -> None:
+    if (
+        after.response_id != before.response_id
+        or after.request_id != before.request_id
+        or after.thread_id != before.thread_id
+        or after.primary_execution_id != before.primary_execution_id
+        or after.study_id != before.study_id
+        or after.version != before.version + 1
+        or after.content != content
+    ):
+        raise AssertionError(
+            "The revision changed answer identity, source or accepted values"
+        )
+
+
+class PublishArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    request_id: str
+    thread_id: str
+    content: ResearchResponseContent
+    expected_version: int
+    primary_execution_id: str | None = None
+
+
+async def revise_and_verify(
+    mode: str,
+    backend_url: str,
+    token: str,
+    completed: ResearchCompleted,
+    receipt: Receipt,
+) -> None:
+    """Use actual publication/read clients with an unreachable graph endpoint."""
+    before = completed.response
+    content = revision_content(before)
+    graph_url = "http://127.0.0.1:1"
+    if mode == "sdk":
+        client = connect(graph_url, backend_url, token)
+        try:
+            latest = await client.supervisor.response(before.response_id)
+            if latest != before:
+                raise AssertionError("The answer changed before the registered edit")
+            after = await client.supervisor.publish_response(
+                before.request_id,
+                content,
+                thread_id=before.thread_id,
+                primary_execution_id=before.primary_execution_id,
+                expected_version=before.version,
+            )
+            receipt.revised_response = after.reference()
+            verify_revision(before, after, content)
+            latest = await client.supervisor.response(before.response_id)
+            original = await client.supervisor.response(
+                before.response_id, version=before.version
+            )
+        finally:
+            await client.aclose()
+    else:
+        async with mcp_client(graph_url, backend_url, token) as client:
+            latest = SavedResearchResponse.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_response",
+                    {"response_id": before.response_id},
+                )
+            )
+            if latest != before:
+                raise AssertionError("The answer changed before the registered edit")
+            arguments = PublishArguments(
+                request_id=before.request_id,
+                thread_id=before.thread_id,
+                content=content,
+                expected_version=before.version,
+            )
+            if before.primary_execution_id is not None:
+                arguments.primary_execution_id = before.primary_execution_id
+            after = SavedResearchResponse.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_publish_response",
+                    arguments.model_dump(mode="json", by_alias=True, exclude_unset=True),
+                )
+            )
+            receipt.revised_response = after.reference()
+            verify_revision(before, after, content)
+            latest = SavedResearchResponse.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_response",
+                    {"response_id": before.response_id},
+                )
+            )
+            original = SavedResearchResponse.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_response",
+                    {"response_id": before.response_id, "version": before.version},
+                )
+            )
+    if latest != after or original != before:
+        raise AssertionError(
+            "Latest or immutable original answer read differs after editing"
+        )
+    receipt.revised_content_sha256 = hashlib.sha256(
+        json.dumps(
+            after.content.to_wire(),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()
+    await fresh_read(mode, backend_url, token, completed)
+    receipt.checks.extend(
+        [
+            "post-analysis-revision-without-graph",
+            "original-request-still-pinned-after-edit",
+        ]
+    )
+
+
 async def reuse(
     mode: str, case: Case, backend_url: str, token: str, completed: ResearchCompleted,
     timeout_seconds: float, receipt: Receipt,
@@ -486,6 +644,7 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
     receipt.checks.extend(["actual-values", "exact-execution-linkage"])
     await fresh_read(args.mode, backend_url, token, result)
     receipt.checks.append("fresh-read-without-graph")
+    await revise_and_verify(args.mode, backend_url, token, result, receipt)
     receipt.reused_execution = await reuse(
         args.mode, case, backend_url, token, result, args.execution_timeout, receipt,
     )

@@ -53,7 +53,12 @@ On success the runner checks:
    actual execution. Conversation content and tool arguments are omitted.
 2. Exact table values, JSON values, declarations and execution/study linkage.
 3. A fresh client returns the same pinned answer with an unreachable graph URL.
-4. Running the saved study creates a different completed native execution of the
+4. Publication of a later explanation revision uses Backend directly. The answer ID,
+   query/thread and source remain the same; native table/JSON values and declarations
+   remain unchanged. Latest reads return the revision, explicit old-version reads
+   return the original, and a fresh request read remains pinned to that original.
+   The receipt records the revised reference and content digest.
+5. Running the saved study creates a different completed native execution of the
    same study while the graph URL remains unreachable.
 
 The separate native execution read is available as `EpochClient.execution` and
