@@ -99,7 +99,7 @@ class ResponseTableSource(Contract):
     table: NonBlank
     field_ids: Annotated[list[NonBlank], Field(min_length=1)]
     order_by: list[TableOrder] = Field(
-        default_factory=list,
+        default_factory=lambda: list[TableOrder](),
         description="Native field IDs and directions that honor requested ranking or chronology.",
     )
 

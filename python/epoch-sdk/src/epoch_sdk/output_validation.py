@@ -55,7 +55,7 @@ class TableReference(Contract):
     table: str = Field(min_length=1)
     field_ids: list[str] = Field(min_length=1)
     row_count: int = Field(ge=0, le=9007199254740991)
-    order_by: list[TableOrder] = Field(default_factory=list)
+    order_by: list[TableOrder] = Field(default_factory=lambda: list[TableOrder]())
 
     @field_validator("field_ids")
     @classmethod
