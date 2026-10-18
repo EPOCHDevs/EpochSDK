@@ -32,6 +32,11 @@ receipt. The services must run the reviewed adapter/Backend revisions; their
 health receipts must identify those exact commits and confirm the agent is ready
 against the selected Backend.
 
+Vendor credentials belong to Backend: its normal `.env.local` supplies local
+configuration, and SSM supplies deployed configuration. EpochAI owns its model
+credentials. SDK/MCP clients receive Epoch authentication and service URLs only;
+their processes do not load either service's private environment file.
+
 ```bash
 .venv/bin/python tools/verify_research_services.py \
   --case examples/research-service-proof.case.json --mode sdk \
