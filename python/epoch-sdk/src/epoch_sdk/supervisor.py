@@ -281,21 +281,27 @@ class SupervisorClient:
 
     async def publish_response(
         self,
-        execution_id: str,
+        request_id: str,
         content: ResearchResponseContent,
         *,
+        thread_id: str,
+        primary_execution_id: str | None = None,
         expected_version: int = 0,
     ) -> SavedResearchResponse:
-        """Publish a selected answer after research without running an agent."""
+        """Publish one query's answer without starting an agent or execution."""
         return await publish_response(
-            self.backend, execution_id, content, expected_version=expected_version
+            self.backend,
+            request_id,
+            content,
+            thread_id=thread_id,
+            primary_execution_id=primary_execution_id,
+            expected_version=expected_version,
         )
 
     async def response(
-        self, execution_id: str, *, version: int | None = None
+        self, response_id: str, *, version: int | None = None
     ) -> SavedResearchResponse:
-        """Read the same saved answer from notebook code or MCP."""
-        return await read_response(self.backend, execution_id, version=version)
+        return await read_response(self.backend, response_id, version=version)
 
     async def execution(self, execution_id: str) -> JobListItem:
         """Read a native execution, including jobs started without a graph handle."""

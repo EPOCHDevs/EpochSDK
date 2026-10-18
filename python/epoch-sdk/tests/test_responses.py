@@ -54,5 +54,5 @@ def test_an_answer_revision_does_not_change_the_native_execution_reference() -> 
     value["version"] = 2
     value["content"]["outputs"][2]["value"] = "Revised interpretation."
     second = SavedResearchResponse.model_validate(value)
-    assert first.execution_id == second.execution_id
+    assert first.primary_execution_id == second.primary_execution_id
     assert first.content.outputs[2] != second.content.outputs[2]
