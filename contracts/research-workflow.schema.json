@@ -134,7 +134,6 @@
       },
       "required": [
         "request_id",
-        "reusable_study",
         "response"
       ],
       "title": "ResearchCompleted",

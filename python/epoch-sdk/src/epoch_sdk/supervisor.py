@@ -18,8 +18,10 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
 
+from .contracts import DomainError
 from .responses import (
     ResearchResponseContent,
+    ResponseReference,
     SavedResearchResponse,
     publish_response,
     read_response,
@@ -122,10 +124,18 @@ class ChosenExecution(Closed):
     reply: str = ""
 
 
+class PublishedAnswer(Closed):
+    status: Literal["response_published"] = "response_published"
+    handle: WorkflowHandle
+    response: ResponseReference
+
+
 class NoExecution(Closed):
     status: Literal["no_execution"] = "no_execution"
     handle: WorkflowHandle
     reason: str
+    publication_failed: bool = False
+    execution_id: str | None = None
     reply: str = ""
 
 
@@ -134,7 +144,7 @@ class InProgress(Closed):
     handle: WorkflowHandle
 
 
-type SupervisorResult = NeedsInput | ChosenExecution | NoExecution | InProgress
+type SupervisorResult = NeedsInput | PublishedAnswer | ChosenExecution | NoExecution | InProgress
 
 
 class _Outcome(BaseModel):
@@ -166,6 +176,8 @@ class _State(BaseModel):
     execution_ids: list[str] = Field(default_factory=list)
     next_action_outcomes: dict[str, _Outcome] = Field(default_factory=dict)
     messages: list[_Message] = Field(default_factory=list[_Message])
+    published_response: ResponseReference | None = None
+    publication_error: DomainError | None = None
     authority_turn_id: str | None = None
     interrupts: list[GraphInterrupt] = Field(
         default_factory=list[GraphInterrupt], alias="__interrupt__"
@@ -308,7 +320,8 @@ class SupervisorClient:
         if not execution_id.strip() or execution_id != execution_id.strip():
             raise ValueError("Provide an exact nonblank execution identity")
         job = await self.backend.studies_executions.get_execution_by_id(
-            execution_id, request_options={"max_retries": 0},
+            execution_id,
+            request_options={"max_retries": 0},
         )
         if job.id != execution_id:
             raise ValueError("Backend returned a different execution identity")
@@ -338,7 +351,10 @@ class SupervisorClient:
         return await self._wait(handle, task=task)
 
     async def prepare(
-        self, thread_id: str | None, *, request_id: str | None = None,
+        self,
+        thread_id: str | None,
+        *,
+        request_id: str | None = None,
     ) -> WorkflowHandle:
         """Resolve a native thread before attaching the accepted Backend record."""
         if thread_id is None:
@@ -359,7 +375,11 @@ class SupervisorClient:
         )
 
     async def submit(
-        self, handle: WorkflowHandle, task: str, *, sdk_request_id: str | None = None,
+        self,
+        handle: WorkflowHandle,
+        task: str,
+        *,
+        sdk_request_id: str | None = None,
     ) -> SupervisorResult:
         """Submit a prepared turn after its owning request/runtime is persisted."""
         if not task.strip():
@@ -403,8 +423,12 @@ class SupervisorClient:
         return await self._wait(waiting.handle, command=Command(resume=resume))
 
     async def _wait(
-        self, handle: WorkflowHandle, *, task: str | None = None,
-        command: Command | None = None, sdk_request_id: str | None = None,
+        self,
+        handle: WorkflowHandle,
+        *,
+        task: str | None = None,
+        command: Command | None = None,
+        sdk_request_id: str | None = None,
     ) -> SupervisorResult:
         current = handle
 
@@ -476,42 +500,32 @@ class SupervisorClient:
                 interrupts=state.interrupts,
                 conversation_url=self.conversation_url(handle.thread_id),
             )
+        reference = state.published_response
+        if reference is not None:
+            if reference.request_id != handle.request_id or reference.thread_id != handle.thread_id:
+                raise ValueError("The published answer belongs to another query or thread")
+            return PublishedAnswer(handle=handle, response=reference)
+        if state.publication_error is not None:
+            return NoExecution(
+                handle=handle, reason=state.publication_error.message, publication_failed=True
+            )
         outcomes = [
             value
             for key, value in state.next_action_outcomes.items()
             if key not in handle.outcome_ids_before
         ]
-        runs = [value for value in outcomes if value.tool_name != "build_study"]
-        execution_id = runs[-1].execution_id if runs else None
-        if not runs:
-            new_ids = [
-                value for value in state.execution_ids if value not in handle.execution_ids_before
-            ]
-            execution_id = new_ids[-1] if new_ids else None
-        if outcomes and outcomes[-1].tool_name == "build_study" and outcomes[-1].status != "saved":
-            execution_id = None
-        if not execution_id:
-            return NoExecution(
-                handle=handle,
-                reason=outcomes[-1].detail
-                if outcomes
-                else "The supervisor returned no new Backend execution for this request.",
-                reply=state.reply(),
-            )
-        execution = await self.backend.studies_executions.get_execution_by_id(
-            execution_id, request_options={"max_retries": 0}
-        )
-        if execution.id != execution_id or not execution.definition_id.strip():
-            raise ValueError("Backend returned a different execution identity")
-        return ChosenExecution(
+        failed = [
+            value
+            for value in outcomes
+            if value.status in {"failed", "cancelled", "infeasible", "not_started"}
+        ]
+        return NoExecution(
             handle=handle,
-            execution=execution,
-            reply=state.reply(),
-            reusable_study=SavedStudy(
-                study_id=execution.definition_id,
-                source_execution_id=execution.id,
-                thread_id=handle.thread_id,
-            ),
+            reason=failed[-1].detail
+            if failed
+            else "The supervisor finished without publishing an answer for this query.",
+            publication_failed=not bool(failed),
+            execution_id=failed[-1].execution_id if failed else None,
         )
 
     async def execute_saved(

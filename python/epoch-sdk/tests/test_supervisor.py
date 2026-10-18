@@ -18,10 +18,10 @@ from epoch_sdk.supervisor import (
     Answer,
     Answers,
     AskUser,
-    ChosenExecution,
     InProgress,
     NeedsInput,
     NoExecution,
+    PublishedAnswer,
     SavedStudy,
     SupervisorClient,
 )
@@ -133,6 +133,17 @@ def outcome(identifier: str | None, status: str = "completed", tool: str = "run_
     }
 
 
+def published(execution: str, request_id: str = "$current") -> dict:
+    return {
+        "response_id": "rsp_" + "1" * 64,
+        "request_id": request_id,
+        "thread_id": THREAD,
+        "version": 1,
+        "primary_execution_id": execution,
+        "study_id": "study-one",
+    }
+
+
 @asynccontextmanager
 async def clients(
     replies: list[dict],
@@ -150,8 +161,10 @@ async def clients(
     backend_calls: list[httpx.Request] = []
     pending = copy.deepcopy(replies)
     jobs = backend_jobs or {}
+    active_request = ""
 
     def graph(request: httpx.Request) -> httpx.Response:
+        nonlocal active_request
         graph_calls.append(request)
         if request.method == "POST" and request.url.path == "/threads":
             return httpx.Response(200, json={"thread_id": THREAD})
@@ -167,9 +180,15 @@ async def clients(
         if request.method == "GET" and request.url.path == f"/threads/{THREAD}":
             return httpx.Response(200, json={"thread_id": THREAD, "status": thread_status})
         if request.method == "POST" and request.url.path == f"/threads/{THREAD}/runs/wait":
+            body = json.loads(request.content)
+            if "input" in body:
+                active_request = body["input"]["messages"][0]["id"]
+            reply = pending.pop(0)
+            if reply.get("published_response", {}).get("request_id") == "$current":
+                reply["published_response"]["request_id"] = active_request
             return httpx.Response(
                 200,
-                json=pending.pop(0),
+                json=reply,
                 headers={"Content-Location": f"/threads/{THREAD}/runs/{RUN}"},
             )
         raise AssertionError(f"Unexpected graph call: {request.method} {request.url.path}")
@@ -228,7 +247,7 @@ def test_interrupt_answers_resume_the_same_thread_without_repeating_the_task() -
     async def scenario() -> None:
         replies = [
             {"execution_ids": ["old"], "__interrupt__": [INTERRUPT]},
-            {"execution_ids": ["old", "new"], "messages": [{"type": "ai", "content": "Finished."}]},
+            {"execution_ids": ["old", "new"], "published_response": published("new")},
         ]
         async with clients(replies, before={"execution_ids": ["old"]}) as (
             client,
@@ -249,11 +268,11 @@ def test_interrupt_answers_resume_the_same_thread_without_repeating_the_task() -
                     )
                 },
             )
-            assert isinstance(final, ChosenExecution)
-            assert final.execution.id == "new" and final.reply == "Finished."
+            assert isinstance(final, PublishedAnswer)
+            assert final.response.primary_execution_id == "new"
             assert final.handle is not None
             assert final.handle.request_id == waiting.handle.request_id
-            assert final.reusable_study.study_id == "study-one"
+            assert final.response.study_id == "study-one"
             waits = [
                 json.loads(call.content)
                 for call in graph_calls
@@ -270,7 +289,7 @@ def test_interrupt_answers_resume_the_same_thread_without_repeating_the_task() -
     asyncio.run(scenario())
 
 
-def test_new_thread_is_kept_and_last_new_execution_is_selected() -> None:
+def test_execution_order_alone_never_selects_a_primary_answer() -> None:
     async def scenario() -> None:
         async with clients([{"execution_ids": ["first", "last"]}]) as (
             client,
@@ -278,10 +297,10 @@ def test_new_thread_is_kept_and_last_new_execution_is_selected() -> None:
             backend_calls,
         ):
             result = await client.run("Build the requested study")
-            assert isinstance(result, ChosenExecution)
-            assert result.execution.id == "last"
+            assert isinstance(result, NoExecution)
+            assert result.publication_failed
             assert len([call for call in graph_calls if call.url.path == "/threads"]) == 1
-            assert len(backend_calls) == 1
+            assert len(backend_calls) == 0
 
     asyncio.run(scenario())
 
@@ -298,7 +317,7 @@ def test_a_second_clarification_round_preserves_its_updated_questions_and_reques
         replies = [
             {"__interrupt__": [INTERRUPT]},
             {"__interrupt__": [second_interrupt]},
-            {"execution_ids": ["final"]},
+            {"execution_ids": ["final"], "published_response": published("final")},
         ]
         async with clients(replies) as (client, calls, _):
             first = await client.run("Compare sales")
@@ -326,8 +345,8 @@ def test_a_second_clarification_round_preserves_its_updated_questions_and_reques
                     )
                 },
             )
-            assert isinstance(result, ChosenExecution)
-            assert result.execution.id == "final"
+            assert isinstance(result, PublishedAnswer)
+            assert result.response.primary_execution_id == "final"
             submissions = [json.loads(call.content) for call in calls if call.method == "POST"]
             assert len([item for item in submissions if "input" in item]) == 1
             assert len([item for item in submissions if "command" in item]) == 2
@@ -348,7 +367,7 @@ def test_no_new_execution_never_returns_an_old_success() -> None:
         ) as (client, _, backend_calls):
             result = await client.run("A new task", thread_id=THREAD)
             assert isinstance(result, NoExecution)
-            assert result.reply == "Data is unavailable."
+            assert result.publication_failed
             assert backend_calls == []
 
     asyncio.run(scenario())
@@ -364,14 +383,20 @@ def test_fresh_client_reads_the_result_after_a_human_resumes_in_the_ui() -> None
             waiting = await first.run("Compare sales")
             assert isinstance(waiting, NeedsInput)
             saved_handle = waiting.handle.model_dump_json()
-        async with clients([], observed={"execution_ids": ["old", "new"]}) as (
+        async with clients(
+            [],
+            observed={
+                "execution_ids": ["old", "new"],
+                "published_response": published("new", waiting.handle.request_id),
+            },
+        ) as (
             second,
             calls,
             _,
         ):
             result = await second.status(waiting.handle.model_validate_json(saved_handle))
-            assert isinstance(result, ChosenExecution)
-            assert result.execution.id == "new"
+            assert isinstance(result, PublishedAnswer)
+            assert result.response.primary_execution_id == "new"
             assert all(call.method == "GET" for call in calls)
             # Read status first so completion between these reads cannot pair an
             # old partial checkpoint with a freshly idle thread status.
@@ -489,8 +514,8 @@ def test_latest_failed_execution_is_returned_with_its_actual_backend_status() ->
             _,
         ):
             result = await client.run("Build and run")
-            assert isinstance(result, ChosenExecution)
-            assert result.execution.id == "failed" and result.execution.status.value == "failed"
+            assert isinstance(result, NoExecution)
+            assert result.execution_id == "failed"
 
     asyncio.run(scenario())
 
@@ -500,10 +525,14 @@ def test_reconnected_execution_can_be_chosen_from_current_outcomes() -> None:
         values = {
             "execution_ids": ["existing"],
             "next_action_outcomes": {"current": outcome("existing")},
+            "published_response": published("existing"),
         }
         async with clients([values], before={"execution_ids": ["existing"]}) as (client, _, _):
             result = await client.run("Check the current execution", thread_id=THREAD)
-            assert isinstance(result, ChosenExecution) and result.execution.id == "existing"
+            assert (
+                isinstance(result, PublishedAnswer)
+                and result.response.primary_execution_id == "existing"
+            )
 
     asyncio.run(scenario())
 
@@ -578,5 +607,18 @@ def test_saved_study_owner_rejection_prevents_execution_submission() -> None:
             assert failure.value.status_code == 404
             assert graph_calls == []
             assert not any(call.method == "POST" for call in backend_calls)
+
+    asyncio.run(scenario())
+
+
+def test_later_diagnostic_execution_does_not_replace_the_explicit_primary():
+    async def scenario():
+        async with clients(
+            [{"execution_ids": ["main", "diagnostic"], "published_response": published("main")}]
+        ) as (client, _, calls):
+            result = await client.run("Explain the main result")
+            assert isinstance(result, PublishedAnswer)
+            assert result.response.primary_execution_id == "main"
+            assert calls == []
 
     asyncio.run(scenario())

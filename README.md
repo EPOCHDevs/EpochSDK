@@ -31,7 +31,8 @@ adapter and a saved-output reader. The adapter returns native clarification ques
 the same thread, executing a saved study directly through Backend, or reading
 validated values from an explicit saved output mapping. See the
 [SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The complete
-named-output analysis flow and real-service proof are still being implemented.
+named-output analysis flow is implemented and component-tested; real-service
+research proof remains pending.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 

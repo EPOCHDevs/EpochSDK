@@ -18,6 +18,7 @@ from .supervisor import (
     ChosenExecution,
     InProgress,
     NeedsInput,
+    PublishedAnswer,
     SavedStudy,
     SupervisorClient,
     SupervisorResult,
@@ -32,6 +33,8 @@ def _result(value: SupervisorResult) -> CallToolResult:
         text = f"Selected Backend execution {value.execution.id}: {value.execution.status.value}."
         if value.reply:
             text += "\n" + value.reply
+    elif isinstance(value, PublishedAnswer):
+        text = "Answer ready."
     elif isinstance(value, InProgress):
         text = "The supervisor is still running. Read epoch_status again using the same handle."
     else:
@@ -57,14 +60,18 @@ def create_server(client: SupervisorClient) -> MCPServer:
             text = "The request was accepted and has no attached supervisor run yet."
         return CallToolResult(
             content=[TextContent(type="text", text=text)],
-            structured_content=value.to_wire() if isinstance(value, Contract)
+            structured_content=value.to_wire()
+            if isinstance(value, Contract)
             else value.model_dump(mode="json", by_alias=True),
         )
 
     def research_error(error: EpochError) -> CallToolResult:
-        response = error.response if isinstance(error, ResearchError) else ErrorResponse(error=error.error)
+        response = (
+            error.response if isinstance(error, ResearchError) else ErrorResponse(error=error.error)
+        )
         return CallToolResult(
-            content=[TextContent(type="text", text=str(error))], structured_content=response.to_wire(),
+            content=[TextContent(type="text", text=str(error))],
+            structured_content=response.to_wire(),
         )
 
     async def research(request: RunRequest, thread_id: str | None = None) -> CallToolResult:
@@ -110,7 +117,8 @@ def create_server(client: SupervisorClient) -> MCPServer:
             return CallToolResult(
                 content=[TextContent(type="text", text=str(error))],
                 structured_content=ErrorResponse(
-                    error=error.error, execution_id=execution_id,
+                    error=error.error,
+                    execution_id=execution_id,
                 ).to_wire(),
             )
         return CallToolResult(

@@ -251,7 +251,7 @@ def verify_trace(trace: TraceEvidence, completed: ResearchCompleted, *, requires
         raise AssertionError("A real-model proof needs source-owned model identity and token usage")
     chosen_calls = {outcome.tool_call_id for outcome in trace.outcomes.values()
                     if outcome.tool_name == "run_study" and outcome.status == "completed"
-                    and outcome.execution_id == completed.response.execution_id}
+                    and outcome.execution_id == completed.response.primary_execution_id}
     if not chosen_calls:
         raise AssertionError("No native completed-run outcome identifies the saved answer's execution")
     run = next((index for index, call in enumerate(trace.tool_calls)
@@ -294,8 +294,8 @@ def verify_values(case: Case, result: ResearchCompleted) -> None:
     if len(texts) != 1 or not texts[0].value.strip():
         raise AssertionError("The requested explanation is missing")
     if (
-        result.reusable_study.study_id != response.study_id
-        or result.reusable_study.source_execution_id != response.execution_id
+        result.reusable_study is None or result.reusable_study.study_id != response.study_id
+        or result.reusable_study.source_execution_id != response.primary_execution_id
     ):
         raise AssertionError("Reusable study and saved answer refer to different executions")
 
@@ -389,6 +389,8 @@ async def reuse(
 ) -> ChosenExecution:
     assert case.request.parameters is not None and case.request.parameters.period is not None
     graph_url = "http://127.0.0.1:1"
+    if completed.reusable_study is None:
+        raise AssertionError("Prepared execution requires an execution-backed answer")
     if mode == "sdk":
         client = connect(graph_url, backend_url, token)
         try:
@@ -427,7 +429,7 @@ async def reuse(
                     receipt.reused_execution = selected
     if (
         selected.execution.status.value != "completed"
-        or selected.execution.id == completed.response.execution_id
+        or selected.execution.id == completed.response.primary_execution_id
         or selected.execution.definition_id != completed.response.study_id
     ):
         raise AssertionError("Saved-study execution failed or changed its study identity")
@@ -469,6 +471,8 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
         return
     if not isinstance(result, ResearchCompleted):
         raise TypeError("The research request has no completed saved response")
+    if result.reusable_study is None:
+        raise AssertionError("This registered engine case requires a reusable study")
     thread_id = result.reusable_study.thread_id
     if thread_id is None:
         raise AssertionError("The completed research response has no native thread reference")

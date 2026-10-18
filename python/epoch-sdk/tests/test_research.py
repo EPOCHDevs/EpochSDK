@@ -19,26 +19,53 @@ from epoch_sdk.supervisor import Answer, Answers, NeedsInput, SupervisorClient
 
 REQUEST_ID = "req_" + "1" * 32
 REQUEST = {
-    "task": "Compare sales", "context": ["Annual values"],
-    "outputs": [{"name": "answer", "type": "json", "schema": {
-        "type": "object", "properties": {"rows": {"type": "integer", "description": "Row count"}},
-        "required": ["rows"], "additionalProperties": False,
-    }}],
+    "task": "Compare sales",
+    "context": ["Annual values"],
+    "outputs": [
+        {
+            "name": "answer",
+            "type": "json",
+            "schema": {
+                "type": "object",
+                "properties": {"rows": {"type": "integer", "description": "Row count"}},
+                "required": ["rows"],
+                "additionalProperties": False,
+            },
+        }
+    ],
     "parameters": {"period": {"start": "2024-01-01", "end": "2024-12-31"}},
 }
 
 
 def saved_response():
     return {
-        "execution_id": "new", "study_id": "study-one", "version": 1, "published_at_ms": 1,
-        "content": {"declarations": REQUEST["outputs"], "outputs": [
-            {"name": "answer", "type": "json", "value": {"rows": 2}},
-        ]},
+        "response_id": "rsp_" + "1" * 64,
+        "request_id": REQUEST_ID,
+        "thread_id": THREAD,
+        "primary_execution_id": "new",
+        "study_id": "study-one",
+        "version": 1,
+        "published_at_ms": 1,
+        "content": {
+            "declarations": REQUEST["outputs"],
+            "outputs": [
+                {"name": "answer", "type": "json", "value": {"rows": 2}},
+            ],
+        },
     }
 
 
 @asynccontextmanager
-async def clients(*, interrupt=False, missing_response=False, terminal_failure=False):
+async def clients(
+    *, interrupt=False, missing_response=False, terminal_failure=False, no_execution=False
+):
+    def answer():
+        value = saved_response()
+        if no_execution:
+            value.pop("primary_execution_id")
+            value.pop("study_id")
+        return value
+
     records = {}
     graph_calls = []
     backend_calls = []
@@ -50,10 +77,16 @@ async def clients(*, interrupt=False, missing_response=False, terminal_failure=F
         assert request.headers["Authorization"] == "Bearer fixture"
         if path == "/api/v1/integration/requests" and request.method == "POST":
             accepted = json.loads(request.content)["request"]
-            records.update({
-                "request_id": REQUEST_ID, "version": 0, "created_at_ms": 1, "updated_at_ms": 1,
-                "phase": "accepted", "request": accepted,
-            })
+            records.update(
+                {
+                    "request_id": REQUEST_ID,
+                    "version": 0,
+                    "created_at_ms": 1,
+                    "updated_at_ms": 1,
+                    "phase": "accepted",
+                    "request": accepted,
+                }
+            )
             return httpx.Response(200, json=copy.deepcopy(records))
         if path == "/api/v1/integration/requests/" + REQUEST_ID:
             if request.method == "PATCH":
@@ -70,16 +103,23 @@ async def clients(*, interrupt=False, missing_response=False, terminal_failure=F
             else:
                 assert request.method == "GET"
             return httpx.Response(200, json=copy.deepcopy(records))
-        if path == "/api/v1/studies/executions/new/response":
+        if path == "/api/v1/research/responses/" + saved_response()["response_id"]:
             if missing_response:
-                return httpx.Response(404, json={
-                    "error": "DataNotFound", "message": "No response", "timestamp": "2026-10-18T00:00:00Z",
-                })
+                return httpx.Response(
+                    404,
+                    json={
+                        "error": "DataNotFound",
+                        "message": "No response",
+                        "timestamp": "2026-10-18T00:00:00Z",
+                    },
+                )
             if "version" in request.url.params:
                 assert request.url.params["version"] == "1"
-            return httpx.Response(200, json=saved_response())
+            return httpx.Response(200, json=answer())
         if path == "/api/v1/studies/executions/new":
-            return httpx.Response(200, json=job("new", status="failed" if terminal_failure else "completed"))
+            return httpx.Response(
+                200, json=job("new", status="failed" if terminal_failure else "completed")
+            )
         raise AssertionError(f"Unexpected native call: {request.method} {path}")
 
     def graph(request):
@@ -99,21 +139,53 @@ async def clients(*, interrupt=False, missing_response=False, terminal_failure=F
             else:
                 assert "input" not in body and "resume" in body["command"]
             assert body["durability"] == "sync"
-            result = {"authority_turn_id": "user-turn:" + REQUEST_ID, "execution_ids": ["new"]}
+            reference = {
+                key: value
+                for key, value in answer().items()
+                if key not in {"content", "published_at_ms"}
+            }
+            result = {
+                "authority_turn_id": "user-turn:" + REQUEST_ID,
+                "execution_ids": ["new"],
+                "published_response": reference,
+            }
+            if terminal_failure:
+                result.pop("published_response")
+                result["next_action_outcomes"] = {
+                    "failed": {
+                        "tool_call_id": "failed-call",
+                        "tool_name": "run_study",
+                        "subject": "sales",
+                        "status": "failed",
+                        "detail": "The selected execution failed.",
+                        "execution_id": "new",
+                    }
+                }
             if interrupt and waits == 1:
-                result = {"authority_turn_id": "user-turn:" + REQUEST_ID, "__interrupt__": [INTERRUPT]}
-            return httpx.Response(200, json=result, headers={
-                "Content-Location": f"/threads/{THREAD}/runs/{RUN}",
-            })
+                result = {
+                    "authority_turn_id": "user-turn:" + REQUEST_ID,
+                    "__interrupt__": [INTERRUPT],
+                }
+            return httpx.Response(
+                200,
+                json=result,
+                headers={
+                    "Content-Location": f"/threads/{THREAD}/runs/{RUN}",
+                },
+            )
         raise AssertionError(f"Unexpected graph call: {request.method} {request.url.path}")
 
     async with (
-        httpx.AsyncClient(base_url="https://graph.invalid", transport=httpx.MockTransport(graph)) as graph_http,
+        httpx.AsyncClient(
+            base_url="https://graph.invalid", transport=httpx.MockTransport(graph)
+        ) as graph_http,
         httpx.AsyncClient(transport=httpx.MockTransport(backend)) as backend_http,
     ):
         supervisor = SupervisorClient(
             LangGraphClient(graph_http),
-            AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=backend_http),
+            AsyncStratifyX(
+                base_url="https://backend.invalid", token="fixture", httpx_client=backend_http
+            ),
         )
         yield EpochClient(supervisor), records, graph_calls, backend_calls
 
@@ -153,9 +225,16 @@ def test_research_clarification_resumes_the_same_accepted_request_and_thread():
             waiting = await sdk.research(RunRequest.model_validate(REQUEST))
             assert isinstance(waiting, NeedsInput) and records["phase"] == "needs_input"
             fresh = EpochClient(sdk.supervisor)
-            result = await fresh.resume_research(waiting, {"interrupt-one": Answers(answers=[
-                Answer(question_index=0, selected_indices=[0]),
-            ])})
+            result = await fresh.resume_research(
+                waiting,
+                {
+                    "interrupt-one": Answers(
+                        answers=[
+                            Answer(question_index=0, selected_indices=[0]),
+                        ]
+                    )
+                },
+            )
             assert isinstance(result, ResearchCompleted)
             assert result.request_id == waiting.handle.request_id == REQUEST_ID
             assert len([call for call in graph_calls if call.url.path == "/threads"]) == 1
@@ -164,9 +243,13 @@ def test_research_clarification_resumes_the_same_accepted_request_and_thread():
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("option,code", [
-    ("missing_response", "OUTPUT_VALIDATION_FAILED"), ("terminal_failure", "EXECUTION_FAILED"),
-])
+@pytest.mark.parametrize(
+    "option,code",
+    [
+        ("missing_response", "OUTPUT_VALIDATION_FAILED"),
+        ("terminal_failure", "EXECUTION_FAILED"),
+    ],
+)
 def test_engine_completion_alone_cannot_certify_response_success(option, code):
     async def scenario():
         async with clients(**{option: True}) as (sdk, records, graph_calls, _):
@@ -197,7 +280,10 @@ def test_prepared_work_is_explicitly_separate_from_research():
 
 def test_mcp_research_uses_the_same_completion_and_fresh_status_path():
     async def scenario():
-        async with clients() as (sdk, _, graph_calls, _), Client(create_server(sdk.supervisor)) as mcp:
+        async with (
+            clients() as (sdk, _, graph_calls, _),
+            Client(create_server(sdk.supervisor)) as mcp,
+        ):
             result = await mcp.call_tool("epoch_research", {"request": REQUEST})
             assert not result.is_error and result.structured_content["status"] == "succeeded"
             assert result.structured_content["response"] == saved_response()
@@ -205,5 +291,19 @@ def test_mcp_research_uses_the_same_completion_and_fresh_status_path():
             fresh = await mcp.call_tool("epoch_research_status", {"request_id": REQUEST_ID})
             assert not fresh.is_error and fresh.structured_content == result.structured_content
             assert graph_calls == []
+
+    asyncio.run(scenario())
+
+
+def test_sdk_can_complete_a_published_answer_without_starting_an_execution():
+    async def scenario():
+        request = {key: value for key, value in REQUEST.items() if key != "parameters"}
+        async with clients(no_execution=True) as (sdk, records, _, calls):
+            result = await sdk.research(RunRequest.model_validate(request))
+            assert isinstance(result, ResearchCompleted)
+            assert result.reusable_study is None
+            assert result.response.primary_execution_id is None
+            assert records["response_id"] == result.response.response_id
+            assert not any("/studies/executions/" in call.url.path for call in calls)
 
     asyncio.run(scenario())

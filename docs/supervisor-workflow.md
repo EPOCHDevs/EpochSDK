@@ -1,3 +1,8 @@
+> Current protocol: research completion requires the explicitly published answer
+> reference for this query. The client does not choose the latest execution or
+> treat a plain model reply as completion. See [the current research flow](research-flow.md).
+> The older examples below describe the original communication adapter.
+
 # Stateful supervisor adapter
 
 This adapter reuses the registered supervisor and native checkpoints. It handles
