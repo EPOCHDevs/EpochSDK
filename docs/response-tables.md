@@ -20,7 +20,8 @@ page_size=1000)` returns a typed page containing its answer ID/version, `schema`
 actual typed `rows`; it is explicitly a page, not the entire answer table.
 MCP exposes the same action as `epoch_response_table`.
 
-Notebook code can traverse every page without collecting the whole table in RAM:
+The same Python SDK can traverse every page from a notebook, script or application
+without collecting the whole table in RAM:
 
 ```python
 async for page in client.iter_response_table(answer.response_id, "results",
@@ -64,8 +65,9 @@ requests keep their original pinned revisions.
 Pages re-query immutable source relations and may scan/sort the selected data;
 this implementation does not promise constant-time offset seeks or provide a
 streaming file export. Normal query deadlines and resource limits still apply.
-References require the execution's stored data to remain available. Missing or
-changed sources fail explicitly rather than returning another run or a preview.
+References require immutable execution data to remain available. Missing sources,
+row-count changes and invalid page values fail explicitly. There is no additional
+content-hash check on each read; the execution store owns data immutability.
 
 The shared schemas are `contracts/research-response.schema.json` and
 `contracts/research-response-table-page.schema.json`. The reference example is
