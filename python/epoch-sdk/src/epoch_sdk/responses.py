@@ -1,4 +1,4 @@
-"""A saved research answer, shared by notebook code, MCP and the agent."""
+"""A saved research answer, shared by SDK callers, MCP and the agent."""
 
 from __future__ import annotations
 
@@ -325,9 +325,11 @@ async def assemble_response(
 ) -> ResearchResponseContent:
     """Bind native relations without requiring dashboard exhibits or copying all rows.
 
-    A caller identifies exact DESCRIBE relations and fields. Backend reads the
-    complete bounded projection, independently of dashboard layout. JSON/text
-    interpretations use evidence read by the caller. No engine work is started.
+    A caller identifies exact DESCRIBE relations and fields. A one-row native
+    probe checks the schema and returns the total row count. Backend validates
+    the complete projection when it saves the answer; clients then page through
+    the referenced table. JSON/text interpretations use evidence read by the
+    caller. No study execution is started.
     """
     non_tables: list[OutputRequest] = [
         item for item in declarations if not isinstance(item, TableOutputRequest)

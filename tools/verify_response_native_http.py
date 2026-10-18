@@ -1,4 +1,4 @@
-"""Prove notebook/MCP response transport against the native loopback fixture.
+"""Prove SDK/MCP response transport against the native loopback fixture.
 
 The fixture uses synthetic execution references. This is not real study or
 model integration evidence; it proves the response API boundary and storage.
@@ -51,7 +51,7 @@ async def verify(url: str) -> None:
             ]
         )
         # The native fixture supplies a computed relation without dashboard exhibits.
-        # Reading the complete source succeeds independently of presentation.
+        # Binding and reading the source succeed independently of presentation.
         selected = await assemble_response(
             backend,
             "native-one",
@@ -273,7 +273,7 @@ def main() -> None:
                     server.kill()
                     server.wait(timeout=10)
     proof = {
-        "scope": "notebook-sdk-and-mcp-native-response-component",
+        "scope": "sdk-and-mcp-native-response-component",
         "native_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "native_sdk_release": SDK_RELEASE,
         "checks": [
@@ -283,7 +283,7 @@ def main() -> None:
             "mcp-complete-25003-row-ranked-traversal",
             "bounded-answer-metadata",
             "execution-free-json-null-answer",
-            "notebook-publication",
+            "sdk-publication",
             "fresh-sdk-read",
             "mcp-read",
             "mcp-post-analysis-update",
