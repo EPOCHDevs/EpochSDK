@@ -2,10 +2,51 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
 from mcp import Client
 from test_supervisor import INTERRUPT, THREAD, clients, job, published
 
 from epoch_sdk.mcp import create_server
+from epoch_sdk.supervisor import NoExecution, PublishedAnswer
+
+
+@pytest.mark.parametrize("kind", ["execution-free-answer", "publication-error"])
+def test_mcp_preserves_closed_publication_metadata_without_checkpoint_nulls(kind) -> None:
+    async def scenario() -> None:
+        if kind == "execution-free-answer":
+            state = {
+                "published_response": {
+                    **published("unused"),
+                    "primary_execution_id": None,
+                    "study_id": None,
+                }
+            }
+        else:
+            state = {
+                "publication_error": {
+                    "code": "TEMPORARILY_UNAVAILABLE",
+                    "message": "Publication was not confirmed.",
+                    "retryable": False,
+                    "gaps": None,
+                    "questions": None,
+                }
+            }
+        async with clients([state]) as (sdk, _, _), Client(create_server(sdk)) as mcp:
+            result = await mcp.call_tool("epoch_run", {"task": "A brief answer"})
+            assert not result.is_error
+            wire = result.structured_content
+            assert wire is not None
+            if kind == "execution-free-answer":
+                parsed = PublishedAnswer.model_validate(wire)
+                assert parsed.response.primary_execution_id is None
+                assert "primary_execution_id" not in wire["response"]
+                assert "study_id" not in wire["response"]
+            else:
+                parsed = NoExecution.model_validate(wire)
+                assert parsed.publication_error.code == "TEMPORARILY_UNAVAILABLE"
+                assert "gaps" not in wire["publication_error"]
+
+    asyncio.run(scenario())
 
 
 def test_mcp_round_trip_keeps_the_pending_thread_and_resumes_via_the_sdk() -> None:

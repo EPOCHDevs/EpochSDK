@@ -18,6 +18,7 @@ from .supervisor import (
     ChosenExecution,
     InProgress,
     NeedsInput,
+    NoExecution,
     PublishedAnswer,
     SavedStudy,
     SupervisorClient,
@@ -39,9 +40,14 @@ def _result(value: SupervisorResult) -> CallToolResult:
         text = "The supervisor is still running. Read epoch_status again using the same handle."
     else:
         text = value.reply or value.reason
+    wire = value.model_dump(mode="json", by_alias=True)
+    if isinstance(value, PublishedAnswer):
+        wire["response"] = value.response.to_wire()
+    elif isinstance(value, NoExecution) and value.publication_error is not None:
+        wire["publication_error"] = value.publication_error.to_wire()
     return CallToolResult(
         content=[TextContent(type="text", text=text)],
-        structured_content=value.model_dump(mode="json", by_alias=True),
+        structured_content=wire,
     )
 
 
