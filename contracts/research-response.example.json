@@ -1,0 +1,27 @@
+{
+  "execution_id": "example_execution",
+  "study_id": "example_study",
+  "version": 1,
+  "published_at_ms": 0,
+  "content": {
+    "declarations": [
+      {"name": "screen", "type": "table", "schema": [
+        {"name": "ticker", "type": "string", "description": "Synthetic example ticker"},
+        {"name": "growth_pct", "type": "float64", "unit": "percent"}
+      ]},
+      {"name": "summary", "type": "json", "schema": {
+        "type": "object", "properties": {"matches": {"type": "integer", "minimum": 0}},
+        "required": ["matches"], "additionalProperties": false
+      }},
+      {"name": "explanation", "type": "text", "format": "markdown", "instructions": "Explain the synthetic result briefly"}
+    ],
+    "outputs": [
+      {"name": "screen", "type": "table", "schema": [
+        {"name": "ticker", "type": "string", "description": "Synthetic example ticker"},
+        {"name": "growth_pct", "type": "float64", "unit": "percent"}
+      ], "rows": [["EXAMPLE", 18.2]]},
+      {"name": "summary", "type": "json", "value": {"matches": 1}},
+      {"name": "explanation", "type": "text", "format": "markdown", "value": "The synthetic screen contains one matching row."}
+    ]
+  }
+}

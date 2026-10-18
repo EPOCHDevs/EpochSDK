@@ -4,6 +4,29 @@ Epoch SDK is a client library over LangGraph SDK and generated StratifyX SDK.
 Each language has its own client implementation and the same shared API contract.
 MCP exposes the same client capabilities rather than recreating orchestration.
 
+Research serves notebook users as well as MCP agents and the existing platform.
+Building/research and application execution against prepared work are separate
+actions. A single run does not implicitly combine training, dataset publication
+and serving. Existing direct native execution remains a distinct SDK/MCP action.
+
+The response API is a shared Backend-owned answer document for an exact
+execution, containing named table, JSON and text parts. Notebook code and the
+existing supervisor can publish after analysis through the same API. Each edit
+creates a new response revision; another execution has another response. Tables
+keep exact columns/types and annotations, JSON uses standard JSON Schema, and
+text keeps its requested format. Publication validates complete selected values,
+with explicit bounds of 4 MiB and 10,000 rows per response table. It never turns
+a truncated preview into a complete answer.
+
+Response production is: compute, read actual results, assemble the requested
+parts, validate, publish, then return the saved response. JSON/text response
+values do not need to live in dashboard Markdown. Existing reporters continue
+to supply computed artifacts; new EpochScript response transforms are deferred
+until the common API demonstrates a concrete authoring need. Backend reuses its
+private blob storage and atomic revision primitives, with no extra database or
+background coordinator. Current component evidence does not establish real
+agent response production or the full live-service notebook/MCP flow yet.
+
 The first flow reuses EpochAI's existing supervisor through LangGraph SDK. Its
 checkpointed thread retains discovery findings, study-building progress and
 native clarification interrupts. The SDK imports native clients, not EpochAI

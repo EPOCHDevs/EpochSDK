@@ -18,6 +18,12 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
 
+from .responses import (
+    ResearchResponseContent,
+    SavedResearchResponse,
+    publish_response,
+    read_response,
+)
 from .saved_outputs import SavedOutputManifest, ValidatedSavedOutputs, read_saved_outputs
 
 
@@ -271,6 +277,24 @@ class SupervisorClient:
     async def outputs(self, manifest: SavedOutputManifest) -> ValidatedSavedOutputs:
         """Read and validate an explicit saved receipt directly through Backend."""
         return await read_saved_outputs(self.backend, manifest)
+
+    async def publish_response(
+        self,
+        execution_id: str,
+        content: ResearchResponseContent,
+        *,
+        expected_version: int = 0,
+    ) -> SavedResearchResponse:
+        """Publish a selected answer after research without running an agent."""
+        return await publish_response(
+            self.backend, execution_id, content, expected_version=expected_version
+        )
+
+    async def response(
+        self, execution_id: str, *, version: int | None = None
+    ) -> SavedResearchResponse:
+        """Read the same saved answer from notebook code or MCP."""
+        return await read_response(self.backend, execution_id, version=version)
 
     def conversation_url(self, thread_id: str) -> str | None:
         if self.ui_url is None:

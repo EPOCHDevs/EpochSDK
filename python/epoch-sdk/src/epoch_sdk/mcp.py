@@ -10,6 +10,7 @@ from mcp.types import CallToolResult, TextContent
 
 from .contracts import ErrorResponse, RunParameters
 from .errors import EpochError
+from .responses import ResearchResponseContent
 from .saved_outputs import SavedOutputManifest
 from .supervisor import (
     Answers,
@@ -105,6 +106,53 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_execute_saved", structured_output=True)(execute_saved)
     server.tool(name="epoch_status", structured_output=True)(status)
     server.tool(name="epoch_outputs", structured_output=True)(outputs)
+
+    async def response(execution_id: str, version: int | None = None) -> CallToolResult:
+        """Read one saved response document containing named table, JSON and text
+        parts. An optional version reads an earlier answer revision. Starts no job.
+        """
+        try:
+            saved = await client.response(execution_id, version=version)
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(
+                    error=error.error, execution_id=execution_id
+                ).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text=f"Saved response revision {saved.version}.")],
+            structured_content=saved.to_wire(),
+        )
+
+    async def publish(
+        execution_id: str, content: ResearchResponseContent, expected_version: int = 0
+    ) -> CallToolResult:
+        """Save a complete selected research answer after a completed execution.
+        Supply declared table/JSON/text parts and their actual values. Do not
+        publish a truncated preview or invent values to meet a schema. To update
+        the answer, supply its current version; earlier revisions remain readable.
+        """
+        try:
+            saved = await client.publish_response(
+                execution_id, content, expected_version=expected_version
+            )
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(
+                    error=error.error, execution_id=execution_id
+                ).to_wire(),
+            )
+        return CallToolResult(
+            content=[
+                TextContent(type="text", text=f"Published response revision {saved.version}.")
+            ],
+            structured_content=saved.to_wire(),
+        )
+
+    server.tool(name="epoch_response", structured_output=True)(response)
+    server.tool(name="epoch_publish_response", structured_output=True)(publish)
     return server
 
 

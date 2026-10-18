@@ -27,6 +27,16 @@ named-output analysis flow and real-service proof are still being implemented.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 
+The saved research response API serves both notebook users and MCP agents. Use
+`SupervisorClient.publish_response(execution_id, content, expected_version=0)`
+after analysis, then `response(execution_id, version=...)` to read the same
+Backend-owned answer. A response contains named table, JSON and text parts and
+their declarations; updates create another revision for that exact execution.
+MCP exposes `epoch_publish_response` and `epoch_response` over the same methods.
+This publication path starts no agent or engine job. It requires the generated
+StratifyX 3.3 response API. Automatic supervisor response production and complete
+live research integration remain unfinished.
+
 ## Development checks
 
 Shared checks need no native SDK or Backend checkout:
@@ -36,6 +46,7 @@ python -m pip install 'jsonschema[format]>=4.23,<5' 'openapi-spec-validator>=0.7
 python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
 python tools/validate_saved_output_contract.py
+python tools/validate_research_response_contract.py
 ```
 
 For Python runtime tests, install a reviewed versioned StratifyX wheel from its

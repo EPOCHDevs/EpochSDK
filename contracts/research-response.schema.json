@@ -1,0 +1,227 @@
+{
+  "$defs": {
+    "JsonSchemaDocument": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "JsonValue": {},
+    "JsonValueOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "json",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "value"
+      ],
+      "title": "JsonValueOutput",
+      "type": "object"
+    },
+    "OutputValue": {
+      "discriminator": {
+        "mapping": {
+          "json": "#/$defs/JsonValueOutput",
+          "table": "#/$defs/TableValue",
+          "text": "#/$defs/TextValue"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/TableValue"
+        },
+        {
+          "$ref": "#/$defs/JsonValueOutput"
+        },
+        {
+          "$ref": "#/$defs/TextValue"
+        }
+      ]
+    },
+    "ResearchResponseContent": {
+      "additionalProperties": false,
+      "description": "Complete bounded selected values; never a preview presented as complete.",
+      "properties": {
+        "declarations": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "json": "openapi.json#/components/schemas/JsonOutputRequest",
+                "table": "openapi.json#/components/schemas/TableOutputRequest",
+                "text": "openapi.json#/components/schemas/TextOutputRequest"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "openapi.json#/components/schemas/TableOutputRequest"
+              },
+              {
+                "$ref": "openapi.json#/components/schemas/JsonOutputRequest"
+              },
+              {
+                "$ref": "openapi.json#/components/schemas/TextOutputRequest"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Declarations",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/OutputValue"
+          },
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "declarations",
+        "outputs"
+      ],
+      "title": "ResearchResponseContent",
+      "type": "object"
+    },
+    "TableValue": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "table",
+          "title": "Type",
+          "type": "string"
+        },
+        "schema": {
+          "items": {
+            "$ref": "openapi.json#/components/schemas/Column"
+          },
+          "title": "Schema",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {
+              "$ref": "openapi.json#/components/schemas/Cell"
+            },
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "schema",
+        "rows"
+      ],
+      "title": "TableValue",
+      "type": "object"
+    },
+    "TextValue": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plain",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "format",
+        "value"
+      ],
+      "title": "TextValue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One Backend-owned response revision for an exact execution. Complete bounded selected table, JSON and text values; notebook code and the existing agent use the same publisher.",
+  "properties": {
+    "execution_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Execution Id",
+      "type": "string"
+    },
+    "study_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Study Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "published_at_ms": {
+      "minimum": 0,
+      "title": "Published At Ms",
+      "type": "integer"
+    },
+    "content": {
+      "$ref": "#/$defs/ResearchResponseContent"
+    }
+  },
+  "required": [
+    "execution_id",
+    "study_id",
+    "version",
+    "published_at_ms",
+    "content"
+  ],
+  "title": "SavedResearchResponse",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
