@@ -10,9 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python/epoch-sdk/src"))
 
-from pydantic import TypeAdapter
-
 from epoch_sdk.research import ResearchFailure, ResearchResult
+from pydantic import TypeAdapter
 
 
 def project() -> dict:
