@@ -20,7 +20,8 @@ Repository = "https://github.com/EPOCHDevs/EpochSDK"
 
 [project.optional-dependencies]
 clients = ["langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1"]
-mcp = ["mcp>=2.3,<3", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1"]
+results = ["pyarrow>=26,<27"]
+mcp = ["mcp>=2.3,<3", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 test = ["pytest>=8,<10"]
 
 [project.scripts]

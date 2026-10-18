@@ -19,8 +19,9 @@ This repository does not turn one language implementation into the API authority
 
 The Python package supplies strict request/error contracts, actual-value output
 validation, a native-client access checker and a thin stateful supervisor/MCP
-adapter. The adapter returns native clarification questions and supports resuming
-the same thread or executing a saved study directly through Backend. See the
+adapter and a saved-output reader. The adapter returns native clarification questions and supports resuming
+the same thread, executing a saved study directly through Backend, or reading
+validated values from an explicit saved output mapping. See the
 [SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The complete
 named-output analysis flow and real-service proof are still being implemented.
 Package registry publication is separate; this is public source, not a released
@@ -34,6 +35,7 @@ Shared checks need no native SDK or Backend checkout:
 python -m pip install 'jsonschema[format]>=4.23,<5' 'openapi-spec-validator>=0.7,<0.9'
 python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
+python tools/validate_saved_output_contract.py
 ```
 
 For Python runtime tests, install a reviewed versioned StratifyX wheel from its

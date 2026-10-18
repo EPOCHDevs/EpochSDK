@@ -18,6 +18,10 @@ def _non_finite(value: str) -> object:
     raise ValueError(f"Non-finite JSON number is not supported: {value}")
 
 
+def parse_json(payload: str | bytes) -> object:
+    """Reject ambiguous keys/non-finite numbers before a typed consumer validates."""
+    return json.loads(payload, object_pairs_hook=_object, parse_constant=_non_finite)
+
+
 def parse_request[T: Contract](model: type[T], payload: str | bytes) -> T:
-    value: object = json.loads(payload, object_pairs_hook=_object, parse_constant=_non_finite)
-    return model.model_validate(value)
+    return model.model_validate(parse_json(payload))

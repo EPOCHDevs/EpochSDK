@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SavedOutputManifest",
+  "description": "A per-execution read receipt. The workflow/Backend owner must save its accepted declarations and exact artifact bindings; this is not another execution coordinator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["execution_id", "study_id", "declarations", "bindings"],
+  "properties": {
+    "execution_id": {"$ref": "#/$defs/NonBlank", "description": "Exact native Backend execution id, never a public admission-attempt id."},
+    "study_id": {"$ref": "#/$defs/NonBlank"},
+    "declarations": {
+      "type": "array", "minItems": 1,
+      "items": {"oneOf": [
+        {"$ref": "openapi.json#/components/schemas/TableOutputRequest"},
+        {"$ref": "openapi.json#/components/schemas/JsonOutputRequest"},
+        {"$ref": "openapi.json#/components/schemas/TextOutputRequest"}
+      ]}
+    },
+    "bindings": {
+      "type": "array", "minItems": 1,
+      "items": {"oneOf": [
+        {"$ref": "#/$defs/TableBinding"},
+        {"$ref": "#/$defs/JsonBinding"},
+        {"$ref": "#/$defs/TextBinding"}
+      ]}
+    }
+  },
+  "$defs": {
+    "NonBlank": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "TableBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "category", "table_index", "field_ids"],
+      "properties": {
+        "name": {"$ref": "openapi.json#/components/schemas/OutputName"},
+        "type": {"const": "table"},
+        "category": {"$ref": "#/$defs/NonBlank"},
+        "table_index": {"type": "integer", "minimum": 0},
+        "field_ids": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/NonBlank"}}
+      }
+    },
+    "JsonBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "category", "markdown_id"],
+      "properties": {
+        "name": {"$ref": "openapi.json#/components/schemas/OutputName"},
+        "type": {"const": "json"},
+        "category": {"$ref": "#/$defs/NonBlank"},
+        "markdown_id": {"$ref": "#/$defs/NonBlank"}
+      }
+    },
+    "TextBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "category", "markdown_id", "format"],
+      "properties": {
+        "name": {"$ref": "openapi.json#/components/schemas/OutputName"},
+        "type": {"const": "text"},
+        "category": {"$ref": "#/$defs/NonBlank"},
+        "markdown_id": {"$ref": "#/$defs/NonBlank"},
+        "format": {"enum": ["plain", "markdown"]}
+      }
+    }
+  }
+}

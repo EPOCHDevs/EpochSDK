@@ -1,8 +1,9 @@
 # Stateful supervisor adapter
 
 This adapter reuses the registered supervisor and native checkpoints. It handles
-communication, clarification and execution selection. It does **not** yet wire
-the declared named-output API to saved results or certify analytical correctness.
+communication, clarification, execution selection and explicit saved-output reads.
+It does **not** yet publish the named-output mapping automatically or certify
+analytical correctness.
 No real service run is claimed by the component tests. Review the agent shape
 and handoffs before exercising a real analysis or ingestion run.
 
@@ -131,6 +132,7 @@ An MCP host may call:
 | `epoch_resume` | Entire `waiting` result, answers keyed by interrupt ID | Resume the same checkpoint |
 | `epoch_execute_saved` | `reference`, `parameters.period`, optional `parameters.execution` | Submit directly to Backend |
 | `epoch_status` | `handle` | Read progress or the result after a UI resume; starts no run |
+| `epoch_outputs` | Saved output `manifest` | Read complete bounded native values and validate them; starts no run |
 
 Questions appear as readable text and structured data. Invalid tool arguments
 are tool errors. `needs_input`, `no_execution` and `execution_selected` are
@@ -147,8 +149,9 @@ UI resume, and direct saved-study submission.
 The supervisor interrupt/answer schema snapshot records its reviewed owner
 source; tests compare the SDK's wire shapes to that snapshot.
 
-The full milestone still needs declared output propagation, saved-result readers
-and validation, authenticated live SDK/MCP examples
+The [saved-output reader](saved-output-reader.md) accepts explicit mappings today.
+The full milestone still needs declared output propagation and persisted mapping
+publication/handoff, authenticated live SDK/MCP examples
 and the human UI handoff. Separate-attempt controllers and a new analysis graph
 are not assumed prerequisites; existing records and supervisor behavior must be
 checked for specific missing capabilities first. No retry/recovery subsystem,
