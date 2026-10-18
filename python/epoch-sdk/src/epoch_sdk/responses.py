@@ -97,9 +97,11 @@ async def assemble_response(
     complete bounded projection, independently of dashboard layout. JSON/text
     interpretations use evidence read by the caller. No engine work is started.
     """
-    from .saved_outputs import TableBinding, _table
+    from .saved_outputs import TableBinding, decode_saved_table
 
-    non_tables = [item for item in declarations if not isinstance(item, TableOutputRequest)]
+    non_tables: list[OutputRequest] = [
+        item for item in declarations if not isinstance(item, TableOutputRequest)
+    ]
     values: list[OutputValue] = validate_outputs(non_tables, list(interpreted))
     tables = [item for item in declarations if isinstance(item, TableOutputRequest)]
     sources = table_sources or []
@@ -140,7 +142,7 @@ async def assemble_response(
             table_index=0,
             field_ids=source.field_ids,
         )
-        value, expanded = _table(
+        value, expanded = decode_saved_table(
             bytes(data),
             declaration,
             binding,
