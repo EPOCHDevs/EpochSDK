@@ -94,3 +94,71 @@ def test_service_pairing_fails_before_a_model_call(monkeypatch, mismatch):
             "https://graph.invalid", "https://backend.invalid", "fixture", backend_sha, agent_sha,
         ))
     assert len(calls) == 2
+
+
+def native_thread():
+    policy = {"run_id": "model-one", "model": "provider-model-one",
+              "model_identity_source": "provider_response", "model_role": "supervisor",
+              "receipt_source": "production_policy"}
+    return {
+        "sdk_request_id": "request-one", "authority_turn_id": "user-turn:request-one",
+        "messages": [
+            {"id": "earlier-task", "type": "human", "content": "Old task"},
+            {"type": "ai", "tool_calls": [{"id": "old-call", "name": "discovery"}]},
+            {"id": "request-one", "type": "human", "content": "private-user-content"},
+            {"type": "ai", "response_metadata": {"epoch_model_call": policy},
+             "usage_metadata": {"input_tokens": 10, "output_tokens": 4, "total_tokens": 14},
+             "tool_calls": [{"id": "build-one", "name": "build_study", "args": {"private-tool-args": "omit"}}]},
+            {"type": "ai", "tool_calls": [{"id": "run-one", "name": "run_study"}]},
+            {"type": "ai", "tool_calls": [{"id": "publish-one", "name": "publish_response"}]},
+        ],
+        "next_action_outcomes": {
+            "build-one:build_study:study": {"tool_call_id": "build-one", "tool_name": "build_study", "status": "saved"},
+            "run-one:run_study:run": {"tool_call_id": "run-one", "tool_name": "run_study", "status": "completed", "execution_id": "execution-one"},
+        },
+    }
+
+
+def test_native_trace_records_current_calls_usage_and_chosen_execution(monkeypatch):
+    state = native_thread()
+
+    def respond(request):
+        assert request.url.path == "/threads/thread-one/state"
+        assert request.headers["Authorization"] == "Bearer fixture"
+        return httpx.Response(200, json={"values": state, "next": [], "interrupts": []})
+
+    client = httpx.AsyncClient
+    monkeypatch.setattr(proof.httpx, "AsyncClient", lambda **kwargs: client(
+        transport=httpx.MockTransport(respond), **kwargs,
+    ))
+    trace = asyncio.run(proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "request-one"))
+    result = completed(proof.load_case(CASE))
+    proof.verify_trace(trace, result)
+    assert [call.name for call in trace.tool_calls] == ["build_study", "run_study", "publish_response"]
+    assert trace.model_calls[0].usage.total_tokens == 14
+    assert "private-user-content" not in trace.model_dump_json()
+    assert "private-tool-args" not in trace.model_dump_json()
+    with pytest.raises(AssertionError, match="real-model proof"):
+        proof.verify_trace(trace.model_copy(update={"model_calls": []}), result)
+    changed = trace.model_copy(deep=True)
+    changed.outcomes["run-one:run_study:run"].execution_id = "another-execution"
+    with pytest.raises(AssertionError, match="completed-run outcome"):
+        proof.verify_trace(changed, result)
+    with pytest.raises(AssertionError, match="did not discover"):
+        proof.verify_trace(trace, result, requires_discovery=True)
+    before = trace.model_copy(update={"tool_calls": trace.tool_calls[:1]})
+    proof.verify_resume_trace(before, trace, no_new_discovery=True)
+    repeated = trace.model_copy(update={"tool_calls": [*trace.tool_calls, proof.ToolCall(id="new-discovery", name="discovery")]})
+    with pytest.raises(AssertionError, match="Discovery repeated"):
+        proof.verify_resume_trace(before, repeated, no_new_discovery=True)
+
+
+def test_native_trace_rejects_an_unrelated_current_user_turn(monkeypatch):
+    state = native_thread()
+    state["authority_turn_id"] = "user-turn:another-request"
+    client = httpx.AsyncClient
+    monkeypatch.setattr(proof.httpx, "AsyncClient", lambda **kwargs: client(
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, json={"values": state})), **kwargs,
+    ))
+    with pytest.raises(AssertionError, match="different current request"):
+        asyncio.run(proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "request-one"))

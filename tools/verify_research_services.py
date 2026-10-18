@@ -36,8 +36,9 @@ from epoch_sdk.research import (
     ResearchResult,
 )
 from epoch_sdk.supervisor import Answers, ChosenExecution, InProgress, NeedsInput
+from langgraph_sdk.client import LangGraphClient
 from mcp import Client, StdioServerParameters
-from pydantic import BaseModel, ConfigDict, TypeAdapter, model_validator
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 from stratifyx._release import SDK_RELEASE
 
 
@@ -47,6 +48,9 @@ class Case(BaseModel):
     request: RunRequest
     expected_table: TableValue
     expected_json: JsonValueOutput
+    requires_discovery: bool = False
+    require_discovery_before_clarification: bool = False
+    no_new_discovery_on_resume: bool = False
 
     @model_validator(mode="after")
     def expected_values(self):
@@ -60,6 +64,78 @@ class Case(BaseModel):
         if self.request.parameters is None or self.request.parameters.period is None:
             raise ValueError("Provide an explicit native period for the saved-study reuse check")
         return self
+
+
+class ModelPolicy(BaseModel):
+    """Read-only projection of EpochAI's ModelCallReceipt owner contract."""
+    model_config = ConfigDict(extra="ignore", strict=True)
+    run_id: str
+    model: str
+    model_identity_source: str
+    model_role: str
+    receipt_source: str
+
+
+class ResponseMetadata(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    epoch_model_call: ModelPolicy | None = None
+
+
+class Usage(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+
+
+class ToolCall(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    id: str
+    name: str
+
+
+class Message(BaseModel):
+    """Only identity, calls and usage are read; conversation content is omitted."""
+    model_config = ConfigDict(extra="ignore", strict=True)
+    id: str | None = None
+    type: str | None = None
+    role: str | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
+    response_metadata: ResponseMetadata = Field(default_factory=ResponseMetadata)
+    usage_metadata: Usage | None = None
+
+
+class Outcome(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    tool_call_id: str
+    tool_name: Literal["build_study", "run_study", "run_monte_carlo", "tune_study"]
+    status: Literal["saved", "completed", "failed", "cancelled", "not_started", "infeasible", "unknown"]
+    execution_id: str | None = None
+
+
+class ThreadState(BaseModel):
+    model_config = ConfigDict(extra="ignore", strict=True)
+    sdk_request_id: str
+    authority_turn_id: str
+    messages: list[Message]
+    # Native tool-call IDs own these map keys; outcome values stay closed.
+    next_action_outcomes: dict[str, Outcome] = Field(default_factory=dict)
+
+
+class ModelEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    policy: ModelPolicy
+    usage: Usage | None
+
+
+class TraceEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    thread_id: str
+    request_id: str
+    tool_calls: list[ToolCall]
+    model_calls: list[ModelEvidence]
+    # Map keys are protocol-owned native tool-call identities.
+    outcomes: dict[str, Outcome]
 
 
 class Receipt(BaseModel):
@@ -79,6 +155,7 @@ class Receipt(BaseModel):
     backend_git_sha: str | None = None
     agent_git_sha: str | None = None
     error: ErrorResponse | None = None
+    trace: TraceEvidence | None = None
     real_analysis_proven: bool = False
 
 
@@ -137,6 +214,67 @@ async def preflight(
     ):
         raise RuntimeError("The agent is not ready against the selected Backend")
     return native.git_sha, agent.deployment.git_sha
+
+
+async def capture_trace(
+    graph_url: str, token: str, thread_id: str, request_id: str,
+) -> TraceEvidence:
+    async with httpx.AsyncClient(
+        base_url=graph_url, headers={"Authorization": f"Bearer {token}"}, timeout=30,
+    ) as http:
+        snapshot = await LangGraphClient(http).threads.get_state(thread_id)
+    state = ThreadState.model_validate(snapshot["values"])
+    if state.sdk_request_id != request_id or state.authority_turn_id != "user-turn:" + request_id:
+        raise AssertionError("The retained thread belongs to a different current request")
+    anchor = next((index for index, message in enumerate(state.messages)
+                   if message.id == request_id and (message.type == "human" or message.role == "user")), None)
+    if anchor is None:
+        raise AssertionError("The accepted user-turn identity is absent from the thread")
+    messages = state.messages[anchor:]
+    calls = [call for message in messages for call in message.tool_calls]
+    call_ids = {call.id for call in calls}
+    return TraceEvidence(
+        thread_id=thread_id, request_id=request_id, tool_calls=calls,
+        model_calls=[ModelEvidence(policy=message.response_metadata.epoch_model_call,
+                                   usage=message.usage_metadata)
+                     for message in messages if message.response_metadata.epoch_model_call is not None],
+        outcomes={key: value for key, value in state.next_action_outcomes.items()
+                  if value.tool_call_id in call_ids},
+    )
+
+
+def verify_trace(trace: TraceEvidence, completed: ResearchCompleted, *, requires_discovery: bool = False) -> None:
+    if not trace.model_calls or not any(
+        call.policy.model not in {"", "?"} and call.usage is not None and call.usage.total_tokens > 0
+        for call in trace.model_calls
+    ):
+        raise AssertionError("A real-model proof needs source-owned model identity and token usage")
+    chosen_calls = {outcome.tool_call_id for outcome in trace.outcomes.values()
+                    if outcome.tool_name == "run_study" and outcome.status == "completed"
+                    and outcome.execution_id == completed.response.execution_id}
+    if not chosen_calls:
+        raise AssertionError("No native completed-run outcome identifies the saved answer's execution")
+    run = next((index for index, call in enumerate(trace.tool_calls)
+                if call.id in chosen_calls and call.name == "run_study"), None)
+    saved_builds = {outcome.tool_call_id for outcome in trace.outcomes.values()
+                    if outcome.tool_name == "build_study" and outcome.status == "saved"}
+    build = next((index for index, call in enumerate(trace.tool_calls)
+                  if call.id in saved_builds and call.name == "build_study"), None)
+    if run is None or build is None or build >= run or not any(
+        call.name == "publish_response" for call in trace.tool_calls[run + 1:]
+    ):
+        raise AssertionError("The thread does not show build -> chosen execution -> publish")
+    if requires_discovery and not any(call.name == "discovery" for call in trace.tool_calls[:build]):
+        raise AssertionError("The registered discovery case did not discover before building")
+
+
+def verify_resume_trace(before: TraceEvidence, after: TraceEvidence, *, no_new_discovery: bool) -> None:
+    if before.thread_id != after.thread_id or before.request_id != after.request_id:
+        raise AssertionError("Clarification moved to a different thread or request")
+    if after.tool_calls[:len(before.tool_calls)] != before.tool_calls:
+        raise AssertionError("The resumed tool history does not retain its prior prefix")
+    if no_new_discovery and any(call.name == "discovery" for call in after.tool_calls[len(before.tool_calls):]):
+        raise AssertionError("Discovery repeated after the registered clarification point")
 
 
 def load_case(path: Path) -> Case:
@@ -304,6 +442,7 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
     )
     receipt.checks.append("reviewed-services-paired-and-ready")
     waiting = None
+    previous_trace = None
     answers: dict[str, Answers] = {}
     if args.resume_from:
         previous = Receipt.model_validate_json(args.resume_from.read_text())
@@ -312,10 +451,16 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
         if args.answers is None:
             raise ValueError("Provide explicit native answers; recommendations are not auto-selected")
         waiting = previous.result
+        previous_trace = previous.trace
         answers = TypeAdapter(dict[str, Answers]).validate_python(parse_json(args.answers.read_text()))
     result = await research(args.mode, case, graph_url, backend_url, token, waiting, answers)
     receipt.result = result
     if isinstance(result, NeedsInput):
+        receipt.trace = await capture_trace(graph_url, token, result.handle.thread_id, result.handle.request_id)
+        if case.require_discovery_before_clarification and not any(
+            call.name == "discovery" for call in receipt.trace.tool_calls
+        ):
+            raise AssertionError("The registered clarification case did not first load discovery")
         print(result.feedback())
         receipt.checks.append("native-clarification-retained")
         return
@@ -324,6 +469,15 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
         return
     if not isinstance(result, ResearchCompleted):
         raise TypeError("The research request has no completed saved response")
+    thread_id = result.reusable_study.thread_id
+    if thread_id is None:
+        raise AssertionError("The completed research response has no native thread reference")
+    receipt.trace = await capture_trace(graph_url, token, thread_id, result.request_id)
+    verify_trace(receipt.trace, result, requires_discovery=case.requires_discovery)
+    if previous_trace is not None:
+        verify_resume_trace(previous_trace, receipt.trace, no_new_discovery=case.no_new_discovery_on_resume)
+        receipt.checks.append("clarification-retains-thread-and-tool-history")
+    receipt.checks.append("native-tool-sequence-and-model-usage")
     verify_values(case, result)
     receipt.checks.extend(["actual-values", "exact-execution-linkage"])
     await fresh_read(args.mode, backend_url, token, result)

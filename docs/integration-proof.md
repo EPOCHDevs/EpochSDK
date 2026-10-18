@@ -19,6 +19,12 @@ vendor availability affecting it. It does not prove live provider discovery.
 The complete milestone also needs a separate approved data-discovery case and
 clarification after discovery, as recorded in ENG-2047.
 
+For those cases, register `requires_discovery`,
+`require_discovery_before_clarification` and `no_new_discovery_on_resume` as
+appropriate. The verifier then checks the observed native call sequence and
+retained prefix across the explicit resume. It does not infer discovery from
+the assistant's explanation.
+
 For an authorized real run, configure `EPOCH_GRAPH_URL`, `EPOCH_BACKEND_URL` and
 `EPOCH_TOKEN` in the environment. Optional `EPOCH_ASSISTANT_ID` and `EPOCH_UI_URL`
 use the same settings as the SDK and MCP. Do not put credentials in a case or
@@ -41,9 +47,13 @@ No real service run was performed merely by preparing this runner.
 
 On success the runner checks:
 
-1. Exact table values, JSON values, declarations and execution/study linkage.
-2. A fresh client returns the same pinned answer with an unreachable graph URL.
-3. Running the saved study creates a different completed native execution of the
+1. The native thread retains the exact SDK request and user-turn identities.
+   Source-owned model receipts/token usage and build -> chosen run -> publish
+   tool calls are captured; the completed-run outcome must identify the response's
+   actual execution. Conversation content and tool arguments are omitted.
+2. Exact table values, JSON values, declarations and execution/study linkage.
+3. A fresh client returns the same pinned answer with an unreachable graph URL.
+4. Running the saved study creates a different completed native execution of the
    same study while the graph URL remains unreachable.
 
 The separate native execution read is available as `EpochClient.execution` and
