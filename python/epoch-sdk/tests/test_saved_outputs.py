@@ -142,6 +142,7 @@ async def native_backend(
     status: str = "completed",
     owner_status: int = 200,
     definition_id: str = "study-one",
+    source_stream: httpx.AsyncByteStream | None = None,
 ):
     calls: list[httpx.Request] = []
     source = arrow_bytes() if data is None else data
@@ -184,6 +185,8 @@ async def native_backend(
             assert request.url.params["category"] == "ALL"
             return httpx.Response(200, json=dashboard() if schema is None else schema)
         if request.url.path == "/api/v1/studies/executions/run-one/dashboard/data/native-data":
+            if source_stream is not None:
+                return httpx.Response(200, stream=source_stream)
             return httpx.Response(
                 200, content=source, headers={"Content-Type": "application/vnd.apache.arrow.file"}
             )
@@ -346,6 +349,28 @@ def test_complete_result_limits_fail_instead_of_returning_partial_rows(
                     backend, only_table(), max_bytes=max_bytes, max_rows=max_rows
                 )
         assert error.value.error.code == "FETCH_LIMIT_EXCEEDED"
+
+    asyncio.run(scenario())
+
+
+def test_native_http_stream_is_closed_immediately_when_a_byte_limit_stops_the_read() -> None:
+    class Stream(httpx.AsyncByteStream):
+        closed = False
+
+        async def __aiter__(self):
+            yield b"x" * 1024
+            yield b"unread remainder"
+
+        async def aclose(self):
+            self.closed = True
+
+    async def scenario() -> None:
+        stream = Stream()
+        async with native_backend(source_stream=stream) as (backend, _):
+            with pytest.raises(EpochError) as error:
+                await read_saved_outputs(backend, only_table(), max_bytes=100)
+            assert error.value.error.code == "FETCH_LIMIT_EXCEEDED"
+            assert stream.closed
 
     asyncio.run(scenario())
 

@@ -344,20 +344,23 @@ async def read_saved_outputs(
                     "The exact saved table binding is missing or ambiguous.", execution_id
                 )
             data = bytearray()
-            async for chunk in backend.studies_dashboard.get_chart_table_data_as_arrow_ipc(
-                execution_id,
-                tables[0].data_id,
-                category=binding.category,
-                request_options={"max_retries": 0},
+            async with (
+                backend.studies_dashboard.with_raw_response.get_chart_table_data_as_arrow_ipc(
+                    execution_id,
+                    tables[0].data_id,
+                    category=binding.category,
+                    request_options={"max_retries": 0},
+                ) as response
             ):
-                used_bytes += len(chunk)
-                if used_bytes > max_bytes:
-                    raise _failure(
-                        "FETCH_LIMIT_EXCEEDED",
-                        "Complete saved outputs exceed the byte limit.",
-                        execution_id,
-                    )
-                data.extend(chunk)
+                async for chunk in response.data:
+                    used_bytes += len(chunk)
+                    if used_bytes > max_bytes:
+                        raise _failure(
+                            "FETCH_LIMIT_EXCEEDED",
+                            "Complete saved outputs exceed the byte limit.",
+                            execution_id,
+                        )
+                    data.extend(chunk)
             try:
                 value, expanded = _table(
                     bytes(data),
