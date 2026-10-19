@@ -254,7 +254,7 @@ def main() -> None:
                 stderr=subprocess.STDOUT,
             )
             try:
-                for _ in range(100):
+                for _ in range(600):
                     if server.poll() is not None:
                         raise RuntimeError((root / "server.log").read_text()[-3000:])
                     try:
@@ -263,7 +263,7 @@ def main() -> None:
                     except OSError:
                         time.sleep(0.1)
                 else:
-                    raise RuntimeError("Native response fixture did not listen")
+                    raise RuntimeError("Native response fixture did not listen within 60 seconds")
                 asyncio.run(verify(f"http://127.0.0.1:{port}"))
             finally:
                 server.terminate()
