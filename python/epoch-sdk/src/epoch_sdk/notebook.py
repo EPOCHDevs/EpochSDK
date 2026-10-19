@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from typing import cast
 
 import ipywidgets as widgets  # pyright: ignore[reportMissingTypeStubs]
-from IPython.display import HTML, JSON, Markdown, display  # pyright: ignore[reportUnknownVariableType]
+from IPython.display import HTML, JSON, display  # pyright: ignore[reportUnknownVariableType]
+from markdown_it import MarkdownIt
 from pydantic import TypeAdapter
 
 from .errors import EpochError
@@ -27,6 +28,16 @@ from .session import (
 from .supervisor import Answer, Answers, NeedsInput, Question
 
 _selection = TypeAdapter(int | tuple[int, ...] | None)
+_markdown = MarkdownIt("commonmark", {"html": False}).enable("table")
+
+
+def _markdown_view(value: str) -> widgets.HTML:
+    # A normal HTML widget does not opt into HTMLMath/MathJax. Financial prose
+    # such as "$87 billion to $136 billion" must remain literal currency while
+    # headings, emphasis, links, code and tables retain Markdown formatting.
+    rendered = widgets.HTML(value=_markdown.render(value))
+    rendered.add_class("jp-RenderedHTMLCommon")  # pyright: ignore[reportUnknownMemberType]
+    return rendered
 
 
 @dataclass
@@ -275,7 +286,7 @@ class NotebookView:
             else:
                 with self.answer_output:
                     display(
-                        Markdown(part.value)
+                        _markdown_view(part.value)
                         if part.format == "markdown"
                         else HTML(
                             '<pre style="white-space:pre-wrap">'

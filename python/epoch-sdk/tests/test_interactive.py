@@ -14,12 +14,30 @@ from rich.console import Console
 from test_session import StreamService
 from test_supervisor import INTERRUPT
 
-from epoch_sdk.notebook import NotebookView
+from epoch_sdk.notebook import NotebookView, _markdown_view
 from epoch_sdk.presentation import ui_text
 from epoch_sdk.research import ResearchCompleted
 from epoch_sdk.session import NativeUIMessage
 from epoch_sdk.supervisor import GraphInterrupt, NeedsInput, WorkflowHandle
 from epoch_sdk.terminal import TerminalView
+
+
+def test_notebook_markdown_preserves_currency_formatting_and_literal_code():
+    text = "**Cash flow** rose from $87.582 billion to $136.162 billion.\n\n`$literal`"
+    rendered = _markdown_view(text)
+    assert type(rendered) is widgets.HTML
+    assert "$87.582 billion to $136.162 billion" in rendered.value
+    assert "<strong>Cash flow</strong>" in rendered.value
+    assert "<code>$literal</code>" in rendered.value
+
+
+def test_notebook_markdown_escapes_raw_html_and_keeps_tables():
+    rendered = _markdown_view(
+        "<script>bad()</script>\n\n| Label | Value |\n| --- | --- |\n| Cash | $12 |"
+    ).value
+    assert "<script>" not in rendered
+    assert "&lt;script&gt;" in rendered
+    assert "<table>" in rendered and "$12" in rendered
 
 
 def pending():

@@ -18,6 +18,12 @@ resumes the native checkpoint, and displays the saved answer once. The returned
 revision, requested named parts, source execution and reusable study reference.
 Prepared study execution remains the separate `execute_saved` action.
 
+Notebook Markdown uses CommonMark formatting in a normal HTML widget. Currency
+such as `$87 billion to $136 billion` stays literal instead of becoming an
+inline math expression. Code, emphasis, links and Markdown tables retain their
+formatting; raw HTML is escaped. This changes presentation only, not the saved
+answer or its values.
+
 ## Questions and reconnect
 
 Notebook replies use asynchronous widgets in the running cell. Select an option
