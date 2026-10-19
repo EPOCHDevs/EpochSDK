@@ -1,5 +1,5 @@
 {
-  "description": "Five real US equities desk scenarios, two saved-evidence output variants, and one optional clarification walkthrough. Cases are requests, not executed research findings.",
+  "description": "Short US equities desk requests: five research cases, two saved-result format changes and an optional clarification walkthrough. Context describes data and business assumptions; outputs declare the answer.",
   "cases": [
     {
       "id": "msft_fundamentals",
@@ -67,5 +67,6 @@
       "family": "single_asset_study",
       "kind": "clarification"
     }
-  ]
+  ],
+  "request_revision": "desk-v2"
 }

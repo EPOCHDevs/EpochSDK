@@ -1,16 +1,8 @@
 {
-  "task": "Prepare a US large-cap momentum shortlist for a portfolio manager. Using a captured current S&P 500 roster and prices through the completed 2026-10-16 session, retain stocks above their 200-session moving average and rank by their 12-minus-1-month price momentum. Return up to 20 names with sector, three-month return and 20-session average daily dollar volume, plus a table showing coverage and exclusions. Return tables only.",
+  "task": "Which S&P 500 names should be on our momentum watchlist? Give me the top 20 above their 200-day average, ranked by 12–1 month momentum.",
   "context": [
-    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
-    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
-    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
-    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
-    "Use the current S&P 500 constituent snapshot discovered for this run and record its actual retrieval timestamp. This is a present-universe desk screen using a fixed price cutoff, not a historical index backtest or a point-in-time membership claim.",
-    "Price cutoff is 2026-10-16, the latest completed US session when this case was prepared. Keep it fixed for reproducibility; changing the cutoff or refreshing membership intentionally requires a new research operation ID.",
-    "Use configured vendor-native daily data and preserve its actual definition. Do not claim independently verified regular-session or auction prints when the metadata does not establish that basis. Momentum is C(t-21)/C(t-252)-1 and three-month return is C(t)/C(t-63)-1 on split-adjusted closes; these are price returns. The SMA is the trailing 200-session mean including t. No future prices may enter the screen.",
-    "Only eligible names enter the ranking. Sort momentum descending, break exact ties by ticker ascending, and assign contiguous ranks. Return min(20, eligible_count), without duplicate tickers or invented replacement names.",
-    "Load the complete captured roster, rather than silently screening only a truncated subset. Record coverage counts and missing-data exclusions. Use actual traded-dollar volume with consistent price/share split units; do not multiply a dividend-adjusted close by raw historical volume.",
-    "Persist company/sector labels, rank, metrics and the coverage row in the saved native results so an output-only JSON follow-up can use the exact same evidence without a new universe lookup."
+    "Current S&P 500 membership snapshot, with daily prices through 2026-10-16; this is a current-universe screen, not a historical membership backtest.",
+    "Use split-adjusted closes for price returns and compatible price/share units for dollar volume. The vendor daily feed does not verify exact regular-session or auction prints."
   ],
   "parameters": {
     "period": {

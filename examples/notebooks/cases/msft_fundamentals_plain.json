@@ -1,9 +1,7 @@
 {
-  "task": "Using only the already completed MSFT fundamentals execution identified in the context, publish the same FY2023–FY2025 findings as a plain-text desk brief. Reuse the saved fiscal-year evidence; do not discover data, rebuild the study or execute another job.",
+  "task": "Turn the Microsoft review into a short plain-text brief for the desk, using the same saved results.",
   "context": [
-    "Output-only follow-up to msft_fundamentals. The notebook supplies the exact authorized study, execution and original saved answer identities when loading this file.",
-    "Keep all dates, USD values, growth, capex sign and cash-conversion definitions from the source answer. If the required saved fields are missing, report the limitation instead of fetching newer statements.",
-    "Publish only the requested plain-text part. Keep the original answer revision unchanged; do not repeat a final assistant narrative."
+    "Use the completed FY2023–FY2025 MSFT review linked by the notebook, keeping its original source snapshot rather than refreshing the statements."
   ],
   "outputs": [
     {

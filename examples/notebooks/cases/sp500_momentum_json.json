@@ -1,9 +1,7 @@
 {
-  "task": "Using only the already completed S&P 500 screener execution identified in the context, publish the exact same shortlist and coverage as JSON. Preserve its snapshot, price cutoff, row order, values and exclusions. Do not refresh the roster, rediscover prices, rebuild or execute another job.",
+  "task": "Give me that same S&P 500 shortlist and coverage as JSON, keeping the original order and snapshot.",
   "context": [
-    "Output-only follow-up to sp500_momentum_screener. The notebook supplies the exact authorized study, execution and original saved answer identities when loading this file.",
-    "Read every row from the saved shortlist and coverage relations. Preserve the rank order and original fractional values. Decode native int64 cells as JSON integers. If the saved fields are missing, report the gap rather than fetching fresh data.",
-    "Publish only the requested JSON part. This creates a distinct answer for the follow-up without overwriting the original answer revision."
+    "Use the completed screen linked by the notebook, with the original membership, price cutoff and exclusions rather than a refreshed screen."
   ],
   "outputs": [
     {

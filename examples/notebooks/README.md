@@ -3,16 +3,18 @@
 Open **01_research_and_execute.ipynb** first. Select the **Epoch SDK (local
 prototype)** kernel. All case files live in the **cases** subfolder beside the
 notebooks; [the case list](cases/README.md) explains the desk questions, output
-formats and fixed assumptions.
+formats and data assumptions. Each task is one or two short sentences; context
+describes the data and business assumptions, while `outputs` declares the answer.
 
 The five scenarios use real vendor data: MSFT financial quality, MSFT risk versus
 SPY, an AAPL trend filter, an S&P 500 momentum shortlist, and QQQ/SPY sensitivity
 to US Treasury yield changes. Two further requests change the format of existing
 MSFT/screener evidence. No market result or winning backtest has been pre-filled.
 
-**Status:** requests and notebooks are validated offline. Their market-data
-research cells have not yet been run end to end. Earlier supplied-data SDK/MCP
-proof remains documented separately; it does not prove these new cases.
+**Request revision:** `desk-v2` uses shorter, natural desk requests. Earlier live
+acceptance covered MSFT fundamentals, risk JSON and the saved plain-text variant
+with more explicit requests. This revision needs its own live acceptance; those
+earlier runs do not prove that the shorter requests work.
 
 ## Notebook order
 
@@ -50,8 +52,10 @@ from the beginning. Each file contains ordinary SDK `task`, `context`,
 `cases/index.json` is a local catalogue, not an API request; it is not sent to Epoch.
 
 IDs include the case name and `ATTEMPT`, for example
-`notebook-demo-msft_fundamentals-01-research` and
-`notebook-demo-msft_fundamentals-01-execute`. Keep the same attempt to reconnect
+`notebook-demo-msft_fundamentals-desk-v2-01-research` and
+`notebook-demo-msft_fundamentals-desk-v2-01-execute`. The default
+`ATTEMPT = "desk-v2-01"` keeps these changed requests separate from earlier runs.
+Keep the same attempt to reconnect
 after a kernel restart. Identical accepted inputs attach; changed accepted inputs
 require a new attempt. `EPOCH_NOTEBOOK_PREFIX` can provide a separate namespace.
 

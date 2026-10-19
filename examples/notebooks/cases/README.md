@@ -1,8 +1,17 @@
 # US equities desk case list
 
-These are runnable requests, not completed findings. Open the JSON beside this
-file to see the full natural-language question, assumptions and output contracts.
+Each case is an ordinary desk request: a short `task`, a few `context` items
+describing the data and business assumptions, and separate `outputs` for the
+answer formats and fields. Users do not need to describe Epoch's internal tools,
+SQL, publishing process or dashboard behavior.
+
+For example, the MSFT task is: “Has Microsoft's growth become more cash-generative
+over FY2023–FY2025? Highlight what changed in margins, capex and cash conversion.”
+Its context identifies annual statements, USD and the cash-flow definitions; its
+outputs request a fiscal-year table and a short Markdown memo.
+
 Use notebook 01 for the five base scenarios, then notebook 03 for output variants.
+Open the JSON beside this file to inspect each complete request.
 
 | Order | Request file | Desk question | Published answer |
 | --- | --- | --- | --- |
@@ -19,7 +28,10 @@ optional extra variant for notebook 02. It intentionally asks one fiscal-year
 confirmation, then continues the same real-company review. It is not a sixth
 research scenario or a requirement that complete requests ask extra questions.
 
-## Fixed meanings
+## Data and interpretation
+
+The notes below explain the financial definitions used by the output schemas and
+the checks. They are not an additional prompt sent to the agent.
 
 - **MSFT statements:** annual fiscal periods, with FY2022 revenue as the growth
   baseline. FCF is operating cash flow minus positive capex; cash conversion is
@@ -31,9 +43,8 @@ research scenario or a requirement that complete requests ask extra questions.
 - **Strategy:** AAPL, 2016–2025, one long position or cash, 200-session SMA,
   completed-close decisions and next vendor daily-open execution. The vendor's
   daily metadata does not establish exact session/auction prints; disclose that
-  limitation. This explicit prototype basis was approved on 2026-10-19 after
-  the first strict-session attempt stopped without executing. Use a new attempt
-  ID for this revised request; the original attempt remains part of the history.
+  limitation. This prototype data basis was approved on 2026-10-19 after
+  the first strict-session attempt stopped without executing.
   USD 1 million initial cash, 10 bps one-way native commission as the simplified
   all-in transaction cost, no additional slippage, zero cash interest and no
   leverage. The comparator is gross analytical buy-and-hold total return. The
@@ -64,10 +75,16 @@ Native table int64 cells are decimal strings; their JSON counterparts are
 integers. Large result sets belong in paged native tables; this small, at-most-20
 shortlist is deliberately suitable for inline JSON.
 
-## Review status
+## Request revision and acceptance
 
-Requests, schemas, notebook syntax and local checking helpers are validated
-offline. No real vendor/model case has been executed as part of preparing these
-files. Financial values must be independently reconciled during live review;
-do not treat generated JSON, prose or a successful engine status as that proof.
-Unavailable data or modeling capability must stay an explicit gap.
+`desk-v2` replaces the long test-style tasks and contexts with short desk requests.
+The parameters and output declarations are unchanged. The notebooks default to
+`ATTEMPT = "desk-v2-01"`, with the same value for `BASE_ATTEMPT` in notebook 03,
+so changed requests do not collide with accepted earlier operations. Keep that
+ID to reconnect; choose another attempt when intentionally changing the request.
+
+Earlier live acceptance covered MSFT fundamentals, MSFT risk JSON and the MSFT
+plain-text variant using the earlier, more explicit requests. Those results do
+not establish acceptance of this shorter revision. Its actual cells and traces
+must be reviewed separately. Shape checks and a successful engine status do not
+replace an independent financial/source audit.
