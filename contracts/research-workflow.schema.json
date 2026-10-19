@@ -95,6 +95,10 @@
     "ResearchAccepted": {
       "additionalProperties": false,
       "properties": {
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
         "request_id": {
           "title": "Request Id",
           "type": "string"
@@ -115,6 +119,10 @@
     "ResearchCompleted": {
       "additionalProperties": false,
       "properties": {
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
         "request_id": {
           "title": "Request Id",
           "type": "string"
@@ -224,6 +232,18 @@
           },
           "title": "Execution Ids Before",
           "type": "array"
+        },
+        "operation_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Id"
         },
         "outcome_ids_before": {
           "items": {

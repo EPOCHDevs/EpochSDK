@@ -1,5 +1,8 @@
 # Epoch SDK
 
+Readable operation IDs reconnect notebooks and MCP callers to the same research
+or prepared execution. See [reconnect usage and API semantics](docs/reconnect-operations.md).
+
 Research with an explicit output contract through `EpochClient.research`,
 `resume_research` and `research_status`. The result includes a saved response with
 the requested named table, JSON and text parts. Both notebooks and MCP use this

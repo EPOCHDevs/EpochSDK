@@ -8,9 +8,22 @@ import os
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent
 
-from .contracts import Contract, ErrorResponse, RunParameters, RunRequest
+from .contracts import (
+    Contract,
+    ErrorResponse,
+    OutputRequest,
+    RunParameters,
+    RunRequest,
+    TextOutputRequest,
+)
 from .errors import EpochError
-from .research import EpochClient, ResearchCompleted, ResearchError, ResearchResult
+from .research import (
+    EpochClient,
+    ExecutionAccepted,
+    ResearchCompleted,
+    ResearchError,
+    ResearchResult,
+)
 from .responses import ResearchResponseContent
 from .saved_outputs import SavedOutputManifest
 from .supervisor import (
@@ -80,22 +93,33 @@ def create_server(client: SupervisorClient) -> MCPServer:
             structured_content=response.to_wire(),
         )
 
-    async def research(request: RunRequest, thread_id: str | None = None) -> CallToolResult:
+    async def research(
+        request: RunRequest, thread_id: str | None = None, operation_id: str | None = None
+    ) -> CallToolResult:
         """Research through Epoch's existing supervisor and receive a validated saved
         response with the requested named table/JSON/text parts. Clarification returns
         questions and a resumable handle. Prepared-work execution is a separate action.
+        Supply operation_id before a long wait; reuse it with the same inputs to reconnect.
         """
         try:
-            return research_result(await research_client.research(request, thread_id=thread_id))
+            return research_result(
+                await research_client.research(
+                    request, thread_id=thread_id, operation_id=operation_id
+                )
+            )
         except EpochError as error:
             return research_error(error)
 
-    async def research_status(request_id: str) -> CallToolResult:
+    async def research_status(
+        request_id: str | None = None, operation_id: str | None = None
+    ) -> CallToolResult:
         """Read the accepted research request using a fresh client. A completed
         request reads its pinned response revision directly; starts no graph run.
         """
         try:
-            return research_result(await research_client.research_status(request_id))
+            return research_result(
+                await research_client.research_status(request_id, operation_id=operation_id)
+            )
         except EpochError as error:
             return research_error(error)
 
@@ -134,11 +158,32 @@ def create_server(client: SupervisorClient) -> MCPServer:
 
     server.tool(name="epoch_execution", structured_output=True)(execution)
 
-    async def run(task: str, thread_id: str | None = None) -> CallToolResult:
+    async def run(
+        task: str, thread_id: str | None = None, operation_id: str | None = None
+    ) -> CallToolResult:
         """Communicate with Epoch's existing supervisor. A needs_input result retains
         the thread and contains questions; answer them with epoch_resume or open
         its conversation URL. Execution selection is not output certification.
+        With operation_id, research and publish a concise Markdown answer; repeated
+        identical inputs attach to that operation. Use epoch_research for table/JSON parts.
         """
+        if operation_id is not None:
+            outputs: list[OutputRequest] = [
+                TextOutputRequest(
+                    name="answer",
+                    type="text",
+                    format="markdown",
+                    instructions="Answer the task concisely using the research evidence.",
+                )
+            ]
+            return await research(
+                RunRequest(
+                    task=task,
+                    outputs=outputs,
+                ),
+                thread_id=thread_id,
+                operation_id=operation_id,
+            )
         return _result(await client.run(task, thread_id=thread_id))
 
     async def resume(waiting: NeedsInput, responses: dict[str, Answers]) -> CallToolResult:
@@ -146,25 +191,61 @@ def create_server(client: SupervisorClient) -> MCPServer:
         Use interrupt ids and zero-based question/option indices from needs_input.
         Recommendations are advice; this tool never selects answers automatically.
         """
+        if waiting.handle.operation_id is not None:
+            return await resume_research(waiting, responses)
         return _result(await client.resume(waiting, responses))
 
-    async def execute_saved(reference: SavedStudy, parameters: RunParameters) -> CallToolResult:
+    async def execute_saved(
+        reference: SavedStudy | str, parameters: RunParameters, operation_id: str | None = None
+    ) -> CallToolResult:
         """Execute a saved immutable study directly through Backend using an explicit
         period and optional execution overrides. Makes no discovery or supervisor call.
         The returned engine status may still be queued or running.
         """
         if parameters.period is None:
             raise ValueError("Provide parameters.period for the saved-study execution")
-        return _result(
-            await client.execute_saved(
-                reference, period=parameters.period, execution=parameters.execution
+        try:
+            value = await research_client.execute_saved(
+                reference,
+                period=parameters.period,
+                execution=parameters.execution,
+                operation_id=operation_id,
             )
-        )
+            if isinstance(value, ExecutionAccepted):
+                return CallToolResult(
+                    content=[
+                        TextContent(
+                            type="text",
+                            text="Execution admitted. Reattach using the same operation ID.",
+                        )
+                    ],
+                    structured_content=value.to_wire(),
+                )
+            return _result(value)
+        except EpochError as error:
+            return research_error(error)
+
+    async def execution_operation(operation_id: str) -> CallToolResult:
+        """Reconnect to the same prepared execution by readable handle. Starts no job."""
+        try:
+            value = await research_client.execution_operation(operation_id)
+            if isinstance(value, ExecutionAccepted):
+                return CallToolResult(
+                    content=[
+                        TextContent(type="text", text="Execution admission is still running.")
+                    ],
+                    structured_content=value.to_wire(),
+                )
+            return _result(value)
+        except EpochError as error:
+            return research_error(error)
 
     async def status(handle: WorkflowHandle) -> CallToolResult:
         """Read the same request after it continues in Epoch's UI. Starts no graph run
         and never resubmits the task. Returns pending questions or the current result.
         """
+        if handle.operation_id is not None:
+            return await research_status(request_id=handle.request_id)
         return _result(await client.status(handle))
 
     async def outputs(manifest: SavedOutputManifest) -> CallToolResult:
@@ -194,6 +275,7 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_run", structured_output=True)(run)
     server.tool(name="epoch_resume", structured_output=True)(resume)
     server.tool(name="epoch_execute_saved", structured_output=True)(execute_saved)
+    server.tool(name="epoch_execution_operation", structured_output=True)(execution_operation)
     server.tool(name="epoch_status", structured_output=True)(status)
     server.tool(name="epoch_outputs", structured_output=True)(outputs)
 

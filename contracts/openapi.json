@@ -1275,6 +1275,1417 @@
           "null"
         ]
       },
+      "Native_CommissionType": {
+        "enum": [
+          "FlatFee",
+          "Percent",
+          "Bps",
+          "MakerTaker",
+          "PerShare",
+          "USEquity",
+          "Futures",
+          "Tiered"
+        ],
+        "type": "string",
+        "x-native-schema-name": "CommissionType"
+      },
+      "Native_CountryCurrency": {
+        "enum": [
+          "AED",
+          "AFN",
+          "ALL",
+          "AMD",
+          "ANG",
+          "ARS",
+          "AUD",
+          "AWG",
+          "BAM",
+          "BBD",
+          "BDT",
+          "BGN",
+          "BHD",
+          "BIF",
+          "BMD",
+          "BND",
+          "BOB",
+          "BOC",
+          "BRL",
+          "BRP",
+          "BSD",
+          "BTN",
+          "BWP",
+          "BZD",
+          "CAD",
+          "CDF",
+          "CHF",
+          "CLP",
+          "CNH",
+          "CNY",
+          "COP",
+          "CRC",
+          "CUP",
+          "CVE",
+          "CYP",
+          "CZK",
+          "DCN",
+          "DJF",
+          "DKK",
+          "DOP",
+          "DTR",
+          "DZD",
+          "ECB",
+          "EGP",
+          "ETB",
+          "EUR",
+          "FJD",
+          "GBP",
+          "GEL",
+          "GHS",
+          "GMD",
+          "GNF",
+          "GTQ",
+          "GYD",
+          "HKD",
+          "HNL",
+          "HRK",
+          "HTG",
+          "HUF",
+          "HUY",
+          "IDR",
+          "ILS",
+          "INR",
+          "IQD",
+          "IRR",
+          "ISK",
+          "JMD",
+          "JOD",
+          "JPY",
+          "KES",
+          "KGS",
+          "KHR",
+          "KMF",
+          "KRW",
+          "KWD",
+          "KYD",
+          "KZT",
+          "LAK",
+          "LBP",
+          "LKR",
+          "LRD",
+          "LSL",
+          "LTL",
+          "LYD",
+          "MAD",
+          "MDL",
+          "MGA",
+          "MKD",
+          "MMK",
+          "MOP",
+          "MTL",
+          "MUR",
+          "MVR",
+          "MWK",
+          "MXN",
+          "MYR",
+          "MZN",
+          "NAD",
+          "NGN",
+          "NIO",
+          "NOK",
+          "NPR",
+          "NZD",
+          "OMR",
+          "PAB",
+          "PEN",
+          "PGK",
+          "PHP",
+          "PKR",
+          "PLN",
+          "PYG",
+          "QAR",
+          "RON",
+          "RSD",
+          "RUB",
+          "RWF",
+          "SAR",
+          "SCR",
+          "SDG",
+          "SEK",
+          "SGD",
+          "SHP",
+          "SOS",
+          "SSG",
+          "SUS",
+          "SVC",
+          "SZL",
+          "THB",
+          "TJS",
+          "TMT",
+          "TND",
+          "TRY",
+          "TTD",
+          "TWD",
+          "TZS",
+          "UAH",
+          "UGX",
+          "USD",
+          "UYU",
+          "UZS",
+          "VES",
+          "VND",
+          "XAF",
+          "XAG",
+          "XAU",
+          "XCD",
+          "XDR",
+          "XOF",
+          "XPF",
+          "YER",
+          "ZAR",
+          "ZMW"
+        ],
+        "type": "string",
+        "x-native-schema-name": "CountryCurrency"
+      },
+      "Native_CreateSdkExecutionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "operation_id": {
+            "description": "Owner-scoped create-or-attach handle. Matching accepted inputs attach to the original operation; changed inputs return 409.",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/Native_SdkContract_RunParameters"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "study_id": {
+            "type": "string"
+          },
+          "thread_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "study_id",
+          "source_execution_id",
+          "parameters"
+        ],
+        "title": "epoch_stratifyx::server::CreateSdkExecutionRequest",
+        "type": "object",
+        "x-native-schema-name": "CreateSdkExecutionRequest"
+      },
+      "Native_CreateSdkRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "launch": {
+            "$ref": "#/components/schemas/Native_SdkResearchLaunch"
+          },
+          "operation_id": {
+            "description": "Owner-scoped create-or-attach handle. Matching accepted inputs attach to the original operation; changed inputs return 409.",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/Native_SdkContract_RunRequest"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "epoch_stratifyx::server::CreateSdkRequest",
+        "type": "object",
+        "x-native-schema-name": "CreateSdkRequest"
+      },
+      "Native_DatePeriodConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "DatePeriodConfig"
+      },
+      "Native_ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalContext": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "timestamp"
+        ],
+        "title": "epoch_stratifyx::openapi::ErrorResponse",
+        "type": "object",
+        "x-native-schema-name": "ErrorResponse"
+      },
+      "Native_ExecutionCostConfig_CommissionType": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction_CommissionType"
+            },
+            "type": "object"
+          },
+          "default_model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction_CommissionType"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction_CommissionType"
+          },
+          "symbol_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction_CommissionType"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "ExecutionCostConfig_CommissionType"
+      },
+      "Native_ExecutionCostConfig_SlippageType": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction_SlippageType"
+            },
+            "type": "object"
+          },
+          "default_model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction_SlippageType"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction_SlippageType"
+          },
+          "symbol_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction_SlippageType"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "ExecutionCostConfig_SlippageType"
+      },
+      "Native_ExecutionOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "cash": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "commission": {
+            "$ref": "#/components/schemas/Native_ExecutionCostConfig_CommissionType"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Native_CountryCurrency"
+          },
+          "futures_tick_snapshot": {
+            "$ref": "#/components/schemas/Native_FuturesTickSnapshot"
+          },
+          "slippage": {
+            "$ref": "#/components/schemas/Native_ExecutionCostConfig_SlippageType"
+          }
+        },
+        "title": "epoch_stratifyx::ExecutionOptions",
+        "type": "object",
+        "x-native-schema-name": "ExecutionOptions"
+      },
+      "Native_FuturesTickRule": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "contract": {
+            "type": "string"
+          },
+          "effective_from_ns": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "effective_to_ns": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "price_kind": {
+            "enum": [
+              "Outright"
+            ],
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "source_uri": {
+            "type": "string"
+          },
+          "tick_size": {
+            "type": "string"
+          },
+          "venue": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "contract",
+          "effective_from_ns",
+          "effective_to_ns",
+          "price_kind",
+          "source_sha256",
+          "source_uri",
+          "tick_size",
+          "venue"
+        ],
+        "title": "epoch_bt::vectorized::FuturesTickRule",
+        "type": "object",
+        "x-native-schema-name": "FuturesTickRule"
+      },
+      "Native_FuturesTickSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/Native_FuturesTickRule"
+            },
+            "type": "array"
+          },
+          "snapshot_id": {
+            "type": "string"
+          },
+          "working_orders_on_change": {
+            "enum": [
+              "Reject",
+              "CancelWorkingOrders"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "rules",
+          "snapshot_id",
+          "working_orders_on_change"
+        ],
+        "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+        "type": "object",
+        "x-native-schema-name": "FuturesTickSnapshot"
+      },
+      "Native_MetaDataOptionDefinition": {
+        "type": [
+          "number",
+          "string",
+          "boolean",
+          "object",
+          "array",
+          "null"
+        ],
+        "x-native-schema-name": "MetaDataOptionDefinition"
+      },
+      "Native_SdkContract_AccessRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "permission": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "permission"
+        ],
+        "title": "AccessRequirement",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_AccessRequirement"
+      },
+      "Native_SdkContract_Column": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "int64",
+              "float64",
+              "boolean",
+              "date",
+              "datetime"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "Column",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Column"
+      },
+      "Native_SdkContract_DataRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "required_coverage": {
+            "title": "Required Coverage",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "DataRequirement",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_DataRequirement"
+      },
+      "Native_SdkContract_Error": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "CLARIFICATION_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "gaps",
+                "questions",
+                "recommended_task"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "DATA_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "data_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "ACCESS_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "access_requirements"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
+          "code": {
+            "$ref": "#/components/schemas/Native_SdkContract_ErrorCode"
+          },
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_Gap"
+            },
+            "minItems": 1,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "recommended_task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Task",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable"
+        ],
+        "title": "DomainError",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Error"
+      },
+      "Native_SdkContract_ErrorCode": {
+        "enum": [
+          "INVALID_REQUEST",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CLARIFICATION_REQUIRED",
+          "DATA_REQUIRED",
+          "ACCESS_REQUIRED",
+          "OUTPUT_VALIDATION_FAILED",
+          "EXECUTION_FAILED",
+          "EXECUTION_NOT_READY",
+          "INVALID_STATE",
+          "IDEMPOTENCY_CONFLICT",
+          "EVENT_CURSOR_EXPIRED",
+          "FETCH_CURSOR_EXPIRED",
+          "FETCH_LIMIT_EXCEEDED",
+          "RATE_LIMITED",
+          "TEMPORARILY_UNAVAILABLE",
+          "UPSTREAM_TIMEOUT"
+        ],
+        "type": "string",
+        "x-native-schema-name": "SdkContract_ErrorCode"
+      },
+      "Native_SdkContract_ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Native_SdkContract_Error"
+          },
+          "execution_id": {
+            "description": "Existing/accepted execution this failure refers to; a failed fetch does not change its source status.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_ErrorResponse"
+      },
+      "Native_SdkContract_Gap": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Gap",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Gap"
+      },
+      "Native_SdkContract_JsonOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/Native_SdkContract_JsonSchema"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "JsonOutputRequest",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_JsonOutputRequest"
+      },
+      "Native_SdkContract_JsonSchema": {
+        "description": "A standard JSON Schema 2020-12 document, including description annotations. The service validates the schema itself. Only local references within this supplied schema are accepted; remote references are rejected. No custom schema keywords are required.",
+        "type": [
+          "object",
+          "boolean"
+        ],
+        "x-native-schema-name": "SdkContract_JsonSchema"
+      },
+      "Native_SdkContract_Manifest_JsonBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
+          },
+          "type": {
+            "const": "json"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id"
+        ],
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Manifest_JsonBinding"
+      },
+      "Native_SdkContract_Manifest_NonBlank": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string",
+        "x-native-schema-name": "SdkContract_Manifest_NonBlank"
+      },
+      "Native_SdkContract_Manifest_TableBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          },
+          "field_ids": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
+          },
+          "table_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": {
+            "const": "table"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "table_index",
+          "field_ids"
+        ],
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Manifest_TableBinding"
+      },
+      "Native_SdkContract_Manifest_TextBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ]
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
+          },
+          "type": {
+            "const": "text"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id",
+          "format"
+        ],
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Manifest_TextBinding"
+      },
+      "Native_SdkContract_OutputName": {
+        "description": "Unique caller-selected name. Names are case-sensitive.",
+        "maxLength": 100,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+        "type": "string",
+        "x-native-schema-name": "SdkContract_OutputName"
+      },
+      "Native_SdkContract_Question": {
+        "additionalProperties": false,
+        "dependentRequired": {
+          "recommended_option": [
+            "options"
+          ]
+        },
+        "properties": {
+          "options": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
+          },
+          "recommended_option": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Option",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "Question",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_Question"
+      },
+      "Native_SdkContract_RunParameters": {
+        "additionalProperties": false,
+        "description": "Only the closed parameter types supported by native Backend execution.",
+        "properties": {
+          "execution": {
+            "$ref": "#/components/schemas/Native_ExecutionOptions"
+          },
+          "period": {
+            "$ref": "#/components/schemas/Native_DatePeriodConfig"
+          }
+        },
+        "title": "RunParameters",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_RunParameters"
+      },
+      "Native_SdkContract_RunRequest": {
+        "additionalProperties": false,
+        "not": {
+          "required": [
+            "study_id",
+            "source_execution_id"
+          ]
+        },
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/SdkContract_JsonOutputRequest",
+                  "table": "#/components/schemas/SdkContract_TableOutputRequest",
+                  "text": "#/components/schemas/SdkContract_TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/Native_SdkContract_RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
+          },
+          "source_execution_id": {
+            "description": "Resolve the exact study from this authorized Backend execution.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source Execution Id",
+            "type": "string"
+          },
+          "study_id": {
+            "description": "Execute this exact authorized study.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "outputs"
+        ],
+        "title": "RunRequest",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_RunRequest"
+      },
+      "Native_SdkContract_SavedOutputManifest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "A per-execution read receipt. The workflow/Backend owner must save its accepted declarations and exact artifact bindings; this is not another execution coordinator.",
+        "properties": {
+          "bindings": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_TableBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_JsonBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_TextBinding"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "declarations": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Native_SdkContract_TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank",
+            "description": "Exact native Backend execution id, never a public admission-attempt id."
+          },
+          "study_id": {
+            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
+          }
+        },
+        "required": [
+          "execution_id",
+          "study_id",
+          "declarations",
+          "bindings"
+        ],
+        "title": "SavedOutputManifest",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_SavedOutputManifest"
+      },
+      "Native_SdkContract_TableOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_Column"
+            },
+            "minItems": 1,
+            "title": "Schema",
+            "type": "array"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableOutputRequest",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_TableOutputRequest"
+      },
+      "Native_SdkContract_TextOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "format": {
+            "default": "plain",
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "instructions"
+        ],
+        "title": "TextOutputRequest",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_TextOutputRequest"
+      },
+      "Native_SdkExecutionRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at_ms": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Native_SdkContract_ErrorResponse"
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/Native_SdkRequestPhase"
+          },
+          "request": {
+            "$ref": "#/components/schemas/Native_CreateSdkExecutionRequest"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "execution_id",
+          "request",
+          "phase",
+          "created_at_ms"
+        ],
+        "title": "epoch_stratifyx::server::SdkExecutionRecord",
+        "type": "object",
+        "x-native-schema-name": "SdkExecutionRecord"
+      },
+      "Native_SdkRequestPhase": {
+        "enum": [
+          "accepted",
+          "active",
+          "needs_input",
+          "outputs_recorded",
+          "failed"
+        ],
+        "type": "string",
+        "x-native-schema-name": "SdkRequestPhase"
+      },
+      "Native_SdkRequestRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at_ms": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "current_execution_id": {
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Native_SdkContract_ErrorResponse"
+          },
+          "graph_run_id": {
+            "type": "string"
+          },
+          "launch": {
+            "$ref": "#/components/schemas/Native_SdkResearchLaunch"
+          },
+          "operation_id": {
+            "type": "string"
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/Native_SdkContract_SavedOutputManifest"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/Native_SdkRequestPhase"
+          },
+          "request": {
+            "$ref": "#/components/schemas/Native_SdkContract_RunRequest"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "response_id": {
+            "type": "string"
+          },
+          "response_version": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/Native_SdkRequestRuntime"
+          },
+          "updated_at_ms": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "version": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "version",
+          "created_at_ms",
+          "updated_at_ms",
+          "phase",
+          "request"
+        ],
+        "title": "epoch_stratifyx::server::SdkRequestRecord",
+        "type": "object",
+        "x-native-schema-name": "SdkRequestRecord"
+      },
+      "Native_SdkRequestRuntime": {
+        "additionalProperties": false,
+        "properties": {
+          "assistant_id": {
+            "type": "string"
+          },
+          "execution_ids_before": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outcome_ids_before": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "thread_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "thread_id",
+          "assistant_id",
+          "execution_ids_before",
+          "outcome_ids_before"
+        ],
+        "title": "epoch_stratifyx::server::SdkRequestRuntime",
+        "type": "object",
+        "x-native-schema-name": "SdkRequestRuntime"
+      },
+      "Native_SdkResearchLaunch": {
+        "additionalProperties": false,
+        "properties": {
+          "assistant_id": {
+            "type": "string"
+          },
+          "thread_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assistant_id"
+        ],
+        "title": "epoch_stratifyx::server::SdkResearchLaunch",
+        "type": "object",
+        "x-native-schema-name": "SdkResearchLaunch"
+      },
+      "Native_SlippageType": {
+        "enum": [
+          "Bps",
+          "Fixed",
+          "Random",
+          "VolumeImpact",
+          "TickBased",
+          "ParticipationRate",
+          "SpreadBased",
+          "None"
+        ],
+        "type": "string",
+        "x-native-schema-name": "SlippageType"
+      },
+      "Native_TemplatedGenericFunction_CommissionType": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_MetaDataOptionDefinition"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Native_CommissionType"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "TemplatedGenericFunction_CommissionType"
+      },
+      "Native_TemplatedGenericFunction_SlippageType": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_MetaDataOptionDefinition"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Native_SlippageType"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "TemplatedGenericFunction_SlippageType"
+      },
+      "Native_UpdateSdkRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "current_execution_id": {
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Native_SdkContract_ErrorResponse"
+          },
+          "expected_version": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "graph_run_id": {
+            "type": "string"
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/Native_SdkContract_SavedOutputManifest"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/Native_SdkRequestPhase"
+          },
+          "prior_graph_run_id": {
+            "type": "string"
+          },
+          "response_id": {
+            "type": "string"
+          },
+          "response_version": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/Native_SdkRequestRuntime"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "epoch_stratifyx::server::UpdateSdkRequest",
+        "type": "object",
+        "x-native-schema-name": "UpdateSdkRequest"
+      },
       "OutputName": {
         "description": "Unique caller-selected name. Names are case-sensitive.",
         "maxLength": 100,
@@ -2514,13 +3925,713 @@
     }
   },
   "info": {
-    "description": "Shared language-neutral Epoch data models. The /v1 bindings are earlier illustrative proposals, not deployed service routes. The current prototype separates notebook/MCP research from prepared-study execution and uses native LangGraph interrupt/resume. Backend owns requests, studies, executions and saved response revisions; EpochSDK orchestrates native clients. See docs/research-flow.md and the generated Backend OpenAPI for current operations.",
+    "description": "Shared language-neutral Epoch contracts. The /api/v1/integration routes are projections of existing EpochBackend native operation APIs; their Native_ schema names identify source-owned DTOs. The earlier illustrative /v1 proposals are historical and do not assert a deployed gateway. Research uses the existing checkpointed EpochAI supervisor; prepared execution calls Backend directly. See docs/research-flow.md and docs/reconnect-operations.md.",
     "title": "Epoch Integration API",
     "version": "0.9.0-draft"
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/integration/execution-requests": {
+      "post": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "createSdkExecutionRequest",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "acceptedInputs": {
+                  "value": {
+                    "operation_id": "refresh-sp500-2025",
+                    "parameters": {
+                      "period": {
+                        "end": "2025-12-31",
+                        "start": "2025-01-01"
+                      }
+                    },
+                    "source_execution_id": "22222222-2222-4222-8222-222222222222",
+                    "study_id": "11111111-1111-4111-8111-111111111111"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/Native_CreateSdkExecutionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "execution_id": "33333333-3333-4333-8333-333333333333",
+                      "phase": "active",
+                      "request": {
+                        "operation_id": "refresh-sp500-2025",
+                        "parameters": {
+                          "period": {
+                            "end": "2025-12-31",
+                            "start": "2025-01-01"
+                          }
+                        },
+                        "source_execution_id": "22222222-2222-4222-8222-222222222222",
+                        "study_id": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "request_id": "req_22222222222222222222222222222222"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkExecutionRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Start or attach to one prepared-study execution by readable handle",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
+    "/api/v1/integration/execution-requests/by-handle/{operationId}": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "getSdkExecutionRequestByHandle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "execution_id": "33333333-3333-4333-8333-333333333333",
+                      "phase": "active",
+                      "request": {
+                        "operation_id": "refresh-sp500-2025",
+                        "parameters": {
+                          "period": {
+                            "end": "2025-12-31",
+                            "start": "2025-01-01"
+                          }
+                        },
+                        "source_execution_id": "22222222-2222-4222-8222-222222222222",
+                        "study_id": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "request_id": "req_22222222222222222222222222222222"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkExecutionRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Attach to an owned prepared execution operation by readable handle",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
+    "/api/v1/integration/execution-requests/{requestId}": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "getSdkExecutionRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "execution_id": "33333333-3333-4333-8333-333333333333",
+                      "phase": "active",
+                      "request": {
+                        "operation_id": "refresh-sp500-2025",
+                        "parameters": {
+                          "period": {
+                            "end": "2025-12-31",
+                            "start": "2025-01-01"
+                          }
+                        },
+                        "source_execution_id": "22222222-2222-4222-8222-222222222222",
+                        "study_id": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "request_id": "req_22222222222222222222222222222222"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkExecutionRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Read an owned prepared execution operation",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
+    "/api/v1/integration/requests": {
+      "post": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "createSdkRequest",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "acceptedInputs": {
+                  "value": {
+                    "launch": {
+                      "assistant_id": "epoch-ai"
+                    },
+                    "operation_id": "screen-sp500",
+                    "request": {
+                      "outputs": [
+                        {
+                          "format": "markdown",
+                          "instructions": "Explain the findings concisely",
+                          "name": "answer",
+                          "type": "text"
+                        }
+                      ],
+                      "task": "Explain the supplied sales data"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/Native_CreateSdkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "launch": {
+                        "assistant_id": "epoch-ai"
+                      },
+                      "operation_id": "screen-sp500",
+                      "phase": "accepted",
+                      "request": {
+                        "outputs": [
+                          {
+                            "format": "markdown",
+                            "instructions": "Explain the findings concisely",
+                            "name": "answer",
+                            "type": "text"
+                          }
+                        ],
+                        "task": "Explain the supplied sales data"
+                      },
+                      "request_id": "req_11111111111111111111111111111111",
+                      "updated_at_ms": 1,
+                      "version": 0
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Store a validated SDK analysis request",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
+    "/api/v1/integration/requests/by-handle/{operationId}": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "getSdkRequestByHandle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "launch": {
+                        "assistant_id": "epoch-ai"
+                      },
+                      "operation_id": "screen-sp500",
+                      "phase": "accepted",
+                      "request": {
+                        "outputs": [
+                          {
+                            "format": "markdown",
+                            "instructions": "Explain the findings concisely",
+                            "name": "answer",
+                            "type": "text"
+                          }
+                        ],
+                        "task": "Explain the supplied sales data"
+                      },
+                      "request_id": "req_11111111111111111111111111111111",
+                      "updated_at_ms": 1,
+                      "version": 0
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Attach to the owner's accepted research operation by readable handle",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
+    "/api/v1/integration/requests/{requestId}": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "getSdkRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "launch": {
+                        "assistant_id": "epoch-ai"
+                      },
+                      "operation_id": "screen-sp500",
+                      "phase": "accepted",
+                      "request": {
+                        "outputs": [
+                          {
+                            "format": "markdown",
+                            "instructions": "Explain the findings concisely",
+                            "name": "answer",
+                            "type": "text"
+                          }
+                        ],
+                        "task": "Explain the supplied sales data"
+                      },
+                      "request_id": "req_11111111111111111111111111111111",
+                      "updated_at_ms": 1,
+                      "version": 0
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Read an owned SDK request and saved result mapping",
+        "tags": [
+          "SdkRequests"
+        ]
+      },
+      "patch": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
+        "operationId": "updateSdkRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "acceptedInputs": {
+                  "value": {
+                    "expected_version": 0,
+                    "runtime": {
+                      "assistant_id": "epoch-ai",
+                      "execution_ids_before": [],
+                      "outcome_ids_before": [],
+                      "thread_id": "44444444-4444-4444-8444-444444444444"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/Native_UpdateSdkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "acceptedOperation": {
+                    "value": {
+                      "created_at_ms": 1,
+                      "launch": {
+                        "assistant_id": "epoch-ai"
+                      },
+                      "operation_id": "screen-sp500",
+                      "phase": "accepted",
+                      "request": {
+                        "outputs": [
+                          {
+                            "format": "markdown",
+                            "instructions": "Explain the findings concisely",
+                            "name": "answer",
+                            "type": "text"
+                          }
+                        ],
+                        "task": "Explain the supplied sales data"
+                      },
+                      "request_id": "req_11111111111111111111111111111111",
+                      "updated_at_ms": 1,
+                      "version": 0
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Record a client runtime or owned result reference",
+        "tags": [
+          "SdkRequests"
+        ]
+      }
+    },
     "/v1/executions/{execution_id}": {
       "get": {
         "description": "Read authoritative Backend study/execution outcomes and native graph progress by stage, using the public mapping. Retained build history supports technical recovery but is not the only source for saved status/results. HTTP 200 may contain a terminal failed domain outcome; SDK wait raises its typed error. Public success requires requested-output validation. Lookup must remain meaningful after eligible graph history expires.",
@@ -4765,6 +6876,61 @@
     }
   ],
   "x-contract-source": "contracts/openapi.json",
+  "x-epoch-native-operations": {
+    "paths": [
+      "/api/v1/integration/execution-requests",
+      "/api/v1/integration/execution-requests/by-handle/{operationId}",
+      "/api/v1/integration/execution-requests/{requestId}",
+      "/api/v1/integration/requests",
+      "/api/v1/integration/requests/by-handle/{operationId}",
+      "/api/v1/integration/requests/{requestId}"
+    ],
+    "schemas": [
+      "Native_CommissionType",
+      "Native_CountryCurrency",
+      "Native_CreateSdkExecutionRequest",
+      "Native_CreateSdkRequest",
+      "Native_DatePeriodConfig",
+      "Native_ErrorResponse",
+      "Native_ExecutionCostConfig_CommissionType",
+      "Native_ExecutionCostConfig_SlippageType",
+      "Native_ExecutionOptions",
+      "Native_FuturesTickRule",
+      "Native_FuturesTickSnapshot",
+      "Native_MetaDataOptionDefinition",
+      "Native_SdkContract_AccessRequirement",
+      "Native_SdkContract_Column",
+      "Native_SdkContract_DataRequirement",
+      "Native_SdkContract_Error",
+      "Native_SdkContract_ErrorCode",
+      "Native_SdkContract_ErrorResponse",
+      "Native_SdkContract_Gap",
+      "Native_SdkContract_JsonOutputRequest",
+      "Native_SdkContract_JsonSchema",
+      "Native_SdkContract_Manifest_JsonBinding",
+      "Native_SdkContract_Manifest_NonBlank",
+      "Native_SdkContract_Manifest_TableBinding",
+      "Native_SdkContract_Manifest_TextBinding",
+      "Native_SdkContract_OutputName",
+      "Native_SdkContract_Question",
+      "Native_SdkContract_RunParameters",
+      "Native_SdkContract_RunRequest",
+      "Native_SdkContract_SavedOutputManifest",
+      "Native_SdkContract_TableOutputRequest",
+      "Native_SdkContract_TextOutputRequest",
+      "Native_SdkExecutionRecord",
+      "Native_SdkRequestPhase",
+      "Native_SdkRequestRecord",
+      "Native_SdkRequestRuntime",
+      "Native_SdkResearchLaunch",
+      "Native_SlippageType",
+      "Native_TemplatedGenericFunction_CommissionType",
+      "Native_TemplatedGenericFunction_SlippageType",
+      "Native_UpdateSdkRequest"
+    ],
+    "sha256": "dd52cbd46535256e66682f87aac15b6369baca49d44facfb098127ed792fa397",
+    "source": "EpochBackend/stratifyx_openapi.json"
+  },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
   "x-parameter-source": "contracts/native-parameters.json"
 }
