@@ -25,6 +25,13 @@ from epoch_sdk.supervisor import ChosenExecution, InProgress, NeedsInput
 
 
 def connect() -> EpochClient:
+    """Prepare the SDK client used by later notebook cells.
+
+    Read your Epoch identity token and the Backend/EpochAI addresses from the
+    notebook environment, then pass them to EpochClient.connect(). Assigning
+    the returned object to ``epoch`` gives later cells their SDK client.
+    Research begins when a later cell calls ``epoch.research(...)``.
+    """
     token = os.environ.get("EPOCH_TOKEN")
     if not token:
         raise RuntimeError(
@@ -39,6 +46,11 @@ def connect() -> EpochClient:
 
 
 async def check_services() -> None:
+    """Print SDK versions and check that both service health endpoints respond.
+
+    A failed HTTP response raises an error in the calling notebook cell.
+    ``await check_services()`` waits for these network checks to finish.
+    """
     print("Workflow SDK:", importlib.metadata.version("epoch-sdk"))
     print("Native SDK:", importlib.metadata.version("stratifyx"))
     async with httpx.AsyncClient(
@@ -54,10 +66,17 @@ async def check_services() -> None:
 
 
 def operation_name(suffix: str) -> str:
+    """Make a readable label for one research or prepared-execution operation."""
     return os.environ.get("EPOCH_NOTEBOOK_PREFIX", "notebook-demo") + "-" + suffix
 
 
 def demo_request(*, confirmation: bool = False) -> RunRequest:
+    """Load the supplied two-year sales task and its requested answer formats.
+
+    This reads the example JSON file. A server call happens later when the
+    notebook submits the returned request to ``epoch.research(...)``.
+    ``confirmation=True`` adds the demonstration's explicit question.
+    """
     case_path = Path(__file__).resolve().parents[1] / "research-service-proof.case.json"
     request = RunRequest.model_validate(json.loads(case_path.read_text())["request"])
     if confirmation:
@@ -72,6 +91,7 @@ def demo_request(*, confirmation: bool = False) -> RunRequest:
 async def wait_research(
     epoch: EpochClient, operation_id: str, *, timeout_seconds: float = 900
 ) -> ResearchCompleted | NeedsInput:
+    """Read the same research ID until an answer or question is available."""
     deadline = time.monotonic() + timeout_seconds
     previous = ""
     while time.monotonic() < deadline:
@@ -88,6 +108,7 @@ async def wait_research(
 async def wait_execution(
     epoch: EpochClient, operation_id: str, *, timeout_seconds: float = 300
 ) -> ChosenExecution:
+    """Read the same prepared-execution ID until its Backend job completes."""
     deadline = time.monotonic() + timeout_seconds
     previous = ""
     while time.monotonic() < deadline:
@@ -111,7 +132,7 @@ async def wait_until_admitted(
     *,
     previous_run_id: str | None = None,
 ) -> ResearchResult:
-    """Wait for server admission before disconnecting the local observer."""
+    """Wait for server acceptance before disconnecting this notebook's wait."""
     deadline = time.monotonic() + 90
     while time.monotonic() < deadline:
         try:
@@ -135,7 +156,7 @@ async def wait_until_admitted(
 
 
 async def stop_local_observer(observer: asyncio.Task[ResearchResult]) -> bool:
-    """Cancel only this Python wait; never call native server cancellation."""
+    """End this notebook's Python wait while the server keeps its research run."""
     if observer.done():
         await observer
         return False
@@ -148,6 +169,7 @@ async def stop_local_observer(observer: asyncio.Task[ResearchResult]) -> bool:
 
 
 def show_table(page: ResponseTablePage) -> None:
+    """Display one table page that the client has already fetched."""
     header = "".join("<th>" + html.escape(column.name) + "</th>" for column in page.columns)
     rows = "".join(
         "<tr>" + "".join("<td>" + html.escape(str(value)) + "</td>" for value in row) + "</tr>"
@@ -158,6 +180,11 @@ def show_table(page: ResponseTablePage) -> None:
 
 
 async def show_answer(epoch: EpochClient, completed: ResearchCompleted) -> None:
+    """Display the saved answer reference and its named table/JSON/text parts.
+
+    Table rows are fetched from Backend. JSON and text are already present in
+    the saved answer. The print/display calls make those parts easy to inspect.
+    """
     print("Saved answer and source identities:")
     display(JSON(completed.response.reference().to_wire(), expanded=False))
     for part in completed.response.content.outputs:
@@ -180,6 +207,7 @@ async def show_answer(epoch: EpochClient, completed: ResearchCompleted) -> None:
 
 
 def check_demo_values(completed: ResearchCompleted, rows: list[list[Cell]]) -> None:
+    """Check the supplied example's two rows, row count and total of 25."""
     assert rows == [["2024", 10.0], ["2025", 15.0]], rows
     metrics = next(
         part for part in completed.response.content.outputs
@@ -190,6 +218,7 @@ def check_demo_values(completed: ResearchCompleted, rows: list[list[Cell]]) -> N
 
 
 def show_research(result: ResearchResult) -> None:
+    """Print the result status, or format a pending question and its choices."""
     if isinstance(result, NeedsInput):
         print(result.feedback())
     else:
