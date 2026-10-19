@@ -11,8 +11,10 @@ Python 3.12 is the first client implementation. The package name is `epoch-sdk`
 and its import is `epoch_sdk`. It supplies executable contracts, an access
 checker, output-value validation and the [supervisor/MCP adapter](../../docs/supervisor-workflow.md).
 The adapter handles native communication, execution selection and explicit
-[saved-output reads](../../docs/saved-output-reader.md). Automatic publication
-of the accepted output mapping and the full named-output flow remain in progress.
+[saved-output reads](../../docs/saved-output-reader.md). Research publishes a saved
+answer with named table, JSON and text parts. Prepared-study execution remains
+a separate direct Backend operation. [Readable operation IDs](../../docs/reconnect-operations.md)
+let notebooks and MCP clients attach after disconnecting.
 
 ## Use the actual core contract
 
@@ -24,10 +26,10 @@ The current supervisor adapter exposes native clarification as `NeedsInput` and
 supports answering/resuming the same thread. The earlier terminal-only design
 is superseded; the draft contract is being reconciled with this direction.
 
-`../../contracts/openapi.json` is the public draft, now v0.9. It preserves the eight logical
-operations from the v0.8 design; the illustrative REST paths do not assert that
-another gateway is deployed. Request/error models must conform to that shared contract. Response/result schemas are still draft contracts; implementing their
-Backend adapters and actual output validation remains ENG-2038.
+`../../contracts/openapi.json` contains the shared request/error models, historical
+illustrative `/v1` bindings, and source-owned native `/api/v1/integration` operation
+projections. Native schema names have a `Native_` prefix and identify the original
+Backend DTO. The wrapper calls the existing Backend and LangGraph origins.
 
 The draft had omitted the agreed saved-study reference and execution parameters.
 `RunRequest` now permits **either** `study_id` **or** `source_execution_id`, with
@@ -56,10 +58,11 @@ request = parse_request(RunRequest, '''{
 }''')
 ```
 
-This example parses a declaration only; it does not execute a study or validate
-saved results. The native supervisor adapter accepts a task string today.
-Connecting these declarations to the supervisor and saved-output reader remains
-explicit work. Malformed declarations fail before any service call.
+This example parses a declaration. Submit it with `await epoch.research(request,
+operation_id="annual-sales")` using an `EpochClient` connected to the two services.
+Malformed declarations fail before a service call. Research builds/analyses through
+the supervisor and returns a saved answer; `execute_saved` starts or attaches to a
+prepared study execution. See the [current flow](../../docs/research-flow.md).
 
 ## Verify locally
 

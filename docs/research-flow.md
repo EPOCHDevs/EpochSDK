@@ -50,6 +50,8 @@ Current native routes:
 | Owner | Surface |
 | --- | --- |
 | Backend | POST/GET/PATCH `/api/v1/integration/requests[/{requestId}]` |
+| Backend | GET `/api/v1/integration/requests/by-handle/{operationId}` |
+| Backend | POST/GET `/api/v1/integration/execution-requests[/{requestId}]` and GET `by-handle/{operationId}` |
 | Backend | POST `/api/v1/research/requests/{requestId}/response` |
 | Backend | GET `/api/v1/research/responses/{responseId}?version=...` |
 | Backend | POST `/api/v1/studies/executions/{executionId}/response-tables` |
@@ -63,6 +65,13 @@ and the separate `execute_saved`/`execution`. MCP exposes the same methods throu
 `epoch_execute_saved` and `epoch_execution`. `epoch_response` reads by answer ID;
 `epoch_publish_response` names the original query/thread and optional primary
 execution. It starts neither an agent nor a job.
+
+Caller-chosen `operation_id` values reconnect SDK/MCP clients to the same accepted
+research or prepared execution. Matching inputs attach; changed inputs conflict.
+Backend publication pins the original answer without depending on a client
+completion callback. Native run identities and operation-specific checkpoints
+preserve pending questions and failure observations across later conversation
+activity. See [readable reconnect](reconnect-operations.md) for notebook and MCP usage.
 
 New table answers carry saved-source references, with no 10,000-row total-table
 ceiling. Use `response_table` / `iter_response_table` on either client, or MCP

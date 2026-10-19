@@ -9,11 +9,11 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Callable
 from typing import Literal, NotRequired, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import httpx
 from langgraph_sdk.client import LangGraphClient
-from langgraph_sdk.schema import Command, RunCreateMetadata
+from langgraph_sdk.schema import Command, Run, RunCreateMetadata
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
@@ -83,6 +83,7 @@ class WorkflowHandle(Closed):
     request_id: str
     assistant_id: str
     run_id: str | None = None
+    operation_id: str | None = None
     execution_ids_before: list[str] = Field(default_factory=list)
     outcome_ids_before: list[str] = Field(default_factory=list)
 
@@ -124,6 +125,8 @@ class ChosenExecution(Closed):
     execution: JobListItem
     reusable_study: SavedStudy
     reply: str = ""
+    operation_id: str | None = None
+    request_id: str | None = None
 
 
 class PublishedAnswer(Closed):
@@ -279,6 +282,25 @@ class _RunsWait(Protocol):
         multitask_strategy: Literal["reject"],
         on_run_created: Callable[[RunCreateMetadata], None],
     ) -> object: ...
+
+
+class _RunsAdmission(Protocol):
+    # Native SDK runtime options; its pinned overloads omit durability on create.
+    async def create(
+        self,
+        thread_id: str,
+        assistant_id: str,
+        *,
+        input: _SupervisorInput,
+        metadata: dict[str, str],
+        durability: Literal["sync"],
+        multitask_strategy: Literal["reject"],
+        on_completion: Literal["keep"],
+    ) -> Run: ...
+
+    # The configured graph owns join values; this caller discards them and reads
+    # the operation's checkpoint through the existing finite state projection.
+    async def join(self, thread_id: str, run_id: str) -> object: ...
 
 
 class SupervisorClient:
@@ -459,6 +481,41 @@ class SupervisorClient:
             raise ValueError("Task must not be blank")
         return await self._wait(handle, task=task, sdk_request_id=sdk_request_id)
 
+    async def prepare_operation(self, request_id: str, thread_id: str | None) -> WorkflowHandle:
+        """Create/attach the operation's thread before the native admission gate."""
+        if thread_id is None:
+            thread_id = str(uuid5(NAMESPACE_URL, "epoch:research:" + request_id))
+            await self.graph.threads.create(thread_id=thread_id, if_exists="do_nothing")
+        return await self.prepare(thread_id, request_id=request_id)
+
+    async def start_operation(self, handle: WorkflowHandle, task: str) -> None:
+        """Create a native background run; server admission durably records its ID."""
+        await cast(_RunsAdmission, self.graph.runs).create(
+            handle.thread_id,
+            handle.assistant_id,
+            input={
+                "messages": [{"role": "user", "id": handle.request_id, "content": task}],
+                "sdk_request_id": handle.request_id,
+            },
+            metadata={"epoch_sdk_request_id": handle.request_id},
+            durability="sync",
+            multitask_strategy="reject",
+            on_completion="keep",
+        )
+
+    async def join_operation(self, handle: WorkflowHandle) -> SupervisorResult:
+        if handle.run_id is None:
+            return InProgress(handle=handle)
+        # Joining observes existing native work. Closing this wait never cancels it.
+        try:
+            await cast(_RunsAdmission, self.graph.runs).join(handle.thread_id, handle.run_id)
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code == 404:
+                # The server recorded admission before publishing the native run.
+                return InProgress(handle=handle)
+            raise
+        return await self.status(handle)
+
     async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
         expected = {item.id for item in waiting.interrupts}
         if not expected:
@@ -534,6 +591,51 @@ class SupervisorClient:
 
     async def status(self, handle: WorkflowHandle) -> SupervisorResult:
         """Read this request after a human resumes in the UI; start no graph run."""
+        if handle.operation_id is not None and handle.run_id is None:
+            return InProgress(handle=handle)
+        if handle.run_id is not None and handle.operation_id is not None:
+            try:
+                run = await self.graph.runs.get(handle.thread_id, handle.run_id)
+            except httpx.HTTPStatusError as error:
+                if error.response.status_code == 404:
+                    return InProgress(handle=handle)
+                raise
+            if (run["metadata"] or {}).get("epoch_sdk_request_id") != handle.request_id:
+                raise ValueError("The recorded native run belongs to another operation")
+            if run["status"] in {"pending", "running"}:
+                return InProgress(handle=handle)
+            if run["status"] in {"error", "timeout"}:
+                return NoExecution(handle=handle, reason="The accepted native graph run failed.")
+            history = await self.graph.threads.get_history(
+                handle.thread_id,
+                limit=1,
+                metadata={
+                    "epoch_sdk_request_id": handle.request_id,
+                    "epoch_sdk_run_id": handle.run_id,
+                },
+            )
+            if history:
+                snapshot = history[0]
+                state = _State.model_validate(snapshot["values"] or {})
+                if snapshot["interrupts"]:
+                    state = state.model_copy(
+                        update={
+                            "interrupts": [
+                                GraphInterrupt.model_validate(item)
+                                for item in snapshot["interrupts"]
+                            ]
+                        }
+                    )
+                if run["status"] == "interrupted" and not state.interrupts:
+                    return NoExecution(
+                        handle=handle,
+                        reason="The accepted native run was cancelled or interrupted.",
+                    )
+                return await self._select(handle, state)
+            return NoExecution(
+                handle=handle,
+                reason="The accepted native run ended without a saved result checkpoint.",
+            )
         thread = await self.graph.threads.get(handle.thread_id)
         if thread["status"] == "busy":
             return InProgress(handle=handle)

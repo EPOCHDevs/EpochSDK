@@ -15,11 +15,14 @@ from stratifyx import (
     SdkRequestPhase,
     SdkRequestRecord,
     SdkRequestRuntime,
+    SdkResearchLaunch,
+    SdkContractRunParameters,
+    SdkExecutionRecord,
 )
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
-from .contracts import Contract, DomainError, ErrorResponse, RunRequest
+from .contracts import Contract, DomainError, ErrorResponse, RunParameters, RunRequest
 from .errors import EpochError
 from .responses import ResponseTablePage, SavedResearchResponse
 from .supervisor import (
@@ -39,6 +42,7 @@ from .supervisor import (
 class ResearchAccepted(Contract):
     status: Literal["accepted"] = "accepted"
     request_id: str
+    operation_id: str | None = None
 
 
 class ResearchCompleted(Contract):
@@ -46,6 +50,14 @@ class ResearchCompleted(Contract):
     request_id: str
     reusable_study: SavedStudy | None = None
     response: SavedResearchResponse
+    operation_id: str | None = None
+
+
+class ExecutionAccepted(Contract):
+    status: Literal["accepted"] = "accepted"
+    request_id: str
+    operation_id: str
+    execution_id: str
 
 
 class ResearchFailure(ErrorResponse):
@@ -185,13 +197,99 @@ class EpochClient:
 
     async def execute_saved(
         self,
-        reference: SavedStudy,
+        reference: SavedStudy | str,
         *,
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
-    ) -> ChosenExecution:
-        """Execute prepared work directly; never start research or discovery."""
-        return await self.supervisor.execute_saved(reference, period=period, execution=execution)
+        operation_id: str | None = None,
+    ) -> ChosenExecution | ExecutionAccepted:
+        """Start/attach prepared work; a string reference is a completed research handle."""
+        if isinstance(reference, str):
+            research = await self.research_status(operation_id=reference)
+            if not isinstance(research, ResearchCompleted) or research.reusable_study is None:
+                raise ValueError("The research operation has no completed prepared study")
+            reference = research.reusable_study
+        if operation_id is None:
+            return await self.supervisor.execute_saved(
+                reference, period=period, execution=execution
+            )
+        async with _boundary(None):
+            parameters = (
+                RunParameters(period=period)
+                if execution is None
+                else RunParameters(period=period, execution=execution)
+            )
+            try:
+                native_parameters = SdkContractRunParameters.model_validate(parameters.to_wire())
+                if reference.thread_id is None:
+                    record = await self.backend.sdk_requests.create_sdk_execution_request(
+                        operation_id=operation_id,
+                        study_id=reference.study_id,
+                        source_execution_id=reference.source_execution_id,
+                        parameters=native_parameters,
+                        request_options={"max_retries": 0},
+                    )
+                else:
+                    record = await self.backend.sdk_requests.create_sdk_execution_request(
+                        operation_id=operation_id,
+                        study_id=reference.study_id,
+                        source_execution_id=reference.source_execution_id,
+                        parameters=native_parameters,
+                        thread_id=reference.thread_id,
+                        request_options={"max_retries": 0},
+                    )
+            except ApiError as error:
+                if error.status_code == 409:
+                    raise EpochError(
+                        DomainError(
+                            code="IDEMPOTENCY_CONFLICT",
+                            message="This operation ID already has different accepted inputs. Use a new operation ID.",
+                            retryable=False,
+                        )
+                    ) from error
+                raise
+            return await self._execution_operation(record)
+
+    async def execution_operation(self, operation_id: str) -> ChosenExecution | ExecutionAccepted:
+        """Read this prepared execution operation; start no job or agent."""
+        async with _boundary(None):
+            record = await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
+                operation_id,
+                request_options={"max_retries": 0},
+            )
+            return await self._execution_operation(record)
+
+    async def _execution_operation(
+        self, record: SdkExecutionRecord
+    ) -> ChosenExecution | ExecutionAccepted:
+        if record.error is not None:
+            failure = ErrorResponse.model_validate_json(
+                record.error.model_dump_json(by_alias=True, exclude_unset=True)
+            )
+            raise EpochError(failure.error, execution_id=record.execution_id)
+        accepted = ExecutionAccepted(
+            request_id=record.request_id,
+            operation_id=record.request.operation_id,
+            execution_id=record.execution_id,
+        )
+        try:
+            job = await self.supervisor.execution(record.execution_id)
+        except ApiError as error:
+            if error.status_code == 404 and record.phase.value == "accepted":
+                return accepted
+            raise
+        if job.id != record.execution_id or job.definition_id != record.request.study_id:
+            raise ValueError("The native execution differs from its accepted operation")
+        return ChosenExecution(
+            execution=job,
+            request_id=record.request_id,
+            operation_id=record.request.operation_id,
+            reusable_study=SavedStudy(
+                study_id=record.request.study_id,
+                source_execution_id=record.execution_id,
+                thread_id=record.request.thread_id,
+            ),
+        )
 
     async def execution(self, execution_id: str) -> JobListItem:
         """Read queued/running/completed native status without a supervisor call."""
@@ -211,16 +309,24 @@ class EpochClient:
             assistant_id=record.runtime.assistant_id,
             execution_ids_before=record.runtime.execution_ids_before,
             outcome_ids_before=record.runtime.outcome_ids_before,
+            run_id=record.graph_run_id,
+            operation_id=record.operation_id,
         )
 
     async def research(
-        self, request: RunRequest, *, thread_id: str | None = None
+        self,
+        request: RunRequest,
+        *,
+        thread_id: str | None = None,
+        operation_id: str | None = None,
     ) -> ResearchResult:
         request = RunRequest.model_validate(request.to_wire())
         if request.study_id is not None or request.source_execution_id is not None:
             raise ValueError("Use the separate saved-study execution action for prepared work")
         if request.auto_ingest:
             raise ValueError("Automatic ingestion is outside the core research capability")
+        if operation_id is not None:
+            return await self._research_operation(request, operation_id, thread_id)
         async with _boundary(None):
             record = await self.backend.sdk_requests.create_sdk_request(
                 request=SdkContractRunRequest.model_validate(request.to_wire()),
@@ -248,6 +354,94 @@ class EpochClient:
             )
             return await self._finish(record.request_id, outcome)
 
+    async def _research_operation(
+        self, request: RunRequest, operation_id: str, thread_id: str | None
+    ) -> ResearchResult:
+        request = RunRequest.model_validate(request)
+        if request.study_id is not None or request.source_execution_id is not None:
+            raise ValueError("Research builds a study; use execute_saved for prepared work")
+        async with _boundary(None):
+            launch = (
+                SdkResearchLaunch(assistant_id=self.supervisor.assistant_id)
+                if thread_id is None
+                else SdkResearchLaunch(
+                    assistant_id=self.supervisor.assistant_id, thread_id=thread_id
+                )
+            )
+            try:
+                record = await self.backend.sdk_requests.create_sdk_request(
+                    request=SdkContractRunRequest.model_validate(
+                        request.model_dump(mode="json", by_alias=True, exclude_none=True)
+                    ),
+                    operation_id=operation_id,
+                    launch=launch,
+                    request_options={"max_retries": 0},
+                )
+            except ApiError as error:
+                if error.status_code == 409:
+                    raise EpochError(
+                        DomainError(
+                            code="IDEMPOTENCY_CONFLICT",
+                            message="This operation ID already has different accepted inputs. Use a new operation ID.",
+                            retryable=False,
+                        )
+                    ) from error
+                raise
+        async with _boundary(record.request_id):
+            record = await self.backend.sdk_requests.get_sdk_request(
+                record.request_id, request_options={"max_retries": 0}
+            )
+            if record.response_version is not None or record.error is not None:
+                return await self.research_status(record.request_id)
+            if record.runtime is None:
+                try:
+                    handle = await self.supervisor.prepare_operation(record.request_id, thread_id)
+                except ValueError:
+                    # Another same-ID caller may already have reached a question
+                    # after this caller read its admission response.
+                    record = await self.backend.sdk_requests.get_sdk_request(
+                        record.request_id, request_options={"max_retries": 0}
+                    )
+                    if record.runtime is None:
+                        raise
+                else:
+                    try:
+                        record = await self.backend.sdk_requests.update_sdk_request(
+                            record.request_id,
+                            expected_version=record.version,
+                            runtime=SdkRequestRuntime(
+                                thread_id=handle.thread_id,
+                                assistant_id=handle.assistant_id,
+                                execution_ids_before=handle.execution_ids_before,
+                                outcome_ids_before=handle.outcome_ids_before,
+                            ),
+                            request_options={"max_retries": 0},
+                        )
+                    except ApiError as error:
+                        if error.status_code != 409:
+                            raise
+                        record = await self.backend.sdk_requests.get_sdk_request(
+                            record.request_id, request_options={"max_retries": 0}
+                        )
+            if record.graph_run_id is None and record.response_version is None:
+                try:
+                    await self.supervisor.start_operation(self._handle(record), request.task)
+                except httpx.HTTPStatusError as error:
+                    if error.response.status_code != 409:
+                        raise
+                record = await self.backend.sdk_requests.get_sdk_request(
+                    record.request_id, request_options={"max_retries": 0}
+                )
+                if record.graph_run_id is None:
+                    raise ValueError(
+                        "The conversation is busy; this operation has not started a native run. Reattach when it is available."
+                    )
+            if record.response_version is not None or record.error is not None:
+                return await self.research_status(record.request_id)
+            return await self._finish(
+                record.request_id, await self.supervisor.join_operation(self._handle(record))
+            )
+
     async def resume_research(
         self,
         waiting: NeedsInput,
@@ -259,21 +453,42 @@ class EpochClient:
                 request_options={"max_retries": 0},
             )
             handle = self._handle(record)
-            if waiting.handle.model_copy(update={"run_id": None}) != handle:
+            if waiting.handle.model_copy(update={"run_id": None}) != handle.model_copy(
+                update={"run_id": None}
+            ):
                 raise ValueError("The pending handle differs from the accepted research runtime")
+            if record.operation_id is not None and (
+                record.response_version is not None
+                or record.error is not None
+                or record.graph_run_id != waiting.handle.run_id
+            ):
+                return await self.research_status(record.request_id)
             if record.phase.value not in {"active", "needs_input"}:
                 raise ValueError("The research request is already closed")
-            return await self._finish(
-                record.request_id,
-                await self.supervisor.resume(waiting, responses),
-            )
+            try:
+                outcome = await self.supervisor.resume(waiting, responses)
+            except httpx.HTTPStatusError as error:
+                if record.operation_id is None or error.response.status_code != 409:
+                    raise
+                return await self.research_status(record.request_id)
+            return await self._finish(record.request_id, outcome)
 
-    async def research_status(self, request_id: str) -> ResearchResult:
+    async def research_status(
+        self, request_id: str | None = None, *, operation_id: str | None = None
+    ) -> ResearchResult:
+        if (request_id is None) == (operation_id is None):
+            raise ValueError("Provide either request_id or operation_id")
         async with _boundary(request_id):
-            record = await self.backend.sdk_requests.get_sdk_request(
-                request_id,
-                request_options={"max_retries": 0},
-            )
+            if operation_id is not None:
+                record = await self.backend.sdk_requests.get_sdk_request_by_handle(
+                    operation_id, request_options={"max_retries": 0}
+                )
+                request_id = record.request_id
+            else:
+                assert request_id is not None
+                record = await self.backend.sdk_requests.get_sdk_request(
+                    request_id, request_options={"max_retries": 0}
+                )
             if record.request_id != request_id:
                 raise ValueError("Backend returned another request identity")
             if record.error is not None:
@@ -289,8 +504,13 @@ class EpochClient:
                 )
             if record.response_version is not None:
                 return await self._completed(record)
-            if record.runtime is None:
-                return ResearchAccepted(status="accepted", request_id=request_id)
+            if record.runtime is None or (
+                record.operation_id is not None and record.graph_run_id is None
+            ):
+                accepted = ResearchAccepted(status="accepted", request_id=request_id)
+                if record.operation_id is not None:
+                    accepted.operation_id = record.operation_id
+                return accepted
             return await self._finish(
                 request_id,
                 await self.supervisor.status(self._handle(record)),
@@ -327,16 +547,14 @@ class EpochClient:
                 source_execution_id=response.primary_execution_id,
                 thread_id=record.runtime.thread_id,
             )
-        if reusable is None:
-            return ResearchCompleted(
-                status="succeeded", request_id=record.request_id, response=response
-            )
-        return ResearchCompleted(
-            status="succeeded",
-            request_id=record.request_id,
-            response=response,
-            reusable_study=reusable,
+        completed = ResearchCompleted(
+            status="succeeded", request_id=record.request_id, response=response
         )
+        if reusable is not None:
+            completed.reusable_study = reusable
+        if record.operation_id is not None:
+            completed.operation_id = record.operation_id
+        return completed
 
     async def _fail(
         self,
@@ -363,12 +581,42 @@ class EpochClient:
         return ResearchError(failure)
 
     async def _finish(self, request_id: str, outcome: SupervisorResult) -> ResearchResult:
+        try:
+            return await self._finish_once(request_id, outcome)
+        except ApiError as error:
+            if error.status_code != 409:
+                raise
+            current = await self.backend.sdk_requests.get_sdk_request(
+                request_id, request_options={"max_retries": 0}
+            )
+            if current.operation_id is None:
+                raise
+            if (
+                isinstance(outcome, NeedsInput)
+                and current.error is None
+                and current.response_version is None
+                and current.graph_run_id == outcome.handle.run_id
+            ):
+                # A phase hint is advisory. A duplicate observer must receive the
+                # same questions even when its write lost the metadata CAS.
+                return outcome
+            return await self.research_status(request_id)
+
+    async def _finish_once(self, request_id: str, outcome: SupervisorResult) -> ResearchResult:
         record = await self.backend.sdk_requests.get_sdk_request(
             request_id,
             request_options={"max_retries": 0},
         )
         if record.response_version is not None:
             return await self._completed(record)
+        if record.error is not None:
+            return await self.research_status(request_id)
+        if (
+            record.operation_id is not None
+            and outcome.handle is not None
+            and record.graph_run_id != outcome.handle.run_id
+        ):
+            return await self.research_status(request_id)
         if isinstance(outcome, NeedsInput):
             if record.phase.value != "needs_input":
                 await self.backend.sdk_requests.update_sdk_request(
