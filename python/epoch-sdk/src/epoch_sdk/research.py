@@ -361,9 +361,13 @@ class EpochClient:
         if request.study_id is not None or request.source_execution_id is not None:
             raise ValueError("Research builds a study; use execute_saved for prepared work")
         async with _boundary(None):
-            launch = SdkResearchLaunch(assistant_id=self.supervisor.assistant_id)
-            if thread_id is not None:
-                launch.thread_id = thread_id
+            launch = (
+                SdkResearchLaunch(assistant_id=self.supervisor.assistant_id)
+                if thread_id is None
+                else SdkResearchLaunch(
+                    assistant_id=self.supervisor.assistant_id, thread_id=thread_id
+                )
+            )
             try:
                 record = await self.backend.sdk_requests.create_sdk_request(
                     request=SdkContractRunRequest.model_validate(
