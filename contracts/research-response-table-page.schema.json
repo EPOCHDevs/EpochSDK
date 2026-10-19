@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "Cell": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One bounded page of a saved answer's table, never an implicit full result.",
+  "properties": {
+    "name": {
+      "maxLength": 100,
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+      "title": "Name",
+      "type": "string"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Offset"
+    },
+    "offset": {
+      "minimum": 0,
+      "title": "Offset",
+      "type": "integer"
+    },
+    "response_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Response Id",
+      "type": "string"
+    },
+    "rows": {
+      "items": {
+        "items": {
+          "$ref": "#/$defs/Cell"
+        },
+        "type": "array"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "schema": {
+      "items": {
+        "$ref": "openapi.json#/components/schemas/Column"
+      },
+      "title": "Schema",
+      "type": "array"
+    },
+    "total_rows": {
+      "maximum": 9007199254740991,
+      "minimum": 0,
+      "title": "Total Rows",
+      "type": "integer"
+    },
+    "type": {
+      "const": "table",
+      "title": "Type",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "response_id",
+    "version",
+    "name",
+    "type",
+    "schema",
+    "rows",
+    "offset",
+    "total_rows",
+    "next_offset"
+  ],
+  "title": "ResponseTablePage",
+  "type": "object"
+}

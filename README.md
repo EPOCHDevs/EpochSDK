@@ -27,6 +27,21 @@ named-output analysis flow and real-service proof are still being implemented.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 
+The saved research response API serves both notebook users and MCP agents. Use
+`SupervisorClient.publish_response(request_id, content, thread_id=thread_id, primary_execution_id=execution_id, expected_version=0)`
+after analysis, then `response(response_id, version=...)` to read the same
+Backend-owned answer. A response contains named table, JSON and text parts and
+their declarations; updates create another revision of that answer. Another query may reuse the
+same execution while retaining a different answer.
+MCP exposes `epoch_publish_response` and `epoch_response` over the same methods.
+Newly assembled tables reference native saved data. Use `response_table` or
+`iter_response_table` to read all rows in bounded pages; MCP uses
+`epoch_response_table`. See [table access](docs/response-tables.md) for the wire
+contract, retrieval ordering and compatibility with older inline answers.
+This publication path starts no agent or engine job. It requires the generated
+StratifyX 3.3.0rc3 response API. The existing supervisor publication tool is integrated in EpochAI #752. Complete
+real research integration proof remains pending.
+
 ## Development checks
 
 Shared checks need no native SDK or Backend checkout:
@@ -36,6 +51,7 @@ python -m pip install 'jsonschema[format]>=4.23,<5' 'openapi-spec-validator>=0.7
 python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
 python tools/validate_saved_output_contract.py
+python tools/validate_research_response_contract.py
 ```
 
 For Python runtime tests, install a reviewed versioned StratifyX wheel from its
@@ -62,3 +78,7 @@ The `python/epoch-protos/` and `typescript/epoch-protos/` folders are discarded
 legacy artifacts; the current contracts, SDK and MCP do not use them, and the
 old sync script no longer updates them.
 See [the historical package notes](docs/legacy-packages.md).
+
+One query publishes one answer with its own identity and revisions. Different queries
+can reuse the same execution. Native response tables use exact relation
+and field sources, independently of dashboard exhibits.

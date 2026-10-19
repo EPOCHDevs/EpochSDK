@@ -1,0 +1,367 @@
+{
+  "$defs": {
+    "Cell": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JsonValue": {},
+    "JsonValueOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "json",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "value"
+      ],
+      "title": "JsonValueOutput",
+      "type": "object"
+    },
+    "OutputValue": {
+      "discriminator": {
+        "mapping": {
+          "json": "#/$defs/JsonValueOutput",
+          "table": "#/$defs/TableValue",
+          "text": "#/$defs/TextValue"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/TableValue"
+        },
+        {
+          "$ref": "#/$defs/JsonValueOutput"
+        },
+        {
+          "$ref": "#/$defs/TextValue"
+        }
+      ]
+    },
+    "ResearchResponseContent": {
+      "additionalProperties": false,
+      "description": "Answer values or native table references; a preview is never a full table.",
+      "properties": {
+        "declarations": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/$defs/JsonOutputRequest",
+                "table": "#/$defs/TableOutputRequest",
+                "text": "#/$defs/TextOutputRequest"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "openapi.json#/components/schemas/TableOutputRequest"
+              },
+              {
+                "$ref": "openapi.json#/components/schemas/JsonOutputRequest"
+              },
+              {
+                "$ref": "openapi.json#/components/schemas/TextOutputRequest"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Declarations",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/OutputValue"
+          },
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "declarations",
+        "outputs"
+      ],
+      "title": "ResearchResponseContent",
+      "type": "object"
+    },
+    "TableOrder": {
+      "additionalProperties": false,
+      "properties": {
+        "descending": {
+          "default": false,
+          "title": "Descending",
+          "type": "boolean"
+        },
+        "field_id": {
+          "minLength": 1,
+          "title": "Field Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_id"
+      ],
+      "title": "TableOrder",
+      "type": "object"
+    },
+    "TableReference": {
+      "additionalProperties": false,
+      "description": "A projection of one immutable execution relation, read in bounded pages.",
+      "properties": {
+        "execution_id": {
+          "minLength": 1,
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "field_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Field Ids",
+          "type": "array"
+        },
+        "order_by": {
+          "items": {
+            "$ref": "#/$defs/TableOrder"
+          },
+          "title": "Order By",
+          "type": "array"
+        },
+        "row_count": {
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "table": {
+          "minLength": 1,
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "execution_id",
+        "table",
+        "field_ids",
+        "row_count"
+      ],
+      "title": "TableReference",
+      "type": "object"
+    },
+    "TableValue": {
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "not": {
+            "required": [
+              "source"
+            ]
+          },
+          "properties": {
+            "rows": {
+              "type": "array"
+            }
+          },
+          "required": [
+            "rows"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "rows"
+            ]
+          },
+          "properties": {
+            "source": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "items": {
+                "items": {
+                  "$ref": "#/$defs/Cell"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rows"
+        },
+        "schema": {
+          "items": {
+            "$ref": "openapi.json#/components/schemas/Column"
+          },
+          "title": "Schema",
+          "type": "array"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TableReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "const": "table",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "schema"
+      ],
+      "title": "TableValue",
+      "type": "object"
+    },
+    "TextValue": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "enum": [
+            "plain",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "format",
+        "value"
+      ],
+      "title": "TextValue",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A Backend-owned answer revision. One query can have many named parts.",
+  "properties": {
+    "content": {
+      "$ref": "#/$defs/ResearchResponseContent"
+    },
+    "primary_execution_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Primary Execution Id",
+      "type": "string"
+    },
+    "published_at_ms": {
+      "minimum": 0,
+      "title": "Published At Ms",
+      "type": "integer"
+    },
+    "request_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "response_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Response Id",
+      "type": "string"
+    },
+    "study_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Study Id",
+      "type": "string"
+    },
+    "thread_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Thread Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "response_id",
+    "request_id",
+    "thread_id",
+    "version",
+    "published_at_ms",
+    "content"
+  ],
+  "title": "SavedResearchResponse",
+  "type": "object"
+}

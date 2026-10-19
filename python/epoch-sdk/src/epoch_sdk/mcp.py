@@ -10,6 +10,7 @@ from mcp.types import CallToolResult, TextContent
 
 from .contracts import ErrorResponse, RunParameters
 from .errors import EpochError
+from .responses import ResearchResponseContent
 from .saved_outputs import SavedOutputManifest
 from .supervisor import (
     Answers,
@@ -105,6 +106,90 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_execute_saved", structured_output=True)(execute_saved)
     server.tool(name="epoch_status", structured_output=True)(status)
     server.tool(name="epoch_outputs", structured_output=True)(outputs)
+
+    async def response(response_id: str, version: int | None = None) -> CallToolResult:
+        """Read a published answer by its own identity and optional immutable revision."""
+        try:
+            saved = await client.response(response_id, version=version)
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(error=error.error).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text="Answer ready.")],
+            structured_content=saved.to_wire(),
+        )
+
+    async def publish(
+        request_id: str,
+        thread_id: str,
+        content: ResearchResponseContent,
+        primary_execution_id: str | None = None,
+        expected_version: int = 0,
+    ) -> CallToolResult:
+        """Publish one answer for this query. Different queries may use the same run.
+        Values must be complete. Edits retain the original query/thread and use
+        its expected revision; no new agent or engine work is started.
+        """
+        try:
+            saved = await client.publish_response(
+                request_id,
+                content,
+                thread_id=thread_id,
+                primary_execution_id=primary_execution_id,
+                expected_version=expected_version,
+            )
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(error=error.error).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text="Answer ready.")],
+            structured_content=saved.to_wire(),
+        )
+
+    server.tool(name="epoch_response", structured_output=True)(response)
+
+    async def response_table(
+        response_id: str,
+        name: str,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> CallToolResult:
+        """Read a table page. Pin its returned version for subsequent pages,
+        then follow next_offset until null for all rows.
+
+        The total table has no fixed row ceiling. This reads Backend only;
+        it starts neither an agent nor a study execution.
+        """
+        try:
+            page = await client.response_table(
+                response_id, name, version=version, offset=offset, page_size=page_size
+            )
+        except EpochError as error:
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(error=error.error).to_wire(),
+            )
+        except ValueError as error:
+            from .contracts import DomainError
+
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=ErrorResponse(
+                    error=DomainError(code="INVALID_REQUEST", message=str(error), retryable=False)
+                ).to_wire(),
+            )
+        return CallToolResult(
+            content=[TextContent(type="text", text="Table page ready.")],
+            structured_content=page.to_wire(),
+        )
+
+    server.tool(name="epoch_response_table", structured_output=True)(response_table)
+    server.tool(name="epoch_publish_response", structured_output=True)(publish)
     return server
 
 

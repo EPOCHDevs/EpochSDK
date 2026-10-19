@@ -1,0 +1,30 @@
+{
+  "response_id": "rsp_2222222222222222222222222222222222222222222222222222222222222222",
+  "version": 1,
+  "offset": 0,
+  "total_rows": 25003,
+  "next_offset": 2,
+  "name": "results",
+  "type": "table",
+  "schema": [
+    {
+      "name": "label",
+      "type": "string",
+      "description": "Row category; labels may repeat"
+    },
+    {
+      "name": "value",
+      "type": "int64"
+    }
+  ],
+  "rows": [
+    [
+      "A",
+      "0"
+    ],
+    [
+      "A",
+      "2"
+    ]
+  ]
+}
