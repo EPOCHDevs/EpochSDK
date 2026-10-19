@@ -1,0 +1,542 @@
+{
+  "$defs": {
+    "NativeRelationPlanQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "field_ids": {
+          "items": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Field Ids",
+          "type": "array"
+        },
+        "kind": {
+          "const": "relation",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "order_by": {
+          "description": "Native field IDs and directions that honor requested ranking or chronology.",
+          "items": {
+            "$ref": "#/$defs/TableOrder"
+          },
+          "title": "Order By",
+          "type": "array"
+        },
+        "table": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "table",
+        "field_ids",
+        "kind"
+      ],
+      "title": "NativeRelationPlanQuery",
+      "type": "object"
+    },
+    "PlanCellBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/PlanQueryField"
+        },
+        "kind": {
+          "const": "cell",
+          "title": "Kind",
+          "type": "string"
+        },
+        "query": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Query",
+          "type": "string"
+        },
+        "row_index": {
+          "minimum": 0,
+          "title": "Row Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "query",
+        "field"
+      ],
+      "title": "PlanCellBinding",
+      "type": "object"
+    },
+    "PlanColumnBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/PlanQueryField"
+        },
+        "kind": {
+          "const": "column_array",
+          "title": "Kind",
+          "type": "string"
+        },
+        "query": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "query",
+        "field"
+      ],
+      "title": "PlanColumnBinding",
+      "type": "object"
+    },
+    "PlanJsonBinding": {
+      "discriminator": {
+        "mapping": {
+          "cell": "#/$defs/PlanCellBinding",
+          "column_array": "#/$defs/PlanColumnBinding",
+          "object": "#/$defs/PlanObjectBinding",
+          "parameter": "#/$defs/PlanParameterBinding",
+          "row": "#/$defs/PlanRowBinding",
+          "rows": "#/$defs/PlanRowsBinding",
+          "schema_constant": "#/$defs/PlanSchemaConstantBinding"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PlanCellBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanRowBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanRowsBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanColumnBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanParameterBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanSchemaConstantBinding"
+        },
+        {
+          "$ref": "#/$defs/PlanObjectBinding"
+        }
+      ]
+    },
+    "PlanJsonOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "json",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/PlanJsonBinding"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "value"
+      ],
+      "title": "PlanJsonOutput",
+      "type": "object"
+    },
+    "PlanObjectBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PlanJsonBinding"
+          },
+          "minProperties": 1,
+          "title": "Fields",
+          "type": "object"
+        },
+        "kind": {
+          "const": "object",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "fields"
+      ],
+      "title": "PlanObjectBinding",
+      "type": "object"
+    },
+    "PlanParameterBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "parameter",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pointer": {
+          "pattern": "^(/([^~/]|~[01])*)+$",
+          "title": "Pointer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "pointer"
+      ],
+      "title": "PlanParameterBinding",
+      "type": "object"
+    },
+    "PlanQueryField": {
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "default": "native",
+          "enum": [
+            "native",
+            "date",
+            "datetime",
+            "decimal_string"
+          ],
+          "title": "Encoding",
+          "type": "string"
+        },
+        "field_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Field Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_id"
+      ],
+      "title": "PlanQueryField",
+      "type": "object"
+    },
+    "PlanRowBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PlanQueryField"
+          },
+          "minProperties": 1,
+          "title": "Fields",
+          "type": "object"
+        },
+        "kind": {
+          "const": "row",
+          "title": "Kind",
+          "type": "string"
+        },
+        "query": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "query",
+        "fields"
+      ],
+      "title": "PlanRowBinding",
+      "type": "object"
+    },
+    "PlanRowsBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PlanQueryField"
+          },
+          "minProperties": 1,
+          "title": "Fields",
+          "type": "object"
+        },
+        "kind": {
+          "const": "rows",
+          "title": "Kind",
+          "type": "string"
+        },
+        "query": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "query",
+        "fields"
+      ],
+      "title": "PlanRowsBinding",
+      "type": "object"
+    },
+    "PlanSchemaConstantBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "schema_constant",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "PlanSchemaConstantBinding",
+      "type": "object"
+    },
+    "PlanTableOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "projections": {
+          "items": {
+            "$ref": "#/$defs/PlanTableProjection"
+          },
+          "minItems": 1,
+          "title": "Projections",
+          "type": "array"
+        },
+        "type": {
+          "const": "table",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "projections"
+      ],
+      "title": "PlanTableOutput",
+      "type": "object"
+    },
+    "PlanTableProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "field_ids": {
+          "items": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Field Ids",
+          "type": "array"
+        },
+        "query": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Query",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query",
+        "field_ids"
+      ],
+      "title": "PlanTableProjection",
+      "type": "object"
+    },
+    "PlanTextOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PlanJsonBinding"
+          },
+          "minProperties": 1,
+          "title": "Inputs",
+          "type": "object"
+        },
+        "instructions": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Instructions",
+          "type": "string"
+        },
+        "model_policy": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Model Policy",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "model_policy",
+        "instructions",
+        "inputs"
+      ],
+      "title": "PlanTextOutput",
+      "type": "object"
+    },
+    "RecordedSqlPlanQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "recorded_sql",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "query_ref": {
+          "pattern": "^rqr_[0-9a-f]{64}$",
+          "title": "Query Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name",
+        "query_ref"
+      ],
+      "title": "RecordedSqlPlanQuery",
+      "type": "object"
+    },
+    "ResponsePlanOutput": {
+      "discriminator": {
+        "mapping": {
+          "json": "#/$defs/PlanJsonOutput",
+          "table": "#/$defs/PlanTableOutput",
+          "text": "#/$defs/PlanTextOutput"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PlanTableOutput"
+        },
+        {
+          "$ref": "#/$defs/PlanJsonOutput"
+        },
+        {
+          "$ref": "#/$defs/PlanTextOutput"
+        }
+      ]
+    },
+    "ResponsePlanQuery": {
+      "discriminator": {
+        "mapping": {
+          "recorded_sql": "#/$defs/RecordedSqlPlanQuery",
+          "relation": "#/$defs/NativeRelationPlanQuery"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RecordedSqlPlanQuery"
+        },
+        {
+          "$ref": "#/$defs/NativeRelationPlanQuery"
+        }
+      ]
+    },
+    "TableOrder": {
+      "additionalProperties": false,
+      "properties": {
+        "descending": {
+          "default": false,
+          "title": "Descending",
+          "type": "boolean"
+        },
+        "field_id": {
+          "minLength": 1,
+          "title": "Field Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_id"
+      ],
+      "title": "TableOrder",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "format_version": {
+      "const": 1,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/ResponsePlanOutput"
+      },
+      "minItems": 1,
+      "title": "Outputs",
+      "type": "array"
+    },
+    "queries": {
+      "items": {
+        "$ref": "#/$defs/ResponsePlanQuery"
+      },
+      "minItems": 1,
+      "title": "Queries",
+      "type": "array"
+    }
+  },
+  "required": [
+    "format_version",
+    "queries",
+    "outputs"
+  ],
+  "title": "ResponsePlanDraft",
+  "type": "object"
+}

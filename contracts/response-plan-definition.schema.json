@@ -1,0 +1,78 @@
+{
+  "$defs": {},
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allow_period_override": {
+      "default": false,
+      "title": "Allow Period Override",
+      "type": "boolean"
+    },
+    "captured_parameters": {
+      "$ref": "openapi.json#/components/schemas/RunParameters"
+    },
+    "declarations": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "json": "openapi.json#/components/schemas/JsonOutputRequest",
+            "table": "openapi.json#/components/schemas/TableOutputRequest",
+            "text": "openapi.json#/components/schemas/TextOutputRequest"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "openapi.json#/components/schemas/TableOutputRequest"
+          },
+          {
+            "$ref": "openapi.json#/components/schemas/JsonOutputRequest"
+          },
+          {
+            "$ref": "openapi.json#/components/schemas/TextOutputRequest"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Declarations",
+      "type": "array"
+    },
+    "format_version": {
+      "const": 1,
+      "title": "Format Version",
+      "type": "integer"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "response-plan-draft.schema.json#/$defs/ResponsePlanOutput"
+      },
+      "minItems": 1,
+      "title": "Outputs",
+      "type": "array"
+    },
+    "queries": {
+      "items": {
+        "$ref": "response-plan-draft.schema.json#/$defs/ResponsePlanQuery"
+      },
+      "minItems": 1,
+      "title": "Queries",
+      "type": "array"
+    },
+    "study_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Study Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "format_version",
+    "queries",
+    "outputs",
+    "study_id",
+    "declarations",
+    "captured_parameters"
+  ],
+  "title": "ResponsePlanDefinition",
+  "type": "object"
+}

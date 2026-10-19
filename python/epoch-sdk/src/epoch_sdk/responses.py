@@ -34,6 +34,11 @@ from .output_validation import (
 type InterpretedOutput = Annotated[JsonValueOutput | TextValue, Field(discriminator="type")]
 
 
+class ResponsePlanReference(Contract):
+    plan_id: Annotated[str, Field(pattern=r"^rpl_[0-9a-f]{64}$")]
+    version: Annotated[int, Field(ge=1)]
+
+
 class ResearchResponseContent(Contract):
     """Answer values or native table references; a preview is never a full table."""
 
