@@ -22,6 +22,7 @@ from stratifyx import (
     SdkResearchLaunch,
 )
 from stratifyx.core.api_error import ApiError
+from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import Contract, DomainError, ErrorResponse, RunParameters, RunRequest
@@ -306,15 +307,33 @@ class EpochClient:
                     )
             except ApiError as error:
                 if error.status_code == 409:
-                    raise EpochError(
-                        DomainError(
-                            code="IDEMPOTENCY_CONFLICT",
-                            message="This operation ID already has different accepted inputs. Use a new operation ID.",
-                            retryable=False,
-                        )
-                    ) from error
+                    raise await self._execution_admission_conflict(operation_id, error) from error
                 raise
             return await self._execution_operation(record)
+
+    async def _execution_admission_conflict(self, operation_id: str, error: ApiError) -> EpochError:
+        # Native checks an existing operation before evaluating a new plan.
+        # Other 409s (for example a frozen period) reject before admission;
+        # changing the ID cannot repair those and may duplicate accepted work.
+        try:
+            await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
+                operation_id, request_options={"max_retries": 0}
+            )
+        except ApiError as observation:
+            if observation.status_code != 404:
+                raise
+            try:
+                message = NativeErrorResponse.model_validate(error.body).message
+            except ValueError:
+                message = "The saved execution was rejected before admission."
+            return EpochError(DomainError(code="INVALID_STATE", message=message, retryable=False))
+        return EpochError(
+            DomainError(
+                code="IDEMPOTENCY_CONFLICT",
+                message="This operation ID already has different accepted inputs. Use a new operation ID.",
+                retryable=False,
+            )
+        )
 
     async def execution_operation(self, operation_id: str) -> ChosenExecution | ExecutionAccepted:
         """Read this prepared execution operation; start no job or agent."""

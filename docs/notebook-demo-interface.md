@@ -110,3 +110,9 @@ cost and account audit passed. The other desk cases and a real populated
 dashboard still need their own acceptance. The screener exposed a missing
 roster-provenance field on the active native Discovery handoff; its failed
 attempt has been preserved, and no Backend build will run without permission.
+
+The short MSFT-risk and QQQ/Treasury requests subsequently passed actual MCP
+research, independent numerical/source audits and five real notebook cells each.
+The cells reused the audited operation IDs rather than submitting replacement
+research. Risk returned typed JSON; macro returned three category-indexed table
+rows and Markdown. Both dashboard checks confirmed response-only studies.

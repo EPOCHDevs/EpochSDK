@@ -367,6 +367,90 @@ def test_optional_launch_and_execution_metadata_are_omitted_from_native_wire():
     asyncio.run(scenario())
 
 
+@pytest.mark.parametrize("mode", ["sdk", "mcp"])
+def test_rejected_plan_period_is_not_reported_as_a_duplicate_operation(mode):
+    async def scenario():
+        service = Service()
+        calls = []
+        reason = "This verified plan does not allow a different period."
+
+        def backend(request):
+            calls.append((request.method, request.url.path))
+            if request.method == "POST":
+                assert request.url.path == "/api/v1/integration/execution-requests"
+                return httpx.Response(
+                    409,
+                    json={
+                        "error": "Conflict",
+                        "message": reason,
+                        "timestamp": "2026-10-19T00:00:00Z",
+                    },
+                )
+            assert request.method == "GET" and request.url.path.endswith("/by-handle/later-period")
+            return httpx.Response(
+                404,
+                json={
+                    "error": "NotFound",
+                    "message": "Execution operation not found.",
+                    "timestamp": "2026-10-19T00:00:00Z",
+                },
+            )
+
+        service.backend_handler = backend
+        source = SavedStudy(
+            study_id="study-one",
+            source_execution_id="new",
+            thread_id=THREAD,
+            response_plan=ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1),
+        )
+        async with service.client() as sdk:
+            if mode == "sdk":
+                with pytest.raises(EpochError) as failure:
+                    await sdk.execute_saved(
+                        source,
+                        period=DatePeriodConfig(start="2026-01-01"),
+                        operation_id="later-period",
+                    )
+                detail = failure.value.error
+            else:
+                async with Client(create_server(sdk.supervisor)) as client:
+                    response = await client.call_tool(
+                        "epoch_execute_saved",
+                        {
+                            "reference": source.model_dump(mode="json", exclude_none=True),
+                            "parameters": {"period": {"start": "2026-01-01"}},
+                            "operation_id": "later-period",
+                        },
+                    )
+                from epoch_sdk.contracts import DomainError
+
+                detail = DomainError.model_validate(response.structured_content["error"])
+        assert detail.code == "INVALID_STATE" and detail.message == reason
+        assert detail.retryable is False
+        assert [method for method, _ in calls] == ["POST", "GET"]
+        assert service.jobs == 0 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+def test_existing_execution_operation_with_changed_inputs_remains_a_conflict():
+    async def scenario():
+        service = Service()
+        source = SavedStudy(study_id="study-one", source_execution_id="new")
+        async with service.client() as sdk:
+            await sdk.execute_saved(
+                source, period=DatePeriodConfig(start="2025-01-01"), operation_id="refresh-one"
+            )
+            with pytest.raises(EpochError) as failure:
+                await sdk.execute_saved(
+                    source, period=DatePeriodConfig(start="2026-01-01"), operation_id="refresh-one"
+                )
+        assert failure.value.error.code == "IDEMPOTENCY_CONFLICT"
+        assert service.jobs == 1 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
 def test_prepared_execution_waits_for_its_answer_and_reconnects_without_a_graph_call():
     async def scenario():
         service = Service()

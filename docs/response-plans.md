@@ -20,6 +20,15 @@ Studies without a response plan retain their existing engine-status behavior.
 Live text verification/replay now also passed; the full five-case
 research/deployment acceptance remains incomplete.
 
+A later execution period requires the saved plan's explicit
+`allow_period_override` capability. The default is false. Changing the engine
+dates cannot make fixed fiscal labels or embedded SQL date filters reusable.
+The AAPL notebook's rejected later-period request exposed a client error: alpha9
+reported every admission HTTP 409 as a reused-ID conflict. Alpha10 reads the
+native operation record to distinguish an actual accepted-input conflict from
+a plan rejection before admission, and preserves the latter's native reason.
+It does not resubmit, change the ID or relax the plan's frozen settings.
+
 The normally built alpha7/Native rc6 packages passed a real authenticated
 computed-only MSFT plan handshake: complete table rows equal the audited original,
 the saved answer names the exact plan revision, reposting the same draft attaches,
@@ -69,6 +78,17 @@ Carry the source-owned provenance through that native path and generated clients
 do not fabricate it or silently re-resolve a frozen cohort in the SDK. Backend
 builds are currently on hold at the owner's request. This attempt remains failed
 evidence, and the full acceptance goal remains open.
+
+The short MSFT-risk and QQQ/Treasury requests also completed through an actual
+MCP client. Their alpha9 notebook connection, request, session, complete-read and
+dashboard-check cells subsequently passed while reconnecting to those exact
+saved operations. Risk metrics and the drawdown/recovery episode reconcile to
+independent prices and dividend events. All 120 macro months and every regime
+statistic reconcile independently; the 2,521 yield observations in the requested
+window also match the Federal Reserve's DGS10 history from FRED. These checks use
+latest history, with its revision limitations; they do not establish historical
+point-in-time availability. The screener and its saved-output variant still
+prevent full goal acceptance.
 
 ## Establish and publish during research
 

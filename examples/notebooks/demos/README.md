@@ -91,8 +91,10 @@ paged reads and reconciliation against independently checked statement values.
 The shorter AAPL notebook also passed a fresh research run, complete SDK/MCP
 reads and an independent price, trade, cost, dividend and account audit. Its
 table, JSON and text belong to one saved answer and verified response plan.
-The screener, macro and remaining output variants have outstanding service/data
-checks. The screener currently stops because Discovery does not retain the
+The short MSFT-risk and QQQ/Treasury cases have also passed real MCP research,
+independent source/calculation audits and their notebook display/read checks.
+The screener and remaining output variants have outstanding service/data checks.
+The screener currently stops because Discovery does not retain the
 roster timestamp required by its output. These source notebooks contain
 requests, not pre-filled successful findings.
 
