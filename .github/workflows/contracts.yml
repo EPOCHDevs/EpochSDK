@@ -23,4 +23,5 @@ jobs:
       - run: python -m pip install 'jsonschema[format]>=4.23,<5' 'openapi-spec-validator>=0.7,<0.9'
       - run: python tools/validate_contract.py
       - run: python tools/sync_native_parameters.py --check
+      - run: python tools/validate_saved_output_contract.py
       - run: python -m compileall -q python/epoch-sdk/src

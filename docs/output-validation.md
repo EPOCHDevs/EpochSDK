@@ -17,6 +17,13 @@ the caller-owned JSON value. Readers must supply the complete bounded result
 or report a limit/error; validating five preview rows does not certify the rest
 of a table. This function validates types and structure, not analytical truth.
 
-The saved-result adapters, Backend output persistence and SDK/MCP integration
-checks are still required by ENG-2038 and the first delivery milestone. The
-validator's unit tests do not establish a live service or completed workflow.
+`saved_outputs.read_saved_outputs` connects the validator to explicit native
+saved-artifact bindings. It reads through StratifyX and exposes the same behavior
+through `SupervisorClient.outputs` and MCP `epoch_outputs`. See
+[the saved-output reader](saved-output-reader.md) for supported representations,
+limits and the remaining accepted-request/publication integration.
+
+Backend publication/persistence of the accepted declarations and artifact
+bindings, automatic handoff from the supervisor, and real SDK/MCP checks are
+still required by ENG-2033/2035/2038 and the first milestone. Component tests do
+not establish a live service or completed natural-language workflow.

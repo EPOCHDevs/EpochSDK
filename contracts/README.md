@@ -27,3 +27,10 @@ membership. Language runtimes must enforce both parts.
 Change the shared contract deliberately, update each affected binding, and run
 the conformance checks. One language's implementation does not define the API for
 the others.
+
+`saved-output-manifest.schema.json` is the explicit per-execution read receipt
+for named values, reusing declarations from `openapi.json`. It identifies exact
+native artifact/field bindings; its example uses placeholders. Publishing the
+receipt from the accepted workflow remains separate Backend/tool work. Check it
+with `tools/validate_saved_output_contract.py`; all references resolve to local,
+checked-in resources.

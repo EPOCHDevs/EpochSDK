@@ -8,7 +8,9 @@ import os
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent
 
-from .contracts import RunParameters
+from .contracts import ErrorResponse, RunParameters
+from .errors import EpochError
+from .saved_outputs import SavedOutputManifest
 from .supervisor import (
     Answers,
     ChosenExecution,
@@ -74,10 +76,35 @@ def create_server(client: SupervisorClient) -> MCPServer:
         """
         return _result(await client.status(handle))
 
+    async def outputs(manifest: SavedOutputManifest) -> CallToolResult:
+        """Read complete bounded saved outputs through Backend and validate their
+        actual values. Supply the saved receipt from the workflow/Backend owner;
+        binding publication is still being integrated. Do not guess bindings from
+        presentation titles. This starts no agent/job and does not certify research.
+        """
+        try:
+            result = await client.outputs(manifest)
+        except EpochError as error:
+            response = ErrorResponse(error=error.error, execution_id=manifest.execution_id)
+            return CallToolResult(
+                content=[TextContent(type="text", text=str(error))],
+                structured_content=response.to_wire(),
+            )
+        return CallToolResult(
+            content=[
+                TextContent(
+                    type="text",
+                    text=f"Validated {len(result.outputs)} saved outputs for execution {result.execution_id}.",
+                )
+            ],
+            structured_content=result.to_wire(),
+        )
+
     server.tool(name="epoch_run", structured_output=True)(run)
     server.tool(name="epoch_resume", structured_output=True)(resume)
     server.tool(name="epoch_execute_saved", structured_output=True)(execute_saved)
     server.tool(name="epoch_status", structured_output=True)(status)
+    server.tool(name="epoch_outputs", structured_output=True)(outputs)
     return server
 
 

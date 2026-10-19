@@ -1,0 +1,20 @@
+{
+  "execution_id": "native_execution_id",
+  "study_id": "saved_study_version_id",
+  "declarations": [
+    {"name": "annual_sales", "type": "table", "schema": [
+      {"name": "year", "type": "int64", "description": "Calendar year"},
+      {"name": "sales", "type": "float64", "unit": "USD"}
+    ]},
+    {"name": "summary", "type": "json", "schema": {
+      "type": "object", "properties": {"total": {"type": "number", "description": "Total sales in USD"}},
+      "required": ["total"], "additionalProperties": false
+    }},
+    {"name": "notes", "type": "text", "format": "markdown", "instructions": "Explain the saved analysis"}
+  ],
+  "bindings": [
+    {"name": "annual_sales", "type": "table", "category": "ALL", "table_index": 3, "field_ids": ["Year", "Revenue"]},
+    {"name": "summary", "type": "json", "category": "ALL", "markdown_id": "saved_summary_json"},
+    {"name": "notes", "type": "text", "category": "ALL", "markdown_id": "saved_report", "format": "markdown"}
+  ]
+}

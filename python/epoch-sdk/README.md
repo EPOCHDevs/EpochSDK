@@ -10,8 +10,9 @@ LangGraph SDK; it does not import the conversation application's Python code.
 Python 3.12 is the first client implementation. The package name is `epoch-sdk`
 and its import is `epoch_sdk`. It supplies executable contracts, an access
 checker, output-value validation and the [supervisor/MCP adapter](../../docs/supervisor-workflow.md).
-The adapter handles native communication and execution selection; connecting it
-to the full named-output analysis API remains work in progress.
+The adapter handles native communication, execution selection and explicit
+[saved-output reads](../../docs/saved-output-reader.md). Automatic publication
+of the accepted output mapping and the full named-output flow remain in progress.
 
 ## Use the actual core contract
 
@@ -69,6 +70,7 @@ Never edit or vendor the generated StratifyX models. From the repository root:
 ```bash
 python3 tools/sync_native_parameters.py --check
 python3 tools/check_python_contracts.py
+python3 tools/validate_saved_output_contract.py
 python3 -m pytest python/epoch-sdk/tests
 ```
 

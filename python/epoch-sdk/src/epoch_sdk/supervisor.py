@@ -18,6 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
 
+from .saved_outputs import SavedOutputManifest, ValidatedSavedOutputs, read_saved_outputs
+
 
 class Closed(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
@@ -265,6 +267,10 @@ class SupervisorClient:
     async def aclose(self) -> None:
         for http in self._owned_http:
             await http.aclose()
+
+    async def outputs(self, manifest: SavedOutputManifest) -> ValidatedSavedOutputs:
+        """Read and validate an explicit saved receipt directly through Backend."""
+        return await read_saved_outputs(self.backend, manifest)
 
     def conversation_url(self, thread_id: str) -> str | None:
         if self.ui_url is None:
