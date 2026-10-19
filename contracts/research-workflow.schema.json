@@ -1,0 +1,274 @@
+{
+  "$defs": {
+    "GraphInterrupt": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "response_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response Schema"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "id",
+        "value"
+      ],
+      "title": "GraphInterrupt",
+      "type": "object"
+    },
+    "InProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/WorkflowHandle"
+        },
+        "status": {
+          "const": "in_progress",
+          "default": "in_progress",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "handle"
+      ],
+      "title": "InProgress",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "NeedsInput": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversation Url"
+        },
+        "handle": {
+          "$ref": "#/$defs/WorkflowHandle"
+        },
+        "interrupts": {
+          "items": {
+            "$ref": "#/$defs/GraphInterrupt"
+          },
+          "title": "Interrupts",
+          "type": "array"
+        },
+        "status": {
+          "const": "needs_input",
+          "default": "needs_input",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "handle",
+        "interrupts"
+      ],
+      "title": "NeedsInput",
+      "type": "object"
+    },
+    "ResearchAccepted": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "status": {
+          "const": "accepted",
+          "default": "accepted",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id"
+      ],
+      "title": "ResearchAccepted",
+      "type": "object"
+    },
+    "ResearchCompleted": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "response": {
+          "$ref": "research-response.schema.json"
+        },
+        "reusable_study": {
+          "$ref": "#/$defs/SavedStudy"
+        },
+        "status": {
+          "const": "succeeded",
+          "default": "succeeded",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "response"
+      ],
+      "title": "ResearchCompleted",
+      "type": "object"
+    },
+    "ResearchFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "openapi.json#/components/schemas/Error"
+        },
+        "execution_id": {
+          "description": "Existing/accepted execution this failure refers to; a failed fetch does not change its source status.",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "error",
+        "request_id"
+      ],
+      "title": "ResearchFailure",
+      "type": "object"
+    },
+    "ResearchResult": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ResearchAccepted"
+        },
+        {
+          "$ref": "#/$defs/ResearchCompleted"
+        },
+        {
+          "$ref": "#/$defs/NeedsInput"
+        },
+        {
+          "$ref": "#/$defs/InProgress"
+        }
+      ]
+    },
+    "SavedStudy": {
+      "additionalProperties": false,
+      "properties": {
+        "source_execution_id": {
+          "title": "Source Execution Id",
+          "type": "string"
+        },
+        "study_id": {
+          "title": "Study Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thread Id"
+        }
+      },
+      "required": [
+        "study_id",
+        "source_execution_id"
+      ],
+      "title": "SavedStudy",
+      "type": "object"
+    },
+    "WorkflowHandle": {
+      "additionalProperties": false,
+      "properties": {
+        "assistant_id": {
+          "title": "Assistant Id",
+          "type": "string"
+        },
+        "execution_ids_before": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Execution Ids Before",
+          "type": "array"
+        },
+        "outcome_ids_before": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Outcome Ids Before",
+          "type": "array"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "thread_id": {
+          "title": "Thread Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "thread_id",
+        "request_id",
+        "assistant_id"
+      ],
+      "title": "WorkflowHandle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/ResearchResult"
+    },
+    {
+      "$ref": "#/$defs/ResearchFailure"
+    }
+  ]
+}

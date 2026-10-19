@@ -7,19 +7,21 @@ Selecting an engine execution is separate from validating its requested outputs.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
-from typing import Literal, Protocol, TypedDict, cast
+from typing import Literal, NotRequired, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
 
 import httpx
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, RunCreateMetadata
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
 
+from .contracts import DomainError
 from .responses import (
     ResearchResponseContent,
+    ResponseReference,
     ResponseTablePage,
     SavedResearchResponse,
     publish_response,
@@ -124,10 +126,19 @@ class ChosenExecution(Closed):
     reply: str = ""
 
 
+class PublishedAnswer(Closed):
+    status: Literal["response_published"] = "response_published"
+    handle: WorkflowHandle
+    response: ResponseReference
+
+
 class NoExecution(Closed):
     status: Literal["no_execution"] = "no_execution"
     handle: WorkflowHandle
     reason: str
+    publication_failed: bool = False
+    publication_error: DomainError | None = None
+    execution_id: str | None = None
     reply: str = ""
 
 
@@ -136,7 +147,7 @@ class InProgress(Closed):
     handle: WorkflowHandle
 
 
-type SupervisorResult = NeedsInput | ChosenExecution | NoExecution | InProgress
+type SupervisorResult = NeedsInput | PublishedAnswer | ChosenExecution | NoExecution | InProgress
 
 
 class _Outcome(BaseModel):
@@ -168,10 +179,47 @@ class _State(BaseModel):
     execution_ids: list[str] = Field(default_factory=list)
     next_action_outcomes: dict[str, _Outcome] = Field(default_factory=dict)
     messages: list[_Message] = Field(default_factory=list[_Message])
+    published_response: ResponseReference | None = None
+    publication_error: DomainError | None = None
     authority_turn_id: str | None = None
     interrupts: list[GraphInterrupt] = Field(
         default_factory=list[GraphInterrupt], alias="__interrupt__"
     )
+
+    @field_validator("published_response", mode="before")
+    @classmethod
+    def checkpoint_response(cls, value: object) -> ResponseReference | None:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            # Native checkpoint serialization includes default null metadata.
+            # Normalize only the known optional reference fields at this boundary.
+            raw = cast(dict[str, object], value)
+            value = {
+                key: item
+                for key, item in raw.items()
+                if key not in {"primary_execution_id", "study_id"} or item is not None
+            }
+        return ResponseReference.model_validate(value)
+
+    @field_validator("publication_error", mode="before")
+    @classmethod
+    def checkpoint_error(cls, value: object) -> DomainError | None:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            raw = cast(dict[str, object], value)
+            optional = {
+                "gaps",
+                "questions",
+                "recommended_task",
+                "data_requirements",
+                "access_requirements",
+            }
+            value = {
+                key: item for key, item in raw.items() if key not in optional or item is not None
+            }
+        return DomainError.model_validate(value)
 
     def reply(self) -> str:
         for message in reversed(self.messages):
@@ -212,6 +260,7 @@ class _UserMessage(TypedDict):
 
 class _SupervisorInput(TypedDict):
     messages: list[_UserMessage]
+    sdk_request_id: NotRequired[str]
 
 
 class _RunsWait(Protocol):
@@ -304,6 +353,18 @@ class SupervisorClient:
     ) -> SavedResearchResponse:
         return await read_response(self.backend, response_id, version=version)
 
+    async def execution(self, execution_id: str) -> JobListItem:
+        """Read a native execution, including jobs started without a graph handle."""
+        if not execution_id.strip() or execution_id != execution_id.strip():
+            raise ValueError("Provide an exact nonblank execution identity")
+        job = await self.backend.studies_executions.get_execution_by_id(
+            execution_id,
+            request_options={"max_retries": 0},
+        )
+        if job.id != execution_id:
+            raise ValueError("Backend returned a different execution identity")
+        return job
+
     async def response_table(
         self,
         response_id: str,
@@ -359,6 +420,16 @@ class SupervisorClient:
     async def run(self, task: str, *, thread_id: str | None = None) -> SupervisorResult:
         if not task.strip():
             raise ValueError("Task must not be blank")
+        handle = await self.prepare(thread_id)
+        return await self._wait(handle, task=task)
+
+    async def prepare(
+        self,
+        thread_id: str | None,
+        *,
+        request_id: str | None = None,
+    ) -> WorkflowHandle:
+        """Resolve a native thread before attaching the accepted Backend record."""
         if thread_id is None:
             thread = await self.graph.threads.create()
             thread_id = thread["thread_id"]
@@ -368,14 +439,25 @@ class SupervisorClient:
             before = _State.model_validate(snapshot["values"] or {})
             if snapshot["interrupts"] or before.interrupts:
                 raise ValueError("This thread is waiting for input; resume its existing handle")
-        handle = WorkflowHandle(
+        return WorkflowHandle(
             thread_id=thread_id,
-            request_id=str(uuid4()),
+            request_id=request_id or str(uuid4()),
             assistant_id=self.assistant_id,
             execution_ids_before=before.execution_ids,
             outcome_ids_before=list(before.next_action_outcomes),
         )
-        return await self._wait(handle, task=task)
+
+    async def submit(
+        self,
+        handle: WorkflowHandle,
+        task: str,
+        *,
+        sdk_request_id: str | None = None,
+    ) -> SupervisorResult:
+        """Submit a prepared turn after its owning request/runtime is persisted."""
+        if not task.strip():
+            raise ValueError("Task must not be blank")
+        return await self._wait(handle, task=task, sdk_request_id=sdk_request_id)
 
     async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
         expected = {item.id for item in waiting.interrupts}
@@ -414,7 +496,12 @@ class SupervisorClient:
         return await self._wait(waiting.handle, command=Command(resume=resume))
 
     async def _wait(
-        self, handle: WorkflowHandle, *, task: str | None = None, command: Command | None = None
+        self,
+        handle: WorkflowHandle,
+        *,
+        task: str | None = None,
+        command: Command | None = None,
+        sdk_request_id: str | None = None,
     ) -> SupervisorResult:
         current = handle
 
@@ -422,15 +509,19 @@ class SupervisorClient:
             nonlocal current
             current = current.model_copy(update={"run_id": metadata["run_id"]})
 
+        graph_input: _SupervisorInput | None = None
+        if task is not None:
+            graph_input = {"messages": [{"role": "user", "id": handle.request_id, "content": task}]}
+            if sdk_request_id is not None:
+                graph_input["sdk_request_id"] = sdk_request_id
+
         # Input/command belong to the native LangGraph transport. User prose is
         # supplied once; a resume sends only the pending answer command.
         state = _State.model_validate(
             await cast(_RunsWait, self.graph.runs).wait(
                 handle.thread_id,
                 handle.assistant_id,
-                input={"messages": [{"role": "user", "id": handle.request_id, "content": task}]}
-                if task is not None
-                else None,
+                input=graph_input,
                 command=command,
                 metadata={"epoch_sdk_request_id": handle.request_id},
                 durability="sync",
@@ -482,42 +573,35 @@ class SupervisorClient:
                 interrupts=state.interrupts,
                 conversation_url=self.conversation_url(handle.thread_id),
             )
+        reference = state.published_response
+        if reference is not None:
+            if reference.request_id != handle.request_id or reference.thread_id != handle.thread_id:
+                raise ValueError("The published answer belongs to another query or thread")
+            return PublishedAnswer(handle=handle, response=reference)
+        if state.publication_error is not None:
+            return NoExecution(
+                handle=handle,
+                reason=state.publication_error.message,
+                publication_failed=True,
+                publication_error=state.publication_error,
+            )
         outcomes = [
             value
             for key, value in state.next_action_outcomes.items()
             if key not in handle.outcome_ids_before
         ]
-        runs = [value for value in outcomes if value.tool_name != "build_study"]
-        execution_id = runs[-1].execution_id if runs else None
-        if not runs:
-            new_ids = [
-                value for value in state.execution_ids if value not in handle.execution_ids_before
-            ]
-            execution_id = new_ids[-1] if new_ids else None
-        if outcomes and outcomes[-1].tool_name == "build_study" and outcomes[-1].status != "saved":
-            execution_id = None
-        if not execution_id:
-            return NoExecution(
-                handle=handle,
-                reason=outcomes[-1].detail
-                if outcomes
-                else "The supervisor returned no new Backend execution for this request.",
-                reply=state.reply(),
-            )
-        execution = await self.backend.studies_executions.get_execution_by_id(
-            execution_id, request_options={"max_retries": 0}
-        )
-        if execution.id != execution_id or not execution.definition_id.strip():
-            raise ValueError("Backend returned a different execution identity")
-        return ChosenExecution(
+        failed = [
+            value
+            for value in outcomes
+            if value.status in {"failed", "cancelled", "infeasible", "not_started"}
+        ]
+        return NoExecution(
             handle=handle,
-            execution=execution,
-            reply=state.reply(),
-            reusable_study=SavedStudy(
-                study_id=execution.definition_id,
-                source_execution_id=execution.id,
-                thread_id=handle.thread_id,
-            ),
+            reason=failed[-1].detail
+            if failed
+            else "The supervisor finished without publishing an answer for this query.",
+            publication_failed=not bool(failed),
+            execution_id=failed[-1].execution_id if failed else None,
         )
 
     async def execute_saved(

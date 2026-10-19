@@ -1,0 +1,280 @@
+[
+  {
+    "name": "accepted",
+    "valid": true,
+    "value": {
+      "status": "accepted",
+      "request_id": "req_example"
+    }
+  },
+  {
+    "name": "completed",
+    "valid": true,
+    "value": {
+      "status": "succeeded",
+      "request_id": "req_example",
+      "reusable_study": {
+        "study_id": "example_study",
+        "source_execution_id": "example_execution"
+      },
+      "response": {
+        "study_id": "example_study",
+        "version": 1,
+        "published_at_ms": 0,
+        "content": {
+          "declarations": [
+            {
+              "name": "screen",
+              "type": "table",
+              "schema": [
+                {
+                  "name": "ticker",
+                  "type": "string",
+                  "description": "Synthetic example ticker"
+                },
+                {
+                  "name": "growth_pct",
+                  "type": "float64",
+                  "unit": "percent"
+                }
+              ]
+            },
+            {
+              "name": "summary",
+              "type": "json",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "matches": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "matches"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "explanation",
+              "type": "text",
+              "format": "markdown",
+              "instructions": "Explain the synthetic result briefly"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "screen",
+              "type": "table",
+              "schema": [
+                {
+                  "name": "ticker",
+                  "type": "string",
+                  "description": "Synthetic example ticker"
+                },
+                {
+                  "name": "growth_pct",
+                  "type": "float64",
+                  "unit": "percent"
+                }
+              ],
+              "rows": [
+                [
+                  "EXAMPLE",
+                  18.2
+                ]
+              ]
+            },
+            {
+              "name": "summary",
+              "type": "json",
+              "value": {
+                "matches": 1
+              }
+            },
+            {
+              "name": "explanation",
+              "type": "text",
+              "format": "markdown",
+              "value": "The synthetic screen contains one matching row."
+            }
+          ]
+        },
+        "primary_execution_id": "example_execution",
+        "response_id": "rsp_1111111111111111111111111111111111111111111111111111111111111111",
+        "request_id": "req_example",
+        "thread_id": "example_thread"
+      }
+    }
+  },
+  {
+    "name": "needs_input",
+    "valid": true,
+    "value": {
+      "status": "needs_input",
+      "handle": {
+        "thread_id": "example-thread",
+        "request_id": "req_example",
+        "assistant_id": "epoch-ai"
+      },
+      "interrupts": [
+        {
+          "id": "question-one",
+          "value": {
+            "type": "ask_user",
+            "questions": [],
+            "tool_call_id": "tool-one"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "in_progress",
+    "valid": true,
+    "value": {
+      "status": "in_progress",
+      "handle": {
+        "thread_id": "example-thread",
+        "request_id": "req_example",
+        "assistant_id": "epoch-ai"
+      }
+    }
+  },
+  {
+    "name": "failure",
+    "valid": true,
+    "value": {
+      "request_id": "req_example",
+      "execution_id": "example_execution",
+      "error": {
+        "code": "OUTPUT_VALIDATION_FAILED",
+        "message": "A value is missing",
+        "retryable": false
+      }
+    }
+  },
+  {
+    "name": "completion requires response",
+    "valid": false,
+    "value": {
+      "status": "succeeded",
+      "request_id": "req_example",
+      "reusable_study": {
+        "study_id": "example_study",
+        "source_execution_id": "example_execution"
+      }
+    }
+  },
+  {
+    "name": "unknown status",
+    "valid": false,
+    "value": {
+      "status": "done",
+      "request_id": "req_example"
+    }
+  },
+  {
+    "name": "closed completion",
+    "valid": false,
+    "value": {
+      "status": "succeeded",
+      "request_id": "req_example",
+      "reusable_study": {
+        "study_id": "example_study",
+        "source_execution_id": "example_execution"
+      },
+      "response": {
+        "study_id": "example_study",
+        "version": 1,
+        "published_at_ms": 0,
+        "content": {
+          "declarations": [
+            {
+              "name": "screen",
+              "type": "table",
+              "schema": [
+                {
+                  "name": "ticker",
+                  "type": "string",
+                  "description": "Synthetic example ticker"
+                },
+                {
+                  "name": "growth_pct",
+                  "type": "float64",
+                  "unit": "percent"
+                }
+              ]
+            },
+            {
+              "name": "summary",
+              "type": "json",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "matches": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "matches"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "explanation",
+              "type": "text",
+              "format": "markdown",
+              "instructions": "Explain the synthetic result briefly"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "screen",
+              "type": "table",
+              "schema": [
+                {
+                  "name": "ticker",
+                  "type": "string",
+                  "description": "Synthetic example ticker"
+                },
+                {
+                  "name": "growth_pct",
+                  "type": "float64",
+                  "unit": "percent"
+                }
+              ],
+              "rows": [
+                [
+                  "EXAMPLE",
+                  18.2
+                ]
+              ]
+            },
+            {
+              "name": "summary",
+              "type": "json",
+              "value": {
+                "matches": 1
+              }
+            },
+            {
+              "name": "explanation",
+              "type": "text",
+              "format": "markdown",
+              "value": "The synthetic screen contains one matching row."
+            }
+          ]
+        },
+        "primary_execution_id": "example_execution",
+        "response_id": "rsp_1111111111111111111111111111111111111111111111111111111111111111",
+        "request_id": "req_example",
+        "thread_id": "example_thread"
+      },
+      "unexpected": "reject"
+    }
+  }
+]

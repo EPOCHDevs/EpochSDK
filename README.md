@@ -1,5 +1,16 @@
 # Epoch SDK
 
+Research with an explicit output contract through `EpochClient.research`,
+`resume_research` and `research_status`. The result includes a saved response with
+the requested named table, JSON and text parts. Both notebooks and MCP use this
+flow; `execute_saved` remains a separate direct Backend action.
+
+See [the research flow](docs/research-flow.md) for the current API, ownership and
+validation limits. The older communication adapter remains available.
+
+The local notebook/MCP cases and their scope are recorded in
+[the October 18 verification](docs/verification-2026-10-18.md).
+
 Public, multi-language clients for Epoch analysis workflows. Epoch SDK wraps
 LangGraph SDK and the generated StratifyX SDK; MCP uses the same client behavior.
 
@@ -23,7 +34,8 @@ adapter and a saved-output reader. The adapter returns native clarification ques
 the same thread, executing a saved study directly through Backend, or reading
 validated values from an explicit saved output mapping. See the
 [SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The complete
-named-output analysis flow and real-service proof are still being implemented.
+named-output analysis flow is implemented and component-tested; real-service
+research proof remains pending.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 

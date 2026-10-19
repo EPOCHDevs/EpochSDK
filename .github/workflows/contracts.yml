@@ -25,4 +25,5 @@ jobs:
       - run: python tools/sync_native_parameters.py --check
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
+      - run: python tools/validate_research_workflow_contract.py
       - run: python -m compileall -q python/epoch-sdk/src
