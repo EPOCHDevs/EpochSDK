@@ -18,6 +18,14 @@ integration, prepared-execution scheduling, live text calls and full replay
 acceptance remain incomplete. Existing `execute_saved` currently
 returns native execution status and does not regenerate an answer.
 
+The normally built alpha7/Native rc6 packages passed a real authenticated
+computed-only MSFT plan handshake: complete table rows equal the audited original,
+the saved answer names the exact plan revision, reposting the same draft attaches,
+and the original answer/graph/engine identities remain unchanged. All 333 SDK
+tests also passed against those installed packages. This establishes the native
+plan boundary; it does not complete prepared-execution orchestration or the
+remaining research/financial acceptance.
+
 ## Establish and publish during research
 
 1. The existing supervisor discovers inputs, builds the saved study, handles
