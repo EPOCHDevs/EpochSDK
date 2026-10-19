@@ -216,7 +216,7 @@ class ResearchSession:
             handle.thread_id,
             handle.run_id,
             cancel_on_disconnect=False,
-            stream_mode=["values", "custom", "messages-tuple"],
+            stream_mode=["values", "custom"],
             last_event_id="0" if buffered else None,
         )
         try:
@@ -241,8 +241,8 @@ class ResearchSession:
                 elif kind == "values" and "|" not in part.event:
                     for event in self._state_ui(data, handle):
                         yield event
-                # Raw model tokens are not the published answer. Human-facing
-                # narration is already supplied by the same UI step events as Portal.
+                # Only UI/custom/value modes are requested. Raw draft model tokens
+                # are not another answer; final parts come from saved publication.
         finally:
             if isinstance(stream, AsyncGenerator):
                 await stream.aclose()

@@ -99,7 +99,7 @@ class StreamService(Service):
             )
         if path.endswith("/runs") and request.method == "POST":
             body = json.loads(request.content)
-            assert body["stream_mode"] == ["values", "custom", "messages-tuple"]
+            assert body["stream_mode"] == ["values", "custom"]
             assert body["stream_subgraphs"] is True
             assert body["stream_resumable"] is True
             if "command" in body:

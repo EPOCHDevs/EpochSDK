@@ -505,7 +505,7 @@ class SupervisorClient:
             durability="sync",
             multitask_strategy="reject",
             on_completion="keep",
-            stream_mode=["values", "custom", "messages-tuple"],
+            stream_mode=["values", "custom"],
             stream_subgraphs=True,
             stream_resumable=True,
         )
@@ -574,7 +574,7 @@ class SupervisorClient:
             durability="sync",
             multitask_strategy="reject",
             on_completion="keep",
-            stream_mode=["values", "custom", "messages-tuple"],
+            stream_mode=["values", "custom"],
             stream_subgraphs=True,
             stream_resumable=True,
         )
