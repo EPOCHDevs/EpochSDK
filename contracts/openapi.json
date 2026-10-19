@@ -1,0 +1,4764 @@
+{
+  "components": {
+    "parameters": {
+      "ExecutionId": {
+        "in": "path",
+        "name": "execution_id",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ExecutionId"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Recommended for creation. Draft retention: 24 hours, scoped by caller, method and path. Identical canonical JSON returns the same original two-field acknowledgement; a different body conflicts. A revised task uses a new key. Without a key, retries may create duplicate executions.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "LastEventId": {
+        "description": "Resume strictly after this execution-scoped event cursor.",
+        "in": "header",
+        "name": "Last-Event-ID",
+        "required": false,
+        "schema": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "SinceEventId": {
+        "description": "Alternative resume cursor. If also sent as Last-Event-ID, both must match; otherwise 400.",
+        "in": "query",
+        "name": "since_event_id",
+        "required": false,
+        "schema": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "AccessRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "permission": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "permission"
+        ],
+        "title": "AccessRequirement",
+        "type": "object"
+      },
+      "Acknowledgement": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "queued",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id",
+          "status"
+        ],
+        "title": "Acknowledgement",
+        "type": "object"
+      },
+      "CancelResponse": {
+        "additionalProperties": false,
+        "description": "status is the current state. queued/running means cancellation is still in progress; only cancelled confirms it stopped. A terminal result may win the race.",
+        "properties": {
+          "cancellation_requested": {
+            "type": "boolean"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/ExecutionId"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          }
+        },
+        "required": [
+          "execution_id",
+          "status",
+          "cancellation_requested"
+        ],
+        "type": "object"
+      },
+      "Cell": {
+        "description": "Validated against its declared column: int64 uses a base-10 JSON string; float64 uses a finite JSON number; date is YYYY-MM-DD; datetime is RFC 3339 with timezone. Null requires nullable=true.",
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "Column": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "int64",
+              "float64",
+              "boolean",
+              "date",
+              "datetime"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "Column",
+        "type": "object"
+      },
+      "CommissionType": {
+        "enum": [
+          "FlatFee",
+          "Percent",
+          "Bps",
+          "MakerTaker",
+          "PerShare",
+          "USEquity",
+          "Futures",
+          "Tiered"
+        ],
+        "type": "string"
+      },
+      "CountryCurrency": {
+        "enum": [
+          "AED",
+          "AFN",
+          "ALL",
+          "AMD",
+          "ANG",
+          "ARS",
+          "AUD",
+          "AWG",
+          "BAM",
+          "BBD",
+          "BDT",
+          "BGN",
+          "BHD",
+          "BIF",
+          "BMD",
+          "BND",
+          "BOB",
+          "BOC",
+          "BRL",
+          "BRP",
+          "BSD",
+          "BTN",
+          "BWP",
+          "BZD",
+          "CAD",
+          "CDF",
+          "CHF",
+          "CLP",
+          "CNH",
+          "CNY",
+          "COP",
+          "CRC",
+          "CUP",
+          "CVE",
+          "CYP",
+          "CZK",
+          "DCN",
+          "DJF",
+          "DKK",
+          "DOP",
+          "DTR",
+          "DZD",
+          "ECB",
+          "EGP",
+          "ETB",
+          "EUR",
+          "FJD",
+          "GBP",
+          "GEL",
+          "GHS",
+          "GMD",
+          "GNF",
+          "GTQ",
+          "GYD",
+          "HKD",
+          "HNL",
+          "HRK",
+          "HTG",
+          "HUF",
+          "HUY",
+          "IDR",
+          "ILS",
+          "INR",
+          "IQD",
+          "IRR",
+          "ISK",
+          "JMD",
+          "JOD",
+          "JPY",
+          "KES",
+          "KGS",
+          "KHR",
+          "KMF",
+          "KRW",
+          "KWD",
+          "KYD",
+          "KZT",
+          "LAK",
+          "LBP",
+          "LKR",
+          "LRD",
+          "LSL",
+          "LTL",
+          "LYD",
+          "MAD",
+          "MDL",
+          "MGA",
+          "MKD",
+          "MMK",
+          "MOP",
+          "MTL",
+          "MUR",
+          "MVR",
+          "MWK",
+          "MXN",
+          "MYR",
+          "MZN",
+          "NAD",
+          "NGN",
+          "NIO",
+          "NOK",
+          "NPR",
+          "NZD",
+          "OMR",
+          "PAB",
+          "PEN",
+          "PGK",
+          "PHP",
+          "PKR",
+          "PLN",
+          "PYG",
+          "QAR",
+          "RON",
+          "RSD",
+          "RUB",
+          "RWF",
+          "SAR",
+          "SCR",
+          "SDG",
+          "SEK",
+          "SGD",
+          "SHP",
+          "SOS",
+          "SSG",
+          "SUS",
+          "SVC",
+          "SZL",
+          "THB",
+          "TJS",
+          "TMT",
+          "TND",
+          "TRY",
+          "TTD",
+          "TWD",
+          "TZS",
+          "UAH",
+          "UGX",
+          "USD",
+          "UYU",
+          "UZS",
+          "VES",
+          "VND",
+          "XAF",
+          "XAG",
+          "XAU",
+          "XCD",
+          "XDR",
+          "XOF",
+          "XPF",
+          "YER",
+          "ZAR",
+          "ZMW"
+        ],
+        "type": "string"
+      },
+      "DashboardSummary": {
+        "additionalProperties": false,
+        "description": "Compact JSON, text, schemas and bounded table previews. No SQL references or bulk downloads.",
+        "properties": {
+          "dashboard_url": {
+            "format": "uri",
+            "type": "string"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetResult"
+            },
+            "type": "array"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/ExecutionId"
+          },
+          "outputs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SummaryOutput"
+            },
+            "description": "Every requested name remains visible, including pending or unavailable outputs.",
+            "propertyNames": {
+              "$ref": "#/components/schemas/OutputName"
+            },
+            "type": "object"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "execution_id",
+          "status",
+          "outputs",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "DataRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "required_coverage": {
+            "title": "Required Coverage",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "DataRequirement",
+        "type": "object"
+      },
+      "DatasetResult": {
+        "additionalProperties": false,
+        "description": "Draft public dataset receipt; the complete customer dataset catalog is separate implementation work.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dataset_id": {
+            "description": "Stable saved-data reference; may be supplied as discovery context in a later request.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "output_name": {
+            "$ref": "#/components/schemas/OutputName"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/TableSchema"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "output_name",
+          "schema",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "DatePeriodConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Error": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "CLARIFICATION_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "gaps",
+                "questions",
+                "recommended_task"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "DATA_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "data_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "ACCESS_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "access_requirements"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "minItems": 1,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "recommended_task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Task",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable"
+        ],
+        "title": "DomainError",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "INVALID_REQUEST",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CLARIFICATION_REQUIRED",
+          "DATA_REQUIRED",
+          "ACCESS_REQUIRED",
+          "OUTPUT_VALIDATION_FAILED",
+          "EXECUTION_FAILED",
+          "EXECUTION_NOT_READY",
+          "INVALID_STATE",
+          "IDEMPOTENCY_CONFLICT",
+          "EVENT_CURSOR_EXPIRED",
+          "FETCH_CURSOR_EXPIRED",
+          "FETCH_LIMIT_EXCEEDED",
+          "RATE_LIMITED",
+          "TEMPORARILY_UNAVAILABLE",
+          "UPSTREAM_TIMEOUT"
+        ],
+        "type": "string"
+      },
+      "ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "execution_id": {
+            "description": "Existing/accepted execution this failure refers to; a failed fetch does not change its source status.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "ExecutionCostConfig_CommissionType": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TemplatedGenericFunction_CommissionType"
+            },
+            "type": "object"
+          },
+          "default_model": {
+            "$ref": "#/components/schemas/TemplatedGenericFunction_CommissionType"
+          },
+          "model": {
+            "$ref": "#/components/schemas/TemplatedGenericFunction_CommissionType"
+          },
+          "symbol_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TemplatedGenericFunction_CommissionType"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExecutionCostConfig_SlippageType": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TemplatedGenericFunction_SlippageType"
+            },
+            "type": "object"
+          },
+          "default_model": {
+            "$ref": "#/components/schemas/TemplatedGenericFunction_SlippageType"
+          },
+          "model": {
+            "$ref": "#/components/schemas/TemplatedGenericFunction_SlippageType"
+          },
+          "symbol_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TemplatedGenericFunction_SlippageType"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExecutionDetails": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "error"
+                ]
+              }
+            },
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "failed"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "error"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "succeeded"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "output_states": {
+                  "items": {
+                    "properties": {
+                      "state": {
+                        "const": "ready"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "partial"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "output_states": {
+                  "allOf": [
+                    {
+                      "contains": {
+                        "properties": {
+                          "state": {
+                            "const": "ready"
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      }
+                    },
+                    {
+                      "contains": {
+                        "properties": {
+                          "state": {
+                            "const": "unavailable"
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "refresh"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "source_execution_id"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "succeeded",
+                    "partial",
+                    "failed",
+                    "cancelled"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "output_states": {
+                  "items": {
+                    "properties": {
+                      "state": {
+                        "enum": [
+                          "ready",
+                          "unavailable"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "cancellation_requested": {
+            "description": "A stop request has been accepted; does not imply work has stopped.",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dashboard_url": {
+            "description": "Authenticated dashboard for this execution; omitted until available.",
+            "format": "uri",
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/ExecutionId"
+          },
+          "kind": {
+            "enum": [
+              "run",
+              "ingest",
+              "refresh"
+            ],
+            "type": "string"
+          },
+          "output_states": {
+            "items": {
+              "$ref": "#/components/schemas/OutputState"
+            },
+            "type": "array"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/Progress"
+          },
+          "source_execution_id": {
+            "$ref": "#/components/schemas/ExecutionId"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "execution_id",
+          "kind",
+          "status",
+          "created_at",
+          "updated_at",
+          "output_states",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "ExecutionId": {
+        "description": "Opaque public execution reference. Do not parse its prefix or infer internal IDs.",
+        "minLength": 1,
+        "type": "string"
+      },
+      "ExecutionOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "cash": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "commission": {
+            "$ref": "#/components/schemas/ExecutionCostConfig_CommissionType"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/CountryCurrency"
+          },
+          "futures_tick_snapshot": {
+            "$ref": "#/components/schemas/FuturesTickSnapshot"
+          },
+          "slippage": {
+            "$ref": "#/components/schemas/ExecutionCostConfig_SlippageType"
+          }
+        },
+        "title": "epoch_stratifyx::ExecutionOptions",
+        "type": "object"
+      },
+      "ExecutionStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "partial",
+          "failed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "FetchOutput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TablePage"
+          },
+          {
+            "$ref": "#/components/schemas/JsonResult"
+          },
+          {
+            "$ref": "#/components/schemas/TextResult"
+          }
+        ]
+      },
+      "FetchPageRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Cursor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cursor"
+        ],
+        "title": "FetchPageRequest",
+        "type": "object"
+      },
+      "FetchRequest": {
+        "description": "Ask a new question, or continue a previous result with its cursor. A cursor cannot be combined with a new task or output declarations.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/FreshFetchRequest"
+          },
+          {
+            "$ref": "#/components/schemas/FetchPageRequest"
+          }
+        ]
+      },
+      "FetchResponse": {
+        "additionalProperties": false,
+        "description": "A bounded retrieval from saved results. A continuation returns only its cursor-selected named table. Successful fetch responses fulfill every requested output; failures return an error without changing saved work.",
+        "properties": {
+          "execution_id": {
+            "$ref": "#/components/schemas/ExecutionId"
+          },
+          "outputs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FetchOutput"
+            },
+            "description": "",
+            "propertyNames": {
+              "$ref": "#/components/schemas/OutputName"
+            },
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "execution_id",
+          "outputs",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "FreshFetchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "page_size": {
+            "default": 100,
+            "maximum": 1000,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "title": "FreshFetchRequest",
+        "type": "object"
+      },
+      "FuturesTickRule": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "contract": {
+            "type": "string"
+          },
+          "effective_from_ns": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "effective_to_ns": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "price_kind": {
+            "enum": [
+              "Outright"
+            ],
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "source_uri": {
+            "type": "string"
+          },
+          "tick_size": {
+            "type": "string"
+          },
+          "venue": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "contract",
+          "effective_from_ns",
+          "effective_to_ns",
+          "price_kind",
+          "source_sha256",
+          "source_uri",
+          "tick_size",
+          "venue"
+        ],
+        "title": "epoch_bt::vectorized::FuturesTickRule",
+        "type": "object"
+      },
+      "FuturesTickSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/FuturesTickRule"
+            },
+            "type": "array"
+          },
+          "snapshot_id": {
+            "type": "string"
+          },
+          "working_orders_on_change": {
+            "enum": [
+              "Reject",
+              "CancelWorkingOrders"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "rules",
+          "snapshot_id",
+          "working_orders_on_change"
+        ],
+        "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+        "type": "object"
+      },
+      "Gap": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Gap",
+        "type": "object"
+      },
+      "IngestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "contains": {
+              "$ref": "#/components/schemas/TableOutputRequest"
+            },
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minContains": 1,
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "outputs"
+        ],
+        "title": "IngestRequest",
+        "type": "object"
+      },
+      "JsonOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "JsonOutputRequest",
+        "type": "object"
+      },
+      "JsonResult": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
+          },
+          "state": {
+            "const": "ready",
+            "type": "string"
+          },
+          "type": {
+            "const": "json",
+            "type": "string"
+          },
+          "value": {
+            "description": "JSON value validated against the accompanying requested JSON Schema."
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "schema",
+          "value"
+        ],
+        "type": "object"
+      },
+      "JsonSchema": {
+        "description": "A standard JSON Schema 2020-12 document, including description annotations. The service validates the schema itself. Only local references within this supplied schema are accepted; remote references are rejected. No custom schema keywords are required.",
+        "type": [
+          "object",
+          "boolean"
+        ]
+      },
+      "MetaDataOptionDefinition": {
+        "type": [
+          "number",
+          "string",
+          "boolean",
+          "object",
+          "array",
+          "null"
+        ]
+      },
+      "OutputName": {
+        "description": "Unique caller-selected name. Names are case-sensitive.",
+        "maxLength": 100,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+        "type": "string"
+      },
+      "OutputRequest": {
+        "discriminator": {
+          "mapping": {
+            "json": "#/components/schemas/JsonOutputRequest",
+            "table": "#/components/schemas/TableOutputRequest",
+            "text": "#/components/schemas/TextOutputRequest"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TableOutputRequest"
+          },
+          {
+            "$ref": "#/components/schemas/JsonOutputRequest"
+          },
+          {
+            "$ref": "#/components/schemas/TextOutputRequest"
+          }
+        ]
+      },
+      "OutputState": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "error"
+                ]
+              }
+            },
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "unavailable"
+                }
+              },
+              "required": [
+                "state"
+              ]
+            },
+            "then": {
+              "required": [
+                "error"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "name": {
+            "$ref": "#/components/schemas/OutputName"
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "ready",
+              "unavailable"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "state"
+        ],
+        "type": "object"
+      },
+      "Page": {
+        "additionalProperties": false,
+        "properties": {
+          "next_cursor": {
+            "description": "Null when this table selection is complete. Otherwise submit only {cursor: ...} to the same fetch endpoint.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "returned_rows": {
+            "description": "",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "returned_rows",
+          "next_cursor"
+        ],
+        "type": "object"
+      },
+      "PendingOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "const": "pending",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "table",
+              "json",
+              "text"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "state"
+        ],
+        "type": "object"
+      },
+      "Progress": {
+        "additionalProperties": false,
+        "description": "Phase is informational. No overall percentage or ETA is promised.",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "phase": {
+            "enum": [
+              "planning",
+              "preparing_data",
+              "executing",
+              "validating_outputs",
+              "finalizing"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase"
+        ],
+        "type": "object"
+      },
+      "Question": {
+        "additionalProperties": false,
+        "dependentRequired": {
+          "recommended_option": [
+            "options"
+          ]
+        },
+        "properties": {
+          "options": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
+          },
+          "recommended_option": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Option",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "RefreshRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters"
+          }
+        },
+        "title": "RefreshRequest",
+        "type": "object"
+      },
+      "Rows": {
+        "description": "Positional rows in exact schema column order. The server validates row width, types and nullability.",
+        "items": {
+          "items": {
+            "$ref": "#/components/schemas/Cell"
+          },
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "RunParameters": {
+        "additionalProperties": false,
+        "description": "Only the closed parameter types supported by native Backend execution.",
+        "properties": {
+          "execution": {
+            "additionalProperties": false,
+            "properties": {
+              "cash": {
+                "maximum": 9223372036854776000,
+                "minimum": -9223372036854776000,
+                "type": "integer"
+              },
+              "commission": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "currency": {
+                "enum": [
+                  "AED",
+                  "AFN",
+                  "ALL",
+                  "AMD",
+                  "ANG",
+                  "ARS",
+                  "AUD",
+                  "AWG",
+                  "BAM",
+                  "BBD",
+                  "BDT",
+                  "BGN",
+                  "BHD",
+                  "BIF",
+                  "BMD",
+                  "BND",
+                  "BOB",
+                  "BOC",
+                  "BRL",
+                  "BRP",
+                  "BSD",
+                  "BTN",
+                  "BWP",
+                  "BZD",
+                  "CAD",
+                  "CDF",
+                  "CHF",
+                  "CLP",
+                  "CNH",
+                  "CNY",
+                  "COP",
+                  "CRC",
+                  "CUP",
+                  "CVE",
+                  "CYP",
+                  "CZK",
+                  "DCN",
+                  "DJF",
+                  "DKK",
+                  "DOP",
+                  "DTR",
+                  "DZD",
+                  "ECB",
+                  "EGP",
+                  "ETB",
+                  "EUR",
+                  "FJD",
+                  "GBP",
+                  "GEL",
+                  "GHS",
+                  "GMD",
+                  "GNF",
+                  "GTQ",
+                  "GYD",
+                  "HKD",
+                  "HNL",
+                  "HRK",
+                  "HTG",
+                  "HUF",
+                  "HUY",
+                  "IDR",
+                  "ILS",
+                  "INR",
+                  "IQD",
+                  "IRR",
+                  "ISK",
+                  "JMD",
+                  "JOD",
+                  "JPY",
+                  "KES",
+                  "KGS",
+                  "KHR",
+                  "KMF",
+                  "KRW",
+                  "KWD",
+                  "KYD",
+                  "KZT",
+                  "LAK",
+                  "LBP",
+                  "LKR",
+                  "LRD",
+                  "LSL",
+                  "LTL",
+                  "LYD",
+                  "MAD",
+                  "MDL",
+                  "MGA",
+                  "MKD",
+                  "MMK",
+                  "MOP",
+                  "MTL",
+                  "MUR",
+                  "MVR",
+                  "MWK",
+                  "MXN",
+                  "MYR",
+                  "MZN",
+                  "NAD",
+                  "NGN",
+                  "NIO",
+                  "NOK",
+                  "NPR",
+                  "NZD",
+                  "OMR",
+                  "PAB",
+                  "PEN",
+                  "PGK",
+                  "PHP",
+                  "PKR",
+                  "PLN",
+                  "PYG",
+                  "QAR",
+                  "RON",
+                  "RSD",
+                  "RUB",
+                  "RWF",
+                  "SAR",
+                  "SCR",
+                  "SDG",
+                  "SEK",
+                  "SGD",
+                  "SHP",
+                  "SOS",
+                  "SSG",
+                  "SUS",
+                  "SVC",
+                  "SZL",
+                  "THB",
+                  "TJS",
+                  "TMT",
+                  "TND",
+                  "TRY",
+                  "TTD",
+                  "TWD",
+                  "TZS",
+                  "UAH",
+                  "UGX",
+                  "USD",
+                  "UYU",
+                  "UZS",
+                  "VES",
+                  "VND",
+                  "XAF",
+                  "XAG",
+                  "XAU",
+                  "XCD",
+                  "XDR",
+                  "XOF",
+                  "XPF",
+                  "YER",
+                  "ZAR",
+                  "ZMW"
+                ],
+                "type": "string"
+              },
+              "futures_tick_snapshot": {
+                "additionalProperties": false,
+                "properties": {
+                  "rules": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "asset_id": {
+                          "type": "string"
+                        },
+                        "contract": {
+                          "type": "string"
+                        },
+                        "effective_from_ns": {
+                          "maximum": 9223372036854776000,
+                          "minimum": -9223372036854776000,
+                          "type": "integer"
+                        },
+                        "effective_to_ns": {
+                          "maximum": 9223372036854776000,
+                          "minimum": -9223372036854776000,
+                          "type": "integer"
+                        },
+                        "price_kind": {
+                          "enum": [
+                            "Outright"
+                          ],
+                          "type": "string"
+                        },
+                        "source_sha256": {
+                          "type": "string"
+                        },
+                        "source_uri": {
+                          "type": "string"
+                        },
+                        "tick_size": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "asset_id",
+                        "contract",
+                        "effective_from_ns",
+                        "effective_to_ns",
+                        "price_kind",
+                        "source_sha256",
+                        "source_uri",
+                        "tick_size",
+                        "venue"
+                      ],
+                      "title": "epoch_bt::vectorized::FuturesTickRule",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "snapshot_id": {
+                    "type": "string"
+                  },
+                  "working_orders_on_change": {
+                    "enum": [
+                      "Reject",
+                      "CancelWorkingOrders"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rules",
+                  "snapshot_id",
+                  "working_orders_on_change"
+                ],
+                "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+                "type": "object"
+              },
+              "slippage": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "title": "epoch_stratifyx::ExecutionOptions",
+            "type": "object"
+          },
+          "period": {
+            "additionalProperties": false,
+            "properties": {
+              "end": {
+                "format": "date",
+                "type": "string"
+              },
+              "start": {
+                "format": "date",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "title": "RunParameters",
+        "type": "object"
+      },
+      "RunRequest": {
+        "additionalProperties": false,
+        "not": {
+          "required": [
+            "study_id",
+            "source_execution_id"
+          ]
+        },
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
+          },
+          "source_execution_id": {
+            "description": "Resolve the exact study from this authorized Backend execution.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source Execution Id",
+            "type": "string"
+          },
+          "study_id": {
+            "description": "Execute this exact authorized study.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "outputs"
+        ],
+        "title": "RunRequest",
+        "type": "object"
+      },
+      "SlippageType": {
+        "enum": [
+          "Bps",
+          "Fixed",
+          "Random",
+          "VolumeImpact",
+          "TickBased",
+          "ParticipationRate",
+          "SpreadBased"
+        ],
+        "type": "string"
+      },
+      "SummaryOutput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TableSummary"
+          },
+          {
+            "$ref": "#/components/schemas/JsonResult"
+          },
+          {
+            "$ref": "#/components/schemas/TextResult"
+          },
+          {
+            "$ref": "#/components/schemas/PendingOutput"
+          },
+          {
+            "$ref": "#/components/schemas/UnavailableOutput"
+          }
+        ]
+      },
+      "TableOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "minItems": 1,
+            "title": "Schema",
+            "type": "array"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableOutputRequest",
+        "type": "object"
+      },
+      "TablePage": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "rows": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Rows"
+              },
+              {
+                "maxItems": 1000
+              }
+            ]
+          },
+          "schema": {
+            "$ref": "#/components/schemas/TableSchema"
+          },
+          "state": {
+            "const": "ready",
+            "type": "string"
+          },
+          "type": {
+            "const": "table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "schema",
+          "rows",
+          "page"
+        ],
+        "type": "object"
+      },
+      "TablePreview": {
+        "additionalProperties": false,
+        "description": "Optional preview, draft maximum five rows. It is never the complete-data promise.",
+        "properties": {
+          "rows": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Rows"
+              },
+              {
+                "maxItems": 5
+              }
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rows",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "TableSchema": {
+        "description": "Exact ordered columns. Column names must be unique; the server validates this cross-field rule.",
+        "items": {
+          "$ref": "#/components/schemas/Column"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "TableSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/TablePreview"
+          },
+          "row_count": {
+            "description": "Exact row count, if known.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/TableSchema"
+          },
+          "state": {
+            "const": "ready",
+            "type": "string"
+          },
+          "type": {
+            "const": "table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "schema"
+        ],
+        "type": "object"
+      },
+      "TemplatedGenericFunction_CommissionType": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetaDataOptionDefinition"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CommissionType"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "TemplatedGenericFunction_SlippageType": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetaDataOptionDefinition"
+            },
+            "type": "object"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SlippageType"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "TextOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "format": {
+            "default": "plain",
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "instructions"
+        ],
+        "title": "TextOutputRequest",
+        "type": "object"
+      },
+      "TextResult": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "const": "ready",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "format",
+          "value"
+        ],
+        "type": "object"
+      },
+      "UnavailableOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "state": {
+            "const": "unavailable",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "table",
+              "json",
+              "text"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "error"
+        ],
+        "type": "object"
+      },
+      "Warning": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "output_name": {
+            "$ref": "#/components/schemas/OutputName"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "description": "Caller credential. Existing services use user JWTs; public unattended credential issuance is not finalized.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Language-neutral Epoch integration contract shared by SDK clients and MCP. Native Backend APIs and LangGraph remain separate services; the SDK wraps their native clients. The illustrative REST bindings do not assert another gateway. Core persistence/controllers, study binding and validation are required. Additional recovery/retries and retention engineering follow separately.",
+    "title": "Epoch Integration API",
+    "version": "0.9.0-draft"
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/executions/{execution_id}": {
+      "get": {
+        "description": "Read authoritative Backend study/execution outcomes and native graph progress by stage, using the public mapping. Retained build history supports technical recovery but is not the only source for saved status/results. HTTP 200 may contain a terminal failed domain outcome; SDK wait raises its typed error. Public success requires requested-output validation. Lookup must remain meaningful after eligible graph history expires.",
+        "operationId": "getExecution",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "clarification": {
+                    "summary": "Failed clarification",
+                    "value": {
+                      "created_at": "2026-10-17T15:00:00Z",
+                      "error": {
+                        "code": "CLARIFICATION_REQUIRED",
+                        "gaps": [
+                          {
+                            "description": "Reported versus organic growth materially changes the screen.",
+                            "field": "/task"
+                          }
+                        ],
+                        "message": "The revenue basis is unspecified.",
+                        "questions": [
+                          {
+                            "options": [
+                              "Reported",
+                              "Organic"
+                            ],
+                            "question": "Which revenue basis should the screen use?",
+                            "recommended_option": "Reported"
+                          }
+                        ],
+                        "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                        "retryable": false
+                      },
+                      "execution_id": "exec_123",
+                      "kind": "run",
+                      "output_states": [
+                        {
+                          "error": {
+                            "code": "CLARIFICATION_REQUIRED",
+                            "gaps": [
+                              {
+                                "description": "Reported versus organic growth materially changes the screen.",
+                                "field": "/task"
+                              }
+                            ],
+                            "message": "The revenue basis is unspecified.",
+                            "questions": [
+                              {
+                                "options": [
+                                  "Reported",
+                                  "Organic"
+                                ],
+                                "question": "Which revenue basis should the screen use?",
+                                "recommended_option": "Reported"
+                              }
+                            ],
+                            "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                            "retryable": false
+                          },
+                          "name": "screen_results",
+                          "state": "unavailable"
+                        },
+                        {
+                          "error": {
+                            "code": "CLARIFICATION_REQUIRED",
+                            "gaps": [
+                              {
+                                "description": "Reported versus organic growth materially changes the screen.",
+                                "field": "/task"
+                              }
+                            ],
+                            "message": "The revenue basis is unspecified.",
+                            "questions": [
+                              {
+                                "options": [
+                                  "Reported",
+                                  "Organic"
+                                ],
+                                "question": "Which revenue basis should the screen use?",
+                                "recommended_option": "Reported"
+                              }
+                            ],
+                            "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                            "retryable": false
+                          },
+                          "name": "explanation",
+                          "state": "unavailable"
+                        }
+                      ],
+                      "status": "failed",
+                      "updated_at": "2026-10-17T15:01:30Z",
+                      "warnings": []
+                    }
+                  },
+                  "running": {
+                    "summary": "Running",
+                    "value": {
+                      "created_at": "2026-10-17T15:00:00Z",
+                      "execution_id": "exec_123",
+                      "kind": "run",
+                      "output_states": [
+                        {
+                          "name": "screen_results",
+                          "state": "pending"
+                        },
+                        {
+                          "name": "explanation",
+                          "state": "pending"
+                        }
+                      ],
+                      "progress": {
+                        "message": "Computing the approved screen.",
+                        "phase": "executing"
+                      },
+                      "status": "running",
+                      "updated_at": "2026-10-17T15:00:30Z",
+                      "warnings": []
+                    }
+                  },
+                  "succeeded": {
+                    "summary": "Succeeded",
+                    "value": {
+                      "created_at": "2026-10-17T15:00:00Z",
+                      "dashboard_url": "https://example.invalid/dashboard/exec_123",
+                      "execution_id": "exec_123",
+                      "kind": "run",
+                      "output_states": [
+                        {
+                          "name": "screen_results",
+                          "state": "ready"
+                        },
+                        {
+                          "name": "explanation",
+                          "state": "ready"
+                        }
+                      ],
+                      "status": "succeeded",
+                      "updated_at": "2026-10-17T15:01:30Z",
+                      "warnings": []
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionDetails"
+                }
+              }
+            },
+            "description": "Current execution state."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Read execution status",
+        "tags": [
+          "Follow work"
+        ],
+        "x-implementation-status": "Adapter work",
+        "x-sdk-routing": {
+          "behavior": "Read authoritative Backend study/run records and native graph progress by stage. Retained thread history is useful for recovery but must not be the only way to resolve saved outcomes.",
+          "client": "LangGraph SDK + StratifyX SDK, according to stage"
+        },
+        "x-source-keys": [
+          "backend_routes",
+          "status_types"
+        ]
+      }
+    },
+    "/v1/executions/{execution_id}/cancel": {
+      "post": {
+        "description": "Use native graph and Backend control APIs to stop active work, then reconcile the actual outcome. For active work return 202; already terminal work returns 200. A completion/cancellation race must preserve the truthful final state and saved results. Kept history is retained/pruned under the explicit rule; cancelled or failed domain attempts cannot resume interactively or launch untracked new work.",
+        "operationId": "cancel",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "cancelled": {
+                    "summary": "Cancelled",
+                    "value": {
+                      "cancellation_requested": true,
+                      "execution_id": "exec_123",
+                      "status": "cancelled"
+                    }
+                  },
+                  "completed": {
+                    "summary": "Cancel after completion",
+                    "value": {
+                      "cancellation_requested": false,
+                      "execution_id": "exec_123",
+                      "status": "succeeded"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            },
+            "description": "Already terminal; no further work to cancel."
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "stopping": {
+                    "summary": "Cancel requested",
+                    "value": {
+                      "cancellation_requested": true,
+                      "execution_id": "exec_123",
+                      "status": "running"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            },
+            "description": "Cancellation requested; work may still be stopping."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Request cancellation",
+        "tags": [
+          "Manage work"
+        ],
+        "x-implementation-status": "Adapter work",
+        "x-sdk-routing": {
+          "behavior": "Stop the active graph and any associated computation as applicable. Reconcile the actual terminal outcome. No reasoning model is needed for cancellation.",
+          "client": "Native LangGraph and StratifyX control APIs"
+        },
+        "x-source-keys": [
+          "backend_routes",
+          "agent_cancel"
+        ]
+      }
+    },
+    "/v1/executions/{execution_id}/dashboard-summary": {
+      "get": {
+        "description": "Read named outputs, warnings and the execution-linked dashboard. During work, outputs can be pending; unavailable outputs explain why. Tables return metadata and optional small previews. Use natural-language fetch for selected data. Validate compact JSON/text delivery budgets before declaring outputs ready: oversized requested compact values become OUTPUT_VALIDATION_FAILED and make the execution partial or failed. Reject output declarations whose metadata cannot fit at admission. This read never changes execution state or silently truncates a validated value; previews may be omitted to stay within budget.",
+        "operationId": "getDashboardSummary",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "screen": {
+                    "summary": "Dashboard summary",
+                    "value": {
+                      "dashboard_url": "https://example.invalid/dashboard/exec_123",
+                      "execution_id": "exec_123",
+                      "outputs": {
+                        "explanation": {
+                          "format": "markdown",
+                          "state": "ready",
+                          "type": "text",
+                          "value": "Illustrative data: two example companies pass the reported-revenue growth screen. These values are fixtures, not investment research."
+                        },
+                        "screen_results": {
+                          "preview": {
+                            "rows": [
+                              [
+                                "EXM",
+                                21.4
+                              ],
+                              [
+                                "SAM",
+                                18.2
+                              ]
+                            ],
+                            "truncated": false
+                          },
+                          "row_count": 2,
+                          "schema": [
+                            {
+                              "description": "Primary listed ticker for the company.",
+                              "name": "ticker",
+                              "type": "string"
+                            },
+                            {
+                              "description": "Reported revenue growth: latest fiscal year versus prior fiscal year.",
+                              "name": "revenue_growth_pct",
+                              "type": "float64",
+                              "unit": "percent"
+                            }
+                          ],
+                          "state": "ready",
+                          "type": "table"
+                        }
+                      },
+                      "status": "succeeded",
+                      "warnings": []
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            },
+            "description": "Compact summary; illustrative examples use fictional data."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Read compact results",
+        "tags": [
+          "Read results"
+        ],
+        "x-implementation-status": "Adapter work",
+        "x-sdk-routing": {
+          "behavior": "Read Backend's stored output/summary data directly. Do not send this native operation through an agent.",
+          "client": "StratifyX SDK"
+        },
+        "x-source-keys": [
+          "backend_context",
+          "dashboard_client",
+          "backend_routes"
+        ]
+      }
+    },
+    "/v1/executions/{execution_id}/events": {
+      "get": {
+        "description": "Proposed public SSE envelope over existing streaming. With no cursor, send a current durable snapshot, then live changes without a subscription gap. With a cursor, replay later events in order, then continue live. Delivery is at least once; deduplicate event IDs. Expired/unavailable cursors return 410 before streaming; read status and reconnect without the cursor. Do not silently replay all history. A lost connection is not a terminal outcome. After headers are sent, a transport failure closes the stream; reconcile using GET status. Suggested heartbeat: 15 seconds; retention duration remains a deployment policy.",
+        "operationId": "streamExecution",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          },
+          {
+            "$ref": "#/components/parameters/LastEventId"
+          },
+          {
+            "$ref": "#/components/parameters/SinceEventId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "examples": {
+                  "stream": {
+                    "value": "id: evt_0042\nevent: execution\ndata: {\"execution_id\":\"exec_123\",\"kind\":\"run\",\"status\":\"running\",\"created_at\":\"2026-10-17T15:00:00Z\",\"updated_at\":\"2026-10-17T15:00:30Z\",\"output_states\":[{\"name\":\"screen_results\",\"state\":\"pending\"},{\"name\":\"explanation\",\"state\":\"pending\"}],\"warnings\":[],\"progress\":{\"phase\":\"executing\",\"message\":\"Computing the approved screen.\"}}\n\n: heartbeat\n\nid: evt_0043\nevent: execution\ndata: {\"execution_id\":\"exec_123\",\"kind\":\"run\",\"status\":\"succeeded\",\"created_at\":\"2026-10-17T15:00:00Z\",\"updated_at\":\"2026-10-17T15:01:30Z\",\"output_states\":[{\"name\":\"screen_results\",\"state\":\"ready\"},{\"name\":\"explanation\",\"state\":\"ready\"}],\"warnings\":[],\"dashboard_url\":\"https://example.invalid/dashboard/exec_123\"}\n\n"
+                  }
+                },
+                "schema": {
+                  "type": "string"
+                },
+                "x-event-data-schema": {
+                  "$ref": "#/components/schemas/ExecutionDetails"
+                }
+              }
+            },
+            "description": "SSE stream. Each execution event data payload is ExecutionDetails. Heartbeats are comments. Final terminal event is followed by stream closure."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "The request is malformed or violates its schema.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request is malformed or violates its schema."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "EVENT_CURSOR_EXPIRED",
+                        "message": "The retained event cursor is no longer available. Read current status, then reconnect without a cursor.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The retained event cursor is no longer available. Read current status, then reconnect without a cursor."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Stream progress",
+        "tags": [
+          "Follow work"
+        ],
+        "x-implementation-status": "Adapter work",
+        "x-sdk-routing": {
+          "behavior": "Follow native retained-graph and Backend events using the public mapping. Technical checkpoint recovery is allowed; public reconnect does not open a human question/answer flow.",
+          "client": "LangGraph SDK + StratifyX SDK, according to stage"
+        },
+        "x-source-keys": [
+          "sse",
+          "sse_replay"
+        ]
+      }
+    },
+    "/v1/executions/{execution_id}/fetch": {
+      "post": {
+        "description": "Resolve the authorized source execution to its exact as-run study/version, then interpret a fresh saved-result question using bounded Backend tools. No original transcript or new study is required. Preserve that read-only source binding; cursor continuation goes directly through StratifyX over a frozen selection. Unclear questions terminate with guidance and leave the source unchanged. Diagnostic history follows bounded profile retention. Draft synchronous limits remain 30 seconds, 1 MiB and 100 rows per table by default (maximum 1,000).",
+        "operationId": "fetch",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "next-page": {
+                  "summary": "Fetch next page",
+                  "value": {
+                    "cursor": "cursor_example_opaque"
+                  }
+                },
+                "select": {
+                  "summary": "Fetch request",
+                  "value": {
+                    "page_size": 20,
+                    "task": "From screen_results, show ticker and reported revenue growth for the top 20, ordered by growth descending."
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "complete": {
+                    "summary": "Fetch response",
+                    "value": {
+                      "execution_id": "exec_123",
+                      "outputs": {
+                        "screen_results": {
+                          "page": {
+                            "next_cursor": null,
+                            "returned_rows": 2
+                          },
+                          "rows": [
+                            [
+                              "EXM",
+                              21.4
+                            ],
+                            [
+                              "SAM",
+                              18.2
+                            ]
+                          ],
+                          "schema": [
+                            {
+                              "description": "Primary listed ticker for the company.",
+                              "name": "ticker",
+                              "type": "string"
+                            },
+                            {
+                              "description": "Reported revenue growth: latest fiscal year versus prior fiscal year.",
+                              "name": "revenue_growth_pct",
+                              "type": "float64",
+                              "unit": "percent"
+                            }
+                          ],
+                          "state": "ready",
+                          "type": "table"
+                        }
+                      },
+                      "warnings": []
+                    }
+                  },
+                  "page": {
+                    "summary": "Fetch page",
+                    "value": {
+                      "execution_id": "exec_123",
+                      "outputs": {
+                        "screen_results": {
+                          "page": {
+                            "next_cursor": "cursor_example_opaque",
+                            "returned_rows": 1
+                          },
+                          "rows": [
+                            [
+                              "EXM",
+                              21.4
+                            ]
+                          ],
+                          "schema": [
+                            {
+                              "description": "Primary listed ticker for the company.",
+                              "name": "ticker",
+                              "type": "string"
+                            },
+                            {
+                              "description": "Reported revenue growth: latest fiscal year versus prior fiscal year.",
+                              "name": "revenue_growth_pct",
+                              "type": "float64",
+                              "unit": "percent"
+                            }
+                          ],
+                          "state": "ready",
+                          "type": "table"
+                        }
+                      },
+                      "warnings": []
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FetchResponse"
+                }
+              }
+            },
+            "description": "Every requested selection is validated. This may be one page of a larger table."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "The request is malformed or violates its schema.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request is malformed or violates its schema."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "EXECUTION_NOT_READY",
+                        "message": "The execution has no readable completed output yet.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The execution has no readable completed output yet."
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FETCH_CURSOR_EXPIRED",
+                        "message": "The fetch cursor expired. Repeat the original natural-language fetch.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The fetch cursor expired. Repeat the original natural-language fetch."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "clarification": {
+                    "summary": "Fetch clarification",
+                    "value": {
+                      "error": {
+                        "code": "CLARIFICATION_REQUIRED",
+                        "gaps": [
+                          {
+                            "description": "Select the reported or organic growth output.",
+                            "field": "/task"
+                          }
+                        ],
+                        "message": "The saved results contain two growth measures.",
+                        "questions": [
+                          {
+                            "options": [
+                              "Reported",
+                              "Organic"
+                            ],
+                            "question": "Which revenue basis should the screen use?",
+                            "recommended_option": "Reported"
+                          }
+                        ],
+                        "recommended_task": "From screen_results, return the top 20 companies by reported revenue growth.",
+                        "retryable": false
+                      },
+                      "execution_id": "exec_123"
+                    }
+                  },
+                  "limit": {
+                    "summary": "Fetch limit",
+                    "value": {
+                      "error": {
+                        "code": "FETCH_LIMIT_EXCEEDED",
+                        "message": "The selected values exceed the draft response limit. Request fewer columns or rows.",
+                        "retryable": false
+                      },
+                      "execution_id": "exec_123"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Clarify the fetch request, narrow it, or choose available saved values. The original execution is unchanged."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UPSTREAM_TIMEOUT",
+                        "message": "Fetch exceeded the synchronous budget. Narrow the question or retry later.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Fetch exceeded the synchronous budget. Narrow the question or retry later."
+          }
+        },
+        "summary": "Fetch saved data naturally",
+        "tags": [
+          "Read results"
+        ],
+        "x-implementation-status": "New fetch graph",
+        "x-sdk-routing": {
+          "behavior": "Use the fetch graph only to interpret a new question. Read/follow the selected saved data through Backend APIs.",
+          "client": "LangGraph SDK for a new question; StratifyX SDK for cursor continuation",
+          "graph": "fetch"
+        },
+        "x-source-keys": [
+          "nl_fetch"
+        ]
+      }
+    },
+    "/v1/executions/{execution_id}/refresh": {
+      "post": {
+        "description": "Resolve the source execution to the exact agreed study/version and approved window/source rules through Backend. Routine refresh calls StratifyX directly and creates a new execution ID while preserving the source. It must work after eligible build history expires. Changing analytical logic requires an explicit revision; ambiguous instructions fail without interrupt(). Current rerun primitives provide a foundation; the full freshness/version promise and native idempotency behavior still require verification.",
+        "operationId": "refresh",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ExecutionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "refresh": {
+                  "summary": "Refresh request",
+                  "value": {
+                    "auto_ingest": false,
+                    "context": [
+                      "Refresh all approved inputs under the saved window rule."
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "accepted": {
+                    "summary": "Refresh accepted",
+                    "value": {
+                      "execution_id": "exec_456",
+                      "status": "queued"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Acknowledgement"
+                }
+              }
+            },
+            "description": "Durably accepted. Planning and downstream execution continue after the caller disconnects.",
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "True when returning the original acceptance for an identical retained key.",
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "Location": {
+                "description": "Relative status endpoint for this execution.",
+                "example": "/v1/executions/exec_456",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "The request is malformed or violates its schema.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request is malformed or violates its schema."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "NOT_FOUND",
+                        "message": "The resource is absent or not visible to this caller.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The resource is absent or not visible to this caller."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid-state": {
+                    "summary": "Invalid refresh",
+                    "value": {
+                      "error": {
+                        "code": "INVALID_STATE",
+                        "message": "Refresh requires a succeeded or partial analysis with a retained study.",
+                        "retryable": false
+                      },
+                      "execution_id": "exec_123"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Idempotency conflict, or the source execution has no valid saved analysis to refresh."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "access": {
+                    "summary": "Access required",
+                    "value": {
+                      "error": {
+                        "access_requirements": [
+                          {
+                            "permission": "read",
+                            "source": "workspace quarterly reports",
+                            "suggested_resolution": "Grant the approved connection access or select an already authorized source."
+                          }
+                        ],
+                        "code": "ACCESS_REQUIRED",
+                        "message": "The selected source is not authorized for this caller.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "clarification": {
+                    "summary": "Immediate clarification",
+                    "value": {
+                      "error": {
+                        "code": "CLARIFICATION_REQUIRED",
+                        "gaps": [
+                          {
+                            "description": "Reported versus organic growth materially changes the screen.",
+                            "field": "/task"
+                          }
+                        ],
+                        "message": "The revenue basis is unspecified.",
+                        "questions": [
+                          {
+                            "options": [
+                              "Reported",
+                              "Organic"
+                            ],
+                            "question": "Which revenue basis should the screen use?",
+                            "recommended_option": "Reported"
+                          }
+                        ],
+                        "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "data": {
+                    "summary": "Data required",
+                    "value": {
+                      "error": {
+                        "code": "DATA_REQUIRED",
+                        "data_requirements": [
+                          {
+                            "description": "Quarterly customer revenue with company, quarter, currency and source.",
+                            "required_coverage": "2024 Q1 through 2026 Q2",
+                            "suggested_resolution": "Prepare an authorized dataset with ingest, or explicitly permit acquisition in a revised request."
+                          }
+                        ],
+                        "message": "The requested customer revenue dataset is unavailable.",
+                        "recommended_task": "Analyze quarterly revenue growth for 2024 Q1 through 2026 Q2 using [authorized prepared dataset].",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A material request gap was detected before acceptance. No execution was created."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Refresh the agreed study",
+        "tags": [
+          "Manage work"
+        ],
+        "x-implementation-status": "Adapter work",
+        "x-sdk-routing": {
+          "behavior": "Resolve source execution to its agreed saved study/version and execute refreshed approved inputs directly through StratifyX. Create a new execution ID; never require a retained transcript for routine refresh.",
+          "client": "StratifyX SDK"
+        },
+        "x-source-keys": [
+          "refresh",
+          "backend_catalog"
+        ]
+      }
+    },
+    "/v1/ingest": {
+      "post": {
+        "description": "Use the dedicated checkpointed preparation profile within explicit source/access scope. Persist preparation/publication identities and reconcile external effects after recovery. Save validated reusable datasets through canonical Backend Files APIs, with provenance and later discovery. No downstream analysis or interactive review thread is required. Kept history follows an explicit retention rule; dataset records survive history expiry.",
+        "operationId": "ingest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "reports": {
+                  "summary": "Ingest request",
+                  "value": {
+                    "context": [
+                      "Authorized uploaded quarterly reports in our workspace"
+                    ],
+                    "outputs": [
+                      {
+                        "name": "quarterly_revenue",
+                        "schema": [
+                          {
+                            "name": "company",
+                            "type": "string"
+                          },
+                          {
+                            "name": "fiscal_quarter",
+                            "type": "string"
+                          },
+                          {
+                            "description": "Reported revenue for this fiscal quarter.",
+                            "name": "revenue",
+                            "type": "float64"
+                          },
+                          {
+                            "name": "currency",
+                            "type": "string"
+                          },
+                          {
+                            "name": "source",
+                            "type": "string"
+                          }
+                        ],
+                        "type": "table"
+                      }
+                    ],
+                    "task": "Extract quarterly revenue; preserve company, currency and source."
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "accepted": {
+                    "summary": "Accepted",
+                    "value": {
+                      "execution_id": "exec_123",
+                      "status": "queued"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Acknowledgement"
+                }
+              }
+            },
+            "description": "Durably accepted. Planning and downstream execution continue after the caller disconnects.",
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "True when returning the original acceptance for an identical retained key.",
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "Location": {
+                "description": "Relative status endpoint for this execution.",
+                "example": "/v1/executions/exec_123",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "The request is malformed or violates its schema.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request is malformed or violates its schema."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "IDEMPOTENCY_CONFLICT",
+                        "message": "This idempotency key was already used with different work.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This idempotency key was already used with different work."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "access": {
+                    "summary": "Access required",
+                    "value": {
+                      "error": {
+                        "access_requirements": [
+                          {
+                            "permission": "read",
+                            "source": "workspace quarterly reports",
+                            "suggested_resolution": "Grant the approved connection access or select an already authorized source."
+                          }
+                        ],
+                        "code": "ACCESS_REQUIRED",
+                        "message": "The selected source is not authorized for this caller.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "clarification": {
+                    "summary": "Immediate clarification",
+                    "value": {
+                      "error": {
+                        "code": "CLARIFICATION_REQUIRED",
+                        "gaps": [
+                          {
+                            "description": "Reported versus organic growth materially changes the screen.",
+                            "field": "/task"
+                          }
+                        ],
+                        "message": "The revenue basis is unspecified.",
+                        "questions": [
+                          {
+                            "options": [
+                              "Reported",
+                              "Organic"
+                            ],
+                            "question": "Which revenue basis should the screen use?",
+                            "recommended_option": "Reported"
+                          }
+                        ],
+                        "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "data": {
+                    "summary": "Data required",
+                    "value": {
+                      "error": {
+                        "code": "DATA_REQUIRED",
+                        "data_requirements": [
+                          {
+                            "description": "Quarterly customer revenue with company, quarter, currency and source.",
+                            "required_coverage": "2024 Q1 through 2026 Q2",
+                            "suggested_resolution": "Prepare an authorized dataset with ingest, or explicitly permit acquisition in a revised request."
+                          }
+                        ],
+                        "message": "The requested customer revenue dataset is unavailable.",
+                        "recommended_task": "Analyze quarterly revenue growth for 2024 Q1 through 2026 Q2 using [authorized prepared dataset].",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A material request gap was detected before acceptance. No execution was created."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Prepare reusable data",
+        "tags": [
+          "Start work"
+        ],
+        "x-implementation-status": "New ingestion graph",
+        "x-sdk-routing": {
+          "behavior": "Start the dedicated ingestion graph. Preparation and persistence use the owning tools/APIs directly.",
+          "client": "LangGraph SDK",
+          "graph": "ingest"
+        },
+        "x-source-keys": [
+          "backend_catalog"
+        ]
+      }
+    },
+    "/v1/run": {
+      "post": {
+        "description": "Resolve an explicit saved-study/execution reference through Backend, or find/build one compatible study. Kept graph checkpoints preserve discovery, building and explicit revisions; save one exact study/version binding and resolved parameters before execution. Suitable saved studies execute directly through StratifyX. Backend owns study/run records; extend existing persistence only for demonstrated pre-build gaps. Clarification ends the attempt with guidance and never calls interrupt(). The public acceptance mapping and safe retries remain implementation work.",
+        "operationId": "run",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "screen": {
+                  "summary": "Run request",
+                  "value": {
+                    "auto_ingest": false,
+                    "context": [
+                      "US S&P 500",
+                      "Latest fiscal-year fundamentals"
+                    ],
+                    "outputs": [
+                      {
+                        "name": "screen_results",
+                        "schema": [
+                          {
+                            "description": "Primary listed ticker for the company.",
+                            "name": "ticker",
+                            "type": "string"
+                          },
+                          {
+                            "description": "Reported revenue growth: latest fiscal year versus prior fiscal year.",
+                            "name": "revenue_growth_pct",
+                            "type": "float64",
+                            "unit": "percent"
+                          }
+                        ],
+                        "type": "table"
+                      },
+                      {
+                        "format": "markdown",
+                        "instructions": "Explain criteria, coverage and limitations in under 100 words.",
+                        "name": "explanation",
+                        "type": "text"
+                      }
+                    ],
+                    "task": "Screen revenue growth above 15%; rank and chart the results."
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "accepted": {
+                    "summary": "Accepted",
+                    "value": {
+                      "execution_id": "exec_123",
+                      "status": "queued"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Acknowledgement"
+                }
+              }
+            },
+            "description": "Durably accepted. Planning and downstream execution continue after the caller disconnects.",
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "True when returning the original acceptance for an identical retained key.",
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "Location": {
+                "description": "Relative status endpoint for this execution.",
+                "example": "/v1/executions/exec_123",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "The request is malformed or violates its schema.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request is malformed or violates its schema."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "UNAUTHENTICATED",
+                        "message": "A valid bearer credential is required.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A valid bearer credential is required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "FORBIDDEN",
+                        "message": "The caller lacks permission for this operation.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The caller lacks permission for this operation."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "IDEMPOTENCY_CONFLICT",
+                        "message": "This idempotency key was already used with different work.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This idempotency key was already used with different work."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "access": {
+                    "summary": "Access required",
+                    "value": {
+                      "error": {
+                        "access_requirements": [
+                          {
+                            "permission": "read",
+                            "source": "workspace quarterly reports",
+                            "suggested_resolution": "Grant the approved connection access or select an already authorized source."
+                          }
+                        ],
+                        "code": "ACCESS_REQUIRED",
+                        "message": "The selected source is not authorized for this caller.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "clarification": {
+                    "summary": "Immediate clarification",
+                    "value": {
+                      "error": {
+                        "code": "CLARIFICATION_REQUIRED",
+                        "gaps": [
+                          {
+                            "description": "Reported versus organic growth materially changes the screen.",
+                            "field": "/task"
+                          }
+                        ],
+                        "message": "The revenue basis is unspecified.",
+                        "questions": [
+                          {
+                            "options": [
+                              "Reported",
+                              "Organic"
+                            ],
+                            "question": "Which revenue basis should the screen use?",
+                            "recommended_option": "Reported"
+                          }
+                        ],
+                        "recommended_task": "Screen latest fiscal-year reported revenue growth above 15% for the S&P 500; rank and chart the results.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "data": {
+                    "summary": "Data required",
+                    "value": {
+                      "error": {
+                        "code": "DATA_REQUIRED",
+                        "data_requirements": [
+                          {
+                            "description": "Quarterly customer revenue with company, quarter, currency and source.",
+                            "required_coverage": "2024 Q1 through 2026 Q2",
+                            "suggested_resolution": "Prepare an authorized dataset with ingest, or explicitly permit acquisition in a revised request."
+                          }
+                        ],
+                        "message": "The requested customer revenue dataset is unavailable.",
+                        "recommended_task": "Analyze quarterly revenue growth for 2024 Q1 through 2026 Q2 using [authorized prepared dataset].",
+                        "retryable": false
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A material request gap was detected before acceptance. No execution was created."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "The request exceeds the caller rate limit.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request exceeds the caller rate limit.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "error": {
+                    "value": {
+                      "error": {
+                        "code": "TEMPORARILY_UNAVAILABLE",
+                        "message": "An upstream service is temporarily unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "An upstream service is temporarily unavailable."
+          }
+        },
+        "summary": "Start an analysis",
+        "tags": [
+          "Start work"
+        ],
+        "x-implementation-status": "New integration graph",
+        "x-sdk-routing": {
+          "behavior": "Resolve existing study/execution references through StratifyX. Use the dedicated kept graph only when building/revision or interpretation is required; compatible saved-study execution is a direct Backend path.",
+          "client": "LangGraph SDK for build/revision; StratifyX SDK for saved-study resolution/execution",
+          "graph": "run"
+        },
+        "x-source-keys": [
+          "agent_entry",
+          "agent_client",
+          "backend_routes",
+          "submit"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Proposed REST binding only. Native SDKs may call different existing origins and routes; no deployed gateway/base URL is asserted.",
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Start work"
+    },
+    {
+      "name": "Follow work"
+    },
+    {
+      "name": "Read results"
+    },
+    {
+      "name": "Manage work"
+    }
+  ],
+  "x-contract-source": "contracts/openapi.json",
+  "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
+  "x-parameter-source": "contracts/native-parameters.json"
+}

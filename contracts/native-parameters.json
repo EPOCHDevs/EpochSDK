@@ -1,0 +1,406 @@
+{
+  "schemas": {
+    "CommissionType": {
+      "enum": [
+        "FlatFee",
+        "Percent",
+        "Bps",
+        "MakerTaker",
+        "PerShare",
+        "USEquity",
+        "Futures",
+        "Tiered"
+      ],
+      "type": "string"
+    },
+    "CountryCurrency": {
+      "enum": [
+        "AED",
+        "AFN",
+        "ALL",
+        "AMD",
+        "ANG",
+        "ARS",
+        "AUD",
+        "AWG",
+        "BAM",
+        "BBD",
+        "BDT",
+        "BGN",
+        "BHD",
+        "BIF",
+        "BMD",
+        "BND",
+        "BOB",
+        "BOC",
+        "BRL",
+        "BRP",
+        "BSD",
+        "BTN",
+        "BWP",
+        "BZD",
+        "CAD",
+        "CDF",
+        "CHF",
+        "CLP",
+        "CNH",
+        "CNY",
+        "COP",
+        "CRC",
+        "CUP",
+        "CVE",
+        "CYP",
+        "CZK",
+        "DCN",
+        "DJF",
+        "DKK",
+        "DOP",
+        "DTR",
+        "DZD",
+        "ECB",
+        "EGP",
+        "ETB",
+        "EUR",
+        "FJD",
+        "GBP",
+        "GEL",
+        "GHS",
+        "GMD",
+        "GNF",
+        "GTQ",
+        "GYD",
+        "HKD",
+        "HNL",
+        "HRK",
+        "HTG",
+        "HUF",
+        "HUY",
+        "IDR",
+        "ILS",
+        "INR",
+        "IQD",
+        "IRR",
+        "ISK",
+        "JMD",
+        "JOD",
+        "JPY",
+        "KES",
+        "KGS",
+        "KHR",
+        "KMF",
+        "KRW",
+        "KWD",
+        "KYD",
+        "KZT",
+        "LAK",
+        "LBP",
+        "LKR",
+        "LRD",
+        "LSL",
+        "LTL",
+        "LYD",
+        "MAD",
+        "MDL",
+        "MGA",
+        "MKD",
+        "MMK",
+        "MOP",
+        "MTL",
+        "MUR",
+        "MVR",
+        "MWK",
+        "MXN",
+        "MYR",
+        "MZN",
+        "NAD",
+        "NGN",
+        "NIO",
+        "NOK",
+        "NPR",
+        "NZD",
+        "OMR",
+        "PAB",
+        "PEN",
+        "PGK",
+        "PHP",
+        "PKR",
+        "PLN",
+        "PYG",
+        "QAR",
+        "RON",
+        "RSD",
+        "RUB",
+        "RWF",
+        "SAR",
+        "SCR",
+        "SDG",
+        "SEK",
+        "SGD",
+        "SHP",
+        "SOS",
+        "SSG",
+        "SUS",
+        "SVC",
+        "SZL",
+        "THB",
+        "TJS",
+        "TMT",
+        "TND",
+        "TRY",
+        "TTD",
+        "TWD",
+        "TZS",
+        "UAH",
+        "UGX",
+        "USD",
+        "UYU",
+        "UZS",
+        "VES",
+        "VND",
+        "XAF",
+        "XAG",
+        "XAU",
+        "XCD",
+        "XDR",
+        "XOF",
+        "XPF",
+        "YER",
+        "ZAR",
+        "ZMW"
+      ],
+      "type": "string"
+    },
+    "DatePeriodConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "format": "date",
+          "type": "string"
+        },
+        "start": {
+          "format": "date",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ExecutionCostConfig_CommissionType": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_class_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplatedGenericFunction_CommissionType"
+          },
+          "type": "object"
+        },
+        "default_model": {
+          "$ref": "#/$defs/TemplatedGenericFunction_CommissionType"
+        },
+        "model": {
+          "$ref": "#/$defs/TemplatedGenericFunction_CommissionType"
+        },
+        "symbol_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplatedGenericFunction_CommissionType"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ExecutionCostConfig_SlippageType": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_class_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplatedGenericFunction_SlippageType"
+          },
+          "type": "object"
+        },
+        "default_model": {
+          "$ref": "#/$defs/TemplatedGenericFunction_SlippageType"
+        },
+        "model": {
+          "$ref": "#/$defs/TemplatedGenericFunction_SlippageType"
+        },
+        "symbol_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TemplatedGenericFunction_SlippageType"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ExecutionOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "cash": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "commission": {
+          "$ref": "#/$defs/ExecutionCostConfig_CommissionType"
+        },
+        "currency": {
+          "$ref": "#/$defs/CountryCurrency"
+        },
+        "futures_tick_snapshot": {
+          "$ref": "#/$defs/FuturesTickSnapshot"
+        },
+        "slippage": {
+          "$ref": "#/$defs/ExecutionCostConfig_SlippageType"
+        }
+      },
+      "title": "epoch_stratifyx::ExecutionOptions",
+      "type": "object"
+    },
+    "FuturesTickRule": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "type": "string"
+        },
+        "contract": {
+          "type": "string"
+        },
+        "effective_from_ns": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "effective_to_ns": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "price_kind": {
+          "enum": [
+            "Outright"
+          ],
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string"
+        },
+        "source_uri": {
+          "type": "string"
+        },
+        "tick_size": {
+          "type": "string"
+        },
+        "venue": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id",
+        "contract",
+        "effective_from_ns",
+        "effective_to_ns",
+        "price_kind",
+        "source_sha256",
+        "source_uri",
+        "tick_size",
+        "venue"
+      ],
+      "title": "epoch_bt::vectorized::FuturesTickRule",
+      "type": "object"
+    },
+    "FuturesTickSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/FuturesTickRule"
+          },
+          "type": "array"
+        },
+        "snapshot_id": {
+          "type": "string"
+        },
+        "working_orders_on_change": {
+          "enum": [
+            "Reject",
+            "CancelWorkingOrders"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "rules",
+        "snapshot_id",
+        "working_orders_on_change"
+      ],
+      "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+      "type": "object"
+    },
+    "MetaDataOptionDefinition": {
+      "type": [
+        "number",
+        "string",
+        "boolean",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "SlippageType": {
+      "enum": [
+        "Bps",
+        "Fixed",
+        "Random",
+        "VolumeImpact",
+        "TickBased",
+        "ParticipationRate",
+        "SpreadBased"
+      ],
+      "type": "string"
+    },
+    "TemplatedGenericFunction_CommissionType": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "additionalProperties": {
+            "$ref": "#/$defs/MetaDataOptionDefinition"
+          },
+          "type": "object"
+        },
+        "type": {
+          "$ref": "#/$defs/CommissionType"
+        }
+      },
+      "required": [
+        "args"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "TemplatedGenericFunction_SlippageType": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "additionalProperties": {
+            "$ref": "#/$defs/MetaDataOptionDefinition"
+          },
+          "type": "object"
+        },
+        "type": {
+          "$ref": "#/$defs/SlippageType"
+        }
+      },
+      "required": [
+        "args"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
+  "source": "stratifyx_openapi.json#/components/schemas"
+}

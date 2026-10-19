@@ -1,0 +1,655 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "run with descriptions",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "saved source and native parameters",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "source_execution_id": "existing_engine",
+        "parameters": {
+          "period": {
+            "start": "2024-01-01",
+            "end": "2024-12-31"
+          },
+          "execution": {
+            "cash": 10000
+          }
+        }
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "two study references",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "study_id": "study_a",
+        "source_execution_id": "engine_a"
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "coerced boolean",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "auto_ingest": "false"
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "unknown native option",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "parameters": {
+          "execution": {
+            "made_up": 1
+          }
+        }
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "boolean cash",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "parameters": {
+          "execution": {
+            "cash": true
+          }
+        }
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "duplicate outputs",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          },
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false,
+      "schema_valid": true
+    },
+    {
+      "name": "duplicate columns",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              },
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false,
+      "schema_valid": true
+    },
+    {
+      "name": "whitespace task",
+      "schema": "RunRequest",
+      "value": {
+        "task": "  ",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "reversed period",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "parameters": {
+          "period": {
+            "start": "2025-01-01",
+            "end": "2024-01-01"
+          }
+        }
+      },
+      "valid": false,
+      "schema_valid": true
+    },
+    {
+      "name": "remote schema reference",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "summary",
+            "type": "json",
+            "schema": {
+              "$ref": "https://example.com/schema"
+            }
+          }
+        ]
+      },
+      "valid": false,
+      "schema_valid": true
+    },
+    {
+      "name": "local schema reference",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "summary",
+            "type": "json",
+            "schema": {
+              "$defs": {
+                "amount": {
+                  "type": "number",
+                  "description": "USD amount"
+                }
+              },
+              "$ref": "#/$defs/amount"
+            }
+          }
+        ]
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "ingestion table",
+      "schema": "IngestRequest",
+      "value": {
+        "task": "Prepare approved data",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "ingestion text only",
+      "schema": "IngestRequest",
+      "value": {
+        "task": "Prepare approved data",
+        "outputs": [
+          {
+            "name": "notes",
+            "type": "text",
+            "instructions": "Describe source"
+          }
+        ]
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "fetch question",
+      "schema": "FetchRequest",
+      "value": {
+        "task": "Show the latest five rows",
+        "page_size": 5
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "fetch cursor",
+      "schema": "FetchRequest",
+      "value": {
+        "cursor": "opaque_page"
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "fetch changed cursor",
+      "schema": "FetchRequest",
+      "value": {
+        "cursor": "opaque_page",
+        "task": "Change selection"
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "refresh native period",
+      "schema": "RefreshRequest",
+      "value": {
+        "parameters": {
+          "period": {
+            "start": "2024-01-01"
+          }
+        }
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "clarification guidance",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "CLARIFICATION_REQUIRED",
+          "message": "Choose a period",
+          "retryable": false,
+          "gaps": [
+            {
+              "field": "/task",
+              "description": "Missing period"
+            }
+          ],
+          "questions": [
+            {
+              "question": "Which year?",
+              "options": [
+                "2024",
+                "2025"
+              ],
+              "recommended_option": "2025"
+            }
+          ],
+          "recommended_task": "Compare annual sales for [chosen year]"
+        }
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "accepted clarification context",
+      "schema": "ErrorResponse",
+      "value": {
+        "execution_id": "exec_existing",
+        "error": {
+          "code": "CLARIFICATION_REQUIRED",
+          "message": "Choose a period",
+          "retryable": false,
+          "gaps": [
+            {
+              "field": "/task",
+              "description": "Missing period"
+            }
+          ],
+          "questions": [
+            {
+              "question": "Which year?",
+              "options": [
+                "2024",
+                "2025"
+              ],
+              "recommended_option": "2025"
+            }
+          ],
+          "recommended_task": "Compare annual sales for [chosen year]"
+        }
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "missing revised task",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "CLARIFICATION_REQUIRED",
+          "message": "Choose a period",
+          "retryable": false,
+          "gaps": [
+            {
+              "field": "/task",
+              "description": "Missing period"
+            }
+          ],
+          "questions": [
+            {
+              "question": "Which year?",
+              "options": [
+                "2024",
+                "2025"
+              ],
+              "recommended_option": "2025"
+            }
+          ]
+        }
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "retryable clarification",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "CLARIFICATION_REQUIRED",
+          "message": "Choose a period",
+          "retryable": true,
+          "gaps": [
+            {
+              "field": "/task",
+              "description": "Missing period"
+            }
+          ],
+          "questions": [
+            {
+              "question": "Which year?",
+              "options": [
+                "2024",
+                "2025"
+              ],
+              "recommended_option": "2025"
+            }
+          ],
+          "recommended_task": "Compare annual sales for [chosen year]"
+        }
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "unoffered recommendation",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "CLARIFICATION_REQUIRED",
+          "message": "Choose a period",
+          "retryable": false,
+          "gaps": [
+            {
+              "field": "/task",
+              "description": "Missing period"
+            }
+          ],
+          "questions": [
+            {
+              "question": "Which year?",
+              "options": [
+                "2024",
+                "2025"
+              ],
+              "recommended_option": "2023"
+            }
+          ],
+          "recommended_task": "Compare annual sales for [chosen year]"
+        }
+      },
+      "valid": false,
+      "schema_valid": true
+    },
+    {
+      "name": "missing data requirements",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "DATA_REQUIRED",
+          "message": "Missing data",
+          "retryable": false
+        }
+      },
+      "valid": false,
+      "schema_valid": false
+    },
+    {
+      "name": "access guidance",
+      "schema": "ErrorResponse",
+      "value": {
+        "error": {
+          "code": "ACCESS_REQUIRED",
+          "message": "Need source permission",
+          "retryable": false,
+          "access_requirements": [
+            {
+              "source": "approved dataset",
+              "permission": "read"
+            }
+          ]
+        }
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "acceptance",
+      "schema": "Acknowledgement",
+      "value": {
+        "execution_id": "exec_123",
+        "status": "queued"
+      },
+      "valid": true,
+      "schema_valid": true
+    },
+    {
+      "name": "extra acceptance fields",
+      "schema": "Acknowledgement",
+      "value": {
+        "execution_id": "exec_123",
+        "status": "queued",
+        "study_id": "internal"
+      },
+      "valid": false,
+      "schema_valid": false
+    }
+  ]
+}
