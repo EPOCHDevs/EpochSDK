@@ -301,7 +301,8 @@ async def execute(
 
     Repeating the call attaches to the same native operation. Only that operation
     is polled; timeout/cell cancellation does not cancel or restart server work.
-    This returns native execution status, not a newly interpreted answer.
+    Without a response plan this returns native engine status. A verified plan
+    also supplies its newly published answer under the returned .response.
     """
     completed = _completed(review, result)
     parameters, operation_id = _execution_inputs(review, period)

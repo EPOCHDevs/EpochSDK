@@ -12,7 +12,7 @@ answer = await read(epoch, review, result)
 
 Share this whole folder, including `demo_helpers.py`, `case_support.py`,
 `notebook_identity.py` and `cases/`. It works without the rest of this checkout.
-The recipient needs `epoch-sdk[notebook]` 0.1.0a6 or later, their Epoch login and
+The recipient needs `epoch-sdk[notebook]` 0.1.0a9 or later, their Epoch login and
 the two service URLs. No vendor/model credentials are used by these helpers.
 
 | Notebook | Demo | Answer |
@@ -50,8 +50,10 @@ execution = await execute(epoch, review, result, period=later)
 `execute` uses the original costs. A changed period gets a readable date suffix
 on its native execution ID; the same dates reconnect to that execution. A timeout
 or cancelled notebook wait does not cancel server work or submit a replacement.
-No-period calls retain the original IDs. Execution currently returns engine
-status; replaying saved answers is ENG-2086 work. Fixed fiscal labels, embedded
+No-period calls retain the original IDs. Existing studies without a response
+plan return engine status. A verified plan also publishes a new answer under
+`execution.response`; computed-only SDK/MCP replay has passed a real service
+check, while live text-plan acceptance is still pending. Fixed fiscal labels, embedded
 date filters and a saved roster are not rewritten by an engine-period override.
 
 The public SDK's `date_range` returns the existing native `DatePeriodConfig`.

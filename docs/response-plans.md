@@ -35,6 +35,11 @@ and plan verification pin stayed unchanged; no graph run or model call occurred.
 All 338 installed SDK tests passed. The subsequent real MCP check found omitted
 column metadata serialized as null; alpha9 corrects the nested saved-answer
 wire boundary while retaining genuine null values in requested JSON data.
+The alpha9 real subprocess MCP recheck passed: `epoch_execute_saved` and
+`epoch_execution_operation` returned the same saved answer and plan, and two
+`epoch_response_table` pages returned all three rows. No new job or graph run
+was created by those reattachments. This still does not certify live text
+interpretation or the remaining five-case notebook acceptance.
 
 ## Establish and publish during research
 

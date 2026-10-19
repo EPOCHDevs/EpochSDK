@@ -83,7 +83,7 @@ def make_notebook(entry: dict, request: dict) -> dict:
             "markdown",
             "## 1. Connect\n\n`connect()` prepares the ordinary SDK client using your "
             "Epoch login and service URLs. The health check confirms access; neither starts research. "
-            "Choose a kernel with `epoch-sdk[notebook]` 0.1.0a6 or later installed.",
+            "Choose a kernel with `epoch-sdk[notebook]` 0.1.0a9 or later installed.",
         ),
         cell(
             "code",
@@ -129,7 +129,9 @@ def make_notebook(entry: dict, request: dict) -> dict:
                 "## Optional: execute the saved study\n\nThis is a separate Backend "
                 "execution with the original period and costs. It starts no supervisor "
                 "or new discovery. Repeating it attaches to the same execution. "
-                "It currently returns engine status; saved-answer replay is still being built.",
+                "An existing study without a response plan returns engine status. "
+                "A verified response plan also publishes a new answer, available as "
+                "`execution.response`; live text-plan acceptance is still pending.",
             ),
             cell(
                 "code",
