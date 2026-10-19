@@ -17,8 +17,10 @@ from test_supervisor import INTERRUPT, RUN, THREAD, job
 
 from epoch_sdk import EpochError, RunRequest
 from epoch_sdk.mcp import create_server
-from epoch_sdk.research import EpochClient, ResearchCompleted, ResearchError
+from epoch_sdk.research import EpochClient, ExecutionAccepted, ResearchCompleted, ResearchError
+from epoch_sdk.response_plans import ResponsePlanReference
 from epoch_sdk.supervisor import (
+    ChosenExecution,
     InProgress,
     NeedsInput,
     NoExecution,
@@ -361,6 +363,101 @@ def test_optional_launch_and_execution_metadata_are_omitted_from_native_wire():
                 operation_id="refresh-one",
             )
             assert "thread_id" not in service.execution_record["request"]
+
+    asyncio.run(scenario())
+
+
+def test_prepared_execution_waits_for_its_answer_and_reconnects_without_a_graph_call():
+    async def scenario():
+        service = Service()
+        service.record = {"request": REQUEST}
+        plan = ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1)
+        source = SavedStudy(
+            study_id="study-one",
+            source_execution_id="new",
+            thread_id=THREAD,
+            response_plan=plan,
+        )
+        async with service.client() as sdk:
+            waiting = await sdk.execute_saved(
+                source, period=DatePeriodConfig(start="2025-01-01"), operation_id="prepared-one"
+            )
+            # The engine is already complete, but native publication has not finished.
+            assert isinstance(waiting, ExecutionAccepted)
+            assert service.execution_record["request"]["response_plan"] == plan.to_wire()
+        service.response.update(primary_execution_id="repeat-one", response_plan=plan.to_wire())
+        service.execution_record.update(
+            response_phase="outputs_recorded",
+            response_id=service.response["response_id"],
+            response_version=1,
+        )
+        async with service.client() as fresh:
+            finished = await fresh.execution_operation("prepared-one")
+            repeated = await fresh.execute_saved(
+                source, period=DatePeriodConfig(start="2025-01-01"), operation_id="prepared-one"
+            )
+            assert isinstance(finished, ChosenExecution) and finished.response is not None
+            assert finished.response.primary_execution_id == finished.execution.id == "repeat-one"
+            assert finished.reusable_study.response_plan == plan
+            assert repeated == finished
+            assert service.jobs == 1 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"primary_execution_id": "another-job"},
+        {"response_plan": {"plan_id": "rpl_" + "b" * 64, "version": 1}},
+        {"thread_id": "another-thread"},
+    ],
+)
+def test_prepared_execution_rejects_a_published_answer_from_another_source(change):
+    async def scenario():
+        service = Service()
+        service.record = {"request": REQUEST}
+        plan = ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1)
+        async with service.client() as sdk:
+            await sdk.execute_saved(
+                SavedStudy(
+                    study_id="study-one",
+                    source_execution_id="new",
+                    thread_id=THREAD,
+                    response_plan=plan,
+                ),
+                period=DatePeriodConfig(start="2025-01-01"),
+                operation_id="prepared-one",
+            )
+            service.response.update(primary_execution_id="repeat-one", response_plan=plan.to_wire())
+            service.response.update(change)
+            service.execution_record.update(
+                response_phase="outputs_recorded",
+                response_id=service.response["response_id"],
+                response_version=1,
+            )
+            with pytest.raises(EpochError, match="exact admitted plan/source") as mismatch:
+                await sdk.execution_operation("prepared-one")
+            assert mismatch.value.error.code == "INVALID_STATE"
+            assert service.jobs == 1 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+def test_lower_level_supervisor_execution_cannot_skip_a_prepared_response_plan():
+    async def scenario():
+        service = Service()
+        async with service.client() as sdk:
+            with pytest.raises(ValueError, match="EpochClient.execute_saved"):
+                await sdk.supervisor.execute_saved(
+                    SavedStudy(
+                        study_id="study-one",
+                        source_execution_id="new",
+                        response_plan=ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1),
+                    ),
+                    period=DatePeriodConfig(start="2025-01-01"),
+                )
+            assert service.jobs == 0 and service.graph_calls == []
 
     asyncio.run(scenario())
 

@@ -133,7 +133,8 @@ def make_notebook(entry: dict, request: dict) -> dict:
             ),
             cell(
                 "code",
-                "execution = await execute(epoch, review, result)\n",
+                "execution = await execute(epoch, review, result)\n"
+                "execution_dashboard_url = await dashboard(epoch, execution)\n",
                 tags=("optional-execution",),
             ),
             cell(
@@ -155,7 +156,8 @@ def make_notebook(entry: dict, request: dict) -> dict:
             ),
             cell(
                 "code",
-                "later_execution = await execute(epoch, review, result, period=later_period)\n",
+                "later_execution = await execute(epoch, review, result, period=later_period)\n"
+                "later_dashboard_url = await dashboard(epoch, later_execution)\n",
                 tags=("optional-execution",),
             ),
         ]

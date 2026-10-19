@@ -52,6 +52,11 @@ published response. One source execution can back both, without duplicating text
 Acceptance must include response-only, explicitly no-dashboard, and explicitly
 requested dashboard cases. Only real populated artifacts produce a dashboard
 link tied to the exact execution; no existence claim is inferred from a URL.
+The requested-dashboard example should ask for a wealth/drawdown chart for the
+AAPL strategy and benchmark while keeping the performance table and short
+conclusion in the published answer. Its acceptance needs both the saved answer
+and an actually populated dashboard; a mocked link is not sufficient. A table
+in the answer need not be copied into that dashboard.
 The current demo `dashboard` helper already reads the native schema and uses
 Portal's existing `/dashboard/{execution_id}` route, with a configured origin.
 It first discovers categories from native performance metadata, including

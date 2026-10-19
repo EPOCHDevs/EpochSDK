@@ -63,6 +63,12 @@ inclusive dates are sent to Backend, never an unresolved moving expression.
 
 ## Dashboard
 
+```python
+dashboard_url = await dashboard(epoch, result)
+# After a separate saved-study execution, link that execution's dashboard:
+execution_dashboard_url = await dashboard(epoch, execution)
+```
+
 `await dashboard(epoch, result)` checks the saved study owner, exact execution
 binding and native dashboard schema. It shows an **Open dashboard** link when
 content exists and `EPOCH_PORTAL_URL` is set to the intended Portal origin. An
@@ -70,6 +76,8 @@ empty response-only study gets no dashboard link. This reads existing content;
 it does not create presentation or imply that output tables require dashboard
 tables. The optional presentation-request contract is described in
 [the interface follow-up](https://github.com/EPOCHDevs/EpochSDK/blob/codex/eng2079-interactive-sessions/docs/notebook-demo-interface.md).
+The completed MSFT examples are response-only, so they intentionally show no
+link. A successful populated-dashboard example is still an acceptance item.
 
 The `desk-v2-01` attempt values match the shorter request revision. Keep IDs to
 reconnect; use another attempt for changed inputs or a deliberate data refresh.

@@ -129,6 +129,7 @@ class ChosenExecution(Closed):
     reply: str = ""
     operation_id: str | None = None
     request_id: str | None = None
+    response: SavedResearchResponse | None = None
 
 
 class PublishedAnswer(Closed):
@@ -745,6 +746,11 @@ class SupervisorClient:
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
     ) -> ChosenExecution:
+        if reference.response_plan is not None:
+            raise ValueError(
+                "Use EpochClient.execute_saved for a prepared response plan so its "
+                "outputs are replayed and published with the new execution."
+            )
         definition = await self.backend.studies_definitions.get_a_study_definition_by_id(
             reference.study_id, request_options={"max_retries": 0}
         )

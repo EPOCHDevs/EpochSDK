@@ -5,12 +5,14 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Literal
+from uuid import uuid4
 
 import httpx
 from stratifyx import (
     DatePeriodConfig,
     ExecutionOptions,
     SdkContractErrorResponse,
+    SdkContractResponsePlanReference,
     SdkContractRunParameters,
     SdkContractRunRequest,
     SdkExecutionRecord,
@@ -248,10 +250,12 @@ class EpochClient:
             if not isinstance(research, ResearchCompleted) or research.reusable_study is None:
                 raise ValueError("The research operation has no completed prepared study")
             reference = research.reusable_study
-        if operation_id is None:
+        if operation_id is None and reference.response_plan is None:
             return await self.supervisor.execute_saved(
                 reference, period=period, execution=execution
             )
+        if operation_id is None:
+            operation_id = "execute-" + uuid4().hex
         async with _boundary(None):
             parameters = (
                 RunParameters(period=period)
@@ -260,7 +264,30 @@ class EpochClient:
             )
             try:
                 native_parameters = SdkContractRunParameters.model_validate(parameters.to_wire())
-                if reference.thread_id is None:
+                if reference.response_plan is not None:
+                    plan = SdkContractResponsePlanReference.model_validate(
+                        reference.response_plan.to_wire()
+                    )
+                    if reference.thread_id is None:
+                        record = await self.backend.sdk_requests.create_sdk_execution_request(
+                            operation_id=operation_id,
+                            study_id=reference.study_id,
+                            source_execution_id=reference.source_execution_id,
+                            parameters=native_parameters,
+                            response_plan=plan,
+                            request_options={"max_retries": 0},
+                        )
+                    else:
+                        record = await self.backend.sdk_requests.create_sdk_execution_request(
+                            operation_id=operation_id,
+                            study_id=reference.study_id,
+                            source_execution_id=reference.source_execution_id,
+                            parameters=native_parameters,
+                            response_plan=plan,
+                            thread_id=reference.thread_id,
+                            request_options={"max_retries": 0},
+                        )
+                elif reference.thread_id is None:
                     record = await self.backend.sdk_requests.create_sdk_execution_request(
                         operation_id=operation_id,
                         study_id=reference.study_id,
@@ -319,7 +346,11 @@ class EpochClient:
             raise
         if job.id != record.execution_id or job.definition_id != record.request.study_id:
             raise ValueError("The native execution differs from its accepted operation")
-        return ChosenExecution(
+        if record.request.response_plan is not None and (
+            record.response_phase is None or record.response_phase.value != "outputs_recorded"
+        ):
+            return accepted
+        result = ChosenExecution(
             execution=job,
             request_id=record.request_id,
             operation_id=record.request.operation_id,
@@ -329,6 +360,31 @@ class EpochClient:
                 thread_id=record.request.thread_id,
             ),
         )
+        if record.request.response_plan is not None:
+            if record.response_id is None or record.response_version is None:
+                raise ValueError("The completed execution plan has no pinned answer revision")
+            response = await self.response(record.response_id, version=record.response_version)
+            plan = record.request.response_plan
+            if (
+                response.request_id != record.request_id
+                or response.primary_execution_id != record.execution_id
+                or response.study_id != record.request.study_id
+                or response.response_plan is None
+                or response.response_plan.plan_id != plan.plan_id
+                or response.response_plan.version != plan.version
+                or (
+                    record.request.thread_id is not None
+                    and response.thread_id != record.request.thread_id
+                )
+            ):
+                raise ValueError(
+                    "The published execution answer differs from its exact admitted plan/source"
+                )
+            study = result.reusable_study.model_copy(
+                update={"response_plan": response.response_plan}
+            )
+            result = result.model_copy(update={"response": response, "reusable_study": study})
+        return result
 
     async def execution(self, execution_id: str) -> JobListItem:
         """Read queued/running/completed native status without a supervisor call."""
