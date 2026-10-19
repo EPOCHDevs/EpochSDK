@@ -18,6 +18,13 @@ resumes the native checkpoint, and displays the saved answer once. The returned
 revision, requested named parts, source execution and reusable study reference.
 Prepared study execution remains the separate `execute_saved` action.
 
+For a client demo, the [case notebooks](../examples/notebooks/demos/README.md)
+wrap setup, request display, result reads and saved-study execution in thin shared
+helpers. The public SDK's `date_range` resolves friendly calendar presets or
+rolling lookbacks to the existing native date type; exact dates remain visible
+before submission. [The notebook interface note](notebook-demo-interface.md)
+records the optional dashboard-presentation proposal and deferred stage display.
+
 Notebook Markdown uses CommonMark formatting in a normal HTML widget. Currency
 such as `$87 billion to $136 billion` stays literal instead of becoming an
 inline math expression. Code, emphasis, links and Markdown tables retain their

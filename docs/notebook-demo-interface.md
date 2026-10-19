@@ -54,6 +54,10 @@ requested dashboard cases. Only real populated artifacts produce a dashboard
 link tied to the exact execution; no existence claim is inferred from a URL.
 The current demo `dashboard` helper already reads the native schema and uses
 Portal's existing `/dashboard/{execution_id}` route, with a configured origin.
+It first discovers categories from native performance metadata, including
+event-marker-only output. No-category response-only studies stop there. It never
+guesses a category or translates an arbitrary 404/authentication failure into an
+empty dashboard.
 
 ## Stage presentation — deferred
 
@@ -65,3 +69,30 @@ agent returns to discovery/build. Publication is complete only when a saved
 answer exists. Fixed 25/50/75/100 percentages are proposed milestone weights,
 not elapsed-work estimates; do not display them as measured progress. This is
 separate from completing the core prototype and response-plan replay.
+
+## Verified on 19 October 2026
+
+The normally built alpha6 wheel with native SDK 3.3.0rc5 passed all 332 Python
+tests, strict source Pyright, Ruff and shared contract checks. Eight actual cells
+in the new MSFT helper notebook passed against the authenticated local services.
+Existing user notebooks and kernels were preserved in a separate folder/kernel.
+
+The research call reconnected to
+`notebook-demo-msft_fundamentals-desk-v2-01-research`, retained the original
+revision-1 answer and read all three fiscal rows. The source trace remains
+`01a155b8-2f76-7420-ab70-f76ebd975635`: fourteen tools, no tool error, and publication
+last; reconnect created no new graph run. Its native checkpoint remains idle
+without pending steps or interrupts.
+
+The optional original-period execution produced
+`adf46b03-be0b-4d76-ade0-1c86766f3902`, completed, and reattached to that same job
+on the second call. Native projection reads matched all original rows. The
+study/thread/source execution binding and the original answer pin were retained.
+Native metadata confirmed no dashboard; no dashboard link was fabricated.
+
+The later-period preview resolved to 1 January–16 October 2026 with a distinct
+readable ID. Its job was not submitted in this check. Changed-period/cost/ID
+forwarding, cancellation, follow-up source preservation and populated-dashboard
+links have component coverage. Rolling-period financial results, a populated
+dashboard through Portal, the other shorter desk cases, and complete stored
+response-plan replay still require their own live acceptance.

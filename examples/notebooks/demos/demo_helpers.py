@@ -370,18 +370,31 @@ async def dashboard(
     job = await epoch.execution(execution_id)
     if job.id != execution_id or job.definition_id != study_id:
         raise ValueError("The dashboard execution differs from the saved answer.")
-    schema = await epoch.backend.studies_dashboard.get_dashboard_schema_chart_specs_table_specs_card_values(
+    metadata = await epoch.backend.studies_performance.get_performance_metadata(
         execution_id, request_options={"max_retries": 0}
     )
-    populated = bool(schema.charts or schema.tables or schema.snapshot_cards)
-    for content in (schema.content, schema.context):
-        if content is not None:
-            populated |= bool(
-                content.graphs
-                or content.markdown
-                or content.studies
-                or content.shared_parts
-            )
+    populated = any(
+        marker.row_count > 0
+        for markers in (metadata.event_markers_metadata or {}).values()
+        for marker in markers or []
+    )
+    # Response-only studies have no categories. Discover the actual categories
+    # first, as EpochAI does; never guess ALL/GLOBAL or translate a 404 to empty.
+    for category in sorted(metadata.tearsheet_metadata):
+        schema = await epoch.backend.studies_dashboard.get_dashboard_schema_chart_specs_table_specs_card_values(
+            execution_id, category=category, request_options={"max_retries": 0}
+        )
+        populated |= bool(schema.charts or schema.tables or schema.snapshot_cards)
+        for content in (schema.content, schema.context):
+            if content is not None:
+                populated |= bool(
+                    content.graphs
+                    or content.markdown
+                    or content.studies
+                    or content.shared_parts
+                )
+        if populated:
+            break
     if not populated:
         print("Response only · no dashboard content.")
         return None

@@ -21,8 +21,10 @@ MSFT/screener evidence. No market result or winning backtest has been pre-filled
 
 **Request revision:** `desk-v2` uses shorter, natural desk requests. Earlier live
 acceptance covered MSFT fundamentals, risk JSON and the saved plain-text variant
-with more explicit requests. This revision needs its own live acceptance; those
-earlier runs do not prove that the shorter requests work.
+with more explicit requests. The shorter MSFT fundamentals request has now passed
+its actual notebook session, complete reads, source comparison and saved-study
+execution. Other shorter cases still need their own live acceptance; earlier
+runs do not prove that those changed requests work.
 
 ## Notebook order
 

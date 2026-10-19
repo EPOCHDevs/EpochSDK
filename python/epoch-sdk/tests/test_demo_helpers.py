@@ -262,6 +262,8 @@ def test_dashboard_link_requires_owned_exact_source_and_actual_content(monkeypat
     result = completed(demos.task("msft_fundamentals"))
     schema = SimpleNamespace(charts=[], tables=[], snapshot_cards=[], content=None, context=None)
     owner_read, schema_read = AsyncMock(), AsyncMock(return_value=schema)
+    metadata = SimpleNamespace(tearsheet_metadata={}, event_markers_metadata={})
+    metadata_read = AsyncMock(return_value=metadata)
     client = SimpleNamespace(
         execution=AsyncMock(return_value=SimpleNamespace(id="exec-one", definition_id="study-one")),
         backend=SimpleNamespace(
@@ -269,12 +271,15 @@ def test_dashboard_link_requires_owned_exact_source_and_actual_content(monkeypat
             studies_dashboard=SimpleNamespace(
                 get_dashboard_schema_chart_specs_table_specs_card_values=schema_read
             ),
+            studies_performance=SimpleNamespace(get_performance_metadata=metadata_read),
         ),
     )
     displays = []
     monkeypatch.setattr(demos, "display", displays.append)
     assert asyncio.run(demos.dashboard(client, result, portal_url="https://portal.example")) is None
     assert displays == []
+    schema_read.assert_not_awaited()
+    metadata.tearsheet_metadata = {"actual-category": object()}
     schema.charts = ["native chart fixture"]
     assert (
         asyncio.run(demos.dashboard(client, result, portal_url="https://portal.example"))
@@ -282,7 +287,9 @@ def test_dashboard_link_requires_owned_exact_source_and_actual_content(monkeypat
     )
     assert 'href="https://portal.example/dashboard/exec-one"' in displays[0].data
     owner_read.assert_awaited_with("study-one", request_options={"max_retries": 0})
-    schema_read.assert_awaited_with("exec-one", request_options={"max_retries": 0})
+    schema_read.assert_awaited_with(
+        "exec-one", category="actual-category", request_options={"max_retries": 0}
+    )
     with pytest.raises(ValueError, match="without credentials"):
         asyncio.run(demos.dashboard(client, result, portal_url="javascript:alert(1)"))
     client.execution.return_value.definition_id = "another-study"
