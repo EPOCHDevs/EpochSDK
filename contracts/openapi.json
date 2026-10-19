@@ -6928,7 +6928,7 @@
       "Native_TemplatedGenericFunction_SlippageType",
       "Native_UpdateSdkRequest"
     ],
-    "sha256": "dd52cbd46535256e66682f87aac15b6369baca49d44facfb098127ed792fa397",
+    "sha256": "c35d6f18515fda1de3d74920d022ebaad92ce47da89baa52681f11de7f7abd4e",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
