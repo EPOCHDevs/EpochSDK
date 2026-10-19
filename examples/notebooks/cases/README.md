@@ -29,12 +29,18 @@ research scenario or a requirement that complete requests ask extra questions.
   by sqrt(252); drawdown is wealth / peak - 1, zero or negative. Both assets use
   the same dates for the worst-drawdown comparison. Returns are fractions.
 - **Strategy:** AAPL, 2016–2025, one long position or cash, 200-session SMA,
-  completed-close decisions and next daily regular-session open execution.
+  completed-close decisions and next vendor daily-open execution. The vendor's
+  daily metadata does not establish exact session/auction prints; disclose that
+  limitation. This explicit prototype basis was approved on 2026-10-19 after
+  the first strict-session attempt stopped without executing. Use a new attempt
+  ID for this revised request; the original attempt remains part of the history.
   USD 1 million initial cash, 10 bps one-way native commission as the simplified
   all-in transaction cost, no additional slippage, zero cash interest and no
   leverage. The comparator is gross analytical buy-and-hold total return. The
   rule is fixed, with no search for a winning parameter.
 - **Screen:** price cutoff **2026-10-16**, current roster captured at discovery.
+  Use the same disclosed vendor-native daily basis without asserting verified
+  regular-session/auction prices.
   This is not historical membership. Momentum is C(t-21)/C(t-252)-1; three-month
   return is C(t)/C(t-63)-1. Rank descending momentum, ticker ascending on ties;
   retain only prices above the 200-session SMA. Show up to 20 names without
