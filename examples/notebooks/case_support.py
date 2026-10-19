@@ -61,9 +61,7 @@ def load_case(
             "The source answer must identify its saved study and execution."
         )
     base = load_case(entry["source_case"] + ".json")
-    if [output.to_wire() for output in reference.content.declarations] != [
-        output.to_wire() for output in base.outputs
-    ]:
+    if reference.content.declarations != base.outputs:
         raise ValueError(
             "This answer does not have the declared outputs of the source case."
         )
@@ -143,8 +141,7 @@ def check_case_answer(
     """
     validate_outputs(request.outputs, completed.response.content.outputs)
     _require(
-        [output.to_wire() for output in completed.response.content.declarations]
-        == [output.to_wire() for output in request.outputs],
+        completed.response.content.declarations == request.outputs,
         "The saved answer declarations differ from the requested outputs.",
     )
     expected_tables = {
