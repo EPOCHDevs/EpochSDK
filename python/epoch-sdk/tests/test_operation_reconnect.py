@@ -401,6 +401,24 @@ def test_prepared_execution_waits_for_its_answer_and_reconnects_without_a_graph_
             assert finished.reusable_study.response_plan == plan
             assert repeated == finished
             assert service.jobs == 1 and service.graph_calls == []
+            # MCP must preserve the same closed saved-answer contract, while
+            # retaining explicit nulls in the user's JSON response data.
+            service.record["request"] = copy.deepcopy(REQUEST)
+            schema = service.record["request"]["outputs"][0]["schema"]
+            schema["properties"]["optional"] = {"type": ["string", "null"]}
+            service.response["content"]["outputs"][0]["value"]["optional"] = None
+            async with Client(create_server(fresh.supervisor)) as mcp:
+                wire = await mcp.call_tool(
+                    "epoch_execution_operation", {"operation_id": "prepared-one"}
+                )
+                assert not wire.is_error
+                parsed = ChosenExecution.model_validate(wire.structured_content)
+                assert parsed.response is not None
+                assert parsed.response.content.outputs[0].value["optional"] is None
+                assert (
+                    "description"
+                    not in wire.structured_content["response"]["content"]["declarations"][0]
+                )
 
     asyncio.run(scenario())
 

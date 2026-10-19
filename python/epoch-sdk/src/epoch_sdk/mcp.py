@@ -58,6 +58,10 @@ def _result(value: SupervisorResult) -> CallToolResult:
     wire = value.model_dump(mode="json", by_alias=True)
     if isinstance(value, PublishedAnswer):
         wire["response"] = value.response.to_wire()
+    elif isinstance(value, ChosenExecution) and value.response is not None:
+        # Response metadata omits unset optional fields. A blanket exclude_none
+        # would also erase meaningful null values inside the user's JSON data.
+        wire["response"] = value.response.to_wire()
     elif isinstance(value, NoExecution) and value.publication_error is not None:
         wire["publication_error"] = value.publication_error.to_wire()
     return CallToolResult(

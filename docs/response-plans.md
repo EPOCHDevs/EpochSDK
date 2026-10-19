@@ -13,10 +13,11 @@ query results now also persist as immutable bounded Arrow parts and page through
 the existing owned native response reader. Native v1 plan admission/read APIs,
 mapped output assembly and answer-backed verification are now implemented, with
 publication over another completed execution tested at the service boundary.
-The bounded text endpoint is implemented in EpochAI's candidate. Generated-client
-integration, prepared-execution scheduling, live text calls and full replay
-acceptance remain incomplete. Existing `execute_saved` currently
-returns native execution status and does not regenerate an answer.
+The bounded text endpoint is implemented in EpochAI's candidate. Native
+prepared-execution scheduling and generated-client integration now replay
+computed-only plans, publish the new answer and return its exact revision.
+Studies without a response plan retain their existing engine-status behavior.
+Live text calls and the full research/deployment acceptance remain incomplete.
 
 The normally built alpha7/Native rc6 packages passed a real authenticated
 computed-only MSFT plan handshake: complete table rows equal the audited original,
@@ -25,6 +26,15 @@ and the original answer/graph/engine identities remain unchanged. All 333 SDK
 tests also passed against those installed packages. This establishes the native
 plan boundary; it does not complete prepared-execution orchestration or the
 remaining research/financial acceptance.
+
+The normally built alpha8/Native rc7 packages also passed actual prepared-study
+execution against Backend `d8a44416`: one new native job, all three complete MSFT
+rows equal the audited source, a new answer tied to that job and the same plan
+revision, and same-handle reattachment without another job. The original answer
+and plan verification pin stayed unchanged; no graph run or model call occurred.
+All 338 installed SDK tests passed. The subsequent real MCP check found omitted
+column metadata serialized as null; alpha9 corrects the nested saved-answer
+wire boundary while retaining genuine null values in requested JSON data.
 
 ## Establish and publish during research
 
