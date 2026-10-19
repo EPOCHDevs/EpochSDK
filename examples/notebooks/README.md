@@ -1,8 +1,14 @@
 # Try the SDK with a US equities desk case
 
-Open **01_research_and_execute.ipynb** first. Select the **Epoch SDK (local
-prototype)** kernel. All case files live in the **cases** subfolder beside the
-notebooks; [the case list](cases/README.md) explains the desk questions, output
+For sharing and demos, use the [individual case notebooks](demos/README.md).
+There is one standalone notebook for each of the five desk cases, two separate
+format follow-ups and a clarification/reconnect example. Each includes its own
+request and setup; it does not import the local notebook helpers or case files.
+
+The generic **01_research_and_execute.ipynb** below is retained as a development
+walkthrough. Select the **Epoch SDK (local prototype)** kernel. Its case files
+live in the **cases** subfolder beside the notebooks;
+[the case list](cases/README.md) explains the desk questions, output
 formats and data assumptions. Each task is one or two short sentences; context
 describes the data and business assumptions, while `outputs` declares the answer.
 
