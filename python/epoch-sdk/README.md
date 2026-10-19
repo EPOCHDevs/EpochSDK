@@ -16,6 +16,20 @@ answer with named table, JSON and text parts. Prepared-study execution remains
 a separate direct Backend operation. [Readable operation IDs](../../docs/reconnect-operations.md)
 let notebooks and MCP clients attach after disconnecting.
 
+## One research session
+
+Install the `notebook` or `terminal` presentation extra and use:
+
+```python
+result = await epoch.run(request, operation_id="msft-quality-2025")
+```
+
+The SDK renders live Epoch activity, collects explicit replies, resumes the same
+native checkpoint and displays the saved answer once. The returned result stays
+ordinary Python data. `await epoch.run(operation_id="msft-quality-2025")`
+reconnects after a kernel/process restart. MCP consumes the same headless session
+core with structured progress and questions. See [interactive sessions](../../docs/interactive-sessions.md).
+
 ## Use the actual core contract
 
 `RunRequest`, `IngestRequest`, fresh/cursor fetch, refresh, acceptance and errors
@@ -67,7 +81,7 @@ prepared study execution. See the [current flow](../../docs/research-flow.md).
 ## Verify locally
 
 Install the reviewed native StratifyX wheel through its existing package
-workflow, then install `python/epoch-sdk[mcp,test]` in your isolated Python environment.
+workflow, then install `python/epoch-sdk[mcp,terminal,notebook,test]` in your isolated Python environment.
 Never edit or vendor the generated StratifyX models. From the repository root:
 
 ```bash

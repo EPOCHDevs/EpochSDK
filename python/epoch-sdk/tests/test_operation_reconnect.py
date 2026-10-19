@@ -12,6 +12,8 @@ import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX, DatePeriodConfig
+from test_research import REQUEST, REQUEST_ID, saved_response
+from test_supervisor import INTERRUPT, RUN, THREAD, job
 
 from epoch_sdk import EpochError, RunRequest
 from epoch_sdk.mcp import create_server
@@ -24,8 +26,16 @@ from epoch_sdk.supervisor import (
     SupervisorClient,
     WorkflowHandle,
 )
-from test_research import REQUEST, REQUEST_ID, saved_response
-from test_supervisor import INTERRUPT, RUN, THREAD, job
+
+
+class ObservedRunStream(httpx.AsyncByteStream):
+    def __init__(self, service):
+        self.service = service
+
+    async def __aiter__(self):
+        self.service.waiting.set()
+        await self.service.release.wait()
+        yield b"event: end\ndata: {}\n\n"
 
 
 class Service:
@@ -130,6 +140,11 @@ class Service:
     async def graph(self, request):
         self.graph_calls.append(request)
         path = request.url.path
+        if path.endswith("/stream"):
+            assert request.url.params["cancel_on_disconnect"] == "false"
+            return httpx.Response(
+                200, headers={"content-type": "text/event-stream"}, stream=ObservedRunStream(self)
+            )
         if path == "/threads":
             return httpx.Response(200, json={"thread_id": THREAD})
         if path.endswith("/state"):

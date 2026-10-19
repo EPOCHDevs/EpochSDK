@@ -20,7 +20,9 @@ proof remains documented separately; it does not prove these new cases.
    request, research, display/check the answer, and optionally continue through
    the separate saved-study execution steps. It defaults to MSFT fundamentals.
    Run it again with another base case to try another desk task.
-2. **02_clarification_and_reconnect.ipynb**: an optional MSFT fiscal-year
+2. **02_clarification_and_reconnect.ipynb**: an optional advanced transport test.
+   The low-level calls are exposed deliberately to test observer disconnects;
+   normal notebook sessions use the single call in notebook 01. An MSFT fiscal-year
    confirmation demonstrates a natural-language answer, a disconnected local
    wait and reconnecting to the same operation. The extra question is deliberate;
    normal base cases do not force it. Disconnecting does not cancel the server.
@@ -33,7 +35,10 @@ proof remains documented separately; it does not prove these new cases.
 Each cell explains what it does. `epoch = connect()` prepares the normal SDK
 client from the environment; `await check_services()` prints package versions
 and checks the service health endpoints. Neither starts research. The later
-`epoch.research(...)` cell starts actual model/vendor/engine work. Output variants
+`epoch.run(...)` cell starts actual model/vendor/engine work. That one call renders
+live activity, collects explicit replies in notebook widgets, resumes the same
+checkpoint and displays the saved answer. No manual polling or reply code is
+needed for normal research. Output variants
 start a model turn over retained evidence; their instructions prohibit new
 discovery and execution, and live tool traces still need review.
 
@@ -97,7 +102,7 @@ variant alone, select another execution or refresh market data.
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
 distribution workflow. These notebooks were prepared with StratifyX 3.3.0rc4 and
-Epoch SDK 0.1.0a2. Install this checkout's `python/epoch-sdk[clients,results]`, plus
+Epoch SDK 0.1.0a3. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:
@@ -122,3 +127,6 @@ server's expired startup token. The helper uses the existing Epoch login cache;
 it returns only the current identity token. No vendor or model credentials are
 returned to the notebook. Independently configured notebooks can still use a
 static `EPOCH_TOKEN` and their own normal identity-refresh flow.
+
+See [interactive sessions](../../docs/interactive-sessions.md) for the same
+terminal experience, structured MCP progress and headless event API.

@@ -187,7 +187,7 @@ async def wait_claim(observer, operation_id, task, previous=None):
 
 async def execute(args, receipt: ProofReceipt):
     if (
-        receipt["epoch_sdk_version"] != "0.1.0a2"
+        receipt["epoch_sdk_version"] != "0.1.0a3"
         or receipt["native_sdk"]["backend_worktree_dirty"]
         or receipt["native_sdk"]["backend_git_sha"] != args.expected_backend_sha
     ):

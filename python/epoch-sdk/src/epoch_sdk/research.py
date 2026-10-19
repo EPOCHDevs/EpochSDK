@@ -4,20 +4,20 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import httpx
 from stratifyx import (
     DatePeriodConfig,
     ExecutionOptions,
     SdkContractErrorResponse,
+    SdkContractRunParameters,
     SdkContractRunRequest,
+    SdkExecutionRecord,
     SdkRequestPhase,
     SdkRequestRecord,
     SdkRequestRuntime,
     SdkResearchLaunch,
-    SdkContractRunParameters,
-    SdkExecutionRecord,
 )
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
@@ -37,6 +37,9 @@ from .supervisor import (
     SupervisorResult,
     WorkflowHandle,
 )
+
+if TYPE_CHECKING:
+    from .session import ResearchSession
 
 
 class ResearchAccepted(Contract):
@@ -162,6 +165,42 @@ class EpochClient:
 
     async def aclose(self) -> None:
         await self.supervisor.aclose()
+
+    def session(
+        self,
+        request: RunRequest | None = None,
+        *,
+        operation_id: str,
+        thread_id: str | None = None,
+    ) -> ResearchSession:
+        """Observe/continue one server-owned research operation without a renderer.
+
+        Supply a request to create-or-attach. Omit it to reconnect read-only to
+        an existing operation. No local session file or second graph is created.
+        """
+        from .session import ResearchSession
+
+        return ResearchSession(self, request, operation_id=operation_id, thread_id=thread_id)
+
+    async def run(
+        self,
+        request: RunRequest | None = None,
+        *,
+        operation_id: str,
+        thread_id: str | None = None,
+        interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
+    ) -> ResearchCompleted | NeedsInput:
+        """Stream research, collect explicit replies, and display its saved answer.
+
+        Notebook and terminal adapters are optional presentation extras. In a
+        noninteractive process this returns structured questions without waiting
+        for keyboard input. Use execute_saved for prepared engine work.
+        """
+        from .interactive import run_interactive
+
+        return await run_interactive(
+            self.session(request, operation_id=operation_id, thread_id=thread_id), interface
+        )
 
     async def response(
         self, response_id: str, *, version: int | None = None
@@ -319,14 +358,17 @@ class EpochClient:
         *,
         thread_id: str | None = None,
         operation_id: str | None = None,
+        wait: bool = True,
     ) -> ResearchResult:
         request = RunRequest.model_validate(request.to_wire())
         if request.study_id is not None or request.source_execution_id is not None:
             raise ValueError("Use the separate saved-study execution action for prepared work")
         if request.auto_ingest:
             raise ValueError("Automatic ingestion is outside the core research capability")
+        if not wait and operation_id is None:
+            raise ValueError("Nonblocking research requires a readable operation_id")
         if operation_id is not None:
-            return await self._research_operation(request, operation_id, thread_id)
+            return await self._research_operation(request, operation_id, thread_id, wait=wait)
         async with _boundary(None):
             record = await self.backend.sdk_requests.create_sdk_request(
                 request=SdkContractRunRequest.model_validate(request.to_wire()),
@@ -355,7 +397,7 @@ class EpochClient:
             return await self._finish(record.request_id, outcome)
 
     async def _research_operation(
-        self, request: RunRequest, operation_id: str, thread_id: str | None
+        self, request: RunRequest, operation_id: str, thread_id: str | None, *, wait: bool = True
     ) -> ResearchResult:
         request = RunRequest.model_validate(request)
         if request.study_id is not None or request.source_execution_id is not None:
@@ -438,6 +480,8 @@ class EpochClient:
                     )
             if record.response_version is not None or record.error is not None:
                 return await self.research_status(record.request_id)
+            if not wait:
+                return await self.research_status(record.request_id)
             return await self._finish(
                 record.request_id, await self.supervisor.join_operation(self._handle(record))
             )
@@ -446,6 +490,8 @@ class EpochClient:
         self,
         waiting: NeedsInput,
         responses: dict[str, Answers],
+        *,
+        wait: bool = True,
     ) -> ResearchResult:
         async with _boundary(waiting.handle.request_id):
             record = await self.backend.sdk_requests.get_sdk_request(
@@ -466,7 +512,13 @@ class EpochClient:
             if record.phase.value not in {"active", "needs_input"}:
                 raise ValueError("The research request is already closed")
             try:
-                outcome = await self.supervisor.resume(waiting, responses)
+                if wait:
+                    outcome = await self.supervisor.resume(waiting, responses)
+                else:
+                    if record.operation_id is None:
+                        raise ValueError("Nonblocking resume requires a readable operation_id")
+                    await self.supervisor.start_resume(waiting, responses)
+                    return await self.research_status(record.request_id)
             except httpx.HTTPStatusError as error:
                 if record.operation_id is None or error.response.status_code != 409:
                     raise

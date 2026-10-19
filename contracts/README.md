@@ -34,3 +34,11 @@ native artifact/field bindings; its example uses placeholders. Publishing the
 receipt from the accepted workflow remains separate Backend/tool work. Check it
 with `tools/validate_saved_output_contract.py`; all references resolve to local,
 checked-in resources.
+
+`research-session.schema.json` defines the five client session event variants
+used by Python renderers and structured MCP progress. It references the existing
+workflow/response schemas instead of copying native result or parameter models.
+`tools/validate_session_contract.py` checks reusable fixtures without private
+client dependencies; `tools/sync_session_contract.py --check` verifies the Python
+binding deliberately. Service-defined UI component names/properties stay open
+extension points inside a closed source UI envelope. This adds no REST server.

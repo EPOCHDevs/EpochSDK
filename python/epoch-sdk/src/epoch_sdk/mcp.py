@@ -6,6 +6,7 @@ import asyncio
 import os
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver import Context
 from mcp.types import CallToolResult, TextContent
 
 from .contracts import (
@@ -26,6 +27,7 @@ from .research import (
 )
 from .responses import ResearchResponseContent
 from .saved_outputs import SavedOutputManifest
+from .session import EventHandler, SessionCompleted, SessionEvent, SessionQuestions
 from .supervisor import (
     Answers,
     ChosenExecution,
@@ -93,8 +95,27 @@ def create_server(client: SupervisorClient) -> MCPServer:
             structured_content=response.to_wire(),
         )
 
+    def progress(context: Context[object, object]) -> EventHandler:
+        count = 0
+
+        async def update(event: SessionEvent) -> None:
+            nonlocal count
+            if isinstance(event, (SessionQuestions, SessionCompleted)):
+                return  # Questions and the saved answer belong to the tool result.
+            count += 1
+            # MCP's progress message is a string. Preserve the closed session
+            # event as JSON so clients can render it without parsing prose/ANSI.
+            await context.report_progress(
+                float(count), message=event.model_dump_json(exclude_none=True)
+            )
+
+        return update
+
     async def research(
-        request: RunRequest, thread_id: str | None = None, operation_id: str | None = None
+        request: RunRequest,
+        ctx: Context[object, object],
+        thread_id: str | None = None,
+        operation_id: str | None = None,
     ) -> CallToolResult:
         """Research through Epoch's existing supervisor and receive a validated saved
         response with the requested named table/JSON/text parts. Clarification returns
@@ -102,6 +123,14 @@ def create_server(client: SupervisorClient) -> MCPServer:
         Supply operation_id before a long wait; reuse it with the same inputs to reconnect.
         """
         try:
+            if operation_id is not None:
+                return research_result(
+                    await research_client.session(
+                        request, thread_id=thread_id, operation_id=operation_id
+                    ).run(on_event=progress(ctx))
+                )
+            # Compatibility with clients predating readable operation IDs. New
+            # sessions supply an operation_id for streaming and reconnectability.
             return research_result(
                 await research_client.research(
                     request, thread_id=thread_id, operation_id=operation_id
@@ -123,11 +152,17 @@ def create_server(client: SupervisorClient) -> MCPServer:
         except EpochError as error:
             return research_error(error)
 
-    async def resume_research(waiting: NeedsInput, responses: dict[str, Answers]) -> CallToolResult:
+    async def resume_research(
+        waiting: NeedsInput, responses: dict[str, Answers], ctx: Context[object, object]
+    ) -> CallToolResult:
         """Answer research interrupts and continue the same checkpoint to its saved
         response. Copy interrupt IDs and zero-based answer indices from needs_input.
         """
         try:
+            if waiting.handle.operation_id is not None:
+                session = research_client.session(operation_id=waiting.handle.operation_id)
+                await session.resume(waiting, responses)
+                return research_result(await session.run(on_event=progress(ctx)))
             return research_result(await research_client.resume_research(waiting, responses))
         except EpochError as error:
             return research_error(error)
@@ -159,7 +194,10 @@ def create_server(client: SupervisorClient) -> MCPServer:
     server.tool(name="epoch_execution", structured_output=True)(execution)
 
     async def run(
-        task: str, thread_id: str | None = None, operation_id: str | None = None
+        task: str,
+        ctx: Context[object, object],
+        thread_id: str | None = None,
+        operation_id: str | None = None,
     ) -> CallToolResult:
         """Communicate with Epoch's existing supervisor. A needs_input result retains
         the thread and contains questions; answer them with epoch_resume or open
@@ -181,18 +219,21 @@ def create_server(client: SupervisorClient) -> MCPServer:
                     task=task,
                     outputs=outputs,
                 ),
+                ctx=ctx,
                 thread_id=thread_id,
                 operation_id=operation_id,
             )
         return _result(await client.run(task, thread_id=thread_id))
 
-    async def resume(waiting: NeedsInput, responses: dict[str, Answers]) -> CallToolResult:
+    async def resume(
+        waiting: NeedsInput, responses: dict[str, Answers], ctx: Context[object, object]
+    ) -> CallToolResult:
         """Answer pending interrupts and continue the same checkpointed task.
         Use interrupt ids and zero-based question/option indices from needs_input.
         Recommendations are advice; this tool never selects answers automatically.
         """
         if waiting.handle.operation_id is not None:
-            return await resume_research(waiting, responses)
+            return await resume_research(waiting, responses, ctx)
         return _result(await client.resume(waiting, responses))
 
     async def execute_saved(
