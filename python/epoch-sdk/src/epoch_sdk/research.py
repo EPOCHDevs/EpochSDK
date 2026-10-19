@@ -599,6 +599,8 @@ class EpochClient:
                 source_execution_id=response.primary_execution_id,
                 thread_id=record.runtime.thread_id,
             )
+            if response.response_plan is not None:
+                reusable = reusable.model_copy(update={"response_plan": response.response_plan})
         completed = ResearchCompleted(
             status="succeeded", request_id=record.request_id, response=response
         )

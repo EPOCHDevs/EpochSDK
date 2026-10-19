@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python/epoch-sdk/src"))
 
 from epoch_sdk.response_plans import (
+    CreateResponsePlan,
     ResponsePlanDefinition,
     ResponsePlanDraft,
     SavedResponsePlan,
@@ -19,6 +20,7 @@ from epoch_sdk.responses import ResponsePlanReference
 MODELS = [
     ("response-plan-reference.schema.json", ResponsePlanReference),
     ("response-plan-draft.schema.json", ResponsePlanDraft),
+    ("response-plan-create.schema.json", CreateResponsePlan),
     ("response-plan-definition.schema.json", ResponsePlanDefinition),
     ("response-plan.schema.json", SavedResponsePlan),
 ]
@@ -58,7 +60,7 @@ def project(model, external):
 
 def schemas():
     core = {name: "openapi.json#/components/schemas/" + (
-        "JsonSchema" if name == "JsonSchemaDocument" else name)
+        "JsonSchema" if name == "JsonSchemaDocument" else "Error" if name == "DomainError" else name)
         for name in ["RunParameters", "DomainError", "Column", "TableOutputRequest",
                      "JsonOutputRequest", "TextOutputRequest", "JsonSchemaDocument"]}
     result = {}

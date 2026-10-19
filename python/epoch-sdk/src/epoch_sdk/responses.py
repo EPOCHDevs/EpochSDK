@@ -60,11 +60,14 @@ class ResponseReference(Contract):
     version: Annotated[int, Field(ge=1)]
     primary_execution_id: NonBlank | None = None
     study_id: NonBlank | None = None
+    response_plan: ResponsePlanReference | None = None
 
     @model_validator(mode="after")
     def paired_source(self) -> Self:
         if (self.primary_execution_id is None) != (self.study_id is None):
             raise ValueError("An execution-backed answer requires both execution and study")
+        if self.response_plan is not None and self.primary_execution_id is None:
+            raise ValueError("A planned answer requires its source execution")
         return self
 
 

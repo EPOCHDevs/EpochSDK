@@ -77,6 +77,9 @@
           "title": "Response Id",
           "type": "string"
         },
+        "response_plan": {
+          "$ref": "response-plan-reference.schema.json"
+        },
         "study_id": {
           "minLength": 1,
           "pattern": "\\S",
@@ -117,7 +120,7 @@
       "$ref": "response-plan-definition.schema.json"
     },
     "error": {
-      "$ref": "openapi.json#/components/schemas/DomainError"
+      "$ref": "openapi.json#/components/schemas/Error"
     },
     "phase": {
       "enum": [

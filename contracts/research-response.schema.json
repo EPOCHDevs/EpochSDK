@@ -113,6 +113,27 @@
       "title": "ResearchResponseContent",
       "type": "object"
     },
+    "ResponsePlanReference": {
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "pattern": "^rpl_[0-9a-f]{64}$",
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "plan_id",
+        "version"
+      ],
+      "title": "ResponsePlanReference",
+      "type": "object"
+    },
     "TableOrder": {
       "additionalProperties": false,
       "properties": {
@@ -335,6 +356,9 @@
       "pattern": "\\S",
       "title": "Response Id",
       "type": "string"
+    },
+    "response_plan": {
+      "$ref": "#/$defs/ResponsePlanReference"
     },
     "study_id": {
       "minLength": 1,

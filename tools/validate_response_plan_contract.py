@@ -18,7 +18,7 @@ BASE = "https://epoch.invalid/contracts/"
 def validators():
     registry = Registry()
     names = ["openapi.json", "response-plan-reference.schema.json", "response-plan-draft.schema.json",
-             "response-plan-definition.schema.json", "response-plan.schema.json"]
+             "response-plan-create.schema.json", "response-plan-definition.schema.json", "response-plan.schema.json"]
     for name in names:
         schema = json.loads((ROOT / "contracts" / name).read_text())
         Draft202012Validator.check_schema(schema)

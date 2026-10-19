@@ -1,0 +1,35 @@
+{
+  "$defs": {},
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Native path supplies request_id; accepted outputs/parameters stay server-owned.",
+  "properties": {
+    "allow_period_override": {
+      "default": false,
+      "title": "Allow Period Override",
+      "type": "boolean"
+    },
+    "draft": {
+      "$ref": "response-plan-draft.schema.json"
+    },
+    "source_execution_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Source Execution Id",
+      "type": "string"
+    },
+    "thread_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Thread Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "thread_id",
+    "source_execution_id",
+    "draft"
+  ],
+  "title": "CreateResponsePlan",
+  "type": "object"
+}

@@ -10,9 +10,12 @@ The wire models and structural fixtures are drafted. Native successful-query
 recording and the internal complete-result materializer are implemented as
 components; query capture has passed a real generated-SDK wire check. Complete
 query results now also persist as immutable bounded Arrow parts and page through
-the existing owned native response reader. The native plan store, mapped output
-assembly, plan publication, replay and bounded text endpoint still require
-implementation and end-to-end acceptance. Existing `execute_saved` currently
+the existing owned native response reader. Native v1 plan admission/read APIs,
+mapped output assembly and answer-backed verification are now implemented, with
+publication over another completed execution tested at the service boundary.
+The bounded text endpoint is implemented in EpochAI's candidate. Generated-client
+integration, prepared-execution scheduling, live text calls and full replay
+acceptance remain incomplete. Existing `execute_saved` currently
 returns native execution status and does not regenerate an answer.
 
 ## Establish and publish during research

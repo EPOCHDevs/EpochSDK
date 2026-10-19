@@ -21,6 +21,7 @@ from stratifyx.types.job_list_item import JobListItem
 from .contracts import DomainError
 from .responses import (
     ResearchResponseContent,
+    ResponsePlanReference,
     ResponseReference,
     ResponseTablePage,
     SavedResearchResponse,
@@ -116,6 +117,7 @@ class SavedStudy(Closed):
     study_id: str
     source_execution_id: str
     thread_id: str | None = None
+    response_plan: ResponsePlanReference | None = None
 
 
 class ChosenExecution(Closed):

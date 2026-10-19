@@ -888,7 +888,11 @@
         "thread_id": "research-thread",
         "version": 1,
         "primary_execution_id": "original-execution",
-        "study_id": "study-aapl"
+        "study_id": "study-aapl",
+        "response_plan": {
+          "plan_id": "rpl_3333333333333333333333333333333333333333333333333333333333333333",
+          "version": 1
+        }
       }
     }
   },
@@ -1989,6 +1993,542 @@
           }
         }
       ]
+    }
+  },
+  {
+    "name": "failed_plan_has_resolvable_domain_error",
+    "schema": "response-plan.schema.json",
+    "valid": true,
+    "value": {
+      "plan_id": "rpl_3333333333333333333333333333333333333333333333333333333333333333",
+      "version": 1,
+      "request_id": "original-query",
+      "thread_id": "research-thread",
+      "source_execution_id": "original-execution",
+      "created_at_ms": 1,
+      "phase": "failed",
+      "definition": {
+        "format_version": 1,
+        "study_id": "study-aapl",
+        "captured_parameters": {
+          "period": {
+            "end": "2025-12-31",
+            "start": "2016-01-01"
+          },
+          "execution": {
+            "cash": 1000000,
+            "commission": {
+              "model": {
+                "args": {
+                  "bps": 10.0
+                },
+                "type": "Bps"
+              }
+            },
+            "currency": "USD",
+            "slippage": {
+              "model": {
+                "args": {},
+                "type": "None"
+              }
+            }
+          }
+        },
+        "declarations": [
+          {
+            "name": "performance",
+            "description": "Executed strategy versus the gross analytical buy-and-hold benchmark.",
+            "type": "table",
+            "schema": [
+              {
+                "name": "variant",
+                "type": "string",
+                "description": "trend_filter or buy_and_hold; in that order."
+              },
+              {
+                "name": "total_return",
+                "type": "float64",
+                "description": "Cumulative account return for the strategy; gross total return for the analytical benchmark.",
+                "unit": "fraction"
+              },
+              {
+                "name": "annualized_return",
+                "type": "float64",
+                "description": "Compound annual growth rate over the common evaluation window.",
+                "unit": "fraction"
+              },
+              {
+                "name": "annualized_volatility",
+                "type": "float64",
+                "description": "Sample standard deviation of daily account returns times sqrt(252).",
+                "unit": "fraction"
+              },
+              {
+                "name": "maximum_drawdown",
+                "type": "float64",
+                "description": "Minimum wealth / running peak - 1; non-positive.",
+                "unit": "fraction"
+              }
+            ]
+          },
+          {
+            "name": "strategy_summary",
+            "description": "The same performance values plus the fixed rule and cost assumptions.",
+            "type": "json",
+            "schema": {
+              "type": "object",
+              "description": "Fixed-rule strategy summary.",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "description": "US ticker.",
+                  "const": "AAPL"
+                },
+                "sma_sessions": {
+                  "type": "integer",
+                  "description": "Fixed moving-average length.",
+                  "const": 200
+                },
+                "trade_timing": {
+                  "type": "string",
+                  "description": "Orders use the next available vendor daily open; no verified opening-auction claim.",
+                  "const": "next_session_open"
+                },
+                "transaction_cost_bps": {
+                  "type": "number",
+                  "description": "One-way all-in modeled native commission rate.",
+                  "const": 10
+                },
+                "cash_interest_rate": {
+                  "type": "number",
+                  "description": "Annual cash interest assumption.",
+                  "const": 0
+                },
+                "benchmark_basis": {
+                  "type": "string",
+                  "description": "Gross analytical benchmark convention.",
+                  "const": "gross_buy_and_hold_total_return"
+                },
+                "strategy": {
+                  "type": "object",
+                  "description": "Actual executed-account metrics, matching the trend_filter table row.",
+                  "properties": {
+                    "total_return": {
+                      "type": "number",
+                      "description": "Cumulative account return for the strategy; gross total return for the analytical benchmark. Stored as a fraction.",
+                      "minimum": -1
+                    },
+                    "annualized_return": {
+                      "type": "number",
+                      "description": "Compound annual growth rate over the common evaluation window. Stored as a fraction.",
+                      "minimum": -1
+                    },
+                    "annualized_volatility": {
+                      "type": "number",
+                      "description": "Sample standard deviation of daily account returns times sqrt(252). Stored as a fraction.",
+                      "minimum": 0
+                    },
+                    "maximum_drawdown": {
+                      "type": "number",
+                      "description": "Minimum wealth / running peak - 1; non-positive. Stored as a fraction.",
+                      "minimum": -1,
+                      "maximum": 0
+                    }
+                  },
+                  "required": [
+                    "total_return",
+                    "annualized_return",
+                    "annualized_volatility",
+                    "maximum_drawdown"
+                  ],
+                  "additionalProperties": false
+                },
+                "benchmark": {
+                  "type": "object",
+                  "description": "Analytical benchmark metrics, matching the buy_and_hold table row.",
+                  "properties": {
+                    "total_return": {
+                      "type": "number",
+                      "description": "Cumulative account return for the strategy; gross total return for the analytical benchmark. Stored as a fraction.",
+                      "minimum": -1
+                    },
+                    "annualized_return": {
+                      "type": "number",
+                      "description": "Compound annual growth rate over the common evaluation window. Stored as a fraction.",
+                      "minimum": -1
+                    },
+                    "annualized_volatility": {
+                      "type": "number",
+                      "description": "Sample standard deviation of daily account returns times sqrt(252). Stored as a fraction.",
+                      "minimum": 0
+                    },
+                    "maximum_drawdown": {
+                      "type": "number",
+                      "description": "Minimum wealth / running peak - 1; non-positive. Stored as a fraction.",
+                      "minimum": -1,
+                      "maximum": 0
+                    }
+                  },
+                  "required": [
+                    "total_return",
+                    "annualized_return",
+                    "annualized_volatility",
+                    "maximum_drawdown"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "asset",
+                "sma_sessions",
+                "trade_timing",
+                "transaction_cost_bps",
+                "cash_interest_rate",
+                "benchmark_basis",
+                "strategy",
+                "benchmark"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "trader_conclusion",
+            "type": "text",
+            "instructions": "Write at most 120 words. State whether the fixed trend filter reduced drawdown and what return trade-off occurred, quoting computed figures. Mention next vendor-open execution, 10 bps each way, zero cash interest and the gross benchmark. Disclose that the daily feed's exact session/auction basis is not independently established. Do not imply that a successful run validates a trading edge. No Markdown table.",
+            "format": "plain"
+          }
+        ],
+        "queries": [
+          {
+            "kind": "recorded_sql",
+            "name": "strategy",
+            "query_ref": "rqr_1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "recorded_sql",
+            "name": "benchmark",
+            "query_ref": "rqr_2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "performance",
+            "type": "table",
+            "projections": [
+              {
+                "query": "strategy",
+                "field_ids": [
+                  "variant",
+                  "total_return",
+                  "annualized_return",
+                  "annualized_volatility",
+                  "maximum_drawdown"
+                ]
+              },
+              {
+                "query": "benchmark",
+                "field_ids": [
+                  "variant",
+                  "total_return",
+                  "annualized_return",
+                  "annualized_volatility",
+                  "maximum_drawdown"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "strategy_summary",
+            "type": "json",
+            "value": {
+              "kind": "object",
+              "fields": {
+                "asset": {
+                  "kind": "schema_constant"
+                },
+                "sma_sessions": {
+                  "kind": "schema_constant"
+                },
+                "trade_timing": {
+                  "kind": "schema_constant"
+                },
+                "cash_interest_rate": {
+                  "kind": "schema_constant"
+                },
+                "benchmark_basis": {
+                  "kind": "schema_constant"
+                },
+                "transaction_cost_bps": {
+                  "kind": "parameter",
+                  "pointer": "/execution/commission/model/args/bps"
+                },
+                "strategy": {
+                  "kind": "row",
+                  "query": "strategy",
+                  "fields": {
+                    "total_return": {
+                      "field_id": "total_return"
+                    },
+                    "annualized_return": {
+                      "field_id": "annualized_return"
+                    },
+                    "annualized_volatility": {
+                      "field_id": "annualized_volatility"
+                    },
+                    "maximum_drawdown": {
+                      "field_id": "maximum_drawdown"
+                    }
+                  }
+                },
+                "benchmark": {
+                  "kind": "row",
+                  "query": "benchmark",
+                  "fields": {
+                    "total_return": {
+                      "field_id": "total_return"
+                    },
+                    "annualized_return": {
+                      "field_id": "annualized_return"
+                    },
+                    "annualized_volatility": {
+                      "field_id": "annualized_volatility"
+                    },
+                    "maximum_drawdown": {
+                      "field_id": "maximum_drawdown"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "trader_conclusion",
+            "type": "text",
+            "model_policy": "response_interpretation.v1",
+            "instructions": "Write at most 120 words. State whether the fixed trend filter reduced drawdown and what return trade-off occurred, quoting computed figures. Mention next vendor-open execution, 10 bps each way, zero cash interest and the gross benchmark. Disclose that the daily feed's exact session/auction basis is not independently established. Do not imply that a successful run validates a trading edge. No Markdown table.",
+            "inputs": {
+              "strategy": {
+                "kind": "row",
+                "query": "strategy",
+                "fields": {
+                  "total_return": {
+                    "field_id": "total_return"
+                  },
+                  "annualized_return": {
+                    "field_id": "annualized_return"
+                  },
+                  "annualized_volatility": {
+                    "field_id": "annualized_volatility"
+                  },
+                  "maximum_drawdown": {
+                    "field_id": "maximum_drawdown"
+                  }
+                }
+              },
+              "benchmark": {
+                "kind": "row",
+                "query": "benchmark",
+                "fields": {
+                  "total_return": {
+                    "field_id": "total_return"
+                  },
+                  "annualized_return": {
+                    "field_id": "annualized_return"
+                  },
+                  "annualized_volatility": {
+                    "field_id": "annualized_volatility"
+                  },
+                  "maximum_drawdown": {
+                    "field_id": "maximum_drawdown"
+                  }
+                }
+              },
+              "execution_parameters": {
+                "kind": "parameter",
+                "pointer": "/execution"
+              }
+            }
+          }
+        ]
+      },
+      "text_settings": {
+        "trader_conclusion": {
+          "model_policy": "response_interpretation.v1",
+          "model_id": "fixture-model-v1",
+          "prompt_version": "grounded-response.v1",
+          "max_output_tokens": 2000,
+          "reasoning_effort": "medium"
+        }
+      },
+      "error": {
+        "code": "OUTPUT_VALIDATION_FAILED",
+        "message": "The computed projection failed validation.",
+        "retryable": false
+      }
+    }
+  },
+  {
+    "name": "native_create_binds_the_server_owned_request",
+    "schema": "response-plan-create.schema.json",
+    "valid": true,
+    "value": {
+      "thread_id": "thread",
+      "source_execution_id": "execution",
+      "draft": {
+        "format_version": 1,
+        "queries": [
+          {
+            "kind": "recorded_sql",
+            "name": "strategy",
+            "query_ref": "rqr_1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "recorded_sql",
+            "name": "benchmark",
+            "query_ref": "rqr_2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "performance",
+            "type": "table",
+            "projections": [
+              {
+                "query": "strategy",
+                "field_ids": [
+                  "variant",
+                  "total_return",
+                  "annualized_return",
+                  "annualized_volatility",
+                  "maximum_drawdown"
+                ]
+              },
+              {
+                "query": "benchmark",
+                "field_ids": [
+                  "variant",
+                  "total_return",
+                  "annualized_return",
+                  "annualized_volatility",
+                  "maximum_drawdown"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "strategy_summary",
+            "type": "json",
+            "value": {
+              "kind": "object",
+              "fields": {
+                "asset": {
+                  "kind": "schema_constant"
+                },
+                "sma_sessions": {
+                  "kind": "schema_constant"
+                },
+                "trade_timing": {
+                  "kind": "schema_constant"
+                },
+                "cash_interest_rate": {
+                  "kind": "schema_constant"
+                },
+                "benchmark_basis": {
+                  "kind": "schema_constant"
+                },
+                "transaction_cost_bps": {
+                  "kind": "parameter",
+                  "pointer": "/execution/commission/model/args/bps"
+                },
+                "strategy": {
+                  "kind": "row",
+                  "query": "strategy",
+                  "fields": {
+                    "total_return": {
+                      "field_id": "total_return"
+                    },
+                    "annualized_return": {
+                      "field_id": "annualized_return"
+                    },
+                    "annualized_volatility": {
+                      "field_id": "annualized_volatility"
+                    },
+                    "maximum_drawdown": {
+                      "field_id": "maximum_drawdown"
+                    }
+                  }
+                },
+                "benchmark": {
+                  "kind": "row",
+                  "query": "benchmark",
+                  "fields": {
+                    "total_return": {
+                      "field_id": "total_return"
+                    },
+                    "annualized_return": {
+                      "field_id": "annualized_return"
+                    },
+                    "annualized_volatility": {
+                      "field_id": "annualized_volatility"
+                    },
+                    "maximum_drawdown": {
+                      "field_id": "maximum_drawdown"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "trader_conclusion",
+            "type": "text",
+            "model_policy": "response_interpretation.v1",
+            "instructions": "Write at most 120 words. State whether the fixed trend filter reduced drawdown and what return trade-off occurred, quoting computed figures. Mention next vendor-open execution, 10 bps each way, zero cash interest and the gross benchmark. Disclose that the daily feed's exact session/auction basis is not independently established. Do not imply that a successful run validates a trading edge. No Markdown table.",
+            "inputs": {
+              "strategy": {
+                "kind": "row",
+                "query": "strategy",
+                "fields": {
+                  "total_return": {
+                    "field_id": "total_return"
+                  },
+                  "annualized_return": {
+                    "field_id": "annualized_return"
+                  },
+                  "annualized_volatility": {
+                    "field_id": "annualized_volatility"
+                  },
+                  "maximum_drawdown": {
+                    "field_id": "maximum_drawdown"
+                  }
+                }
+              },
+              "benchmark": {
+                "kind": "row",
+                "query": "benchmark",
+                "fields": {
+                  "total_return": {
+                    "field_id": "total_return"
+                  },
+                  "annualized_return": {
+                    "field_id": "annualized_return"
+                  },
+                  "annualized_volatility": {
+                    "field_id": "annualized_volatility"
+                  },
+                  "maximum_drawdown": {
+                    "field_id": "maximum_drawdown"
+                  }
+                }
+              },
+              "execution_parameters": {
+                "kind": "parameter",
+                "pointer": "/execution"
+              }
+            }
+          }
+        ]
+      }
     }
   }
 ]

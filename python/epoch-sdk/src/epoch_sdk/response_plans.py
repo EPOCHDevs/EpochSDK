@@ -185,6 +185,15 @@ class ResponsePlanDefinition(ResponsePlanDraft):
         return self
 
 
+class CreateResponsePlan(Contract):
+    """Native path supplies request_id; accepted outputs/parameters stay server-owned."""
+
+    thread_id: NonBlank
+    source_execution_id: NonBlank
+    draft: ResponsePlanDraft
+    allow_period_override: bool = False
+
+
 class ResolvedTextSettings(Contract):
     """Effective non-secret model settings captured by the owning AI service."""
     model_policy: NonBlank
@@ -224,6 +233,8 @@ class SavedResponsePlan(ResponsePlanReference):
                     or response.primary_execution_id != self.source_execution_id
                     or response.study_id != self.definition.study_id):
                 raise ValueError("A verified plan must retain its exact original answer/source")
+            if response.response_plan != ResponsePlanReference(plan_id=self.plan_id, version=self.version):
+                raise ValueError("The original saved answer must name this exact plan revision")
         elif self.verified_response is not None:
             raise ValueError("Only a fully published plan has a verified answer")
         if (self.phase == "failed") != (self.error is not None):

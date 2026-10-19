@@ -119,6 +119,7 @@ def published_plan() -> dict:
             "model_id": "fixture-model-v1", "prompt_version": "grounded-response.v1",
             "max_output_tokens": 2000, "reasoning_effort": "medium"}},
         "verified_response": {"response_id": "original-answer", "request_id": "original-query",
+            "response_plan": {"plan_id": "rpl_" + "3" * 64, "version": 1},
             "thread_id": "research-thread", "version": 1,
             "primary_execution_id": "original-execution", "study_id": "study-aapl"},
     }
