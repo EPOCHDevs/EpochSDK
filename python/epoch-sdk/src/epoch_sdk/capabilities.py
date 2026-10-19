@@ -21,7 +21,14 @@ from stratifyx.core.request_options import RequestOptions
 class ServiceAccess(BaseModel):
     model_config = ConfigDict(extra="forbid")
     service: Literal["Backend", "LangGraph"]
-    status: Literal["reachable", "unavailable", "auth_required", "missing_graph", "http_error"]
+    status: Literal[
+        "reachable",
+        "unavailable",
+        "auth_required",
+        "missing_graph",
+        "missing_capability",
+        "http_error",
+    ]
     authenticated: bool | None = None
     detail: str
 
@@ -32,6 +39,11 @@ class AccessReport(BaseModel):
     langgraph_sdk_version: str
     backend_attempt_sdk_available: bool
     services: list[ServiceAccess]
+
+    def ready(self) -> bool:
+        return all(item.status == "reachable" for item in self.services) and any(
+            item.service == "Backend" and item.authenticated is True for item in self.services
+        )
 
 
 class _AttemptReader(Protocol):
@@ -61,6 +73,8 @@ async def check_access(
     graph_id: str,
     token: str | None,
     attempt_id: str | None = None,
+    *,
+    study_id: str | None = None,
 ) -> AccessReport:
     _validate_url(backend_url)
     _validate_url(graph_url)
@@ -70,7 +84,17 @@ async def check_access(
             async with httpx.AsyncClient(timeout=3.0) as http:
                 client = AsyncStratifyX(base_url=backend_url, token=token, httpx_client=http)
                 await client.health.health_check(request_options={"max_retries": 0})
-                if attempt_id is not None and hasattr(client, "integration_executions"):
+                if study_id is not None:
+                    await client.studies_definitions.get_a_study_definition_by_id(
+                        study_id, request_options={"max_retries": 0}
+                    )
+                if attempt_id is not None:
+                    if not hasattr(client, "integration_executions"):
+                        return ServiceAccess(
+                            service="Backend",
+                            status="missing_capability",
+                            detail="The explicitly requested draft attempt API is absent from this SDK.",
+                        )
                     reader = cast(_IntegrationClient, client).integration_executions
                     await reader.get_integration_execution(
                         attempt_id, request_options={"max_retries": 0}
@@ -78,14 +102,21 @@ async def check_access(
                     return ServiceAccess(
                         service="Backend",
                         status="reachable",
-                        authenticated=True,
+                        authenticated=bool(token and token.strip()),
                         detail="Native owner-scoped attempt read succeeded.",
+                    )
+                if study_id is not None:
+                    return ServiceAccess(
+                        service="Backend",
+                        status="reachable",
+                        authenticated=bool(token and token.strip()),
+                        detail="Native owner-scoped saved-study read succeeded.",
                     )
             # Public health confirms connectivity only, never owner-scoped authorization.
             return ServiceAccess(
                 service="Backend",
                 status="reachable",
-                detail="Native health API responded; authenticated attempt access still needs verification.",
+                detail="Native health API responded; pass an owned study id to verify protected access.",
             )
         except ApiError as exc:
             return ServiceAccess(
@@ -118,13 +149,13 @@ async def check_access(
                 return ServiceAccess(
                     service="LangGraph",
                     status="missing_graph",
-                    detail="Server responded, but the dedicated integration graph is not registered.",
+                    detail="Server responded, but the requested supervisor graph is not registered.",
                 )
             await client.assistants.get_schemas(assistants[0]["assistant_id"])
             return ServiceAccess(
                 service="LangGraph",
                 status="reachable",
-                detail="Native assistant discovery found the integration graph.",
+                detail="Native assistant discovery and schemas are available for the requested graph.",
             )
         except httpx.HTTPStatusError as exc:
             return ServiceAccess(
@@ -155,10 +186,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend-url", default=os.environ.get("EPOCH_CAMPAIGN_SERVER"))
     parser.add_argument("--graph-url", default=os.environ.get("LANGGRAPH_API_URL"))
-    parser.add_argument("--graph-id", default="integration_run")
+    parser.add_argument("--graph-id", default=os.environ.get("EPOCH_GRAPH_ID", "epoch-ai"))
+    parser.add_argument(
+        "--study-id",
+        help="Existing saved study owned by the caller; verifies protected native read access",
+    )
     parser.add_argument(
         "--attempt-id",
-        help="Existing attempt owned by the caller; verifies authenticated read access",
+        help="Optional legacy draft-attempt probe; not required by the supervisor adapter",
     )
     args = parser.parse_args()
     if not args.backend_url or not args.graph_url:
@@ -168,16 +203,13 @@ def main() -> None:
             args.backend_url,
             args.graph_url,
             args.graph_id,
-            os.environ.get("EPOCH_ACCESS_TOKEN"),
+            os.environ.get("EPOCH_TOKEN") or os.environ.get("EPOCH_ACCESS_TOKEN"),
             args.attempt_id,
+            study_id=args.study_id,
         )
     )
     print(json.dumps(report.model_dump(), indent=2))
-    if (
-        not report.backend_attempt_sdk_available
-        or not any(c.service == "Backend" and c.authenticated is True for c in report.services)
-        or any(c.status != "reachable" for c in report.services)
-    ):
+    if not report.ready():
         raise SystemExit(1)
 
 

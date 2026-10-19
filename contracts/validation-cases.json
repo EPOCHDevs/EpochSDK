@@ -650,6 +650,43 @@
       },
       "valid": false,
       "schema_valid": false
+    },
+    {
+      "name": "native no-slippage execution option",
+      "schema": "RunRequest",
+      "value": {
+        "task": "Compare annual sales for the approved dataset",
+        "outputs": [
+          {
+            "name": "sales",
+            "type": "table",
+            "schema": [
+              {
+                "name": "year",
+                "type": "int64",
+                "description": "Calendar year"
+              },
+              {
+                "name": "sales",
+                "type": "float64",
+                "unit": "USD"
+              }
+            ]
+          }
+        ],
+        "parameters": {
+          "execution": {
+            "slippage": {
+              "model": {
+                "type": "None",
+                "args": {}
+              }
+            }
+          }
+        }
+      },
+      "valid": true,
+      "schema_valid": true
     }
   ]
 }

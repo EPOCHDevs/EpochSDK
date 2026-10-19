@@ -4,19 +4,24 @@ This Python implementation lives in the public, multi-language EpochSDK
 repository. `contracts/openapi.json` at the repository root is the shared API
 contract for every language client and MCP. Backend owns native REST APIs,
 controllers, persistence and StratifyX generation; service repositories own
-server graphs. Nothing here imports the EpochAI conversation application.
+server graphs. The stateful adapter calls the existing EpochAI supervisor through
+LangGraph SDK; it does not import the conversation application's Python code.
 
 Python 3.12 is the first client implementation. The package name is `epoch-sdk`
-and its import is `epoch_sdk`. The initial code supplies executable contracts
-and an access checker; full SDK/MCP flow adapters are subsequent work.
+and its import is `epoch_sdk`. It supplies executable contracts, an access
+checker, output-value validation and the [supervisor/MCP adapter](../../docs/supervisor-workflow.md).
+The adapter handles native communication and execution selection; connecting it
+to the full named-output analysis API remains work in progress.
 
 ## Use the actual core contract
 
 `RunRequest`, `IngestRequest`, fresh/cursor fetch, refresh, acceptance and errors
 are executable Pydantic models. They reject unknown fields and type coercion,
 validate exact output/column names, and preserve descriptions and standard JSON
-Schema. A material ambiguity remains a **terminal** domain error containing gaps,
-questions/options and a recommended adjusted task. There is no answer/resume API.
+Schema. These models preserve the earlier draft API's domain-error envelope.
+The current supervisor adapter exposes native clarification as `NeedsInput` and
+supports answering/resuming the same thread. The earlier terminal-only design
+is superseded; the draft contract is being reconciled with this direction.
 
 `../../contracts/openapi.json` is the public draft, now v0.9. It preserves the eight logical
 operations from the v0.8 design; the illustrative REST paths do not assert that
@@ -50,14 +55,15 @@ request = parse_request(RunRequest, '''{
 }''')
 ```
 
-The example exercises the full request contract; it does not bypass the Backend
-admission, study binding or output validation. Semantic ambiguity is resolved by
-the dedicated graph, while malformed shapes fail before any service call.
+This example parses a declaration only; it does not execute a study or validate
+saved results. The native supervisor adapter accepts a task string today.
+Connecting these declarations to the supervisor and saved-output reader remains
+explicit work. Malformed declarations fail before any service call.
 
 ## Verify locally
 
 Install the reviewed native StratifyX wheel through its existing package
-workflow, then install `python/epoch-sdk[clients,test]` in your isolated Python environment.
+workflow, then install `python/epoch-sdk[mcp,test]` in your isolated Python environment.
 Never edit or vendor the generated StratifyX models. From the repository root:
 
 ```bash
@@ -83,17 +89,20 @@ epoch-api-check --backend-url "$EPOCH_BACKEND_URL" --graph-url "$EPOCH_GRAPH_URL
 
 The command uses the actual generated StratifyX health client and LangGraph
 assistant discovery client. It starts no thread, study, ingestion or engine job,
-prints no credentials, and returns nonzero for missing capabilities. A public
-health response proves connectivity only, **not** authenticated attempt access.
-Once the matching native SDK is available, pass `--attempt-id` for an existing
-caller-owned record to check that read as well; connectivity alone never passes
-the complete check.
-Use `EPOCH_ACCESS_TOKEN`/`LANGGRAPH_API_KEY` in the process environment when needed;
+prints no credentials, and returns nonzero for missing capabilities. It defaults
+to the existing `epoch-ai` graph; use `--graph-id` or `EPOCH_GRAPH_ID` for another
+registered graph. A public health response proves connectivity only. Pass
+`--study-id` for an existing caller-owned definition and configure a bearer token
+to check protected Backend access as well; connectivity alone never passes the
+complete check. This diagnostic creates no thread or execution. The optional
+`--attempt-id` checks the older draft controller only when explicitly requested.
+Use `EPOCH_TOKEN` (or `EPOCH_ACCESS_TOKEN`) and `LANGGRAPH_API_KEY` in the environment;
 credentials must not be put in URLs. This package does not load another
 application's `.env` or mutate its installed SDK.
 
 See [the architecture notes](../../docs/architecture.md) for client/service
-ownership. The actual Backend admission/binding/status APIs, matching generated
-SDK and registered integration graph are prerequisites for a real flow. The
-checker reports availability; it does not start missing services or substitute
-a temporary controller. Additional recovery and retention work is separate.
+ownership. The native adapter uses existing supervisor and Backend study/execution
+APIs. The older attempt-route check is relevant only to that draft API and is
+not a prerequisite for the native communication adapter. The checker reports
+availability; it does not start missing services. Additional recovery and
+retention work is separate.

@@ -354,7 +354,8 @@
         "VolumeImpact",
         "TickBased",
         "ParticipationRate",
-        "SpreadBased"
+        "SpreadBased",
+        "None"
       ],
       "type": "string"
     },
@@ -401,6 +402,6 @@
       ]
     }
   },
-  "sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
+  "sha256": "3fb05bb81a18d02c0c9571be1e32fe5baee077bd76d9380a364aa983371d6a81",
   "source": "stratifyx_openapi.json#/components/schemas"
 }
