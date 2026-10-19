@@ -1,5 +1,10 @@
 # Epoch SDK
 
+Start with the runnable [research/execute](examples/notebooks/01_research_and_execute.ipynb)
+and [clarification/reconnect](examples/notebooks/02_clarification_and_reconnect.ipynb)
+notebooks. Their [setup notes](examples/notebooks/README.md) explain the local kernel,
+Epoch authentication and expected supplied-data results.
+
 Readable operation IDs reconnect notebooks and MCP callers to the same research
 or prepared execution. See [reconnect usage and API semantics](docs/reconnect-operations.md).
 
@@ -36,9 +41,8 @@ validation, a native-client access checker and a thin stateful supervisor/MCP
 adapter and a saved-output reader. The adapter returns native clarification questions and supports resuming
 the same thread, executing a saved study directly through Backend, or reading
 validated values from an explicit saved output mapping. See the
-[SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The complete
-named-output analysis flow is implemented and component-tested; real-service
-research proof remains pending.
+[SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The supplied-data research flow has passed through actual SDK and MCP services,
+including saved-answer reads and readable-ID reconnect.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 
@@ -53,9 +57,10 @@ Newly assembled tables reference native saved data. Use `response_table` or
 `iter_response_table` to read all rows in bounded pages; MCP uses
 `epoch_response_table`. See [table access](docs/response-tables.md) for the wire
 contract, retrieval ordering and compatibility with older inline answers.
-This publication path starts no agent or engine job. It requires the generated
-StratifyX 3.3.0rc3 response API. The existing supervisor publication tool is integrated in EpochAI #752. Complete
-real research integration proof remains pending.
+This publication path starts no agent or engine job. The current package uses
+generated StratifyX 3.3.0rc4 APIs, including readable-operation admission. The
+existing supervisor publication tool is integrated in EpochAI. Supplied-data
+research and saved-response checks have passed through SDK and MCP.
 
 ## Development checks
 
