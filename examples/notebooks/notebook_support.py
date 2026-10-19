@@ -9,19 +9,21 @@ from __future__ import annotations
 import asyncio
 import html
 import importlib.metadata
-import json
 import os
 import time
-from pathlib import Path
 
 import httpx
-from IPython.display import HTML, JSON, Markdown, display
-from epoch_sdk import RunRequest
 from epoch_sdk.errors import EpochError
-from epoch_sdk.output_validation import Cell, JsonValueOutput, TableValue, TextValue
-from epoch_sdk.research import EpochClient, ExecutionAccepted, ResearchCompleted, ResearchResult
+from epoch_sdk.output_validation import JsonValueOutput, TableValue, TextValue
+from epoch_sdk.research import (
+    EpochClient,
+    ExecutionAccepted,
+    ResearchCompleted,
+    ResearchResult,
+)
 from epoch_sdk.responses import ResponseTablePage
 from epoch_sdk.supervisor import ChosenExecution, InProgress, NeedsInput
+from IPython.display import HTML, JSON, Markdown, display
 
 
 def connect() -> EpochClient:
@@ -70,17 +72,6 @@ def operation_name(suffix: str) -> str:
     return os.environ.get("EPOCH_NOTEBOOK_PREFIX", "notebook-demo") + "-" + suffix
 
 
-def demo_request(*, confirmation: bool = False) -> RunRequest:
-    """Read a research request from the cases folder beside the notebooks.
-
-    The ordinary and confirmation walkthroughs each have an explicit JSON
-    input file. Reading a case does not send it to the services.
-    """
-    filename = "annual_sales_confirmation.json" if confirmation else "annual_sales.json"
-    case_path = Path(__file__).resolve().parent / "cases" / filename
-    return RunRequest.model_validate(json.loads(case_path.read_text()))
-
-
 async def wait_research(
     epoch: EpochClient, operation_id: str, *, timeout_seconds: float = 900
 ) -> ResearchCompleted | NeedsInput:
@@ -95,7 +86,9 @@ async def wait_research(
             print("Research:", result.status)
             previous = result.status
         await asyncio.sleep(1)
-    raise TimeoutError("Still running. Re-run the status cell with the same operation ID.")
+    raise TimeoutError(
+        "Still running. Re-run the status cell with the same operation ID."
+    )
 
 
 async def wait_execution(
@@ -106,7 +99,11 @@ async def wait_execution(
     previous = ""
     while time.monotonic() < deadline:
         result = await epoch.execution_operation(operation_id)
-        state = "accepted" if isinstance(result, ExecutionAccepted) else result.execution.status.value
+        state = (
+            "accepted"
+            if isinstance(result, ExecutionAccepted)
+            else result.execution.status.value
+        )
         if state != previous:
             print("Execution:", state)
             previous = state
@@ -163,12 +160,24 @@ async def stop_local_observer(observer: asyncio.Task[ResearchResult]) -> bool:
 
 def show_table(page: ResponseTablePage) -> None:
     """Display one table page that the client has already fetched."""
-    header = "".join("<th>" + html.escape(column.name) + "</th>" for column in page.columns)
+    header = "".join(
+        "<th>" + html.escape(column.name) + "</th>" for column in page.columns
+    )
     rows = "".join(
-        "<tr>" + "".join("<td>" + html.escape(str(value)) + "</td>" for value in row) + "</tr>"
+        "<tr>"
+        + "".join("<td>" + html.escape(str(value)) + "</td>" for value in row)
+        + "</tr>"
         for row in page.rows
     )
-    display(HTML("<table><thead><tr>" + header + "</tr></thead><tbody>" + rows + "</tbody></table>"))
+    display(
+        HTML(
+            "<table><thead><tr>"
+            + header
+            + "</tr></thead><tbody>"
+            + rows
+            + "</tbody></table>"
+        )
+    )
     print(f"Showing {len(page.rows)} of {page.total_rows} rows; offset {page.offset}.")
 
 
@@ -197,17 +206,6 @@ async def show_answer(epoch: EpochClient, completed: ResearchCompleted) -> None:
                 display(Markdown(part.value))
             else:
                 display(HTML("<pre>" + html.escape(part.value) + "</pre>"))
-
-
-def check_demo_values(completed: ResearchCompleted, rows: list[list[Cell]]) -> None:
-    """Check the supplied example's two rows, row count and total of 25."""
-    assert rows == [["2024", 10.0], ["2025", 15.0]], rows
-    metrics = next(
-        part for part in completed.response.content.outputs
-        if isinstance(part, JsonValueOutput) and part.name == "metrics"
-    )
-    assert metrics.value == {"row_count": 2, "total_sales": 25}, metrics.value
-    print("Verified: two annual rows, row_count = 2, total_sales = 25.")
 
 
 def show_research(result: ResearchResult) -> None:

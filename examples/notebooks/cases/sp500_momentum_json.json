@@ -1,0 +1,127 @@
+{
+  "task": "Using only the already completed S&P 500 screener execution identified in the context, publish the exact same shortlist and coverage as JSON. Preserve its snapshot, price cutoff, row order, values and exclusions. Do not refresh the roster, rediscover prices, rebuild or execute another job.",
+  "context": [
+    "Output-only follow-up to sp500_momentum_screener. The notebook supplies the exact authorized study, execution and original saved answer identities when loading this file.",
+    "Read every row from the saved shortlist and coverage relations. Preserve the rank order and original fractional values. Decode native int64 cells as JSON integers. If the saved fields are missing, report the gap rather than fetching fresh data.",
+    "Publish only the requested JSON part. This creates a distinct answer for the follow-up without overwriting the original answer revision."
+  ],
+  "outputs": [
+    {
+      "name": "screener_json",
+      "type": "json",
+      "description": "Identical original shortlist and coverage, serialized as a JSON object.",
+      "schema": {
+        "type": "object",
+        "description": "Saved shortlist with its original snapshot metadata.",
+        "properties": {
+          "coverage": {
+            "type": "object",
+            "description": "Exactly the original screening_coverage row.",
+            "properties": {
+              "as_of": {
+                "type": "string",
+                "description": "Price observation cutoff fixed for this case: 2026-10-16.",
+                "format": "date"
+              },
+              "membership_snapshot_at": {
+                "type": "string",
+                "description": "Actual retrieval timestamp of the current S&P 500 roster; not a claim of historical membership.",
+                "format": "date-time"
+              },
+              "universe_count": {
+                "type": "integer",
+                "description": "Number of unique constituent tickers in the captured roster."
+              },
+              "excluded_missing_data_count": {
+                "type": "integer",
+                "description": "Constituents excluded for missing required history, fields or metadata."
+              },
+              "eligible_count": {
+                "type": "integer",
+                "description": "Constituents with complete required data and a close strictly above their 200-session SMA."
+              },
+              "returned_count": {
+                "type": "integer",
+                "description": "min(20, eligible_count); do not pad the shortlist with failing names."
+              }
+            },
+            "required": [
+              "as_of",
+              "membership_snapshot_at",
+              "universe_count",
+              "excluded_missing_data_count",
+              "eligible_count",
+              "returned_count"
+            ],
+            "additionalProperties": false
+          },
+          "shortlist": {
+            "type": "array",
+            "description": "Exactly the original shortlist in ascending rank order; at most 20 entries.",
+            "items": {
+              "type": "object",
+              "description": "One original shortlist row.",
+              "properties": {
+                "rank": {
+                  "type": "integer",
+                  "description": "Sequential rank starting at 1; descending momentum with ticker ascending as the tie-break."
+                },
+                "ticker": {
+                  "type": "string",
+                  "description": "Unique US-listed constituent ticker; the row label is a security, not a timestamp."
+                },
+                "company": {
+                  "type": "string",
+                  "description": "Company display name from the resolved asset metadata."
+                },
+                "sector": {
+                  "type": "string",
+                  "description": "Sector label from the resolved asset metadata."
+                },
+                "as_of": {
+                  "type": "string",
+                  "description": "Exact completed price session used by the screen: 2026-10-16.",
+                  "format": "date"
+                },
+                "momentum_12_1": {
+                  "type": "number",
+                  "description": "Split-adjusted close 21 sessions ago / split-adjusted close 252 sessions ago - 1. Unit: fraction."
+                },
+                "return_3m": {
+                  "type": "number",
+                  "description": "Split-adjusted close at as_of / close 63 sessions ago - 1; price return. Unit: fraction."
+                },
+                "distance_to_sma_200": {
+                  "type": "number",
+                  "description": "As-of split-adjusted close / its trailing 200-session SMA - 1; strictly positive. Unit: fraction."
+                },
+                "average_dollar_volume_20": {
+                  "type": "number",
+                  "description": "Mean of actual quoted close times traded shares over the last 20 sessions, with price/volume on a consistent split basis. Unit: USD/day."
+                }
+              },
+              "required": [
+                "rank",
+                "ticker",
+                "company",
+                "sector",
+                "as_of",
+                "momentum_12_1",
+                "return_3m",
+                "distance_to_sma_200",
+                "average_dollar_volume_20"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "coverage",
+          "shortlist"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

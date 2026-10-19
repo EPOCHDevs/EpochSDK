@@ -2,8 +2,12 @@
 
 Start with the runnable [research/execute](examples/notebooks/01_research_and_execute.ipynb)
 and [clarification/reconnect](examples/notebooks/02_clarification_and_reconnect.ipynb)
-notebooks. Their [setup notes](examples/notebooks/README.md) explain the local kernel,
-Epoch authentication and expected supplied-data results.
+notebooks. The [US equities desk cases](examples/notebooks/cases/README.md) cover
+company analysis, risk, a strategy, screening and macro analysis, with a separate
+[saved-output variants](examples/notebooks/03_saved_output_variants.ipynb) notebook.
+Their [setup notes](examples/notebooks/README.md) explain the local kernel and Epoch
+authentication. These market cases are prepared for live review, not claimed as
+completed research results.
 
 Readable operation IDs reconnect notebooks and MCP callers to the same research
 or prepared execution. See [reconnect usage and API semantics](docs/reconnect-operations.md).
@@ -72,6 +76,7 @@ python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
 python tools/validate_saved_output_contract.py
 python tools/validate_research_response_contract.py
+python tools/validate_notebook_cases.py
 ```
 
 For Python runtime tests, install a reviewed versioned StratifyX wheel from its

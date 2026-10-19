@@ -2,10 +2,10 @@ name: Shared SDK contract
 
 on:
   pull_request:
-    paths: ['contracts/**', 'tools/**', 'python/epoch-sdk/**', '.github/workflows/contracts.yml']
+    paths: ['contracts/**', 'tools/**', 'python/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
   push:
     branches: [main]
-    paths: ['contracts/**', 'tools/**', 'python/epoch-sdk/**', '.github/workflows/contracts.yml']
+    paths: ['contracts/**', 'tools/**', 'python/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
 
 permissions:
   contents: read
@@ -26,4 +26,5 @@ jobs:
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
       - run: python tools/validate_research_workflow_contract.py
+      - run: python tools/validate_notebook_cases.py
       - run: python -m compileall -q python/epoch-sdk/src
