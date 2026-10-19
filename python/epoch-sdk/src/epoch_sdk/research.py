@@ -220,14 +220,24 @@ class EpochClient:
                 else RunParameters(period=period, execution=execution)
             )
             try:
-                record = await self.backend.sdk_requests.create_sdk_execution_request(
-                    operation_id=operation_id,
-                    study_id=reference.study_id,
-                    source_execution_id=reference.source_execution_id,
-                    thread_id=reference.thread_id,
-                    parameters=SdkContractRunParameters.model_validate(parameters.to_wire()),
-                    request_options={"max_retries": 0},
-                )
+                native_parameters = SdkContractRunParameters.model_validate(parameters.to_wire())
+                if reference.thread_id is None:
+                    record = await self.backend.sdk_requests.create_sdk_execution_request(
+                        operation_id=operation_id,
+                        study_id=reference.study_id,
+                        source_execution_id=reference.source_execution_id,
+                        parameters=native_parameters,
+                        request_options={"max_retries": 0},
+                    )
+                else:
+                    record = await self.backend.sdk_requests.create_sdk_execution_request(
+                        operation_id=operation_id,
+                        study_id=reference.study_id,
+                        source_execution_id=reference.source_execution_id,
+                        parameters=native_parameters,
+                        thread_id=reference.thread_id,
+                        request_options={"max_retries": 0},
+                    )
             except ApiError as error:
                 if error.status_code == 409:
                     raise EpochError(
@@ -351,15 +361,16 @@ class EpochClient:
         if request.study_id is not None or request.source_execution_id is not None:
             raise ValueError("Research builds a study; use execute_saved for prepared work")
         async with _boundary(None):
+            launch = SdkResearchLaunch(assistant_id=self.supervisor.assistant_id)
+            if thread_id is not None:
+                launch.thread_id = thread_id
             try:
                 record = await self.backend.sdk_requests.create_sdk_request(
                     request=SdkContractRunRequest.model_validate(
                         request.model_dump(mode="json", by_alias=True, exclude_none=True)
                     ),
                     operation_id=operation_id,
-                    launch=SdkResearchLaunch(
-                        assistant_id=self.supervisor.assistant_id, thread_id=thread_id
-                    ),
+                    launch=launch,
                     request_options={"max_retries": 0},
                 )
             except ApiError as error:
@@ -437,17 +448,17 @@ class EpochClient:
                 waiting.handle.request_id,
                 request_options={"max_retries": 0},
             )
+            handle = self._handle(record)
+            if waiting.handle.model_copy(update={"run_id": None}) != handle.model_copy(
+                update={"run_id": None}
+            ):
+                raise ValueError("The pending handle differs from the accepted research runtime")
             if record.operation_id is not None and (
                 record.response_version is not None
                 or record.error is not None
                 or record.graph_run_id != waiting.handle.run_id
             ):
                 return await self.research_status(record.request_id)
-            handle = self._handle(record)
-            if waiting.handle.model_copy(update={"run_id": None}) != handle.model_copy(
-                update={"run_id": None}
-            ):
-                raise ValueError("The pending handle differs from the accepted research runtime")
             if record.phase.value not in {"active", "needs_input"}:
                 raise ValueError("The research request is already closed")
             try:

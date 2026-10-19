@@ -136,14 +136,16 @@ class Service:
             return httpx.Response(200, json=self.snapshot)
         if path.endswith("/runs") and request.method == "POST":
             self.submissions += 1
-            assert self.record["runtime"]["thread_id"] == THREAD
+            assert self.record["runtime"]["thread_id"] == path.split("/")[2]
             body = json.loads(request.content)
             assert body["input"]["messages"][0]["id"] == REQUEST_ID
             assert body["input"]["messages"][0]["content"] == REQUEST["task"]
             assert body["durability"] == "sync" and body["on_completion"] == "keep"
             # Native auth records this before the native create response returns.
             self.record["graph_run_id"] = RUN
-            return httpx.Response(200, json={"run_id": RUN, "thread_id": THREAD})
+            return httpx.Response(
+                200, json={"run_id": RUN, "thread_id": self.record["runtime"]["thread_id"]}
+            )
         if path.endswith("/join"):
             self.waiting.set()
             await self.release.wait()
@@ -322,6 +324,28 @@ def test_changed_input_conflicts_and_prepared_execution_reconnect_does_not_call_
             )
             assert first.execution.id == second.execution.id == "repeat-one"
             assert service.jobs == 1 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+def test_optional_launch_and_execution_metadata_are_omitted_from_native_wire():
+    async def scenario():
+        service = Service()
+        async with service.client() as sdk:
+            task = asyncio.create_task(
+                sdk.research(RunRequest.model_validate(REQUEST), operation_id="screen-sp500")
+            )
+            await started(service, task)
+            assert "thread_id" not in service.record["launch"]
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            await sdk.execute_saved(
+                SavedStudy(study_id="study-one", source_execution_id="new"),
+                period=DatePeriodConfig(start="2025-01-01"),
+                operation_id="refresh-one",
+            )
+            assert "thread_id" not in service.execution_record["request"]
 
     asyncio.run(scenario())
 
