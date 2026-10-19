@@ -1,0 +1,102 @@
+{
+  "task": "How did QQQ perform versus SPY in months when US 10-year yields rose sharply, fell sharply or stayed fairly flat during 2016–2025?",
+  "context": [
+    "US 10-year nominal constant-maturity Treasury yields (Fed H.15 definition) and dividend-inclusive QQQ/SPY returns.",
+    "Calendar months January 2016–December 2025, with December 2015 as the baseline; align yields to the last equity session of each month.",
+    "Rising means a same-month yield increase of at least 25 bp; falling means a decrease of at least 25 bp; otherwise flat. This is a descriptive comparison, not a trading signal."
+  ],
+  "parameters": {
+    "period": {
+      "start": "2015-12-01",
+      "end": "2025-12-31"
+    }
+  },
+  "outputs": [
+    {
+      "name": "rate_regimes",
+      "type": "table",
+      "description": "Three labelled regime rows; the row index is a category, not a date.",
+      "schema": [
+        {
+          "name": "regime",
+          "type": "string",
+          "description": "yields_up_25bp, yields_down_25bp or other; in that order."
+        },
+        {
+          "name": "month_count",
+          "type": "int64",
+          "description": "Number of complete paired calendar months in the regime."
+        },
+        {
+          "name": "qqq_mean_return",
+          "type": "float64",
+          "description": "Arithmetic mean of QQQ monthly total returns in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "qqq_median_return",
+          "type": "float64",
+          "description": "Median QQQ monthly total return in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "qqq_worst_return",
+          "type": "float64",
+          "description": "Minimum QQQ monthly total return in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "spy_mean_return",
+          "type": "float64",
+          "description": "Arithmetic mean of SPY monthly total returns in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "spy_median_return",
+          "type": "float64",
+          "description": "Median SPY monthly total return in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "spy_worst_return",
+          "type": "float64",
+          "description": "Minimum SPY monthly total return in the regime.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "active_mean_return",
+          "type": "float64",
+          "description": "Mean of paired QQQ minus SPY monthly returns.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "active_median_return",
+          "type": "float64",
+          "description": "Median of paired QQQ minus SPY monthly returns; not the difference between marginal medians.",
+          "unit": "fraction",
+          "nullable": true
+        },
+        {
+          "name": "active_worst_return",
+          "type": "float64",
+          "description": "Minimum of paired QQQ minus SPY monthly returns.",
+          "unit": "fraction",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "macro_assessment",
+      "type": "text",
+      "format": "markdown",
+      "instructions": "Write at most 180 words for the desk. Describe the observed QQQ versus SPY relationship and sample sizes without claiming causation or a predictive strategy. State actual source, total-return basis, complete/missing months and alignment policy. Do not repeat the table as prose or create another Markdown table."
+    }
+  ]
+}

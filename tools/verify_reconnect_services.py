@@ -13,13 +13,10 @@ import os
 import time
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-from uuid import uuid4
 from typing import Literal, TypedDict
+from uuid import uuid4
 
-from pydantic import TypeAdapter
-from stratifyx.core.api_error import ApiError
-from stratifyx._release import SDK_RELEASE
-
+from epoch_sdk.output_validation import TableValue
 from epoch_sdk.research import (
     EpochClient,
     ExecutionAccepted,
@@ -27,8 +24,11 @@ from epoch_sdk.research import (
     ResearchResult,
 )
 from epoch_sdk.supervisor import Answer, Answers, ChosenExecution, NeedsInput
-from epoch_sdk.output_validation import TableValue
+from pydantic import TypeAdapter
+from stratifyx._release import SDK_RELEASE
+from stratifyx.core.api_error import ApiError
 from verify_research_services import (
+    TraceEvidence,
     capture_trace,
     connect,
     load_case,
@@ -39,7 +39,6 @@ from verify_research_services import (
     revision_content,
     verify_trace,
     verify_values,
-    TraceEvidence,
 )
 
 RESULT = TypeAdapter(ResearchResult)
@@ -187,7 +186,7 @@ async def wait_claim(observer, operation_id, task, previous=None):
 
 async def execute(args, receipt: ProofReceipt):
     if (
-        receipt["epoch_sdk_version"] != "0.1.0a5"
+        receipt["epoch_sdk_version"] != "0.1.0a6"
         or receipt["native_sdk"]["backend_worktree_dirty"]
         or receipt["native_sdk"]["backend_git_sha"] != args.expected_backend_sha
     ):

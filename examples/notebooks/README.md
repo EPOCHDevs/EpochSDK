@@ -1,9 +1,11 @@
 # Try the SDK with a US equities desk case
 
 For sharing and demos, use the [individual case notebooks](demos/README.md).
-There is one standalone notebook for each of the five desk cases, two separate
-format follow-ups and a clarification/reconnect example. Each includes its own
-request and setup; it does not import the local notebook helpers or case files.
+There is one notebook for each of the five desk cases, two separate format
+follow-ups and a clarification/reconnect example. The cells use shared `connect`,
+`task`, `display_request`, `run`, `read`, `execute` and `dashboard` helpers. Share
+the complete `demos` folder, including its helper modules and `cases` subfolder.
+Resolved parameters are visible before research or a later execution is sent.
 
 The generic **01_research_and_execute.ipynb** below is retained as a development
 walkthrough. Select the **Epoch SDK (local prototype)** kernel. Its case files
