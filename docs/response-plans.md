@@ -17,7 +17,8 @@ The bounded text endpoint is implemented in EpochAI's candidate. Native
 prepared-execution scheduling and generated-client integration now replay
 computed-only plans, publish the new answer and return its exact revision.
 Studies without a response plan retain their existing engine-status behavior.
-Live text calls and the full research/deployment acceptance remain incomplete.
+Live text verification/replay now also passed; the full five-case
+research/deployment acceptance remains incomplete.
 
 The normally built alpha7/Native rc6 packages passed a real authenticated
 computed-only MSFT plan handshake: complete table rows equal the audited original,
@@ -38,8 +39,17 @@ wire boundary while retaining genuine null values in requested JSON data.
 The alpha9 real subprocess MCP recheck passed: `epoch_execute_saved` and
 `epoch_execution_operation` returned the same saved answer and plan, and two
 `epoch_response_table` pages returned all three rows. No new job or graph run
-was created by those reattachments. This still does not certify live text
-interpretation or the remaining five-case notebook acceptance.
+was created by those reattachments.
+
+Real text-plan verification and replay also passed against the local candidate.
+The complete table and deterministic JSON matched independent fiscal-source
+calculations. Both short briefs preserved the defined cash-conversion ratio and
+every quoted figure; trace review found exactly one declared text-model call
+per execution, with no tools or supervisor. An earlier recipe that omitted the
+ratio was retained as a failed factual-review attempt before correcting its
+inputs. A subsequent live check preserved graph UI/progress while avoiding
+invalid graph writes from standalone calls. Five-case financial/source and
+complete notebook/deployment acceptance remain open.
 
 ## Establish and publish during research
 
