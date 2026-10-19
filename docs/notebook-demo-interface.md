@@ -101,3 +101,12 @@ forwarding, cancellation, follow-up source preservation and populated-dashboard
 links have component coverage. Rolling-period financial results, a populated
 dashboard through Portal, the other shorter desk cases, and complete stored
 response-plan replay still require their own live acceptance.
+
+Subsequent alpha9/Native rc7 checks passed both computed-only and bounded-text
+prepared-plan replay, including actual MCP reads and independent fiscal audits.
+The AAPL helper notebook also completed a fresh research cell with its three
+requested formats. Its complete SDK/MCP reads and independent source, fill,
+cost and account audit passed. The other desk cases and a real populated
+dashboard still need their own acceptance. The screener exposed a missing
+roster-provenance field on the active native Discovery handoff; its failed
+attempt has been preserved, and no Backend build will run without permission.

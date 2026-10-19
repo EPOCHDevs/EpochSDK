@@ -52,8 +52,8 @@ on its native execution ID; the same dates reconnect to that execution. A timeou
 or cancelled notebook wait does not cancel server work or submit a replacement.
 No-period calls retain the original IDs. Existing studies without a response
 plan return engine status. A verified plan also publishes a new answer under
-`execution.response`; computed-only SDK/MCP replay has passed a real service
-check, while live text-plan acceptance is still pending. Fixed fiscal labels, embedded
+`execution.response`; computed-only and bounded-text replay have passed real
+service checks, including SDK/MCP reads and independent fiscal audits. Fixed fiscal labels, embedded
 date filters and a saved roster are not rewritten by an engine-period override.
 
 The public SDK's `date_range` returns the existing native `DatePeriodConfig`.
@@ -88,10 +88,13 @@ recipient needs their own authorized service identity and operations.
 
 The short MSFT fundamentals request has passed a real notebook run, complete
 paged reads and reconciliation against independently checked statement values.
-The other shorter requests still need their own live acceptance. The AAPL case
-needs post-execution response-plan work; the screener and macro cases have
-remaining service/data checks. These notebooks contain requests, not pre-filled
-successful findings.
+The shorter AAPL notebook also passed a fresh research run, complete SDK/MCP
+reads and an independent price, trade, cost, dividend and account audit. Its
+table, JSON and text belong to one saved answer and verified response plan.
+The screener, macro and remaining output variants have outstanding service/data
+checks. The screener currently stops because Discovery does not retain the
+roster timestamp required by its output. These source notebooks contain
+requests, not pre-filled successful findings.
 
 The generic chooser and low-level transport walkthroughs remain one folder up
 for development. Notebook files here are generated from the canonical requests

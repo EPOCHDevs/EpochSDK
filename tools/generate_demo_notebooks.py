@@ -131,7 +131,8 @@ def make_notebook(entry: dict, request: dict) -> dict:
                 "or new discovery. Repeating it attaches to the same execution. "
                 "An existing study without a response plan returns engine status. "
                 "A verified response plan also publishes a new answer, available as "
-                "`execution.response`; live text-plan acceptance is still pending.",
+                "`execution.response`. Computed-only and bounded-text plan replay have "
+                "passed service checks; each saved study still needs its own acceptance.",
             ),
             cell(
                 "code",

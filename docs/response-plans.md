@@ -51,6 +51,25 @@ inputs. A subsequent live check preserved graph UI/progress while avoiding
 invalid graph writes from standalone calls. Five-case financial/source and
 complete notebook/deployment acceptance remain open.
 
+The shorter AAPL case subsequently passed its actual alpha9 notebook research
+cell, producing a table, deterministic JSON and a short text part under one
+verified plan. Complete reads through the installed SDK and a real subprocess
+MCP client returned the same two performance rows and original answer revision;
+reattachment preserved the graph run and idle checkpoint. Independent Barchart
+and FMP evidence reconciled all 2,514 evaluation dates, the 200-session SMA,
+51 next-open fills, daily cash/equity, 10 bps commissions, dividend credits and
+all published strategy/benchmark metrics. The audit preserves Backend's existing
+price quantization and the disclosed uncertainty about the feed's session basis.
+
+The fresh screener attempt stopped before execution because its native Discovery
+collection did not retain the actual roster retrieval time. The existing preview
+API has that provenance, but the active metadata collection contract drops it
+before authoring. Its receipt capture time cannot substitute for roster time.
+Carry the source-owned provenance through that native path and generated clients;
+do not fabricate it or silently re-resolve a frozen cohort in the SDK. Backend
+builds are currently on hold at the owner's request. This attempt remains failed
+evidence, and the full acceptance goal remains open.
+
 ## Establish and publish during research
 
 1. The existing supervisor discovers inputs, builds the saved study, handles
