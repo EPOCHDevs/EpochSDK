@@ -102,7 +102,7 @@ variant alone, select another execution or refresh market data.
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
 distribution workflow. These notebooks were prepared with StratifyX 3.3.0rc4 and
-Epoch SDK 0.1.0a3. Install this checkout's `python/epoch-sdk[notebook]`, plus
+Epoch SDK 0.1.0a4. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:

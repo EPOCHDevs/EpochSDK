@@ -8,7 +8,7 @@ study, or infer named outputs from assistant prose or presentation titles.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from importlib import import_module
 from typing import Annotated, Literal, Protocol, cast
 
@@ -105,6 +105,7 @@ class _Array(Protocol):
 
 class _Arrow(Protocol):
     def string(self) -> object: ...
+    def int64(self) -> object: ...
 
 
 class _Batch(Protocol):
@@ -151,6 +152,7 @@ class _DictionaryType(Protocol):
 
 class _TimestampType(Protocol):
     tz: str | None
+    unit: Literal["s", "ms", "us", "ns"]
 
 
 def _failure(
@@ -186,7 +188,11 @@ def _compatible(kind: object, column: Column, types: _Types) -> bool:
     if column.type == "float64":
         return types.is_floating(kind) or types.is_integer(kind)
     if column.type == "date":
-        return types.is_date(kind) or string
+        return (
+            types.is_date(kind)
+            or string
+            or (types.is_timestamp(kind) and cast(_TimestampType, kind).tz in {"UTC", "Etc/UTC"})
+        )
     return string or (types.is_timestamp(kind) and cast(_TimestampType, kind).tz is not None)
 
 
@@ -202,6 +208,32 @@ def _cell(value: object, column: Column, execution_id: str) -> Cell:
     if type(value) in (str, int, float, bool):
         return cast(Cell, value)
     raise _invalid(f"Output column {column.name} has an unsupported stored value.", execution_id)
+
+
+def _date_timestamp_values(
+    array: _Array, kind: _TimestampType, arrow: _Arrow, column: Column, execution_id: str
+) -> list[object]:
+    # Native SQL's date-like fields use TimestampNsUtc. A declared response
+    # date may consume UTC midnight losslessly, but never a time of day or a
+    # fractional nanosecond. Check integer ticks before Python datetime can
+    # round precision or assign a timezone.
+    ticks_per_day = 86_400 * {"s": 1, "ms": 1_000, "us": 1_000_000, "ns": 1_000_000_000}[kind.unit]
+    result: list[object] = []
+    for value in array.cast(arrow.int64()).to_pylist():
+        if value is None:
+            result.append(None)
+            continue
+        if type(value) is not int or value % ticks_per_day:
+            raise _invalid(
+                f"Date column {column.name} contains a timestamp with a time of day.", execution_id
+            )
+        try:
+            result.append((date(1970, 1, 1) + timedelta(days=value // ticks_per_day)).isoformat())
+        except (OverflowError, ValueError) as error:
+            raise _invalid(
+                f"Date column {column.name} is outside the supported date range.", execution_id
+            ) from error
+    return result
 
 
 def decode_saved_table(
@@ -251,7 +283,13 @@ def decode_saved_table(
             kind = schema.field(index).type
             if types.is_dictionary(kind):
                 kind = cast(_DictionaryType, kind).value_type
-            if column.type == "datetime" and types.is_timestamp(kind):
+            if column.type == "date" and types.is_timestamp(kind):
+                columns.append(
+                    _date_timestamp_values(
+                        array, cast(_TimestampType, kind), arrow, column, execution_id
+                    )
+                )
+            elif column.type == "datetime" and types.is_timestamp(kind):
                 # Arrow's string cast retains nanoseconds; Python datetime can
                 # reduce precision or require the optional pandas dependency.
                 columns.append(
