@@ -45,7 +45,11 @@ class TerminalView:
         if isinstance(event, SessionStatus):
             self.status = "Research in progress" if event.status == "in_progress" else "Accepted"
         elif isinstance(event, SessionUI):
-            self.rows[event.message.id] = ui_text(event.message)
+            text = ui_text(event.message)
+            if text:
+                self.rows[event.message.id] = text
+            else:
+                self.rows.pop(event.message.id, None)
         elif isinstance(event, SessionUIRemoved):
             self.rows.pop(event.id, None)
         elif isinstance(event, SessionQuestions):

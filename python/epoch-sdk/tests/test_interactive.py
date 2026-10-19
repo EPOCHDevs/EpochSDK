@@ -15,7 +15,9 @@ from test_session import StreamService
 from test_supervisor import INTERRUPT
 
 from epoch_sdk.notebook import NotebookView
+from epoch_sdk.presentation import ui_text
 from epoch_sdk.research import ResearchCompleted
+from epoch_sdk.session import NativeUIMessage
 from epoch_sdk.supervisor import GraphInterrupt, NeedsInput, WorkflowHandle
 from epoch_sdk.terminal import TerminalView
 
@@ -144,3 +146,75 @@ def test_high_level_headless_run_never_imports_human_views(monkeypatch):
             assert service.resumes == 0
 
     asyncio.run(scenario())
+
+
+def test_current_tool_component_names_render_activity_without_rpc_payloads():
+    message = NativeUIMessage(
+        type="ui",
+        id="native-tool",
+        name="discovery",
+        props={
+            "tool_name": "discovery",
+            "status": "success",
+            "params": '{"registry_version":"internal-v1","binding_ref":"opaque"}',
+            "result": '{"verified_results":{"internal-record":{"many":"fields"}}}',
+        },
+    )
+    assert ui_text(message) == "Discover data · done"
+    assert "registry_version" in message.props["params"]  # Full headless evidence is retained.
+
+
+def test_model_pulses_show_waiting_and_remove_completed_internal_status():
+    message = NativeUIMessage(
+        type="ui",
+        id="pulse",
+        name="model_status",
+        props={
+            "call_id": "internal-call",
+            "lane_id": "internal-lane",
+            "state": "waiting",
+            "sequence": 1,
+            "started_at_ms": 1,
+            "optional": False,
+        },
+    )
+    assert ui_text(message) == "Thinking…"
+    done = message.model_copy(update={"props": {**message.props, "state": "recovered"}})
+    assert ui_text(done) == ""
+
+
+def test_question_recap_uses_the_user_reply_without_internal_decision_ids():
+    message = NativeUIMessage(
+        type="ui",
+        id="reply",
+        name="ask_user_recap",
+        props={
+            "id": "internal-call",
+            "selections": [
+                {
+                    "question": "Which years?",
+                    "chosen": [],
+                    "free_form_input": "Use fiscal years.",
+                    "skipped": False,
+                    "decision_ref": "internal-decision",
+                    "tool_call_id": "internal-call",
+                    "options": [{"label": "Fiscal", "recommended": True}],
+                }
+            ],
+        },
+    )
+    assert ui_text(message) == "Reply sent: Use fiscal years."
+
+
+def test_unknown_component_keeps_readable_label_without_dumping_extension_properties():
+    message = NativeUIMessage(
+        type="ui",
+        id="extension",
+        name="source_coverage",
+        props={
+            "label": "Annual statements ready",
+            "binding_ref": "internal",
+            "schema": {"x": 1},
+        },
+    )
+    assert ui_text(message) == "Annual statements ready"
