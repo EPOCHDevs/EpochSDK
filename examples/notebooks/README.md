@@ -25,6 +25,21 @@ For a different objective or parameters, choose a new readable operation ID and
 update the supplied-case value assertions for your new expected results.
 `EPOCH_NOTEBOOK_PREFIX` can give a whole walkthrough a separate namespace.
 
+## Case files
+
+Open the **cases** folder in Jupyter's left file browser:
+
+- [annual_sales.json](cases/annual_sales.json): research and saved-study execution.
+- [annual_sales_confirmation.json](cases/annual_sales_confirmation.json): clarification and reconnect.
+
+Each file is a normal SDK research request containing `task`, `context`,
+`parameters` and `outputs`. The notebooks read those files directly.
+
+The `CASE_FILE` variable in each notebook shows the path being loaded. To try
+another input, add a JSON file in `cases/`, change `CASE_FILE` and choose a new
+operation ID. The demonstration's expected-value checks are specific to its two
+supplied observations; update those checks when changing the example values.
+
 ## Another environment
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal

@@ -71,21 +71,14 @@ def operation_name(suffix: str) -> str:
 
 
 def demo_request(*, confirmation: bool = False) -> RunRequest:
-    """Load the supplied two-year sales task and its requested answer formats.
+    """Read a research request from the cases folder beside the notebooks.
 
-    This reads the example JSON file. A server call happens later when the
-    notebook submits the returned request to ``epoch.research(...)``.
-    ``confirmation=True`` adds the demonstration's explicit question.
+    The ordinary and confirmation walkthroughs each have an explicit JSON
+    input file. Reading a case does not send it to the services.
     """
-    case_path = Path(__file__).resolve().parents[1] / "research-service-proof.case.json"
-    request = RunRequest.model_validate(json.loads(case_path.read_text())["request"])
-    if confirmation:
-        request.task = (
-            "Before building, ask me once to confirm that you should use exactly the two "
-            "supplied years (2024 and 2025). Wait for my confirmation using ask_user. "
-            "After I confirm, " + request.task
-        )
-    return request
+    filename = "annual_sales_confirmation.json" if confirmation else "annual_sales.json"
+    case_path = Path(__file__).resolve().parent / "cases" / filename
+    return RunRequest.model_validate(json.loads(case_path.read_text()))
 
 
 async def wait_research(
