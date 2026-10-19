@@ -79,7 +79,8 @@ it does not create presentation or imply that output tables require dashboard
 tables. The optional presentation-request contract is described in
 [the interface follow-up](https://github.com/EPOCHDevs/EpochSDK/blob/codex/eng2079-interactive-sessions/docs/notebook-demo-interface.md).
 The completed MSFT examples are response-only, so they intentionally show no
-link. A successful populated-dashboard example is still an acceptance item.
+link. AAPL's populated execution exposes a checked dashboard link; rendering
+the authenticated Portal page after sign-in remains a separate acceptance item.
 
 The `desk-v2-01` attempt values match the shorter request revision. Keep IDs to
 reconnect; use another attempt for changed inputs or a deliberate data refresh.
@@ -93,7 +94,16 @@ reads and an independent price, trade, cost, dividend and account audit. Its
 table, JSON and text belong to one saved answer and verified response plan.
 The short MSFT-risk and QQQ/Treasury cases have also passed real MCP research,
 independent source/calculation audits and their notebook display/read checks.
-The screener and remaining output variants have outstanding service/data checks.
+The plain-text MSFT follow-up passed actual notebook cells and a complete trace
+review: it reused the original saved execution, retained its original answer
+revision, and published a new 132-word brief with all 19 numerical claims checked.
+The clarification example passed MCP admission, terminal leave, MCP reconnect,
+and an explicit notebook reply on the same thread, followed by all three fiscal
+rows and the memo. These checks used isolated acceptance copies to preserve the
+owner's open notebooks. A small stale validation-label cleanup is prepared in
+source; installed preview kernels were not patched in place.
+
+The screener and its JSON follow-up are the two remaining case flows.
 The screener currently stops because Discovery does not retain the
 roster timestamp required by its output. These source notebooks contain
 requests, not pre-filled successful findings.

@@ -90,6 +90,22 @@ latest history, with its revision limitations; they do not establish historical
 point-in-time availability. The screener and its saved-output variant still
 prevent full goal acceptance.
 
+The owner's subsequent original-period AAPL saved-plan execution also passed
+complete native reads: all eight audited relations, including 2,514 daily
+account rows and 51 fills, match the independently checked research execution
+(excluding job-local order IDs). Its two-row table and deterministic JSON
+match the original values. The new 95-word text retains the checked figures,
+costs, timing and source limitations; its trace is one bounded text-model call
+with no tools or supervisor. The original research answer remains pinned.
+This validates replay at the original period, not the rejected later period.
+
+The short plain-text follow-up and explicit fiscal-year clarification also
+passed actual notebook cells, complete SDK/MCP reads and source/trace reviews.
+The follow-up's complete trace contains only an audit of saved results and
+publication. The clarification resumes the same thread after a terminal leave
+and MCP reconnect; its completed trace ends at publication with no later model
+call. No user pending questions were answered by these acceptance operations.
+
 ## Establish and publish during research
 
 1. The existing supervisor discovers inputs, builds the saved study, handles

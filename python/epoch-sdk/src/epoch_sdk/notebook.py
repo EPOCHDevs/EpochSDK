@@ -190,6 +190,7 @@ class NotebookView:
             except ValueError as problem:
                 error.value = '<p style="color:#b44">' + html.escape(str(problem)) + "</p>"
                 return
+            error.value = ""
             future.set_result({key: Answers(answers=value) for key, value in answers.items()})
 
         def leave(_button: widgets.Button) -> None:

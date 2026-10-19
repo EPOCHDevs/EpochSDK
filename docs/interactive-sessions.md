@@ -38,6 +38,8 @@ or write a natural-language reply and click **Send reply**. A recommended option
 is advice; it is never preselected. Multi-select questions support several
 choices. **Leave waiting** returns the pending question without changing the
 server. Stopping the cell also leaves the server operation available.
+An empty reply stays local and shows a validation message. Sending a valid
+reply clears that message before resuming the server.
 
 Terminal replies accept displayed option numbers or plain language; commas select
 multiple options where allowed. `/leave` returns the pending question and `/skip`
