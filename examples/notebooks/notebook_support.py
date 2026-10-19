@@ -24,22 +24,18 @@ from epoch_sdk.research import (
 from epoch_sdk.responses import ResponseTablePage
 from epoch_sdk.supervisor import ChosenExecution, InProgress, NeedsInput
 from IPython.display import HTML, JSON, Markdown, display
+from notebook_identity import identity_token
 
 
 def connect() -> EpochClient:
     """Prepare the SDK client used by later notebook cells.
 
-    Read your Epoch identity token and the Backend/EpochAI addresses from the
-    notebook environment, then pass them to EpochClient.connect(). Assigning
+    Obtain your current Epoch identity token and the Backend/EpochAI addresses
+    from the prepared environment, then pass them to EpochClient.connect(). Assigning
     the returned object to ``epoch`` gives later cells their SDK client.
     Research begins when a later cell calls ``epoch.research(...)``.
     """
-    token = os.environ.get("EPOCH_TOKEN")
-    if not token:
-        raise RuntimeError(
-            "Set EPOCH_TOKEN to your Epoch identity token, or use the prepared local "
-            "notebook server, which supplies authentication to its kernels."
-        )
+    token = identity_token()
     return EpochClient.connect(
         graph_url=os.environ["EPOCH_GRAPH_URL"],
         backend_url=os.environ["EPOCH_BACKEND_URL"],
@@ -56,13 +52,18 @@ async def check_services() -> None:
     print("Workflow SDK:", importlib.metadata.version("epoch-sdk"))
     print("Native SDK:", importlib.metadata.version("stratifyx"))
     async with httpx.AsyncClient(
-        headers={"Authorization": "Bearer " + os.environ["EPOCH_TOKEN"]}, timeout=20
+        headers={"Authorization": "Bearer " + identity_token()}, timeout=20
     ) as http:
         for name, origin, route in [
             ("Backend", os.environ["EPOCH_BACKEND_URL"], "/api/v1/health"),
             ("EpochAI", os.environ["EPOCH_GRAPH_URL"], "/health/custom"),
         ]:
             response = await http.get(origin.rstrip("/") + route)
+            if response.status_code == 401:
+                raise RuntimeError(
+                    f"{name} rejected the Epoch login. Refresh your Epoch identity and "
+                    "rerun the setup cell; keep the same operation ID to reconnect."
+                )
             response.raise_for_status()
             print(f"{name}: HTTP {response.status_code} at {origin}")
 

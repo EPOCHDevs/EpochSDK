@@ -114,3 +114,11 @@ needs its own client settings.
 Epoch identity tokens expire. On 401, refresh through the normal login flow and
 create a fresh client; keep the same operation ID. Restarting the local notebook
 launcher refreshes the prepared environment's identity token.
+
+The prepared server also configures `EPOCH_NOTEBOOK_TOKEN_COMMAND`, a trusted
+local login-helper argv list. `connect()` and `check_services()` obtain a current
+Epoch token from that helper when you rerun setup, rather than keeping the
+server's expired startup token. The helper uses the existing Epoch login cache;
+it returns only the current identity token. No vendor or model credentials are
+returned to the notebook. Independently configured notebooks can still use a
+static `EPOCH_TOKEN` and their own normal identity-refresh flow.
