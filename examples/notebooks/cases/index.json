@@ -1,0 +1,71 @@
+{
+  "description": "Five real US equities desk scenarios, two saved-evidence output variants, and one optional clarification walkthrough. Cases are requests, not executed research findings.",
+  "cases": [
+    {
+      "id": "msft_fundamentals",
+      "file": "msft_fundamentals.json",
+      "title": "MSFT financial quality",
+      "persona": "Fundamental analyst",
+      "family": "single_asset_study",
+      "kind": "research"
+    },
+    {
+      "id": "msft_risk_json",
+      "file": "msft_risk_json.json",
+      "title": "MSFT risk versus SPY",
+      "persona": "Risk analyst",
+      "family": "single_asset_study",
+      "kind": "research"
+    },
+    {
+      "id": "aapl_trend_strategy",
+      "file": "aapl_trend_strategy.json",
+      "title": "AAPL fixed trend filter",
+      "persona": "Systematic trader",
+      "family": "single_asset_strategy",
+      "kind": "research"
+    },
+    {
+      "id": "sp500_momentum_screener",
+      "file": "sp500_momentum_screener.json",
+      "title": "S&P 500 momentum shortlist",
+      "persona": "Portfolio manager",
+      "family": "screener",
+      "kind": "research"
+    },
+    {
+      "id": "qqq_treasury_regimes",
+      "file": "qqq_treasury_regimes.json",
+      "title": "QQQ, SPY and Treasury yields",
+      "persona": "Macro risk analyst",
+      "family": "macro_asset",
+      "kind": "research"
+    },
+    {
+      "id": "msft_fundamentals_plain",
+      "file": "msft_fundamentals_plain.json",
+      "title": "MSFT findings as plain text",
+      "persona": "Fundamental analyst",
+      "family": "single_asset_study",
+      "kind": "output_variant",
+      "source_case": "msft_fundamentals"
+    },
+    {
+      "id": "sp500_momentum_json",
+      "file": "sp500_momentum_json.json",
+      "title": "Same shortlist as JSON",
+      "persona": "Portfolio manager",
+      "family": "screener",
+      "kind": "output_variant",
+      "source_case": "sp500_momentum_screener"
+    },
+    {
+      "id": "msft_fundamentals_confirmation",
+      "file": "msft_fundamentals_confirmation.json",
+      "title": "MSFT clarification and reconnect",
+      "persona": "Fundamental analyst",
+      "family": "single_asset_study",
+      "kind": "clarification"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "task": "Assess MSFT against SPY for the US equities risk desk over 2021–2025. Compare calendar-year total returns, full-window annualized volatility and maximum drawdown. Identify MSFT's worst drawdown and SPY's performance over the same peak-to-trough dates. Return JSON only.",
+  "context": [
+    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
+    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
+    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
+    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
+    "Use daily US regular-session observations for MSFT and SPY from 2021-01-01 through 2025-12-31. Load authentic prior observations needed for the first return without counting them as evaluation days.",
+    "Use a consistent dividend-inclusive total-return convention for both assets. Preserve split handling and avoid counting dividends twice. Disclose the native return convention if it differs; do not silently switch to price-only returns.",
+    "Use the common valid observation grid. Annualized volatility is sample standard deviation of daily total returns times sqrt(252). Maximum drawdown is wealth / its running peak - 1 and is non-positive.",
+    "Return exactly five calendar years in ascending order and exactly MSFT and SPY asset summaries. The worst-drawdown comparison must use the same two dates for both assets; recovery may be null."
+  ],
+  "parameters": {
+    "period": {
+      "start": "2021-01-01",
+      "end": "2025-12-31"
+    }
+  },
+  "outputs": [
+    {
+      "name": "risk_summary",
+      "type": "json",
+      "description": "Machine-readable risk review; no table or prose response part.",
+      "schema": {
+        "type": "object",
+        "description": "US desk risk review, all returns as fractions.",
+        "properties": {
+          "period_start": {
+            "type": "string",
+            "description": "Requested evaluation start.",
+            "const": "2021-01-01",
+            "format": "date"
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Requested evaluation end.",
+            "const": "2025-12-31",
+            "format": "date"
+          },
+          "return_basis": {
+            "type": "string",
+            "description": "Return convention shared by both assets.",
+            "const": "total_return"
+          },
+          "source_notes": {
+            "type": "string",
+            "description": "Actual source, coverage, observation-date and corporate-action conventions.",
+            "minLength": 1
+          },
+          "annual_returns": {
+            "type": "array",
+            "description": "Five calendar-year comparisons, ordered 2021 to 2025.",
+            "items": {
+              "type": "object",
+              "description": "Calendar-year total returns, all using the same dates and return convention.",
+              "properties": {
+                "year": {
+                  "type": "integer",
+                  "description": "Calendar year.",
+                  "minimum": 2021,
+                  "maximum": 2025
+                },
+                "msft_return": {
+                  "type": "number",
+                  "description": "MSFT dividend-inclusive return, as a fraction.",
+                  "minimum": -1
+                },
+                "spy_return": {
+                  "type": "number",
+                  "description": "SPY dividend-inclusive return, as a fraction.",
+                  "minimum": -1
+                },
+                "active_return": {
+                  "type": "number",
+                  "description": "MSFT return minus SPY return, in fractional percentage-point units."
+                }
+              },
+              "required": [
+                "year",
+                "msft_return",
+                "spy_return",
+                "active_return"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 5,
+            "maxItems": 5
+          },
+          "assets": {
+            "type": "array",
+            "description": "Exactly one summary for MSFT and one for SPY.",
+            "items": {
+              "type": "object",
+              "description": "Computed full-window risk metrics for one asset.",
+              "properties": {
+                "ticker": {
+                  "type": "string",
+                  "description": "US ticker.",
+                  "enum": [
+                    "MSFT",
+                    "SPY"
+                  ]
+                },
+                "total_return": {
+                  "type": "number",
+                  "description": "Cumulative dividend-inclusive return over the requested window, as a fraction.",
+                  "minimum": -1
+                },
+                "annualized_volatility": {
+                  "type": "number",
+                  "description": "Sample standard deviation of daily total returns multiplied by sqrt(252), as a fraction.",
+                  "minimum": 0
+                },
+                "maximum_drawdown": {
+                  "type": "number",
+                  "description": "Minimum wealth / running peak - 1 over the requested window; zero or negative.",
+                  "minimum": -1,
+                  "maximum": 0
+                }
+              },
+              "required": [
+                "ticker",
+                "total_return",
+                "annualized_volatility",
+                "maximum_drawdown"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "msft_worst_drawdown": {
+            "type": "object",
+            "description": "MSFT worst peak-to-trough drawdown and the benchmark return on those exact dates.",
+            "properties": {
+              "peak_date": {
+                "type": "string",
+                "description": "Date of the running wealth peak preceding the trough.",
+                "format": "date"
+              },
+              "trough_date": {
+                "type": "string",
+                "description": "Date of the maximum-drawdown trough.",
+                "format": "date"
+              },
+              "recovery_date": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "First later date wealth recovers the peak, or null if unrecovered by the window end.",
+                "format": "date"
+              },
+              "msft_return": {
+                "type": "number",
+                "description": "MSFT total return from that peak to trough.",
+                "minimum": -1,
+                "maximum": 0
+              },
+              "spy_return": {
+                "type": "number",
+                "description": "SPY total return over the same peak-to-trough dates.",
+                "minimum": -1
+              },
+              "active_return": {
+                "type": "number",
+                "description": "MSFT minus SPY return over the same peak-to-trough dates."
+              }
+            },
+            "required": [
+              "peak_date",
+              "trough_date",
+              "recovery_date",
+              "msft_return",
+              "spy_return",
+              "active_return"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "return_basis",
+          "source_notes",
+          "annual_returns",
+          "assets",
+          "msft_worst_drawdown"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "task": "Prepare a US large-cap momentum shortlist for a portfolio manager. Using a captured current S&P 500 roster and prices through the completed 2026-10-16 session, retain stocks above their 200-session moving average and rank by their 12-minus-1-month price momentum. Return up to 20 names with sector, three-month return and 20-session average daily dollar volume, plus a table showing coverage and exclusions. Return tables only.",
+  "context": [
+    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
+    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
+    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
+    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
+    "Use the current S&P 500 constituent snapshot discovered for this run and record its actual retrieval timestamp. This is a present-universe desk screen using a fixed price cutoff, not a historical index backtest or a point-in-time membership claim.",
+    "Price cutoff is 2026-10-16, the latest completed US session when this case was prepared. Keep it fixed for reproducibility; changing the cutoff or refreshing membership intentionally requires a new research operation ID.",
+    "Use US regular-session daily data. Momentum is C(t-21)/C(t-252)-1 and three-month return is C(t)/C(t-63)-1 on split-adjusted closes; these are price returns. The SMA is the trailing 200-session mean including t. No future prices may enter the screen.",
+    "Only eligible names enter the ranking. Sort momentum descending, break exact ties by ticker ascending, and assign contiguous ranks. Return min(20, eligible_count), without duplicate tickers or invented replacement names.",
+    "Load the complete captured roster, rather than silently screening only a truncated subset. Record coverage counts and missing-data exclusions. Use actual traded-dollar volume with consistent price/share split units; do not multiply a dividend-adjusted close by raw historical volume.",
+    "Persist company/sector labels, rank, metrics and the coverage row in the saved native results so an output-only JSON follow-up can use the exact same evidence without a new universe lookup."
+  ],
+  "parameters": {
+    "period": {
+      "start": "2025-01-01",
+      "end": "2026-10-16"
+    }
+  },
+  "outputs": [
+    {
+      "name": "shortlist",
+      "type": "table",
+      "description": "Ranked current-universe shortlist; one row per ticker, ordered by rank.",
+      "schema": [
+        {
+          "name": "rank",
+          "type": "int64",
+          "description": "Sequential rank starting at 1; descending momentum with ticker ascending as the tie-break."
+        },
+        {
+          "name": "ticker",
+          "type": "string",
+          "description": "Unique US-listed constituent ticker; the row label is a security, not a timestamp."
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "description": "Company display name from the resolved asset metadata."
+        },
+        {
+          "name": "sector",
+          "type": "string",
+          "description": "Sector label from the resolved asset metadata."
+        },
+        {
+          "name": "as_of",
+          "type": "date",
+          "description": "Exact completed price session used by the screen: 2026-10-16."
+        },
+        {
+          "name": "momentum_12_1",
+          "type": "float64",
+          "description": "Split-adjusted close 21 sessions ago / split-adjusted close 252 sessions ago - 1.",
+          "unit": "fraction"
+        },
+        {
+          "name": "return_3m",
+          "type": "float64",
+          "description": "Split-adjusted close at as_of / close 63 sessions ago - 1; price return.",
+          "unit": "fraction"
+        },
+        {
+          "name": "distance_to_sma_200",
+          "type": "float64",
+          "description": "As-of split-adjusted close / its trailing 200-session SMA - 1; strictly positive.",
+          "unit": "fraction"
+        },
+        {
+          "name": "average_dollar_volume_20",
+          "type": "float64",
+          "description": "Mean of actual quoted close times traded shares over the last 20 sessions, with price/volume on a consistent split basis.",
+          "unit": "USD/day"
+        }
+      ]
+    },
+    {
+      "name": "screening_coverage",
+      "type": "table",
+      "description": "Exactly one coverage row for the captured roster and price cutoff.",
+      "schema": [
+        {
+          "name": "as_of",
+          "type": "date",
+          "description": "Price observation cutoff fixed for this case: 2026-10-16."
+        },
+        {
+          "name": "membership_snapshot_at",
+          "type": "datetime",
+          "description": "Actual retrieval timestamp of the current S&P 500 roster; not a claim of historical membership."
+        },
+        {
+          "name": "universe_count",
+          "type": "int64",
+          "description": "Number of unique constituent tickers in the captured roster."
+        },
+        {
+          "name": "excluded_missing_data_count",
+          "type": "int64",
+          "description": "Constituents excluded for missing required history, fields or metadata."
+        },
+        {
+          "name": "eligible_count",
+          "type": "int64",
+          "description": "Constituents with complete required data and a close strictly above their 200-session SMA."
+        },
+        {
+          "name": "returned_count",
+          "type": "int64",
+          "description": "min(20, eligible_count); do not pad the shortlist with failing names."
+        }
+      ]
+    }
+  ]
+}
