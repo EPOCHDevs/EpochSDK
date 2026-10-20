@@ -1,80 +1,106 @@
 # Interactive-session acceptance — 19 October 2026
 
-The acceptance goal is open. Source, component checks and actual service results
-are recorded separately. An answer can publish successfully and still fail its
-financial/source review; the screener below demonstrated that distinction.
+The eight case flows passed live answer, source and trace checks. Final
+transport and delivery bookkeeping remain open until their receipts are recorded.
+A successful publication alone is not financial acceptance: failed screener
+attempts and their immutable sources remain retained.
 
-## Candidate and boundaries
+## Exact candidates
 
-- Epoch SDK `0.1.0a11`, built from `163393b9cbc4f0f8502f203a63a39b4fed8f98f5`.
-  Its installed suite passed 341 tests with Native Python `3.3.0rc8`.
-  Alpha12 adds concise human activity errors while retaining exact source events;
-  its installed-package check is pending.
-- Native built source `63939005a2906e30ca9157eb74ad63a7e9dc50ac`, server SHA-256
+- Epoch SDK `0.1.0a12`, built from
+  `1ae5c0aeae5b7ce9dcb9a7649c1388aea16adc8b`; installed suite **343 passed**
+  with Native Python `3.3.0rc8`. Session and replay-plan fixtures, notebook bundle
+  generation and strict affected-module types/lint pass. Human activity errors
+  are bounded without changing source UI properties or MCP events.
+- Native built source `63939005a2906e30ca9157eb74ad63a7e9dc50ac`; server SHA-256
   `4f280f480b68183db5dcefabb87b1f0b395b53e1daaea01053ede8e5393d2d6c`.
-  The normal packaging workflow generated Python `3.3.0rc8` and TypeScript
-  `3.3.0-rc.8`; generated models were not patched.
-- EpochAI `1597b4cc10274e4712c19c7bd71c7c64cd7dd32a` retains the existing
-  supervisor and kept runtime, plus the explicit bounded interpretation call.
-  Native registry/reference version remains `aff8345a0813f681`.
-- Real service checks use ordinary Epoch authentication and loopback URLs.
-  Vendor credentials stay in Backend configuration; model credentials stay in
-  EpochAI. Client environments contain neither.
-- Existing owner notebook outputs, kernels and unanswered operations are
-  preserved. Acceptance uses separate folders/kernels. Draft review branches
-  have not been merged, released or deployed to production.
+  Maintained packaging generated Python `3.3.0rc8` and TypeScript `3.3.0-rc.8`.
+  Scoped store checks passed 32 cases/416 assertions; Search/Discovery/OpenAPI
+  checks passed 167 cases/33,891 assertions. Earlier compiler, response-plan,
+  query/materialization and durable-table checks are retained separately.
+  These are scoped checks, not the entire Backend suite or the optional broad
+  Native wire/presentation certification gates.
+- EpochAI `1597b4cc10274e4712c19c7bd71c7c64cd7dd32a`; scoped roster/authoring/
+  supervisor-relay checks **144 passed, one opt-in live test skipped**. Native
+  registry/reference version stays `aff8345a0813f681`. The fresh named MSFT
+  research ran on its predecessor `ebfbe0753904035baebb78195122835a67180493`;
+  the later change affects roster views, not that financial computation.
+- Authenticated local services retain the original storage and kept runtime.
+  Idle adoption preserved all 41 then-existing thread/checkpoint fingerprints
+  and 25 job IDs. Existing owner kernels, outputs and unanswered operations
+  were not replaced. Vendor/model credentials remain on their owning services;
+  a read-only presence audit found neither in the sampled client kernels.
+- The owner restored `-j16` for Native builds. No Native build was needed for
+  the final Python presentation/relay changes. No registry release, main merge
+  or production deployment is included.
 
-## Case evidence
+## Case results
 
-| Case | Direct evidence | Current acceptance |
-| --- | --- | --- |
-| MSFT financial quality | Actual notebook research, all three fiscal rows and independent statement arithmetic passed on `desk-v2-01`. An alpha11 named-notebook reattachment preserved its exact original answer. | Fresh `plan-a11-01` passed the actual research/read cells in `01_research_and_execute.ipynb`, all 36 fiscal fields, 22 quantitative memo checks and three complete successful-query receipts under one verified plan. Its 173-word Markdown memo meets the 180-word limit. The original-period deployment check remains pending. |
-| MSFT risk versus SPY | Real MCP research; five real notebook cells; independent prices/dividends, 1,256 common observations, 1,255 returns, annual returns, volatility and drawdown/recovery review. | Passed for the short `plan-a9-01` request. |
-| AAPL fixed trend strategy | Fresh actual notebook research; complete SDK/MCP table reads; all 2,514 evaluation dates, 51 next-open fills, cash/equity, dividends, commission and published metrics independently reconciled. Original-period saved-plan execution and its new answer also passed. | Passed at the original period. Vendor session/auction basis remains disclosed. The fixed plan correctly rejects later-period execution; this is not rolling-period acceptance. |
-| S&P 500 momentum screen | Fresh notebook and real MCP shared one operation; all 223,990 persisted price rows read over 28 pages, every shortlisted row and its arithmetic reconciled. | `provenance-a11-01` failed coverage review: reported universe/exclusions 501/4 instead of 503/6. `provenance-a11-02` built with the correct 503 count, then stopped before execution after the supervisor demanded unsupported identities for aggregate counts. The missing Native facts in its normal/bounded message are now fixed and tested; another fresh check remains required. |
-| QQQ/SPY Treasury regimes | Actual MCP research and five notebook cells; 120 months, every regime statistic, prices/dividends and month-end clocks independently reconciled. All 2,521 yield observations also match Federal Reserve DGS10 history. | Passed for `plan-a9-02`. Uses latest history, not a point-in-time vintage guarantee. |
-| MSFT plain-text follow-up | Actual notebook cells; same saved study/execution/thread, new answer ID, original revision unchanged. All 19 numerical claims in the 132-word brief checked against independent fiscal calculations. | Passed. Complete trace contains only saved-result audit and publication. |
-| Screener JSON follow-up | Must use the accepted notebook 04 source, preserve every ordered row and coverage field, produce a new deterministic JSON answer and retain the original pin. | Pending accepted screener source; not substituted with a smaller synthetic table. |
-| Clarification/reconnect | Real MCP admission, terminal `/leave`, fresh MCP reconnect, unselected notebook choices, empty-reply rejection, explicit fiscal reply in the same cell, and complete final reads. Same thread/checkpoint retained; one study execution. | Passed. Alpha11's stale validation-message cleanup also passed an isolated actual widget check without submitting a real answer. |
+| Case | Direct acceptance |
+| --- | --- |
+| MSFT financial quality | Fresh `plan-a11-01` ran the actual research cell in `01_research_and_execute.ipynb`; all eight research/read/execute/reconnect/pin cells passed. All 36 fiscal fields and 22 memo quantities match independent statement calculations. The original Markdown memo is 173/180 words. Three complete successful-query receipts form its verified plan. |
+| MSFT risk versus SPY | Real MCP research, five actual notebook cells, independent prices/dividends, 1,256 common observations, 1,255 returns, annual returns, volatility and drawdown/recovery review passed for `plan-a9-01`. |
+| AAPL fixed trend strategy | Actual fresh notebook research; complete SDK/MCP reads; all 2,514 evaluation dates, 51 next-open fills, cash/equity, dividends, commissions and published metrics independently reconciled. Original-period plan replay also passed. Vendor session/auction uncertainty remains disclosed. |
+| S&P 500 momentum screen | Fresh `provenance-a12-01` passed actual notebook and subprocess-MCP research. All 20 rows and metrics match an independent complete 501-asset input capture. Correct coverage is **503 constituents, eight exclusions, 256 eligible, 20 returned**; original roster acquisition is `2026-10-19T18:09:14Z`. |
+| QQQ/SPY Treasury regimes | Actual MCP research and five notebook cells; 120 months, all regime statistics, prices/dividends and month-end clocks independently reconciled for `plan-a9-02`. All 2,521 yield observations also match Federal Reserve DGS10 history. Uses latest history, not a point-in-time vintage guarantee. |
+| MSFT plain-text follow-up | Fresh follow-up over `plan-a11-01` passed actual notebook and MCP reads. Its 133/150 words and all 14 numerical claims match source calculations. It chose the original research execution despite a newer deployment execution. |
+| Screener JSON follow-up | Actual notebook and MCP reads match every value and ordering of all 20 original rows and all six coverage fields. Same study/execution/thread, new deterministic JSON plan and answer, original answer pin unchanged. |
+| Clarification/reconnect | Actual MCP admission, terminal leave, fresh MCP reconnect, unselected notebook choices, empty-reply rejection and explicit in-cell fiscal reply resumed the same thread/checkpoint and produced all three fiscal rows plus the memo. One study execution. Alpha11's validation-message cleanup also passed an actual isolated widget check. |
 
-## Behavioral evidence
+The new screen's SQL-only execution retains its public tables plus a 223,990-row
+date/asset grid. All grid keys match the separate complete earlier same-cohort/
+period price capture; raw c/v are not retained in this new grid. Independent
+recomputation uses that full capture, with separate direct Barchart fetches
+checking all 8,952 price/share rows for the 20 returned names. This is not a
+claim that every new runtime price cell was read back, nor second-provider,
+exact-session or historical-membership certification. ESS/FRT are excluded using
+the retained missing source-sector facts; Native's `Others` fallback does not
+manufacture a known provider sector.
 
-Public response SQL terminals qualify as study sinks; no dashboard exhibit is
-required. Response-only MSFT/risk/macro cases returned their requested answer
-without fabricating a dashboard link. AAPL has populated Native dashboard
-content and an exact-execution Portal link; authenticated Portal rendering after
-sign-in remains frontend acceptance, not a claim made by that link check.
+## Deployment, interface and trace checks
 
-The terminal, asynchronous notebook view and MCP share the same SDK session.
-MCP uses structured progress and questions with no human renderer. Actual CLI
-and subprocess-MCP observers left/rejoined the same native operation without
-creating another graph run or engine job. Blank/recommended choices do not
-silently answer questions. Publication ends research without a second assistant
-narrative. Completed risk, macro, plain and clarification traces were checked
-for tool/model errors and model calls after publication.
+Fresh MSFT deployment produced a new execution and answer under the exact
+verified plan. All three rows/36 fields still match independent statements;
+the new 172-word memo passes 22 quantitative checks. Actual MCP operation reads,
+identical execute repost and complete two-page table reads reattach to that same
+record. The original research answer and plan verification pins stay unchanged.
+Its text trace contains one declared interpretation call, no tools or supervisor.
+Earlier computed-only replay invokes neither a model nor a graph.
 
-Saved-plan deployment reads complete computed data from the new native
-execution, maps table/JSON deterministically and uses one bounded model call
-only for declared text. Real computed-only replay made no graph/model call;
-text replay made no supervisor/tool call. Same-handle reattachment retains the
-new answer revision while the original research answer remains pinned.
+The screen trace has 29 tools/27 model spans, one study execution and one handled
+wrong metadata result/ref association. Fresh MSFT research has 16 tools/16 model
+spans and one handled invalid plan tag, corrected before publication. Neither
+validator nor ownership guard was weakened. Each fresh follow-up has exactly
+`audit_run` and `publish_response`, three model spans, no discovery/build/engine
+call and no tool/model error. All successful traces end at publication with zero
+later model calls. Earlier risk, macro, AAPL and clarification traces retain
+separate receipts.
 
-The alpha9 later-period error was a client classification defect, not permission
-to change a frozen plan. Alpha10/11 preserve the Native pre-admission rejection
-reason instead of calling every HTTP 409 an accepted-input conflict. No new job
-is created by the rejected request.
+Terminal, notebook and MCP share the typed session core and server-owned readable
+operations. Human views update source UI identities and display the saved answer
+once. MCP returns structured progress/questions without a human renderer.
+Response tables do not require dashboard exhibits. Actual response-only dashboard
+checks pass; AAPL exposes a verified populated exact-execution link. Authenticated
+Portal rendering after sign-in remains frontend work, not proof supplied by a URL.
 
-## Evidence ownership and remaining work
+Fixed fiscal labels, SQL filters, settings and rosters remain frozen. The rejected
+later-period AAPL request created no job; alpha10/12 preserve its Native rejection
+reason rather than mislabeling every HTTP 409 an accepted-input conflict. This is
+not rolling-period financial acceptance. Recovery, automatic retry and retention
+systems, proposed dashboard-request fields and weighted progress remain outside
+the core prototype.
 
-Private local evidence is retained under the task's
-`output/interactive-sessions-2026-10-19` directory: versioned launch records,
-redacted acceptance receipts, actual notebook outputs/screenshots, complete
-Arrow page digests, immutable as-run snapshots, vendor captures and trace
-exports. Raw licensed data and authentication material are not committed into
-this public SDK repository.
+## Review and evidence
 
-Before closing ENG-2083: verify fresh named-notebook plan deployment and traces, independently
-accept the corrected full screener, run/compare its JSON follow-up, inspect their
-complete traces and native records, and update this ledger with the outcomes.
-Keep all failed and abandoned attempts. Broader recovery/retry/retention systems
-remain outside the goal.
+[Backend #492](https://github.com/EPOCHDevs/EpochBackend/pull/492),
+[EpochAI #758](https://github.com/EPOCHDevs/EpochAI/pull/758), and
+[SDK #10](https://github.com/EPOCHDevs/EpochSDK/pull/10) contain the reviewable work.
+Independent review is required before merging. The Portal renderer handoff remains
+[ENG-2065](https://linear.app/epoch-inc/issue/ENG-2065).
+
+Private evidence remains in the task's `output/interactive-sessions-2026-10-19`:
+exact launch/package manifests, actual saved notebook counts and screenshots,
+complete Arrow page receipts, immutable as-run snapshots, licensed vendor
+captures and trace exports. Raw licensed data and authentication material are
+not committed into this public repository. Failed/abandoned attempts remain
+available; they were not overwritten by passing ones.

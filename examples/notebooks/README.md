@@ -21,8 +21,8 @@ MSFT/screener evidence. No market result or winning backtest has been pre-filled
 
 **Request revision:** `desk-v2` uses shorter, natural desk requests. The short
 MSFT fundamentals/risk, AAPL, macro, MSFT plain-text follow-up and clarification
-flows have actual notebook/service and source-review evidence. The screener
-and its JSON follow-up still prevent full acceptance. See the
+flows have actual notebook/service and source-review evidence. The corrected screener
+and its JSON follow-up now also have live source and trace acceptance. See the
 [current acceptance ledger](../../docs/interactive-acceptance-2026-10-19.md),
 which distinguishes saved-answer reattachment, fresh research and plan replay.
 
@@ -116,7 +116,7 @@ variant alone, select another execution or refresh market data.
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
 distribution workflow. The current acceptance environment uses StratifyX 3.3.0rc8
-and Epoch SDK 0.1.0a11. Install this checkout's `python/epoch-sdk[notebook]`, plus
+and Epoch SDK 0.1.0a12. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:

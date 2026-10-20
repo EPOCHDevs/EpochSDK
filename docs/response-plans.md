@@ -20,13 +20,15 @@ model step. The AAPL strategy's actual notebook research and original-period
 replay also passed independent source, account, next-open fill, dividend and cost
 review. These checks do not establish every case or a later-period deployment.
 
-The [current acceptance ledger](interactive-acceptance-2026-10-19.md) distinguishes
-component checks, fresh notebook research, saved-answer reattachment, independent
-financial review and deployment replay. The full goal remains open: a fresh
-alpha11 named-notebook plan run passed financial/source review, while the screener plus its JSON
-follow-up still need acceptance. The source-owned roster handoff is now live;
-its first published screen preserved the acquisition clock but failed full-roster
-coverage counts. Its failed answer and as-run source are retained separately.
+The [current acceptance ledger](interactive-acceptance-2026-10-19.md) records
+all eight live case flows, exact candidates, independent calculations and trace
+coverage. Fresh named-notebook MSFT research and its separate deployment passed,
+as did the corrected screener and its exact saved-evidence JSON follow-up.
+The screen's full roster is 503, including two unsupported names; two missing
+source sectors and four missing-history/cutoff cases bring exclusions to eight.
+Original failed answers and as-run sources remain preserved. Final transport
+and delivery bookkeeping are tracked in the ledger rather than inferred from
+a published answer alone.
 
 A later execution period requires the saved plan's explicit
 `allow_period_override` capability. The default is false. During research the

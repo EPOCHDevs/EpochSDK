@@ -97,12 +97,12 @@ Authenticated Portal rendering after sign-in is still frontend acceptance. An
 optional presentation-request field and weighted stage display remain proposals,
 not fields silently added to the closed request contract.
 
-The screener's first published result passed full saved-price calculations but
-failed roster coverage counts. Its next attempt built the correct count, then
-stopped because the supervisor lacked the Native aggregate provenance in its
-normal message. That handoff is now fixed and tested; a fresh screener and its
-saved-evidence JSON follow-up remain required. Existing failed answers and owner
-notebook outputs remain intact.
+The first screener answer failed full-roster coverage review, and the next
+attempt exposed a missing typed provenance relay. Both attempts remain retained.
+The corrected fresh notebook/MCP screen and its deterministic JSON follow-up
+now pass complete-output, source/calculation and trace checks. All 20 rows and
+six coverage fields agree, with the original roster clock and answer pin intact.
+The current acceptance ledger records the precise raw-input comparison scope.
 
 Original-period computed-only and bounded-text saved-plan execution passed real
 SDK/MCP and source/trace checks. Fixed fiscal labels, SQL date filters and

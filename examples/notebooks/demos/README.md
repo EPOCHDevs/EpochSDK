@@ -103,16 +103,14 @@ rows and the memo. These checks used isolated acceptance copies to preserve the
 owner's open notebooks. Alpha11's stale validation-label cleanup also passed a
 separate actual widget check. Existing owner kernels were not patched in place.
 
-The screener and its JSON follow-up are the two remaining case flows.
-Native Discovery now retains the original roster timestamp and full population
-facts. The first fresh notebook/MCP result preserved that clock but failed
-independent coverage review: it counted 501 supported constituents instead of
-all 503, omitting two unsupported names from exclusions. The next attempt stopped before execution when the supervisor demanded identities
-for the unsupported aggregate count. The missing typed handoff facts are now
-fixed and tested; a fresh unmodified request still needs acceptance. These source
-notebooks contain requests, not pre-filled successful findings. The
+All eight case flows now have actual service/notebook and source/trace evidence.
+The corrected screener reports 503 constituents, eight exclusions, 256 eligible
+and 20 returned, preserving the original roster clock. Its saved-evidence JSON
+matches every cell and the original ordering. The fresh plain-text follow-up
+keeps the explicit original execution despite a newer deployment. These source
+notebooks contain requests, not pre-filled results. The
 [acceptance ledger](../../../docs/interactive-acceptance-2026-10-19.md) records
-the current evidence and remaining checks.
+exact versions, failed history, calculation scope and remaining delivery checks.
 
 The generic chooser and low-level transport walkthroughs remain one folder up
 for development. Notebook files here are generated from the canonical requests
