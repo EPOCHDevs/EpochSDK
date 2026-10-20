@@ -18,6 +18,7 @@ from .output_validation import JsonValueOutput, TableValue
 from .presentation import ui_text
 from .research import ResearchCompleted
 from .session import (
+    EventHandler,
     ResearchSession,
     SessionEvent,
     SessionQuestions,
@@ -296,11 +297,16 @@ class NotebookView:
                         )
                     )
 
-    async def run(self) -> ResearchCompleted | NeedsInput:
+    async def run(self, *, on_event: EventHandler | None = None) -> ResearchCompleted | NeedsInput:
+        async def update(event: SessionEvent) -> None:
+            await self.update(event)
+            if on_event is not None:
+                await on_event(event)
+
         self._refresh()
         display(self.root)
         try:
-            result = await self.session.run(on_event=self.update, on_question=self.ask)
+            result = await self.session.run(on_event=update, on_question=self.ask)
         except EpochError as error:
             self.status = "Research stopped · " + error.error.code
             self._refresh()

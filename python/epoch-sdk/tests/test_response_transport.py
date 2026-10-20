@@ -85,23 +85,19 @@ def test_notebook_publication_and_read_use_the_generated_native_client() -> None
     asyncio.run(scenario())
 
 
-def test_mcp_publishes_and_reads_the_same_typed_response_without_an_agent_run() -> None:
+def test_sdk_publishes_and_mcp_reads_the_same_typed_response_without_an_agent_run() -> None:
     async def scenario() -> None:
         async with clients() as (sdk, _), Client(create_server(sdk)) as mcp:
-            published = await mcp.call_tool(
-                "epoch_publish_response",
-                {
-                    "request_id": "example_query",
-                    "thread_id": "example_thread",
-                    "primary_execution_id": "example_execution",
-                    "content": example()["content"],
-                },
+            published = await sdk.publish_response(
+                "example_query",
+                ResearchResponseContent.model_validate(example()["content"]),
+                thread_id="example_thread",
+                primary_execution_id="example_execution",
             )
-            assert not published.is_error
-            assert published.structured_content == example()
-            read = await mcp.call_tool("epoch_response", {"response_id": example()["response_id"]})
+            assert published.to_wire() == example()
+            read = await mcp.call_tool("epoch_read", {"response_id": example()["response_id"]})
             assert not read.is_error
-            assert read.structured_content == published.structured_content
+            assert read.structured_content == published.to_wire()
 
     asyncio.run(scenario())
 
@@ -120,9 +116,7 @@ def test_another_execution_cannot_be_returned_as_the_requested_response() -> Non
 def test_mcp_keeps_access_failure_separate_from_protocol_failure() -> None:
     async def scenario() -> None:
         async with clients(denied=True) as (sdk, _), Client(create_server(sdk)) as mcp:
-            result = await mcp.call_tool(
-                "epoch_response", {"response_id": example()["response_id"]}
-            )
+            result = await mcp.call_tool("epoch_read", {"response_id": example()["response_id"]})
             assert not result.is_error
             assert result.structured_content["error"]["code"] == "FORBIDDEN"
             assert "execution_id" not in result.structured_content

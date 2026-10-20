@@ -58,13 +58,10 @@ Current native routes:
 | LangGraph | Native state, run/wait and interrupt/resume |
 | EpochSDK/MCP | Wrap native LangGraph and generated StratifyX clients |
 
-The same Python SDK works in notebooks, scripts and applications. Its methods are
-`EpochClient.research`, `resume_research`, `research_status`
-and the separate `execute_saved`/`execution`. MCP exposes the same methods through
-`epoch_research`, `epoch_resume_research`, `epoch_research_status`,
-`epoch_execute_saved` and `epoch_execution`. `epoch_response` reads by answer ID;
-`epoch_publish_response` names the original query/thread and optional primary
-execution. It starts neither an agent nor a job.
+The public SDK and MCP share five operations: `run`, `execute`, `resume`,
+`status` and `read`. A task string plus optional context, output declarations and
+parameters goes through one session. Epoch owns discovery, building, output
+validation and publication. See [the interface](public-client-interface.md).
 
 Caller-chosen `operation_id` values reconnect SDK/MCP clients to the same accepted
 research or prepared execution. Matching inputs attach; changed inputs conflict.
@@ -75,7 +72,7 @@ activity. See [readable reconnect](reconnect-operations.md) for notebook and MCP
 
 New table answers carry saved-source references, with no 10,000-row total-table
 ceiling. Use `response_table` / `iter_response_table` on either client, or MCP
-`epoch_response_table`, to read pages of up to 10,000 rows and 4 MiB. Saved answer
+`epoch_read` with a table name, to read pages of up to 10,000 rows and 4 MiB. Saved answer
 JSON remains bounded to 4 MiB. Older inline-row answers retain their saved order
 and remain readable. See [table access](response-tables.md). Invalid, ambiguous,
 incomplete or oversized output fails explicitly. Schema

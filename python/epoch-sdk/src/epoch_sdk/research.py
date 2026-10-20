@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Literal
@@ -25,7 +26,15 @@ from stratifyx.core.api_error import ApiError
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 from stratifyx.types.job_list_item import JobListItem
 
-from .contracts import Contract, DomainError, ErrorResponse, RunParameters, RunRequest
+from .contracts import (
+    Contract,
+    DomainError,
+    ErrorResponse,
+    OutputRequest,
+    RunParameters,
+    RunRequest,
+    TextOutputRequest,
+)
 from .errors import EpochError
 from .responses import ResponseTablePage, SavedResearchResponse
 from .supervisor import (
@@ -42,7 +51,7 @@ from .supervisor import (
 )
 
 if TYPE_CHECKING:
-    from .session import ResearchSession
+    from .session import EventHandler, ResearchSession
 
 
 class ResearchAccepted(Contract):
@@ -187,22 +196,148 @@ class EpochClient:
 
     async def run(
         self,
-        request: RunRequest | None = None,
+        task: RunRequest | str | None = None,
         *,
-        operation_id: str,
+        operation_id: str | None = None,
         thread_id: str | None = None,
+        context: list[str] | None = None,
+        outputs: list[OutputRequest] | None = None,
+        parameters: RunParameters | None = None,
+        auto_ingest: bool = False,
         interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
+        on_event: EventHandler | None = None,
+        request: RunRequest | None = None,
     ) -> ResearchCompleted | NeedsInput:
         """Stream research, collect explicit replies, and display its saved answer.
 
         Notebook and terminal adapters are optional presentation extras. In a
         noninteractive process this returns structured questions without waiting
-        for keyboard input. Use execute_saved for prepared engine work.
+        for keyboard input. A plain task defaults to a concise Markdown answer.
+        Supply operation_id to reconnect; omit the task to observe saved work.
+        Use execute for prepared work. Typed RunRequest callers remain supported.
         """
         from .interactive import run_interactive
 
+        if request is not None:
+            if task is not None:
+                raise ValueError("Supply task or the legacy request keyword, not both.")
+            task = request
+        request = task
+        additions = (context, outputs, parameters)
+        if isinstance(request, str):
+            request = RunRequest(
+                task=request,
+                context=[] if context is None else context,
+                outputs=outputs
+                if outputs is not None
+                else [
+                    TextOutputRequest(
+                        name="answer",
+                        type="text",
+                        format="markdown",
+                        instructions="Answer the task concisely using the research evidence.",
+                    )
+                ],
+                **({"parameters": parameters} if parameters is not None else {}),
+                **({"auto_ingest": True} if auto_ingest else {}),
+            )
+        elif any(value is not None for value in additions) or auto_ingest:
+            raise ValueError("Supply task fields with a plain task, or put them in RunRequest.")
+        if request is None and operation_id is None:
+            raise ValueError("Supply a task to start work or operation_id to reconnect.")
         return await run_interactive(
-            self.session(request, operation_id=operation_id, thread_id=thread_id), interface
+            self.session(
+                request,
+                operation_id=operation_id if operation_id is not None else "run-" + uuid4().hex,
+                thread_id=thread_id,
+            ),
+            interface,
+            on_event=on_event,
+        )
+
+    async def resume(
+        self,
+        operation_id: str,
+        responses: dict[str, Answers],
+        *,
+        interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
+        on_event: EventHandler | None = None,
+    ) -> ResearchCompleted | NeedsInput:
+        """Answer this operation's current questions, then continue the same session."""
+        from .interactive import run_interactive
+
+        waiting = await self.research_status(operation_id=operation_id)
+        if not isinstance(waiting, NeedsInput):
+            raise ValueError("This operation is not waiting for an answer.")
+        session = self.session(operation_id=operation_id)
+        await session.resume(waiting, responses)
+        return await run_interactive(session, interface, on_event=on_event)
+
+    async def status(
+        self,
+        operation_id: str,
+        *,
+        kind: Literal["run", "execute"] = "run",
+    ) -> ResearchResult | ChosenExecution | ExecutionAccepted:
+        """Read one operation; never submit, resume or execute work."""
+        if kind == "run":
+            return await self.research_status(operation_id=operation_id)
+        if kind == "execute":
+            return await self.execution_operation(operation_id)
+        raise ValueError("Operation kind must be run or execute.")
+
+    async def execute(
+        self,
+        reference: SavedStudy | str,
+        *,
+        period: DatePeriodConfig,
+        execution: ExecutionOptions | None = None,
+        operation_id: str | None = None,
+    ) -> ChosenExecution:
+        """Run prepared work and wait for completion and any saved response plan.
+
+        Waiting only reads the accepted operation. Cancelling this local observer
+        does not cancel Backend work. execute_saved remains the admission-only API.
+        """
+        operation_id = operation_id if operation_id is not None else "execute-" + uuid4().hex
+        if not operation_id.strip() or operation_id != operation_id.strip():
+            raise ValueError("Provide an exact nonblank operation_id")
+        current = await self.execute_saved(
+            reference, period=period, execution=execution, operation_id=operation_id
+        )
+        while True:
+            if isinstance(current, ChosenExecution):
+                state = current.execution.status.value
+                if state == "completed":
+                    return current
+                if state in {"failed", "cancelled"}:
+                    raise EpochError(
+                        DomainError(
+                            code="EXECUTION_FAILED",
+                            message=f"Prepared execution {state}.",
+                            retryable=False,
+                        ),
+                        execution_id=current.execution.id,
+                    )
+            await asyncio.sleep(1)
+            current = await self.execution_operation(operation_id)
+
+    async def read(
+        self,
+        response_id: str,
+        *,
+        table: str | None = None,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> SavedResearchResponse | ResponseTablePage:
+        """Read an answer or one table page from Backend, without starting work."""
+        if table is None:
+            if offset != 0 or page_size != 1000:
+                raise ValueError("Table paging options require a table name.")
+            return await self.response(response_id, version=version)
+        return await self.response_table(
+            response_id, table, version=version, offset=offset, page_size=page_size
         )
 
     async def response(

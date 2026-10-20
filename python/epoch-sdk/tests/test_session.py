@@ -186,15 +186,15 @@ def test_questions_remain_structured_and_explicit_replies_resume_same_operation(
             if mcp:
                 async with Client(create_server(client.supervisor)) as caller:
                     pending = await caller.call_tool(
-                        "epoch_research", {"request": REQUEST, "operation_id": "question-one"}
+                        "epoch_run", {**REQUEST, "operation_id": "question-one"}
                     )
                     assert not pending.is_error
                     waiting = NeedsInput.model_validate(pending.structured_content)
                     assert service.resumes == 0
                     completed = await caller.call_tool(
-                        "epoch_resume_research",
+                        "epoch_resume",
                         {
-                            "waiting": waiting.model_dump(mode="json"),
+                            "operation_id": waiting.handle.operation_id,
                             "responses": {
                                 INTERRUPT["id"]: {
                                     "answers": [{"question_index": 0, "selected_indices": [0]}]
@@ -246,13 +246,13 @@ def test_mcp_reports_structured_progress_without_importing_human_renderers(monke
             tools = await caller.list_tools()
             assert (
                 "ctx"
-                not in next(
-                    tool for tool in tools.tools if tool.name == "epoch_research"
-                ).input_schema["properties"]
+                not in next(tool for tool in tools.tools if tool.name == "epoch_run").input_schema[
+                    "properties"
+                ]
             )
             result = await caller.call_tool(
-                "epoch_research",
-                {"request": REQUEST, "operation_id": "mcp-stream"},
+                "epoch_run",
+                {**REQUEST, "operation_id": "mcp-stream"},
                 progress_callback=notify,
             )
         assert not result.is_error

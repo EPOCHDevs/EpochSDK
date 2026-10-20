@@ -113,8 +113,8 @@ async def research(client, mode, request, operation_id):
     return RESULT.validate_python(
         await mcp_call(
             client,
-            "epoch_research",
-            {"request": request.to_wire(), "operation_id": operation_id},
+            "epoch_run",
+            {**request.to_wire(), "operation_id": operation_id},
         )
     )
 
@@ -123,7 +123,7 @@ async def status(client, mode, operation_id):
     if mode == "sdk":
         return await client.research_status(operation_id=operation_id)
     return RESULT.validate_python(
-        await mcp_call(client, "epoch_research_status", {"operation_id": operation_id})
+        await mcp_call(client, "epoch_status", {"operation_id": operation_id})
     )
 
 
@@ -133,9 +133,9 @@ async def resume(client, mode, waiting, answers):
     return RESULT.validate_python(
         await mcp_call(
             client,
-            "epoch_resume_research",
+            "epoch_resume",
             {
-                "waiting": waiting.model_dump(mode="json"),
+                "operation_id": waiting.handle.operation_id,
                 "responses": {
                     key: value.model_dump(mode="json") for key, value in answers.items()
                 },
@@ -389,10 +389,10 @@ async def execute(args, receipt: ProofReceipt):
                 task = asyncio.create_task(
                     mcp_call(
                         executor,
-                        "epoch_execute_saved",
+                        "epoch_execute",
                         {
                             "reference": args.operation_id,
-                            "parameters": case.request.parameters.to_wire(),
+                            **case.request.parameters.to_wire(),
                             "operation_id": execution_handle,
                         },
                     )
@@ -431,12 +431,12 @@ async def execute(args, receipt: ProofReceipt):
                     selected = EXECUTION.validate_python(
                         await mcp_call(
                             fresh,
-                            "epoch_execute_saved",
+                            "epoch_execute",
                             {
                                 "reference": completed.reusable_study.model_dump(
                                     mode="json"
                                 ),
-                                "parameters": case.request.parameters.to_wire(),
+                                **case.request.parameters.to_wire(),
                                 "operation_id": execution_handle,
                             },
                         )

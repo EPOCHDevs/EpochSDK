@@ -127,22 +127,13 @@ not implemented by this method; it must not be described as a lossless replay.
 
 ## MCP
 
-`epoch-mcp` serves the same adapter over stdio using the environment above.
-Configure an MCP host to launch that command in the installed environment.
-An MCP host may call:
-
-| Tool | Input | Behavior |
-| --- | --- | --- |
-| `epoch_run` | `task`, optional `thread_id` | Send a task to the existing supervisor |
-| `epoch_resume` | Entire `waiting` result, answers keyed by interrupt ID | Resume the same checkpoint |
-| `epoch_execute_saved` | `reference`, `parameters.period`, optional `parameters.execution` | Submit directly to Backend |
-| `epoch_status` | `handle` | Read progress or the result after a UI resume; starts no run |
-| `epoch_outputs` | Saved output `manifest` | Read complete bounded native values and validate them; starts no run |
-
-Questions appear as readable text and structured data. Invalid tool arguments
-are tool errors. `needs_input`, `no_execution` and `execution_selected` are
-structured SDK outcomes, alongside `in_progress`. MCP owns no additional
-workflow registry or agent.
+`epoch-mcp` exposes `epoch_run`, `epoch_execute`, `epoch_resume`, `epoch_status`
+and `epoch_read` over the public SDK. Task-only calls, explicit output schemas,
+structured progress/questions and saved answers all use the shared session.
+There are no separate default publication, manifest or supervisor tools.
+See [the shared public interface](public-client-interface.md) for signatures and
+migration from the older catalogue. Advanced native SDK calls described above
+remain available to existing callers.
 
 ## Verification and remaining work
 

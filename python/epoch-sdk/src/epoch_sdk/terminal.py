@@ -16,6 +16,7 @@ from .output_validation import JsonValueOutput, TextValue
 from .presentation import question_answer, ui_text
 from .research import ResearchCompleted
 from .session import (
+    EventHandler,
     ResearchSession,
     SessionEvent,
     SessionQuestions,
@@ -147,10 +148,15 @@ class TerminalView:
             )
         )
 
-    async def run(self) -> ResearchCompleted | NeedsInput:
+    async def run(self, *, on_event: EventHandler | None = None) -> ResearchCompleted | NeedsInput:
+        async def update(event: SessionEvent) -> None:
+            await self.update(event)
+            if on_event is not None:
+                await on_event(event)
+
         self.live.start()
         try:
-            result = await self.session.run(on_event=self.update, on_question=self.ask)
+            result = await self.session.run(on_event=update, on_question=self.ask)
         finally:
             self.live.stop()
         if isinstance(result, ResearchCompleted):

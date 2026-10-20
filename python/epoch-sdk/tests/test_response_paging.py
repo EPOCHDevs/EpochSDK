@@ -101,10 +101,10 @@ def test_mcp_returns_explicit_page_metadata_and_an_empty_end_page():
     async def scenario():
         async with clients() as (sdk, _, _), Client(create_server(sdk)) as mcp:
             page = await mcp.call_tool(
-                "epoch_response_table",
+                "epoch_read",
                 {
                     "response_id": example()["response_id"],
-                    "name": "results",
+                    "table": "results",
                     "version": 1,
                     "offset": 25000,
                     "page_size": 1000,

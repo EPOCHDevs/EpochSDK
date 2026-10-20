@@ -95,14 +95,13 @@ The optional question callback receives `NeedsInput` and returns native
 `dict[str, Answers]` keyed by interrupt ID, or `None` to leave the question
 pending. Without a question callback, a pending question returns immediately.
 
-MCP's `epoch_research` with a readable `operation_id` uses this headless core.
-MCP progress messages contain the closed session event as JSON using the standard
-progress notification. Questions and the saved answer are returned as structured
-tool results. The calling agent uses context to answer an authorized question or
-asks its user, then calls `epoch_resume_research`. The MCP server never imports a
-terminal/notebook renderer or opens keyboard/widget input. Legacy calls without
-an operation ID retain the older native research path; supply an ID for streamed,
-reconnectable sessions.
+MCP's `epoch_run` uses this same headless session for every task, with or
+without a supplied operation ID. Progress notifications contain closed session
+events as JSON. Questions and saved answers are structured tool results. The
+calling agent supplies explicit answers using `epoch_resume(operation_id,
+responses)`. MCP imports no notebook/terminal renderer and never chooses a
+recommendation automatically. The complete five-operation surface is documented
+in [the shared client interface](public-client-interface.md).
 
 ## Results and dashboard independence
 

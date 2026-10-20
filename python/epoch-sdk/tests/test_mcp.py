@@ -1,28 +1,203 @@
+"""Public MCP/SDK parity over native admission, streaming and saved operations."""
+
 from __future__ import annotations
 
 import asyncio
+import copy
 
 import pytest
 from mcp import Client
-from test_supervisor import INTERRUPT, THREAD, clients, job, published
+from test_operation_reconnect import Service
+from test_research import REQUEST
+from test_session import StreamService
+from test_supervisor import INTERRUPT, clients, published
 
-from epoch_sdk.mcp import create_server
+from epoch_sdk.mcp import _result, create_server
 from epoch_sdk.supervisor import NoExecution, PublishedAnswer
 
 
+def test_public_surface_has_five_tools_and_task_is_the_only_required_run_field():
+    async def scenario():
+        service = StreamService()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            tools = {tool.name: tool for tool in (await mcp.list_tools()).tools}
+            assert set(tools) == {
+                "epoch_run",
+                "epoch_execute",
+                "epoch_resume",
+                "epoch_status",
+                "epoch_read",
+            }
+            assert tools["epoch_run"].input_schema["required"] == ["task"]
+            assert all(
+                tool.input_schema["additionalProperties"] is False for tool in tools.values()
+            )
+            assert "ctx" not in tools["epoch_run"].input_schema["properties"]
+            assert service.submissions == service.jobs == 0
+
+    asyncio.run(scenario())
+
+
+def test_unknown_task_fields_fail_before_any_service_work():
+    async def scenario():
+        service = StreamService()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            result = await mcp.call_tool("epoch_run", {"task": "Compare sales", "output": "json"})
+            assert result.is_error
+            assert "Unknown arguments: output" in result.content[0].text
+            assert service.record is None and service.submissions == 0 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("keyed", [False, True])
+def test_task_only_run_always_uses_the_published_session_path(keyed):
+    async def scenario():
+        service = StreamService()
+        service.response["content"]["outputs"] = [
+            {"name": "answer", "type": "text", "format": "markdown", "value": "The saved answer."}
+        ]
+        args = {"task": REQUEST["task"]}
+        if keyed:
+            args["operation_id"] = "task-only"
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            result = await mcp.call_tool("epoch_run", args)
+            assert not result.is_error
+            wire = result.structured_content
+            assert wire["status"] == "succeeded" and wire["operation_id"]
+            assert wire["response"]["content"]["outputs"][0]["value"] == "The saved answer."
+            assert service.record["request"]["outputs"][0]["type"] == "text"
+            assert service.record["request"]["outputs"][0]["format"] == "markdown"
+            assert service.streams == service.submissions == 1
+            before = len(service.graph_calls)
+            observed = await mcp.call_tool("epoch_status", {"operation_id": wire["operation_id"]})
+            assert observed.structured_content == wire
+            assert len(service.graph_calls) == before
+
+    asyncio.run(scenario())
+
+
+def test_run_reconnects_with_the_same_inputs_and_preserves_named_json_outputs():
+    async def scenario():
+        service = StreamService()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            args = {**REQUEST, "operation_id": "same-operation"}
+            first = await mcp.call_tool("epoch_run", args)
+            again = await mcp.call_tool("epoch_run", args)
+            assert not first.is_error and again.structured_content == first.structured_content
+            assert first.structured_content["response"]["content"]["outputs"][0]["value"] == {
+                "rows": 2
+            }
+            assert service.submissions == 1
+            changed = await mcp.call_tool("epoch_run", {**args, "task": "Different task"})
+            assert changed.structured_content["error"]["code"] == "IDEMPOTENCY_CONFLICT"
+            assert service.submissions == 1
+
+    asyncio.run(scenario())
+
+
+def test_fresh_mcp_resumes_by_operation_id_without_copying_the_checkpoint():
+    async def scenario():
+        service = StreamService(questions=True)
+        async with service.client() as sdk, Client(create_server(sdk)) as first:
+            pending = await first.call_tool("epoch_run", {**REQUEST, "operation_id": "questions"})
+            assert pending.structured_content["status"] == "needs_input"
+            thread = pending.structured_content["handle"]["thread_id"]
+            assert service.resumes == 0
+        async with service.client() as sdk, Client(create_server(sdk)) as second:
+            invalid = await second.call_tool(
+                "epoch_resume",
+                {
+                    "operation_id": "questions",
+                    "responses": {
+                        INTERRUPT["id"]: {
+                            "answers": [{"question_index": 0, "selected_indices": [99]}]
+                        }
+                    },
+                },
+            )
+            assert invalid.structured_content["error"]["code"] == "INVALID_STATE"
+            assert service.resumes == 0
+            complete = await second.call_tool(
+                "epoch_resume",
+                {
+                    "operation_id": "questions",
+                    "responses": {
+                        INTERRUPT["id"]: {
+                            "answers": [{"question_index": 0, "selected_indices": [0]}]
+                        }
+                    },
+                },
+            )
+            assert not complete.is_error and complete.structured_content["status"] == "succeeded"
+            assert complete.structured_content["response"]["thread_id"] == thread
+            assert service.resumes == service.submissions == 1
+
+    asyncio.run(scenario())
+
+
+def test_execute_and_its_status_use_backend_without_a_supervisor():
+    async def scenario():
+        service = Service()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            value = await mcp.call_tool(
+                "epoch_execute",
+                {
+                    "reference": {"study_id": "study-one", "source_execution_id": "new"},
+                    "period": {"start": "2025-01-01", "end": "2025-12-31"},
+                    "operation_id": "prepared",
+                },
+            )
+            assert not value.is_error
+            assert value.structured_content["execution"]["status"] == "completed"
+            status = await mcp.call_tool(
+                "epoch_status", {"operation_id": "prepared", "kind": "execute"}
+            )
+            assert status.structured_content == value.structured_content
+            assert service.jobs == 1 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "epoch_research",
+        "epoch_research_status",
+        "epoch_resume_research",
+        "epoch_execute_saved",
+        "epoch_execution",
+        "epoch_execution_operation",
+        "epoch_outputs",
+        "epoch_publish_response",
+        "epoch_response",
+        "epoch_response_table",
+    ],
+)
+def test_retired_tools_are_not_callable(name):
+    async def scenario():
+        service = StreamService()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            result = await mcp.call_tool(name, {})
+            assert result.is_error
+            assert service.submissions == service.jobs == 0 and service.graph_calls == []
+
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("kind", ["execution-free-answer", "publication-error"])
-def test_mcp_preserves_closed_publication_metadata_without_checkpoint_nulls(kind) -> None:
-    async def scenario() -> None:
-        if kind == "execution-free-answer":
-            state = {
+def test_transport_preserves_closed_publication_metadata_without_checkpoint_nulls(kind):
+    async def scenario():
+        state = (
+            {
                 "published_response": {
                     **published("unused"),
                     "primary_execution_id": None,
                     "study_id": None,
                 }
             }
-        else:
-            state = {
+            if kind == "execution-free-answer"
+            else {
                 "publication_error": {
                     "code": "TEMPORARILY_UNAVAILABLE",
                     "message": "Publication was not confirmed.",
@@ -31,161 +206,19 @@ def test_mcp_preserves_closed_publication_metadata_without_checkpoint_nulls(kind
                     "questions": None,
                 }
             }
-        async with clients([state]) as (sdk, _, _), Client(create_server(sdk)) as mcp:
-            result = await mcp.call_tool("epoch_run", {"task": "A brief answer"})
-            assert not result.is_error
-            wire = result.structured_content
-            assert wire is not None
+        )
+        async with clients([copy.deepcopy(state)]) as (sdk, _, _):
+            wire = _result(await sdk.run("A brief answer")).structured_content
             if kind == "execution-free-answer":
                 parsed = PublishedAnswer.model_validate(wire)
                 assert parsed.response.primary_execution_id is None
-                assert "primary_execution_id" not in wire["response"]
-                assert "study_id" not in wire["response"]
+                assert (
+                    "primary_execution_id" not in wire["response"]
+                    and "study_id" not in wire["response"]
+                )
             else:
                 parsed = NoExecution.model_validate(wire)
                 assert parsed.publication_error.code == "TEMPORARILY_UNAVAILABLE"
                 assert "gaps" not in wire["publication_error"]
-
-    asyncio.run(scenario())
-
-
-def test_mcp_round_trip_keeps_the_pending_thread_and_resumes_via_the_sdk() -> None:
-    async def scenario() -> None:
-        replies = [
-            {"execution_ids": ["old"], "__interrupt__": [INTERRUPT]},
-            {"execution_ids": ["old", "new"], "published_response": published("new")},
-        ]
-        async with (
-            clients(replies, before={"execution_ids": ["old"]}) as (sdk, graph_calls, _),
-            Client(create_server(sdk)) as mcp,
-        ):
-            tools = await mcp.list_tools()
-            assert {tool.name for tool in tools.tools} == {
-                "epoch_run",
-                "epoch_resume",
-                "epoch_execute_saved",
-                "epoch_status",
-                "epoch_outputs",
-                "epoch_response",
-                "epoch_publish_response",
-                "epoch_research",
-                "epoch_research_status",
-                "epoch_resume_research",
-                "epoch_execution",
-                "epoch_execution_operation",
-                "epoch_response_table",
-            }
-            waiting = await mcp.call_tool(
-                "epoch_run", {"task": "Compare sales", "thread_id": THREAD}
-            )
-            assert not waiting.is_error
-            assert waiting.structured_content is not None
-            assert waiting.structured_content["status"] == "needs_input"
-            assert waiting.structured_content["handle"]["thread_id"] == THREAD
-            feedback = "\n".join(item.text for item in waiting.content if item.type == "text")
-            assert "Which period?" in feedback and "2024 (recommended)" in feedback
-            result = await mcp.call_tool(
-                "epoch_resume",
-                {
-                    "waiting": waiting.structured_content,
-                    "responses": {
-                        "interrupt-one": {
-                            "answers": [{"question_index": 0, "selected_indices": [1]}]
-                        }
-                    },
-                },
-            )
-            assert not result.is_error
-            assert result.structured_content is not None
-            assert result.structured_content["response"]["primary_execution_id"] == "new"
-            assert not any(call.method == "DELETE" for call in graph_calls)
-
-    asyncio.run(scenario())
-
-
-def test_mcp_reuses_a_saved_study_without_calling_the_supervisor() -> None:
-    async def scenario() -> None:
-        async with (
-            clients(
-                [], backend_jobs={"fresh-execution": job("fresh-execution", status="queued")}
-            ) as (sdk, graph_calls, _),
-            Client(create_server(sdk)) as mcp,
-        ):
-            result = await mcp.call_tool(
-                "epoch_execute_saved",
-                {
-                    "reference": {
-                        "study_id": "study-one",
-                        "source_execution_id": "old",
-                        "thread_id": THREAD,
-                    },
-                    "parameters": {"period": {"start": "2024-01-01", "end": "2024-12-31"}},
-                },
-            )
-            assert not result.is_error
-            assert result.structured_content is not None
-            assert result.structured_content["execution"]["id"] == "fresh-execution"
-            assert result.structured_content["execution"]["status"] == "queued"
-            observed = await mcp.call_tool(
-                "epoch_execution",
-                {"execution_id": "fresh-execution"},
-            )
-            assert not observed.is_error
-            assert observed.structured_content["id"] == "fresh-execution"
-            assert observed.structured_content["status"] == "queued"
-            assert graph_calls == []
-
-    asyncio.run(scenario())
-
-
-def test_mcp_invalid_resume_is_a_tool_error_and_keeps_the_checkpoint() -> None:
-    async def scenario() -> None:
-        async with (
-            clients([{"__interrupt__": [INTERRUPT]}]) as (sdk, graph_calls, _),
-            Client(create_server(sdk)) as mcp,
-        ):
-            waiting = await mcp.call_tool("epoch_run", {"task": "Compare sales"})
-            before = len(graph_calls)
-            result = await mcp.call_tool(
-                "epoch_resume",
-                {
-                    "waiting": waiting.structured_content,
-                    "responses": {
-                        "interrupt-one": {
-                            "answers": [{"question_index": 0, "selected_indices": [99]}]
-                        }
-                    },
-                },
-            )
-            assert result.is_error
-            assert len(graph_calls) == before
-
-    asyncio.run(scenario())
-
-
-def test_mcp_reads_the_result_after_the_human_ui_resume_without_starting_a_run() -> None:
-    async def scenario() -> None:
-        async with (
-            clients([{"__interrupt__": [INTERRUPT]}]) as (sdk, _, _),
-            Client(create_server(sdk)) as first,
-        ):
-            waiting = await first.call_tool("epoch_run", {"task": "Compare sales"})
-            assert waiting.structured_content is not None
-            handle = waiting.structured_content["handle"]
-        async with (
-            clients(
-                [],
-                observed={
-                    "execution_ids": ["from-ui"],
-                    "published_response": published("from-ui", handle["request_id"]),
-                },
-            ) as (sdk, calls, _),
-            Client(create_server(sdk)) as second,
-        ):
-            result = await second.call_tool("epoch_status", {"handle": handle})
-            assert not result.is_error
-            assert result.structured_content is not None
-            assert result.structured_content["response"]["primary_execution_id"] == "from-ui"
-            assert all(call.method == "GET" for call in calls)
 
     asyncio.run(scenario())

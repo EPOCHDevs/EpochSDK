@@ -103,13 +103,13 @@ runner; it is not a desk case or a notebook default.
 
 ## MCP uses the same requests
 
-Pass the selected base file's object to `epoch_research`, with its own readable
+Pass the selected base file's object to `epoch_run`, with its own readable
 operation ID. No notebook-specific SDK or server is involved. The notebook's
 helpers only load local files, format displays and check results.
 
 For an output variant, notebook 03 displays the fully resolved request with the
 source study/execution identities. Supply that request and original thread ID to
-MCP's `epoch_research`, using a distinct operation ID. Do not submit an unresolved
+MCP's `epoch_run`, using a distinct operation ID. Do not submit an unresolved
 variant alone, select another execution or refresh market data.
 
 ## Another environment

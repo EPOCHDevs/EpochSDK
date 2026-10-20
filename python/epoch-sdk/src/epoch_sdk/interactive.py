@@ -6,7 +6,7 @@ import sys
 from typing import Literal
 
 from .research import ResearchCompleted
-from .session import ResearchSession
+from .session import EventHandler, ResearchSession
 from .supervisor import NeedsInput
 
 
@@ -22,6 +22,8 @@ def notebook_environment() -> bool:
 async def run_interactive(
     session: ResearchSession,
     interface: Literal["auto", "terminal", "notebook", "headless"],
+    *,
+    on_event: EventHandler | None = None,
 ) -> ResearchCompleted | NeedsInput:
     if interface == "auto":
         interface = (
@@ -30,7 +32,7 @@ async def run_interactive(
             else ("terminal" if sys.stdin.isatty() and sys.stdout.isatty() else "headless")
         )
     if interface == "headless":
-        return await session.run()
+        return await session.run(on_event=on_event)
     if interface == "notebook":
         try:
             from .notebook import NotebookView
@@ -38,7 +40,7 @@ async def run_interactive(
             raise RuntimeError(
                 "Install epoch-sdk[notebook] to use the notebook interface"
             ) from error
-        return await NotebookView(session).run()
+        return await NotebookView(session).run(on_event=on_event)
     if interface == "terminal":
         if not sys.stdin.isatty():
             raise ValueError(
@@ -50,5 +52,5 @@ async def run_interactive(
             raise RuntimeError(
                 "Install epoch-sdk[terminal] to use the terminal interface"
             ) from error
-        return await TerminalView(session).run()
+        return await TerminalView(session).run(on_event=on_event)
     raise ValueError("Unknown research interface")

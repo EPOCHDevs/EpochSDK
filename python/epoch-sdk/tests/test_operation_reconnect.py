@@ -231,9 +231,9 @@ def test_fresh_client_reattaches_after_original_wait_is_cancelled_and_conversati
                 async with Client(create_server(sdk.supervisor)) as mcp:
                     original = asyncio.create_task(
                         mcp.call_tool(
-                            "epoch_research",
+                            "epoch_run",
                             {
-                                "request": REQUEST,
+                                **REQUEST,
                                 "operation_id": "screen-sp500",
                                 "thread_id": THREAD,
                             },
@@ -258,8 +258,8 @@ def test_fresh_client_reattaches_after_original_wait_is_cancelled_and_conversati
             else:
                 async with Client(create_server(sdk.supervisor)) as mcp:
                     result = await mcp.call_tool(
-                        "epoch_research",
-                        {"request": REQUEST, "operation_id": "screen-sp500", "thread_id": THREAD},
+                        "epoch_run",
+                        {**REQUEST, "operation_id": "screen-sp500", "thread_id": THREAD},
                     )
                     assert result.structured_content["response"]["version"] == 1
         assert service.submissions == 1 and service.graph_calls == []
@@ -415,10 +415,10 @@ def test_rejected_plan_period_is_not_reported_as_a_duplicate_operation(mode):
             else:
                 async with Client(create_server(sdk.supervisor)) as client:
                     response = await client.call_tool(
-                        "epoch_execute_saved",
+                        "epoch_execute",
                         {
                             "reference": source.model_dump(mode="json", exclude_none=True),
-                            "parameters": {"period": {"start": "2026-01-01"}},
+                            "period": {"start": "2026-01-01"},
                             "operation_id": "later-period",
                         },
                     )
@@ -493,7 +493,7 @@ def test_prepared_execution_waits_for_its_answer_and_reconnects_without_a_graph_
             service.response["content"]["outputs"][0]["value"]["optional"] = None
             async with Client(create_server(fresh.supervisor)) as mcp:
                 wire = await mcp.call_tool(
-                    "epoch_execution_operation", {"operation_id": "prepared-one"}
+                    "epoch_status", {"operation_id": "prepared-one", "kind": "execute"}
                 )
                 assert not wire.is_error
                 parsed = ChosenExecution.model_validate(wire.structured_content)

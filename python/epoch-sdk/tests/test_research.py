@@ -118,7 +118,7 @@ async def clients(
                 }
             )
             return httpx.Response(200, json=copy.deepcopy(records))
-        if path == "/api/v1/integration/requests/" + REQUEST_ID:
+        if path.startswith("/api/v1/integration/requests/"):
             if request.method == "PATCH":
                 body = json.loads(request.content)
                 assert body.pop("expected_version") == records["version"]
@@ -317,13 +317,14 @@ def test_publication_service_failure_keeps_its_code_in_fresh_request_reads(mode)
 
     async def scenario():
         async with clients(publication_error=failure) as (sdk, records, graph_calls, _):
-            if mode == "sdk":
-                with pytest.raises(ResearchError) as raised:
-                    await sdk.research(RunRequest.model_validate(REQUEST))
-                assert raised.value.error.to_wire() == failure
-            else:
+            with pytest.raises(ResearchError) as raised:
+                await sdk.research(RunRequest.model_validate(REQUEST))
+            assert raised.value.error.to_wire() == failure
+            if mode == "mcp":
                 async with Client(create_server(sdk.supervisor)) as mcp:
-                    result = await mcp.call_tool("epoch_research", {"request": REQUEST})
+                    result = await mcp.call_tool(
+                        "epoch_status", {"operation_id": "legacy-research"}
+                    )
                     assert result.structured_content["error"] == failure
                     assert result.structured_content["request_id"] == REQUEST_ID
             assert records["phase"] == "failed"
@@ -350,18 +351,18 @@ def test_prepared_work_is_explicitly_separate_from_research():
 
 
 def test_mcp_research_uses_the_same_completion_and_fresh_status_path():
+    from test_session import StreamService
+
     async def scenario():
-        async with (
-            clients() as (sdk, _, graph_calls, _),
-            Client(create_server(sdk.supervisor)) as mcp,
-        ):
-            result = await mcp.call_tool("epoch_research", {"request": REQUEST})
+        service = StreamService()
+        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
+            result = await mcp.call_tool("epoch_run", {**REQUEST, "operation_id": "saved-research"})
             assert not result.is_error and result.structured_content["status"] == "succeeded"
-            assert result.structured_content["response"] == saved_response()
-            graph_calls.clear()
-            fresh = await mcp.call_tool("epoch_research_status", {"request_id": REQUEST_ID})
+            assert result.structured_content["response"]["content"] == saved_response()["content"]
+            service.graph_calls.clear()
+            fresh = await mcp.call_tool("epoch_status", {"operation_id": "saved-research"})
             assert not fresh.is_error and fresh.structured_content == result.structured_content
-            assert graph_calls == []
+            assert service.graph_calls == []
 
     asyncio.run(scenario())
 
