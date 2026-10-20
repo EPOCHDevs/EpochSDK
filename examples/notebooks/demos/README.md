@@ -100,13 +100,19 @@ revision, and published a new 132-word brief with all 19 numerical claims checke
 The clarification example passed MCP admission, terminal leave, MCP reconnect,
 and an explicit notebook reply on the same thread, followed by all three fiscal
 rows and the memo. These checks used isolated acceptance copies to preserve the
-owner's open notebooks. A small stale validation-label cleanup is prepared in
-source; installed preview kernels were not patched in place.
+owner's open notebooks. Alpha11's stale validation-label cleanup also passed a
+separate actual widget check. Existing owner kernels were not patched in place.
 
 The screener and its JSON follow-up are the two remaining case flows.
-The screener currently stops because Discovery does not retain the
-roster timestamp required by its output. These source notebooks contain
-requests, not pre-filled successful findings.
+Native Discovery now retains the original roster timestamp and full population
+facts. The first fresh notebook/MCP result preserved that clock but failed
+independent coverage review: it counted 501 supported constituents instead of
+all 503, omitting two unsupported names from exclusions. The next attempt stopped before execution when the supervisor demanded identities
+for the unsupported aggregate count. The missing typed handoff facts are now
+fixed and tested; a fresh unmodified request still needs acceptance. These source
+notebooks contain requests, not pre-filled successful findings. The
+[acceptance ledger](../../../docs/interactive-acceptance-2026-10-19.md) records
+the current evidence and remaining checks.
 
 The generic chooser and low-level transport walkthroughs remain one folder up
 for development. Notebook files here are generated from the canonical requests

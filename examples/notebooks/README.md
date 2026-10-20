@@ -19,12 +19,12 @@ SPY, an AAPL trend filter, an S&P 500 momentum shortlist, and QQQ/SPY sensitivit
 to US Treasury yield changes. Two further requests change the format of existing
 MSFT/screener evidence. No market result or winning backtest has been pre-filled.
 
-**Request revision:** `desk-v2` uses shorter, natural desk requests. Earlier live
-acceptance covered MSFT fundamentals, risk JSON and the saved plain-text variant
-with more explicit requests. The shorter MSFT fundamentals request has now passed
-its actual notebook session, complete reads, source comparison and saved-study
-execution. Other shorter cases still need their own live acceptance; earlier
-runs do not prove that those changed requests work.
+**Request revision:** `desk-v2` uses shorter, natural desk requests. The short
+MSFT fundamentals/risk, AAPL, macro, MSFT plain-text follow-up and clarification
+flows have actual notebook/service and source-review evidence. The screener
+and its JSON follow-up still prevent full acceptance. See the
+[current acceptance ledger](../../docs/interactive-acceptance-2026-10-19.md),
+which distinguishes saved-answer reattachment, fresh research and plan replay.
 
 ## Notebook order
 
@@ -115,8 +115,8 @@ variant alone, select another execution or refresh market data.
 ## Another environment
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
-distribution workflow. These notebooks were prepared with StratifyX 3.3.0rc4 and
-Epoch SDK 0.1.0a4. Install this checkout's `python/epoch-sdk[notebook]`, plus
+distribution workflow. The current acceptance environment uses StratifyX 3.3.0rc8
+and Epoch SDK 0.1.0a11. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:

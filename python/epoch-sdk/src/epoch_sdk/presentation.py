@@ -59,6 +59,14 @@ def _label(name: str) -> str:
     return labels.get(name, name.replace("_", " ").capitalize())
 
 
+def _activity_error(message: str) -> str:
+    """Keep human activity concise; exact diagnostics stay in the source event."""
+    if message.startswith("Error invoking tool ") and " with kwargs " in message:
+        return "The step needs a format correction."
+    detail = " ".join(message.split())
+    return detail if len(detail) <= 240 else detail[:237] + "…"
+
+
 def ui_text(message: NativeUIMessage) -> str:
     """Render the server's own labels; do not infer research success from them."""
     props = message.props
@@ -97,7 +105,11 @@ def ui_text(message: NativeUIMessage) -> str:
     if text("tool_name") and text("status") in {"processing", "success", "error"}:
         activity = _ToolActivity.model_validate(props)
         state = {"processing": "working", "success": "done", "error": "failed"}[activity.status]
-        detail = activity.error_message if activity.status == "error" else None
+        detail = (
+            _activity_error(activity.error_message)
+            if activity.status == "error" and activity.error_message
+            else None
+        )
         return f"{_label(activity.tool_name or message.name)} · {state}" + (
             f" — {detail}" if detail else ""
         )

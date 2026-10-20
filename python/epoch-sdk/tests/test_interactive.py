@@ -182,6 +182,46 @@ def test_current_tool_component_names_render_activity_without_rpc_payloads():
     assert "registry_version" in message.props["params"]  # Full headless evidence is retained.
 
 
+def test_wrapped_tool_validation_error_does_not_dump_call_arguments_in_human_view():
+    error = (
+        "Error invoking tool 'publish_response' with kwargs "
+        "{'plan': {'private_diagnostic_marker': 'complete recipe and inputs'}} with error:\n"
+        "Invalid input tag 'query_rows'; expected 'rows'. Please fix the error and try again."
+    )
+    message = NativeUIMessage(
+        type="ui",
+        id="publication-attempt",
+        name="publish_response",
+        props={"tool_name": "publish_response", "status": "error", "error_message": error},
+    )
+    before = message.model_dump_json()
+    assert ui_text(message) == "Publish answer · failed — The step needs a format correction."
+    assert message.model_dump_json() == before
+    assert (
+        message.props["error_message"] == error
+    )  # MCP/app consumers retain the exact source property.
+
+
+def test_long_activity_error_is_bounded_and_short_business_reason_is_preserved():
+    message = NativeUIMessage(
+        type="ui",
+        id="failed-step",
+        name="audit_run",
+        props={
+            "tool_name": "audit_run",
+            "status": "error",
+            "error_message": "Execution was cancelled.",
+        },
+    )
+    assert ui_text(message) == "Review results · failed — Execution was cancelled."
+    long_message = message.model_copy(
+        update={"props": {**message.props, "error_message": "Detailed failure. " * 1000}}
+    )
+    rendered = ui_text(long_message)
+    assert len(rendered) <= len("Review results · failed — ") + 240 and rendered.endswith("…")
+    assert long_message.props["error_message"] == "Detailed failure. " * 1000
+
+
 def test_model_pulses_show_waiting_and_remove_completed_internal_status():
     message = NativeUIMessage(
         type="ui",

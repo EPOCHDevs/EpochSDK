@@ -1,110 +1,41 @@
 # Saved response plans
 
 Research establishes a study and a verified response plan. Deployment executes
-that saved sequence without a supervisor. The AAPL case exposed the missing
-boundary: account returns, fills and costs exist after execution, so their
-performance table cannot be required as a pre-run study relation.
+that saved sequence without a supervisor. Account returns, fills and costs exist
+after execution, so a requested performance table can come from post-run queries;
+it does not have to be a pre-run study relation or a dashboard exhibit.
 
 This design is approved in [ENG-2086](https://linear.app/epoch-inc/issue/ENG-2086).
-The wire models and structural fixtures are drafted. Native successful-query
-recording and the internal complete-result materializer are implemented as
-components; query capture has passed a real generated-SDK wire check. Complete
-query results now also persist as immutable bounded Arrow parts and page through
-the existing owned native response reader. Native v1 plan admission/read APIs,
-mapped output assembly and answer-backed verification are now implemented, with
-publication over another completed execution tested at the service boundary.
-The bounded text endpoint is implemented in EpochAI's candidate. Native
-prepared-execution scheduling and generated-client integration now replay
-computed-only plans, publish the new answer and return its exact revision.
-Studies without a response plan retain their existing engine-status behavior.
-Live text verification/replay now also passed; the full five-case
-research/deployment acceptance remains incomplete.
+Backend owns successful-query receipts, immutable complete result storage,
+versioned plan admission/verification, deterministic output mapping and prepared
+execution. EpochAI owns research reasoning and the bounded interpretation call
+for declared text. SDK/MCP wrap the native APIs and retain the original answer
+pin while a new execution publishes its own answer.
+
+The normal generated-client workflow and real authenticated service checks have
+proved computed-only and bounded-text plan replay, complete SDK/MCP paging,
+same-handle reattachment and exact source/plan/answer identities. Computed-only
+replay invokes no model or graph; text replay invokes only its declared bounded
+model step. The AAPL strategy's actual notebook research and original-period
+replay also passed independent source, account, next-open fill, dividend and cost
+review. These checks do not establish every case or a later-period deployment.
+
+The [current acceptance ledger](interactive-acceptance-2026-10-19.md) distinguishes
+component checks, fresh notebook research, saved-answer reattachment, independent
+financial review and deployment replay. The full goal remains open: a fresh
+alpha11 named-notebook plan run passed financial/source review, while the screener plus its JSON
+follow-up still need acceptance. The source-owned roster handoff is now live;
+its first published screen preserved the acquisition clock but failed full-roster
+coverage counts. Its failed answer and as-run source are retained separately.
 
 A later execution period requires the saved plan's explicit
-`allow_period_override` capability. The default is false. Changing the engine
-dates cannot make fixed fiscal labels or embedded SQL date filters reusable.
-The AAPL notebook's rejected later-period request exposed a client error: alpha9
-reported every admission HTTP 409 as a reused-ID conflict. Alpha10 reads the
-native operation record to distinguish an actual accepted-input conflict from
-a plan rejection before admission, and preserves the latter's native reason.
-It does not resubmit, change the ID or relax the plan's frozen settings.
-
-The normally built alpha7/Native rc6 packages passed a real authenticated
-computed-only MSFT plan handshake: complete table rows equal the audited original,
-the saved answer names the exact plan revision, reposting the same draft attaches,
-and the original answer/graph/engine identities remain unchanged. All 333 SDK
-tests also passed against those installed packages. This establishes the native
-plan boundary; it does not complete prepared-execution orchestration or the
-remaining research/financial acceptance.
-
-The normally built alpha8/Native rc7 packages also passed actual prepared-study
-execution against Backend `d8a44416`: one new native job, all three complete MSFT
-rows equal the audited source, a new answer tied to that job and the same plan
-revision, and same-handle reattachment without another job. The original answer
-and plan verification pin stayed unchanged; no graph run or model call occurred.
-All 338 installed SDK tests passed. The subsequent real MCP check found omitted
-column metadata serialized as null; alpha9 corrects the nested saved-answer
-wire boundary while retaining genuine null values in requested JSON data.
-The alpha9 real subprocess MCP recheck passed: `epoch_execute_saved` and
-`epoch_execution_operation` returned the same saved answer and plan, and two
-`epoch_response_table` pages returned all three rows. No new job or graph run
-was created by those reattachments.
-
-Real text-plan verification and replay also passed against the local candidate.
-The complete table and deterministic JSON matched independent fiscal-source
-calculations. Both short briefs preserved the defined cash-conversion ratio and
-every quoted figure; trace review found exactly one declared text-model call
-per execution, with no tools or supervisor. An earlier recipe that omitted the
-ratio was retained as a failed factual-review attempt before correcting its
-inputs. A subsequent live check preserved graph UI/progress while avoiding
-invalid graph writes from standalone calls. Five-case financial/source and
-complete notebook/deployment acceptance remain open.
-
-The shorter AAPL case subsequently passed its actual alpha9 notebook research
-cell, producing a table, deterministic JSON and a short text part under one
-verified plan. Complete reads through the installed SDK and a real subprocess
-MCP client returned the same two performance rows and original answer revision;
-reattachment preserved the graph run and idle checkpoint. Independent Barchart
-and FMP evidence reconciled all 2,514 evaluation dates, the 200-session SMA,
-51 next-open fills, daily cash/equity, 10 bps commissions, dividend credits and
-all published strategy/benchmark metrics. The audit preserves Backend's existing
-price quantization and the disclosed uncertainty about the feed's session basis.
-
-The fresh screener attempt stopped before execution because its native Discovery
-collection did not retain the actual roster retrieval time. The existing preview
-API has that provenance, but the active metadata collection contract drops it
-before authoring. Its receipt capture time cannot substitute for roster time.
-Carry the source-owned provenance through that native path and generated clients;
-do not fabricate it or silently re-resolve a frozen cohort in the SDK. Backend
-builds are currently on hold at the owner's request. This attempt remains failed
-evidence, and the full acceptance goal remains open.
-
-The short MSFT-risk and QQQ/Treasury requests also completed through an actual
-MCP client. Their alpha9 notebook connection, request, session, complete-read and
-dashboard-check cells subsequently passed while reconnecting to those exact
-saved operations. Risk metrics and the drawdown/recovery episode reconcile to
-independent prices and dividend events. All 120 macro months and every regime
-statistic reconcile independently; the 2,521 yield observations in the requested
-window also match the Federal Reserve's DGS10 history from FRED. These checks use
-latest history, with its revision limitations; they do not establish historical
-point-in-time availability. The screener and its saved-output variant still
-prevent full goal acceptance.
-
-The owner's subsequent original-period AAPL saved-plan execution also passed
-complete native reads: all eight audited relations, including 2,514 daily
-account rows and 51 fills, match the independently checked research execution
-(excluding job-local order IDs). Its two-row table and deterministic JSON
-match the original values. The new 95-word text retains the checked figures,
-costs, timing and source limitations; its trace is one bounded text-model call
-with no tools or supervisor. The original research answer remains pinned.
-This validates replay at the original period, not the rejected later period.
-
-The short plain-text follow-up and explicit fiscal-year clarification also
-passed actual notebook cells, complete SDK/MCP reads and source/trace reviews.
-The follow-up's complete trace contains only an audit of saved results and
-publication. The clarification resumes the same thread after a terminal leave
-and MCP reconnect; its completed trace ends at publication with no later model
-call. No user pending questions were answered by these acceptance operations.
+`allow_period_override` capability. The default is false. During research the
+publisher enables it only when the user requests reuse and the executed study,
+every recorded query, output schema and text inputs are correct under changed
+dates. Engine dates do not rewrite fixed fiscal labels, embedded SQL filters or
+a captured roster. A fixed plan rejects an unsupported period before admission.
+Alpha10/11 distinguish that Native rejection from a real accepted-input conflict;
+they do not resubmit, change the operation ID or relax the frozen plan.
 
 ## Establish and publish during research
 
