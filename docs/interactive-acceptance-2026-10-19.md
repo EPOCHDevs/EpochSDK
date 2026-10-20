@@ -1,7 +1,7 @@
 # Interactive-session acceptance — 19 October 2026
 
-The eight case flows passed live answer, source and trace checks. Final
-transport and delivery bookkeeping remain open until their receipts are recorded.
+The eight case flows and the additional explicit CLI/MCP reply paths passed
+live answer, source and trace checks. Review and merge remain separate gates.
 A successful publication alone is not financial acceptance: failed screener
 attempts and their immutable sources remain retained.
 
@@ -20,14 +20,17 @@ attempts and their immutable sources remain retained.
   query/materialization and durable-table checks are retained separately.
   These are scoped checks, not the entire Backend suite or the optional broad
   Native wire/presentation certification gates.
-- EpochAI `1597b4cc10274e4712c19c7bd71c7c64cd7dd32a`; scoped roster/authoring/
-  supervisor-relay checks **144 passed, one opt-in live test skipped**. Native
+- EpochAI roster/authoring source `1597b4cc10274e4712c19c7bd71c7c64cd7dd32a`
+  passed **144 scoped tests, one opt-in live test skipped**. Final source
+  `a53df727f8f571da80f48045a12c7b176c837960` also preserves deterministic
+  provider-failure reasons through the existing typed failure channel; its
+  publication/provider/next-action checks passed **139 tests**. Native
   registry/reference version stays `aff8345a0813f681`. The fresh named MSFT
   research ran on its predecessor `ebfbe0753904035baebb78195122835a67180493`;
   the later change affects roster views, not that financial computation.
 - Authenticated local services retain the original storage and kept runtime.
-  Idle adoption preserved all 41 then-existing thread/checkpoint fingerprints
-  and 25 job IDs. Existing owner kernels, outputs and unanswered operations
+  The final idle adoption preserved all 44 then-existing thread/checkpoint
+  fingerprints and 28 job IDs. Existing owner kernels, outputs and unanswered operations
   were not replaced. Vendor/model credentials remain on their owning services;
   a read-only presence audit found neither in the sampled client kernels.
 - The owner restored `-j16` for Native builds. No Native build was needed for
@@ -75,6 +78,29 @@ validator nor ownership guard was weakened. Each fresh follow-up has exactly
 call and no tool/model error. All successful traces end at publication with zero
 later model calls. Earlier risk, macro, AAPL and clarification traces retain
 separate receipts.
+
+The actual alpha12 PTY CLI accepted an explicit natural-language fiscal reply
+and completed on the same thread with one execution (exit 0). Blank input kept
+the native question/record/checkpoint unchanged. All 36 fiscal fields and 15
+quoted figures match independent calculations; its Markdown memo is 153 words.
+Its trace ends at successful publication with no later model call.
+
+Actual subprocess MCP also rejected empty resume input without changing the
+question/record/checkpoint, then resumed an explicit fiscal reply on the same
+thread and completed with 68 structured progress events. All 36 fiscal fields
+and 16 memo quantities pass independent checks; its Markdown memo is 165 words.
+The resumed trace has 17 tools/15 model spans, one execution, two handled
+closed-schema publication argument errors, no model error and no call after
+successful publication. Neither path chose the recommended answer implicitly.
+
+The first additional MCP closure attempt resumed correctly but then encountered
+an external authoring-model connection failure. The strict publication guard
+initially masked the deterministic failure notice with a generic graph error.
+The failed record/checkpoint is preserved. The final fix routes only the existing
+canonical provider notices to a typed terminal failure and clears stale answer
+references; ordinary unpublished answers remain rejected. The compiled graph
+test proves no follow-on suggestion/model call. It adds no retry/recovery system.
+The passing MCP attempt used a new explicitly chosen test operation ID.
 
 Terminal, notebook and MCP share the typed session core and server-owned readable
 operations. Human views update source UI identities and display the saved answer

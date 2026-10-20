@@ -26,9 +26,10 @@ coverage. Fresh named-notebook MSFT research and its separate deployment passed,
 as did the corrected screener and its exact saved-evidence JSON follow-up.
 The screen's full roster is 503, including two unsupported names; two missing
 source sectors and four missing-history/cutoff cases bring exclusions to eight.
-Original failed answers and as-run sources remain preserved. Final transport
-and delivery bookkeeping are tracked in the ledger rather than inferred from
-a published answer alone.
+Original failed answers and as-run sources remain preserved. Explicit live
+terminal and MCP replies also completed on their original threads with independently
+checked answers. The ledger records exact transport and delivery evidence rather
+than inferring correctness from a published answer alone.
 
 A later execution period requires the saved plan's explicit
 `allow_period_override` capability. The default is false. During research the
