@@ -1,0 +1,99 @@
+{
+  "task": "Review Microsoft's growth, margins and cash conversion over 2023–2025. Before you start, check whether I mean fiscal years or calendar years.",
+  "context": [
+    "MSFT annual financial statements for a US equities desk, using the latest available revisions.",
+    "USD amounts; cash conversion means operating cash flow / net income, and free cash flow is operating cash flow less cash capex."
+  ],
+  "parameters": {
+    "period": {
+      "start": "2022-01-01",
+      "end": "2025-12-31"
+    }
+  },
+  "outputs": [
+    {
+      "name": "msft_fundamentals",
+      "type": "table",
+      "description": "One row per requested fiscal year, calculated from the saved annual statements.",
+      "schema": [
+        {
+          "name": "fiscal_year",
+          "type": "string",
+          "description": "Microsoft fiscal-year label: FY2023, FY2024 or FY2025; ascending order."
+        },
+        {
+          "name": "period_end",
+          "type": "date",
+          "description": "Actual fiscal-year period-end date, not filing or retrieval date."
+        },
+        {
+          "name": "revenue",
+          "type": "float64",
+          "description": "Annual reported revenue, in unscaled US dollars.",
+          "unit": "USD"
+        },
+        {
+          "name": "revenue_growth",
+          "type": "float64",
+          "description": "Revenue / prior fiscal-year revenue - 1; FY2022 is needed for FY2023.",
+          "unit": "fraction"
+        },
+        {
+          "name": "operating_income",
+          "type": "float64",
+          "description": "Annual reported operating income.",
+          "unit": "USD"
+        },
+        {
+          "name": "operating_margin",
+          "type": "float64",
+          "description": "Operating income divided by revenue.",
+          "unit": "fraction"
+        },
+        {
+          "name": "net_income",
+          "type": "float64",
+          "description": "Annual reported net income.",
+          "unit": "USD"
+        },
+        {
+          "name": "operating_cash_flow",
+          "type": "float64",
+          "description": "Annual net cash provided by operating activities.",
+          "unit": "USD"
+        },
+        {
+          "name": "capex",
+          "type": "float64",
+          "description": "Capital expenditure expressed as a positive cash outflow; normalize the provider sign once.",
+          "unit": "USD"
+        },
+        {
+          "name": "free_cash_flow",
+          "type": "float64",
+          "description": "Operating cash flow minus positive capital expenditure.",
+          "unit": "USD"
+        },
+        {
+          "name": "free_cash_flow_margin",
+          "type": "float64",
+          "description": "Free cash flow divided by revenue.",
+          "unit": "fraction"
+        },
+        {
+          "name": "cash_conversion",
+          "type": "float64",
+          "description": "Operating cash flow divided by net income; null if net income is zero.",
+          "unit": "ratio",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "analyst_memo",
+      "type": "text",
+      "format": "markdown",
+      "instructions": "Write at most 180 words for the desk. State the main finding, cite the relevant fiscal years and computed figures, and explain growth versus cash conversion. Identify the source and latest-restated snapshot basis. Use no Markdown table and do not repeat every row."
+    }
+  ]
+}

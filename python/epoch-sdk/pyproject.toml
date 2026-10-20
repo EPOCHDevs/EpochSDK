@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epoch-sdk"
-version = "0.1.0a2"
+version = "0.1.0a13"
 description = "Epoch integration contracts and client adapters over LangGraph and StratifyX"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,7 @@ dependencies = [
   "pydantic>=2.11,<3",
   "jsonschema>=4.23,<5",
   "referencing>=0.36,<1",
-  "stratifyx>=3.3.0rc4,<4",
+  "stratifyx>=3.3.0rc7,<4",
 ]
 
 [project.urls]
@@ -20,6 +20,8 @@ Repository = "https://github.com/EPOCHDevs/EpochSDK"
 
 [project.optional-dependencies]
 clients = ["langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1"]
+terminal = ["rich>=14,<15", "prompt-toolkit>=3,<4", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
+notebook = ["ipywidgets>=8,<9", "ipython>=9,<10", "markdown-it-py>=4,<5", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 results = ["pyarrow>=26,<27"]
 mcp = ["mcp>=2.3,<3", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 test = ["pytest>=8,<10"]
@@ -27,6 +29,7 @@ test = ["pytest>=8,<10"]
 [project.scripts]
 epoch-api-check = "epoch_sdk.capabilities:main"
 epoch-mcp = "epoch_sdk.mcp:main"
+epoch = "epoch_sdk.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

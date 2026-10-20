@@ -70,20 +70,34 @@ class Case(BaseModel):
     def expected_values(self):
         text = [item for item in self.request.outputs if item.type == "text"]
         if len(text) != 1 or len(self.request.outputs) != 3:
-            raise ValueError("A proof case requires one table, one JSON and one text part")
-        validate_outputs(self.request.outputs, [
-            self.expected_table, self.expected_json,
-            TextValue(name=text[0].name, type="text", format=text[0].format, value="Expected text"),
-        ])
+            raise ValueError(
+                "A proof case requires one table, one JSON and one text part"
+            )
+        validate_outputs(
+            self.request.outputs,
+            [
+                self.expected_table,
+                self.expected_json,
+                TextValue(
+                    name=text[0].name,
+                    type="text",
+                    format=text[0].format,
+                    value="Expected text",
+                ),
+            ],
+        )
         if self.expected_table.rows is None:
             raise ValueError("A proof case must register complete expected table rows")
         if self.request.parameters is None or self.request.parameters.period is None:
-            raise ValueError("Provide an explicit native period for the saved-study reuse check")
+            raise ValueError(
+                "Provide an explicit native period for the saved-study reuse check"
+            )
         return self
 
 
 class ModelPolicy(BaseModel):
     """Read-only projection of EpochAI's ModelCallReceipt owner contract."""
+
     model_config = ConfigDict(extra="ignore", strict=True)
     run_id: str
     model: str
@@ -112,6 +126,7 @@ class ToolCall(BaseModel):
 
 class Message(BaseModel):
     """Only identity, calls and usage are read; conversation content is omitted."""
+
     model_config = ConfigDict(extra="ignore", strict=True)
     id: str | None = None
     type: str | None = None
@@ -125,7 +140,15 @@ class Outcome(BaseModel):
     model_config = ConfigDict(extra="ignore", strict=True)
     tool_call_id: str
     tool_name: Literal["build_study", "run_study", "run_monte_carlo", "tune_study"]
-    status: Literal["saved", "completed", "failed", "cancelled", "not_started", "infeasible", "unknown"]
+    status: Literal[
+        "saved",
+        "completed",
+        "failed",
+        "cancelled",
+        "not_started",
+        "infeasible",
+        "unknown",
+    ]
     execution_id: str | None = None
 
 
@@ -194,6 +217,7 @@ class BuildReadiness(BaseModel):
 
 class AgentHealth(BaseModel):
     """Read-only projection of the service-owned custom health receipt."""
+
     model_config = ConfigDict(extra="ignore", strict=True)
     status: str
     deployment: Deployment
@@ -206,18 +230,30 @@ class BackendHealth(BaseModel):
 
 
 async def preflight(
-    graph_url: str, backend_url: str, token: str, backend_sha: str, agent_sha: str,
+    graph_url: str,
+    backend_url: str,
+    token: str,
+    backend_sha: str,
+    agent_sha: str,
 ) -> tuple[str, str]:
     for endpoint in (graph_url, backend_url):
         url = urlsplit(endpoint)
         if (
-            url.scheme not in {"http", "https"} or not url.hostname
-            or url.username or url.password or url.query or url.fragment
+            url.scheme not in {"http", "https"}
+            or not url.hostname
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
         ):
-            raise ValueError("Provide HTTP service URLs without credentials, queries or fragments")
+            raise ValueError(
+                "Provide HTTP service URLs without credentials, queries or fragments"
+            )
     if len(backend_sha) != 40 or len(agent_sha) != 40:
         raise ValueError("Provide the exact expected Backend and agent commit SHAs")
-    async with httpx.AsyncClient(headers={"Authorization": f"Bearer {token}"}, timeout=30) as http:
+    async with httpx.AsyncClient(
+        headers={"Authorization": f"Bearer {token}"}, timeout=30
+    ) as http:
         backend = await http.get(backend_url.rstrip("/") + "/api/v1/health")
         backend.raise_for_status()
         graph = await http.get(graph_url.rstrip("/") + "/health/custom")
@@ -225,9 +261,12 @@ async def preflight(
     native = BackendHealth.model_validate(backend.json())
     agent = AgentHealth.model_validate(graph.json())
     if native.git_sha != backend_sha or agent.deployment.git_sha != agent_sha:
-        raise RuntimeError("The running services do not match the reviewed source revisions")
+        raise RuntimeError(
+            "The running services do not match the reviewed source revisions"
+        )
     if (
-        agent.status != "healthy" or not agent.build_study.ready
+        agent.status != "healthy"
+        or not agent.build_study.ready
         or agent.build_study.backend_url.rstrip("/") != backend_url.rstrip("/")
     ):
         raise RuntimeError("The agent is not ready against the selected Backend")
@@ -235,64 +274,142 @@ async def preflight(
 
 
 async def capture_trace(
-    graph_url: str, token: str, thread_id: str, request_id: str,
+    graph_url: str,
+    token: str,
+    thread_id: str,
+    request_id: str,
 ) -> TraceEvidence:
     async with httpx.AsyncClient(
-        base_url=graph_url, headers={"Authorization": f"Bearer {token}"}, timeout=30,
+        base_url=graph_url,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30,
     ) as http:
         snapshot = await LangGraphClient(http).threads.get_state(thread_id)
     state = ThreadState.model_validate(snapshot["values"])
-    if state.sdk_request_id != request_id or state.authority_turn_id != "user-turn:" + request_id:
-        raise AssertionError("The retained thread belongs to a different current request")
-    anchor = next((index for index, message in enumerate(state.messages)
-                   if message.id == request_id and (message.type == "human" or message.role == "user")), None)
+    if (
+        state.sdk_request_id != request_id
+        or state.authority_turn_id != "user-turn:" + request_id
+    ):
+        raise AssertionError(
+            "The retained thread belongs to a different current request"
+        )
+    anchor = next(
+        (
+            index
+            for index, message in enumerate(state.messages)
+            if message.id == request_id
+            and (message.type == "human" or message.role == "user")
+        ),
+        None,
+    )
     if anchor is None:
-        raise AssertionError("The accepted user-turn identity is absent from the thread")
+        raise AssertionError(
+            "The accepted user-turn identity is absent from the thread"
+        )
     messages = state.messages[anchor:]
     calls = [call for message in messages for call in message.tool_calls]
     call_ids = {call.id for call in calls}
     return TraceEvidence(
-        thread_id=thread_id, request_id=request_id, tool_calls=calls,
-        model_calls=[ModelEvidence(policy=message.response_metadata.epoch_model_call,
-                                   usage=message.usage_metadata)
-                     for message in messages if message.response_metadata.epoch_model_call is not None],
-        outcomes={key: value for key, value in state.next_action_outcomes.items()
-                  if value.tool_call_id in call_ids},
+        thread_id=thread_id,
+        request_id=request_id,
+        tool_calls=calls,
+        model_calls=[
+            ModelEvidence(
+                policy=message.response_metadata.epoch_model_call,
+                usage=message.usage_metadata,
+            )
+            for message in messages
+            if message.response_metadata.epoch_model_call is not None
+        ],
+        outcomes={
+            key: value
+            for key, value in state.next_action_outcomes.items()
+            if value.tool_call_id in call_ids
+        },
     )
 
 
-def verify_trace(trace: TraceEvidence, completed: ResearchCompleted, *, requires_discovery: bool = False) -> None:
+def verify_trace(
+    trace: TraceEvidence,
+    completed: ResearchCompleted,
+    *,
+    requires_discovery: bool = False,
+) -> None:
     if not trace.model_calls or not any(
-        call.policy.model not in {"", "?"} and call.usage is not None and call.usage.total_tokens > 0
+        call.policy.model not in {"", "?"}
+        and call.usage is not None
+        and call.usage.total_tokens > 0
         for call in trace.model_calls
     ):
-        raise AssertionError("A real-model proof needs source-owned model identity and token usage")
-    chosen_calls = {outcome.tool_call_id for outcome in trace.outcomes.values()
-                    if outcome.tool_name == "run_study" and outcome.status == "completed"
-                    and outcome.execution_id == completed.response.primary_execution_id}
+        raise AssertionError(
+            "A real-model proof needs source-owned model identity and token usage"
+        )
+    chosen_calls = {
+        outcome.tool_call_id
+        for outcome in trace.outcomes.values()
+        if outcome.tool_name == "run_study"
+        and outcome.status == "completed"
+        and outcome.execution_id == completed.response.primary_execution_id
+    }
     if not chosen_calls:
-        raise AssertionError("No native completed-run outcome identifies the saved answer's execution")
-    run = next((index for index, call in enumerate(trace.tool_calls)
-                if call.id in chosen_calls and call.name == "run_study"), None)
-    saved_builds = {outcome.tool_call_id for outcome in trace.outcomes.values()
-                    if outcome.tool_name == "build_study" and outcome.status == "saved"}
-    build = next((index for index, call in enumerate(trace.tool_calls)
-                  if call.id in saved_builds and call.name == "build_study"), None)
-    if run is None or build is None or build >= run or not any(
-        call.name == "publish_response" for call in trace.tool_calls[run + 1:]
+        raise AssertionError(
+            "No native completed-run outcome identifies the saved answer's execution"
+        )
+    run = next(
+        (
+            index
+            for index, call in enumerate(trace.tool_calls)
+            if call.id in chosen_calls and call.name == "run_study"
+        ),
+        None,
+    )
+    saved_builds = {
+        outcome.tool_call_id
+        for outcome in trace.outcomes.values()
+        if outcome.tool_name == "build_study" and outcome.status == "saved"
+    }
+    build = next(
+        (
+            index
+            for index, call in enumerate(trace.tool_calls)
+            if call.id in saved_builds and call.name == "build_study"
+        ),
+        None,
+    )
+    if (
+        run is None
+        or build is None
+        or build >= run
+        or not any(
+            call.name == "publish_response" for call in trace.tool_calls[run + 1 :]
+        )
     ):
-        raise AssertionError("The thread does not show build -> chosen execution -> publish")
-    if requires_discovery and not any(call.name == "discovery" for call in trace.tool_calls[:build]):
-        raise AssertionError("The registered discovery case did not discover before building")
+        raise AssertionError(
+            "The thread does not show build -> chosen execution -> publish"
+        )
+    if requires_discovery and not any(
+        call.name == "discovery" for call in trace.tool_calls[:build]
+    ):
+        raise AssertionError(
+            "The registered discovery case did not discover before building"
+        )
 
 
-def verify_resume_trace(before: TraceEvidence, after: TraceEvidence, *, no_new_discovery: bool) -> None:
+def verify_resume_trace(
+    before: TraceEvidence, after: TraceEvidence, *, no_new_discovery: bool
+) -> None:
     if before.thread_id != after.thread_id or before.request_id != after.request_id:
         raise AssertionError("Clarification moved to a different thread or request")
-    if after.tool_calls[:len(before.tool_calls)] != before.tool_calls:
-        raise AssertionError("The resumed tool history does not retain its prior prefix")
-    if no_new_discovery and any(call.name == "discovery" for call in after.tool_calls[len(before.tool_calls):]):
-        raise AssertionError("Discovery repeated after the registered clarification point")
+    if after.tool_calls[: len(before.tool_calls)] != before.tool_calls:
+        raise AssertionError(
+            "The resumed tool history does not retain its prior prefix"
+        )
+    if no_new_discovery and any(
+        call.name == "discovery" for call in after.tool_calls[len(before.tool_calls) :]
+    ):
+        raise AssertionError(
+            "Discovery repeated after the registered clarification point"
+        )
 
 
 def load_case(path: Path) -> Case:
@@ -337,22 +454,30 @@ def verify_values(
 
 def connect(graph_url: str, backend_url: str, token: str) -> EpochClient:
     return EpochClient.connect(
-        graph_url=graph_url, backend_url=backend_url, token=token,
+        graph_url=graph_url,
+        backend_url=backend_url,
+        token=token,
         assistant_id=os.environ.get("EPOCH_ASSISTANT_ID", "epoch-ai"),
         ui_url=os.environ.get("EPOCH_UI_URL"),
     )
 
 
 @asynccontextmanager
-async def mcp_client(graph_url: str, backend_url: str, token: str) -> AsyncIterator[Client]:
+async def mcp_client(
+    graph_url: str, backend_url: str, token: str
+) -> AsyncIterator[Client]:
     env = {
-        "EPOCH_GRAPH_URL": graph_url, "EPOCH_BACKEND_URL": backend_url, "EPOCH_TOKEN": token,
+        "EPOCH_GRAPH_URL": graph_url,
+        "EPOCH_BACKEND_URL": backend_url,
+        "EPOCH_TOKEN": token,
     }
     for key in ("EPOCH_ASSISTANT_ID", "EPOCH_UI_URL"):
         if value := os.environ.get(key):
             env[key] = value
     server = StdioServerParameters(
-        command=sys.executable, args=["-m", "epoch_sdk.mcp"], env=env,
+        command=sys.executable,
+        args=["-m", "epoch_sdk.mcp"],
+        env=env,
     )
     failure: EpochError | None = None
     async with Client(server, read_timeout_seconds=None) as client:
@@ -431,10 +556,10 @@ async def read_case_table(
                 page = ResponseTablePage.model_validate(
                     await mcp_call(
                         client,
-                        "epoch_response_table",
+                        "epoch_read",
                         {
                             "response_id": saved.response_id,
-                            "name": table.name,
+                            "table": table.name,
                             "version": saved.version,
                             "offset": offset,
                             "page_size": 1000,
@@ -451,25 +576,40 @@ async def read_case_table(
 
 
 async def research(
-    mode: str, case: Case, graph_url: str, backend_url: str, token: str,
-    waiting: NeedsInput | None, answers: dict[str, Answers],
+    mode: str,
+    case: Case,
+    graph_url: str,
+    backend_url: str,
+    token: str,
+    waiting: NeedsInput | None,
+    answers: dict[str, Answers],
 ) -> ResearchResult:
     if mode == "sdk":
         client = connect(graph_url, backend_url, token)
         try:
-            return await client.resume_research(waiting, answers) if waiting else (
-                await client.research(case.request)
+            return (
+                await client.resume(
+                    waiting.handle.operation_id, answers, interface="headless"
+                )
+                if waiting
+                else (await client.run(case.request, interface="headless"))
             )
         finally:
             await client.aclose()
     async with mcp_client(graph_url, backend_url, token) as client:
-        arguments = {"waiting": waiting.model_dump(mode="json"),
-                     "responses": {key: value.model_dump(mode="json", exclude_unset=True)
-                                   for key, value in answers.items()}} if waiting else {
-            "request": case.request.to_wire(),
-        }
+        arguments = (
+            {
+                "operation_id": waiting.handle.operation_id,
+                "responses": {
+                    key: value.model_dump(mode="json", exclude_unset=True)
+                    for key, value in answers.items()
+                },
+            }
+            if waiting
+            else case.request.to_wire()
+        )
         payload = await mcp_call(
-            client, "epoch_resume_research" if waiting else "epoch_research", arguments,
+            client, "epoch_resume" if waiting else "epoch_run", arguments
         )
         parsed = RESULT.validate_python(payload)
         if isinstance(parsed, ResearchFailure):
@@ -478,7 +618,10 @@ async def research(
 
 
 async def fresh_read(
-    mode: str, backend_url: str, token: str, completed: ResearchCompleted,
+    mode: str,
+    backend_url: str,
+    token: str,
+    completed: ResearchCompleted,
 ) -> None:
     # An unreachable graph URL proves this read cannot silently start an agent.
     graph_url = "http://127.0.0.1:1"
@@ -488,11 +631,37 @@ async def fresh_read(
             actual = await fresh.research_status(completed.request_id)
         finally:
             await fresh.aclose()
-    else:
+    elif completed.operation_id is not None:
         async with mcp_client(graph_url, backend_url, token) as client:
-            actual = RESULT.validate_python(await mcp_call(
-                client, "epoch_research_status", {"request_id": completed.request_id},
-            ))
+            actual = RESULT.validate_python(
+                await mcp_call(
+                    client,
+                    "epoch_status",
+                    {"operation_id": completed.operation_id},
+                )
+            )
+    else:
+        fresh = connect(graph_url, backend_url, token)
+        try:
+            actual = await fresh.research_status(completed.request_id)
+        finally:
+            await fresh.aclose()
+        async with mcp_client(graph_url, backend_url, token) as client:
+            saved = SavedResearchResponse.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_read",
+                    {
+                        "response_id": completed.response.response_id,
+                        "version": completed.response.version,
+                    },
+                )
+            )
+            if saved != completed.response:
+                raise AssertionError(
+                    "MCP read differed from the pinned historical answer"
+                )
+
     if actual != completed:
         raise AssertionError("A fresh client did not return the same pinned answer")
 
@@ -583,40 +752,37 @@ async def revise_and_verify(
             latest = SavedResearchResponse.model_validate(
                 await mcp_call(
                     client,
-                    "epoch_response",
+                    "epoch_read",
                     {"response_id": before.response_id},
                 )
             )
             if latest != before:
                 raise AssertionError("The answer changed before the registered edit")
-            arguments = PublishArguments(
-                request_id=before.request_id,
-                thread_id=before.thread_id,
-                content=content,
-                expected_version=before.version,
-            )
-            if before.primary_execution_id is not None:
-                arguments.primary_execution_id = before.primary_execution_id
-            after = SavedResearchResponse.model_validate(
-                await mcp_call(
-                    client,
-                    "epoch_publish_response",
-                    arguments.model_dump(mode="json", by_alias=True, exclude_unset=True),
+            # Publication is an owning SDK/service operation, not an MCP tool.
+            owner = connect(graph_url, backend_url, token)
+            try:
+                after = await owner.supervisor.publish_response(
+                    before.request_id,
+                    content,
+                    thread_id=before.thread_id,
+                    primary_execution_id=before.primary_execution_id,
+                    expected_version=before.version,
                 )
-            )
+            finally:
+                await owner.aclose()
             receipt.revised_response = after.reference()
             verify_revision(before, after, content)
             latest = SavedResearchResponse.model_validate(
                 await mcp_call(
                     client,
-                    "epoch_response",
+                    "epoch_read",
                     {"response_id": before.response_id},
                 )
             )
             original = SavedResearchResponse.model_validate(
                 await mcp_call(
                     client,
-                    "epoch_response",
+                    "epoch_read",
                     {"response_id": before.response_id, "version": before.version},
                 )
             )
@@ -642,63 +808,84 @@ async def revise_and_verify(
 
 
 async def reuse(
-    mode: str, case: Case, backend_url: str, token: str, completed: ResearchCompleted,
-    timeout_seconds: float, receipt: Receipt,
+    mode: str,
+    case: Case,
+    backend_url: str,
+    token: str,
+    completed: ResearchCompleted,
+    timeout_seconds: float,
+    receipt: Receipt,
 ) -> ChosenExecution:
-    assert case.request.parameters is not None and case.request.parameters.period is not None
+    assert (
+        case.request.parameters is not None
+        and case.request.parameters.period is not None
+    )
     graph_url = "http://127.0.0.1:1"
     if completed.reusable_study is None:
         raise AssertionError("Prepared execution requires an execution-backed answer")
     if mode == "sdk":
         client = connect(graph_url, backend_url, token)
         try:
-            selected = await client.execute_saved(
-                completed.reusable_study, period=case.request.parameters.period,
+            selected = await client.execute(
+                completed.reusable_study,
+                period=case.request.parameters.period,
                 execution=case.request.parameters.execution,
             )
             receipt.reused_execution = selected
             async with asyncio.timeout(timeout_seconds):
-                while selected.execution.status.value in {"pending", "queued", "running"}:
+                while selected.execution.status.value in {
+                    "pending",
+                    "queued",
+                    "running",
+                }:
                     await asyncio.sleep(1)
-                    selected = selected.model_copy(update={
-                        "execution": await client.execution(selected.execution.id),
-                    })
+                    selected = selected.model_copy(
+                        update={
+                            "execution": await client.execution(selected.execution.id),
+                        }
+                    )
                     receipt.reused_execution = selected
         finally:
             await client.aclose()
     else:
         async with mcp_client(graph_url, backend_url, token) as client:
-            selected = ChosenExecution.model_validate(await mcp_call(
-                client, "epoch_execute_saved", {
-                    "reference": completed.reusable_study.model_dump(mode="json"),
-                    "parameters": case.request.parameters.to_wire(),
-                },
-            ))
+            selected = ChosenExecution.model_validate(
+                await mcp_call(
+                    client,
+                    "epoch_execute",
+                    {
+                        "reference": completed.reusable_study.model_dump(
+                            mode="json", exclude_none=True
+                        ),
+                        **case.request.parameters.to_wire(),
+                    },
+                )
+            )
             receipt.reused_execution = selected
-            async with asyncio.timeout(timeout_seconds):
-                while selected.execution.status.value in {"pending", "queued", "running"}:
-                    await asyncio.sleep(1)
-                    from stratifyx.types.job_list_item import JobListItem
-                    selected = selected.model_copy(update={
-                        "execution": JobListItem.model_validate(await mcp_call(
-                            client, "epoch_execution", {"execution_id": selected.execution.id},
-                        )),
-                    })
-                    receipt.reused_execution = selected
+
     if (
         selected.execution.status.value != "completed"
         or selected.execution.id == completed.response.primary_execution_id
         or selected.execution.definition_id != completed.response.study_id
     ):
-        raise AssertionError("Saved-study execution failed or changed its study identity")
+        raise AssertionError(
+            "Saved-study execution failed or changed its study identity"
+        )
     return selected
 
 
 async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> None:
     token = os.environ["EPOCH_TOKEN"]
-    graph_url, backend_url = os.environ["EPOCH_GRAPH_URL"], os.environ["EPOCH_BACKEND_URL"]
+    graph_url, backend_url = (
+        os.environ["EPOCH_GRAPH_URL"],
+        os.environ["EPOCH_BACKEND_URL"],
+    )
     receipt.backend_git_sha, receipt.agent_git_sha = await preflight(
-        graph_url, backend_url, token, args.expected_backend_sha or "", args.expected_agent_sha or "",
+        graph_url,
+        backend_url,
+        token,
+        args.expected_backend_sha or "",
+        args.expected_agent_sha or "",
     )
     receipt.checks.append("reviewed-services-paired-and-ready")
     waiting = None
@@ -706,21 +893,35 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
     answers: dict[str, Answers] = {}
     if args.resume_from:
         previous = Receipt.model_validate_json(args.resume_from.read_text())
-        if previous.case_sha256 != receipt.case_sha256 or not isinstance(previous.result, NeedsInput):
-            raise ValueError("Resume the same registered case with a needs_input receipt")
+        if previous.case_sha256 != receipt.case_sha256 or not isinstance(
+            previous.result, NeedsInput
+        ):
+            raise ValueError(
+                "Resume the same registered case with a needs_input receipt"
+            )
         if args.answers is None:
-            raise ValueError("Provide explicit native answers; recommendations are not auto-selected")
+            raise ValueError(
+                "Provide explicit native answers; recommendations are not auto-selected"
+            )
         waiting = previous.result
         previous_trace = previous.trace
-        answers = TypeAdapter(dict[str, Answers]).validate_python(parse_json(args.answers.read_text()))
-    result = await research(args.mode, case, graph_url, backend_url, token, waiting, answers)
+        answers = TypeAdapter(dict[str, Answers]).validate_python(
+            parse_json(args.answers.read_text())
+        )
+    result = await research(
+        args.mode, case, graph_url, backend_url, token, waiting, answers
+    )
     receipt.result = result
     if isinstance(result, NeedsInput):
-        receipt.trace = await capture_trace(graph_url, token, result.handle.thread_id, result.handle.request_id)
+        receipt.trace = await capture_trace(
+            graph_url, token, result.handle.thread_id, result.handle.request_id
+        )
         if case.require_discovery_before_clarification and not any(
             call.name == "discovery" for call in receipt.trace.tool_calls
         ):
-            raise AssertionError("The registered clarification case did not first load discovery")
+            raise AssertionError(
+                "The registered clarification case did not first load discovery"
+            )
         print(result.feedback())
         receipt.checks.append("native-clarification-retained")
         return
@@ -733,11 +934,17 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
         raise AssertionError("This registered engine case requires a reusable study")
     thread_id = result.reusable_study.thread_id
     if thread_id is None:
-        raise AssertionError("The completed research response has no native thread reference")
+        raise AssertionError(
+            "The completed research response has no native thread reference"
+        )
     receipt.trace = await capture_trace(graph_url, token, thread_id, result.request_id)
     verify_trace(receipt.trace, result, requires_discovery=case.requires_discovery)
     if previous_trace is not None:
-        verify_resume_trace(previous_trace, receipt.trace, no_new_discovery=case.no_new_discovery_on_resume)
+        verify_resume_trace(
+            previous_trace,
+            receipt.trace,
+            no_new_discovery=case.no_new_discovery_on_resume,
+        )
         receipt.checks.append("clarification-retains-thread-and-tool-history")
     receipt.checks.append("native-tool-sequence-and-model-usage")
     table = await read_case_table(args.mode, backend_url, token, case, result)
@@ -748,7 +955,13 @@ async def execute(args: argparse.Namespace, case: Case, receipt: Receipt) -> Non
     receipt.checks.append("fresh-read-without-graph")
     await revise_and_verify(args.mode, backend_url, token, result, receipt)
     receipt.reused_execution = await reuse(
-        args.mode, case, backend_url, token, result, args.execution_timeout, receipt,
+        args.mode,
+        case,
+        backend_url,
+        token,
+        result,
+        args.execution_timeout,
+        receipt,
     )
     receipt.checks.append("direct-repeat-without-graph")
     receipt.real_analysis_proven = True
@@ -768,8 +981,10 @@ def main() -> None:
     args = parser.parse_args()
     case = load_case(args.case)
     receipt = Receipt(
-        mode=args.mode, case_sha256=hashlib.sha256(args.case.read_bytes()).hexdigest(),
-        recorded_at=datetime.now(UTC).isoformat(), checks=["registered-case-valid"],
+        mode=args.mode,
+        case_sha256=hashlib.sha256(args.case.read_bytes()).hexdigest(),
+        recorded_at=datetime.now(UTC).isoformat(),
+        checks=["registered-case-valid"],
         epoch_sdk_version=importlib.metadata.version("epoch-sdk"),
         langgraph_sdk_version=importlib.metadata.version("langgraph-sdk"),
         stratifyx_version=importlib.metadata.version("stratifyx"),
@@ -780,20 +995,30 @@ def main() -> None:
         if args.execute:
             asyncio.run(execute(args, case, receipt))
         else:
-            print(case.request.model_dump_json(by_alias=True, exclude_unset=True, indent=2))
-            print("Validated only; no service connection, study or model call was made.")
+            print(
+                case.request.model_dump_json(
+                    by_alias=True, exclude_unset=True, indent=2
+                )
+            )
+            print(
+                "Validated only; no service connection, study or model call was made."
+            )
     except ResearchError as error:
         receipt.result = error.response
         raise
     except EpochError as error:
-        receipt.error = ErrorResponse.model_validate({
-            "error": error.error.to_wire(),
-            **({"execution_id": error.execution_id} if error.execution_id else {}),
-        })
+        receipt.error = ErrorResponse.model_validate(
+            {
+                "error": error.error.to_wire(),
+                **({"execution_id": error.execution_id} if error.execution_id else {}),
+            }
+        )
         raise
     finally:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(receipt.model_dump_json(exclude_none=True, indent=2) + "\n")
+        args.output.write_text(
+            receipt.model_dump_json(exclude_none=True, indent=2) + "\n"
+        )
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ from pathlib import Path
 
 import httpx
 from epoch_sdk.contracts import TableOutputRequest
+from epoch_sdk.errors import EpochError
 from epoch_sdk.mcp import create_server
 from epoch_sdk.responses import (
     ResearchResponseContent,
@@ -161,10 +162,10 @@ async def verify(url: str) -> None:
             offset = 0
             while True:
                 native_page = await mcp.call_tool(
-                    "epoch_response_table",
+                    "epoch_read",
                     {
                         "response_id": large_answer.response_id,
-                        "name": "results",
+                        "table": "results",
                         "version": 1,
                         "offset": offset,
                         "page_size": 5000,
@@ -178,43 +179,36 @@ async def verify(url: str) -> None:
                     break
                 offset = data["next_offset"]
             assert gathered == all_rows
-            read = await mcp.call_tool(
-                "epoch_response", {"response_id": first.response_id}
-            )
+            read = await mcp.call_tool("epoch_read", {"response_id": first.response_id})
             assert not read.is_error and read.structured_content == first.to_wire()
             changed = content.to_wire()
             changed["outputs"][2]["value"] = (
-                "Updated interpretation from the MCP client."
+                "Updated interpretation from the owning SDK."
             )
-            updated = await mcp.call_tool(
-                "epoch_publish_response",
-                {
-                    "request_id": "query-one",
-                    "thread_id": "thread-one",
-                    "primary_execution_id": "native-one",
-                    "expected_version": 1,
-                    "content": changed,
-                },
+            updated = await fresh.publish_response(
+                "query-one",
+                ResearchResponseContent.model_validate(changed),
+                thread_id="thread-one",
+                primary_execution_id="native-one",
+                expected_version=1,
             )
-            assert not updated.is_error and updated.structured_content["version"] == 2
+            assert updated.version == 2
             old = await mcp.call_tool(
-                "epoch_response", {"response_id": first.response_id, "version": 1}
+                "epoch_read", {"response_id": first.response_id, "version": 1}
             )
             assert not old.is_error and old.structured_content == first.to_wire()
-            stale = await mcp.call_tool(
-                "epoch_publish_response",
-                {
-                    "request_id": "query-one",
-                    "thread_id": "thread-one",
-                    "primary_execution_id": "native-one",
-                    "expected_version": 1,
-                    "content": changed,
-                },
-            )
-            assert (
-                not stale.is_error
-                and stale.structured_content["error"]["code"] == "INVALID_STATE"
-            )
+            try:
+                await fresh.publish_response(
+                    "query-one",
+                    ResearchResponseContent.model_validate(changed),
+                    thread_id="thread-one",
+                    primary_execution_id="native-one",
+                    expected_version=1,
+                )
+            except EpochError as error:
+                assert error.error.code == "INVALID_STATE"
+            else:
+                raise AssertionError("A stale publication must fail")
         other = SupervisorClient(
             LangGraphClient(graph_http),
             AsyncStratifyX(
@@ -225,7 +219,7 @@ async def verify(url: str) -> None:
         )
         async with Client(create_server(other)) as mcp:
             denied = await mcp.call_tool(
-                "epoch_response", {"response_id": first.response_id}
+                "epoch_read", {"response_id": first.response_id}
             )
             assert (
                 not denied.is_error
@@ -263,7 +257,9 @@ def main() -> None:
                     except OSError:
                         time.sleep(0.1)
                 else:
-                    raise RuntimeError("Native response fixture did not listen within 60 seconds")
+                    raise RuntimeError(
+                        "Native response fixture did not listen within 60 seconds"
+                    )
                 asyncio.run(verify(f"http://127.0.0.1:{port}"))
             finally:
                 server.terminate()

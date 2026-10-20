@@ -13,7 +13,7 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import httpx
 from langgraph_sdk.client import LangGraphClient
-from langgraph_sdk.schema import Command, Run, RunCreateMetadata
+from langgraph_sdk.schema import Command, Run, RunCreateMetadata, StreamMode
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
 from stratifyx.types.job_list_item import JobListItem
@@ -21,6 +21,7 @@ from stratifyx.types.job_list_item import JobListItem
 from .contracts import DomainError
 from .responses import (
     ResearchResponseContent,
+    ResponsePlanReference,
     ResponseReference,
     ResponseTablePage,
     SavedResearchResponse,
@@ -116,6 +117,7 @@ class SavedStudy(Closed):
     study_id: str
     source_execution_id: str
     thread_id: str | None = None
+    response_plan: ResponsePlanReference | None = None
 
 
 class ChosenExecution(Closed):
@@ -127,6 +129,7 @@ class ChosenExecution(Closed):
     reply: str = ""
     operation_id: str | None = None
     request_id: str | None = None
+    response: SavedResearchResponse | None = None
 
 
 class PublishedAnswer(Closed):
@@ -291,11 +294,15 @@ class _RunsAdmission(Protocol):
         thread_id: str,
         assistant_id: str,
         *,
-        input: _SupervisorInput,
+        input: _SupervisorInput | None = None,
+        command: Command | None = None,
         metadata: dict[str, str],
         durability: Literal["sync"],
         multitask_strategy: Literal["reject"],
         on_completion: Literal["keep"],
+        stream_mode: list[StreamMode] = ...,
+        stream_subgraphs: bool = ...,
+        stream_resumable: bool = ...,
     ) -> Run: ...
 
     # The configured graph owns join values; this caller discards them and reads
@@ -497,10 +504,13 @@ class SupervisorClient:
                 "messages": [{"role": "user", "id": handle.request_id, "content": task}],
                 "sdk_request_id": handle.request_id,
             },
-            metadata={"epoch_sdk_request_id": handle.request_id},
+            metadata={"epoch_sdk_request_id": handle.request_id, "epoch_sdk_ui_stream": "v1"},
             durability="sync",
             multitask_strategy="reject",
             on_completion="keep",
+            stream_mode=["values", "custom"],
+            stream_subgraphs=True,
+            stream_resumable=True,
         )
 
     async def join_operation(self, handle: WorkflowHandle) -> SupervisorResult:
@@ -516,7 +526,8 @@ class SupervisorClient:
             raise
         return await self.status(handle)
 
-    async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
+    @staticmethod
+    def _resume_command(waiting: NeedsInput, responses: dict[str, Answers]) -> Command:
         expected = {item.id for item in waiting.interrupts}
         if not expected:
             raise ValueError("There are no pending interrupts to resume")
@@ -550,7 +561,29 @@ class SupervisorClient:
             if used != set(range(len(questions))):
                 raise ValueError("Provide an answer row for every question; an empty row skips it")
             resume[item.id] = answers.model_dump(mode="json", exclude_unset=True)
-        return await self._wait(waiting.handle, command=Command(resume=resume))
+        return Command(resume=resume)
+
+    async def start_resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> None:
+        """Resume the exact native interrupt in a kept background run."""
+        command = self._resume_command(waiting, responses)
+        await cast(_RunsAdmission, self.graph.runs).create(
+            waiting.handle.thread_id,
+            waiting.handle.assistant_id,
+            command=command,
+            metadata={
+                "epoch_sdk_request_id": waiting.handle.request_id,
+                "epoch_sdk_ui_stream": "v1",
+            },
+            durability="sync",
+            multitask_strategy="reject",
+            on_completion="keep",
+            stream_mode=["values", "custom"],
+            stream_subgraphs=True,
+            stream_resumable=True,
+        )
+
+    async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
+        return await self._wait(waiting.handle, command=self._resume_command(waiting, responses))
 
     async def _wait(
         self,
@@ -713,6 +746,11 @@ class SupervisorClient:
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
     ) -> ChosenExecution:
+        if reference.response_plan is not None:
+            raise ValueError(
+                "Use EpochClient.execute_saved for a prepared response plan so its "
+                "outputs are replayed and published with the new execution."
+            )
         definition = await self.backend.studies_definitions.get_a_study_definition_by_id(
             reference.study_id, request_options={"max_retries": 0}
         )

@@ -1,18 +1,30 @@
 # Try the SDK with a US equities desk case
 
-Open **01_research_and_execute.ipynb** first. Select the **Epoch SDK (local
-prototype)** kernel. All case files live in the **cases** subfolder beside the
-notebooks; [the case list](cases/README.md) explains the desk questions, output
-formats and fixed assumptions.
+For sharing and demos, use the [individual case notebooks](demos/README.md).
+There is one notebook for each of the five desk cases, two separate format
+follow-ups and a clarification/reconnect example. The cells use shared `connect`,
+`task`, `display_request`, `run`, `read`, `execute` and `dashboard` helpers. Share
+the complete `demos` folder, including its helper modules and `cases` subfolder.
+Resolved parameters are visible before research or a later execution is sent.
+
+The generic **01_research_and_execute.ipynb** below is retained as a development
+walkthrough. Select the **Epoch SDK (local prototype)** kernel. Its case files
+live in the **cases** subfolder beside the notebooks;
+[the case list](cases/README.md) explains the desk questions, output
+formats and data assumptions. Each task is one or two short sentences; context
+describes the data and business assumptions, while `outputs` declares the answer.
 
 The five scenarios use real vendor data: MSFT financial quality, MSFT risk versus
 SPY, an AAPL trend filter, an S&P 500 momentum shortlist, and QQQ/SPY sensitivity
 to US Treasury yield changes. Two further requests change the format of existing
 MSFT/screener evidence. No market result or winning backtest has been pre-filled.
 
-**Status:** requests and notebooks are validated offline. Their market-data
-research cells have not yet been run end to end. Earlier supplied-data SDK/MCP
-proof remains documented separately; it does not prove these new cases.
+**Request revision:** `desk-v2` uses shorter, natural desk requests. The short
+MSFT fundamentals/risk, AAPL, macro, MSFT plain-text follow-up and clarification
+flows have actual notebook/service and source-review evidence. The corrected screener
+and its JSON follow-up now also have live source and trace acceptance. See the
+[current acceptance ledger](../../docs/interactive-acceptance-2026-10-19.md),
+which distinguishes saved-answer reattachment, fresh research and plan replay.
 
 ## Notebook order
 
@@ -20,7 +32,9 @@ proof remains documented separately; it does not prove these new cases.
    request, research, display/check the answer, and optionally continue through
    the separate saved-study execution steps. It defaults to MSFT fundamentals.
    Run it again with another base case to try another desk task.
-2. **02_clarification_and_reconnect.ipynb**: an optional MSFT fiscal-year
+2. **02_clarification_and_reconnect.ipynb**: an optional advanced transport test.
+   The low-level calls are exposed deliberately to test observer disconnects;
+   normal notebook sessions use the single call in notebook 01. An MSFT fiscal-year
    confirmation demonstrates a natural-language answer, a disconnected local
    wait and reconnecting to the same operation. The extra question is deliberate;
    normal base cases do not force it. Disconnecting does not cancel the server.
@@ -33,7 +47,10 @@ proof remains documented separately; it does not prove these new cases.
 Each cell explains what it does. `epoch = connect()` prepares the normal SDK
 client from the environment; `await check_services()` prints package versions
 and checks the service health endpoints. Neither starts research. The later
-`epoch.research(...)` cell starts actual model/vendor/engine work. Output variants
+`epoch.run(...)` cell starts actual model/vendor/engine work. That one call renders
+live activity, collects explicit replies in notebook widgets, resumes the same
+checkpoint and displays the saved answer. No manual polling or reply code is
+needed for normal research. Output variants
 start a model turn over retained evidence; their instructions prohibit new
 discovery and execution, and live tool traces still need review.
 
@@ -45,8 +62,10 @@ from the beginning. Each file contains ordinary SDK `task`, `context`,
 `cases/index.json` is a local catalogue, not an API request; it is not sent to Epoch.
 
 IDs include the case name and `ATTEMPT`, for example
-`notebook-demo-msft_fundamentals-01-research` and
-`notebook-demo-msft_fundamentals-01-execute`. Keep the same attempt to reconnect
+`notebook-demo-msft_fundamentals-desk-v2-01-research` and
+`notebook-demo-msft_fundamentals-desk-v2-01-execute`. The default
+`ATTEMPT = "desk-v2-01"` keeps these changed requests separate from earlier runs.
+Keep the same attempt to reconnect
 after a kernel restart. Identical accepted inputs attach; changed accepted inputs
 require a new attempt. `EPOCH_NOTEBOOK_PREFIX` can provide a separate namespace.
 
@@ -84,20 +103,20 @@ runner; it is not a desk case or a notebook default.
 
 ## MCP uses the same requests
 
-Pass the selected base file's object to `epoch_research`, with its own readable
+Pass the selected base file's object to `epoch_run`, with its own readable
 operation ID. No notebook-specific SDK or server is involved. The notebook's
 helpers only load local files, format displays and check results.
 
 For an output variant, notebook 03 displays the fully resolved request with the
 source study/execution identities. Supply that request and original thread ID to
-MCP's `epoch_research`, using a distinct operation ID. Do not submit an unresolved
+MCP's `epoch_run`, using a distinct operation ID. Do not submit an unresolved
 variant alone, select another execution or refresh market data.
 
 ## Another environment
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
-distribution workflow. These notebooks were prepared with StratifyX 3.3.0rc4 and
-Epoch SDK 0.1.0a2. Install this checkout's `python/epoch-sdk[clients,results]`, plus
+distribution workflow. The current acceptance environment uses StratifyX 3.3.0rc8
+and Epoch SDK 0.1.0a12. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:
@@ -122,3 +141,6 @@ server's expired startup token. The helper uses the existing Epoch login cache;
 it returns only the current identity token. No vendor or model credentials are
 returned to the notebook. Independently configured notebooks can still use a
 static `EPOCH_TOKEN` and their own normal identity-refresh flow.
+
+See [interactive sessions](../../docs/interactive-sessions.md) for the same
+terminal experience, structured MCP progress and headless event API.

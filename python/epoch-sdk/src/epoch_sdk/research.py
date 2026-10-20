@@ -2,27 +2,39 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+from uuid import uuid4
 
 import httpx
 from stratifyx import (
     DatePeriodConfig,
     ExecutionOptions,
     SdkContractErrorResponse,
+    SdkContractResponsePlanReference,
+    SdkContractRunParameters,
     SdkContractRunRequest,
+    SdkExecutionRecord,
     SdkRequestPhase,
     SdkRequestRecord,
     SdkRequestRuntime,
     SdkResearchLaunch,
-    SdkContractRunParameters,
-    SdkExecutionRecord,
 )
 from stratifyx.core.api_error import ApiError
+from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 from stratifyx.types.job_list_item import JobListItem
 
-from .contracts import Contract, DomainError, ErrorResponse, RunParameters, RunRequest
+from .contracts import (
+    Contract,
+    DomainError,
+    ErrorResponse,
+    OutputRequest,
+    RunParameters,
+    RunRequest,
+    TextOutputRequest,
+)
 from .errors import EpochError
 from .responses import ResponseTablePage, SavedResearchResponse
 from .supervisor import (
@@ -37,6 +49,9 @@ from .supervisor import (
     SupervisorResult,
     WorkflowHandle,
 )
+
+if TYPE_CHECKING:
+    from .session import EventHandler, ResearchSession
 
 
 class ResearchAccepted(Contract):
@@ -163,6 +178,168 @@ class EpochClient:
     async def aclose(self) -> None:
         await self.supervisor.aclose()
 
+    def session(
+        self,
+        request: RunRequest | None = None,
+        *,
+        operation_id: str,
+        thread_id: str | None = None,
+    ) -> ResearchSession:
+        """Observe/continue one server-owned research operation without a renderer.
+
+        Supply a request to create-or-attach. Omit it to reconnect read-only to
+        an existing operation. No local session file or second graph is created.
+        """
+        from .session import ResearchSession
+
+        return ResearchSession(self, request, operation_id=operation_id, thread_id=thread_id)
+
+    async def run(
+        self,
+        task: RunRequest | str | None = None,
+        *,
+        operation_id: str | None = None,
+        thread_id: str | None = None,
+        context: list[str] | None = None,
+        outputs: list[OutputRequest] | None = None,
+        parameters: RunParameters | None = None,
+        auto_ingest: bool = False,
+        interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
+        on_event: EventHandler | None = None,
+        request: RunRequest | None = None,
+    ) -> ResearchCompleted | NeedsInput:
+        """Stream research, collect explicit replies, and display its saved answer.
+
+        Notebook and terminal adapters are optional presentation extras. In a
+        noninteractive process this returns structured questions without waiting
+        for keyboard input. A plain task defaults to a concise Markdown answer.
+        Supply operation_id to reconnect; omit the task to observe saved work.
+        Use execute for prepared work. Typed RunRequest callers remain supported.
+        """
+        from .interactive import run_interactive
+
+        if request is not None:
+            if task is not None:
+                raise ValueError("Supply task or the legacy request keyword, not both.")
+            task = request
+        request = task
+        additions = (context, outputs, parameters)
+        if isinstance(request, str):
+            request = RunRequest(
+                task=request,
+                context=[] if context is None else context,
+                outputs=outputs
+                if outputs is not None
+                else [
+                    TextOutputRequest(
+                        name="answer",
+                        type="text",
+                        format="markdown",
+                        instructions="Answer the task concisely using the research evidence.",
+                    )
+                ],
+                **({"parameters": parameters} if parameters is not None else {}),
+                **({"auto_ingest": True} if auto_ingest else {}),
+            )
+        elif any(value is not None for value in additions) or auto_ingest:
+            raise ValueError("Supply task fields with a plain task, or put them in RunRequest.")
+        if request is None and operation_id is None:
+            raise ValueError("Supply a task to start work or operation_id to reconnect.")
+        return await run_interactive(
+            self.session(
+                request,
+                operation_id=operation_id if operation_id is not None else "run-" + uuid4().hex,
+                thread_id=thread_id,
+            ),
+            interface,
+            on_event=on_event,
+        )
+
+    async def resume(
+        self,
+        operation_id: str,
+        responses: dict[str, Answers],
+        *,
+        interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
+        on_event: EventHandler | None = None,
+    ) -> ResearchCompleted | NeedsInput:
+        """Answer this operation's current questions, then continue the same session."""
+        from .interactive import run_interactive
+
+        waiting = await self.research_status(operation_id=operation_id)
+        if not isinstance(waiting, NeedsInput):
+            raise ValueError("This operation is not waiting for an answer.")
+        session = self.session(operation_id=operation_id)
+        await session.resume(waiting, responses)
+        return await run_interactive(session, interface, on_event=on_event)
+
+    async def status(
+        self,
+        operation_id: str,
+        *,
+        kind: Literal["run", "execute"] = "run",
+    ) -> ResearchResult | ChosenExecution | ExecutionAccepted:
+        """Read one operation; never submit, resume or execute work."""
+        if kind == "run":
+            return await self.research_status(operation_id=operation_id)
+        if kind == "execute":
+            return await self.execution_operation(operation_id)
+        raise ValueError("Operation kind must be run or execute.")
+
+    async def execute(
+        self,
+        reference: SavedStudy | str,
+        *,
+        period: DatePeriodConfig,
+        execution: ExecutionOptions | None = None,
+        operation_id: str | None = None,
+    ) -> ChosenExecution:
+        """Run prepared work and wait for completion and any saved response plan.
+
+        Waiting only reads the accepted operation. Cancelling this local observer
+        does not cancel Backend work. execute_saved remains the admission-only API.
+        """
+        operation_id = operation_id if operation_id is not None else "execute-" + uuid4().hex
+        if not operation_id.strip() or operation_id != operation_id.strip():
+            raise ValueError("Provide an exact nonblank operation_id")
+        current = await self.execute_saved(
+            reference, period=period, execution=execution, operation_id=operation_id
+        )
+        while True:
+            if isinstance(current, ChosenExecution):
+                state = current.execution.status.value
+                if state == "completed":
+                    return current
+                if state in {"failed", "cancelled"}:
+                    raise EpochError(
+                        DomainError(
+                            code="EXECUTION_FAILED",
+                            message=f"Prepared execution {state}.",
+                            retryable=False,
+                        ),
+                        execution_id=current.execution.id,
+                    )
+            await asyncio.sleep(1)
+            current = await self.execution_operation(operation_id)
+
+    async def read(
+        self,
+        response_id: str,
+        *,
+        table: str | None = None,
+        version: int | None = None,
+        offset: int = 0,
+        page_size: int = 1000,
+    ) -> SavedResearchResponse | ResponseTablePage:
+        """Read an answer or one table page from Backend, without starting work."""
+        if table is None:
+            if offset != 0 or page_size != 1000:
+                raise ValueError("Table paging options require a table name.")
+            return await self.response(response_id, version=version)
+        return await self.response_table(
+            response_id, table, version=version, offset=offset, page_size=page_size
+        )
+
     async def response(
         self, response_id: str, *, version: int | None = None
     ) -> SavedResearchResponse:
@@ -209,10 +386,12 @@ class EpochClient:
             if not isinstance(research, ResearchCompleted) or research.reusable_study is None:
                 raise ValueError("The research operation has no completed prepared study")
             reference = research.reusable_study
-        if operation_id is None:
+        if operation_id is None and reference.response_plan is None:
             return await self.supervisor.execute_saved(
                 reference, period=period, execution=execution
             )
+        if operation_id is None:
+            operation_id = "execute-" + uuid4().hex
         async with _boundary(None):
             parameters = (
                 RunParameters(period=period)
@@ -221,7 +400,30 @@ class EpochClient:
             )
             try:
                 native_parameters = SdkContractRunParameters.model_validate(parameters.to_wire())
-                if reference.thread_id is None:
+                if reference.response_plan is not None:
+                    plan = SdkContractResponsePlanReference.model_validate(
+                        reference.response_plan.to_wire()
+                    )
+                    if reference.thread_id is None:
+                        record = await self.backend.sdk_requests.create_sdk_execution_request(
+                            operation_id=operation_id,
+                            study_id=reference.study_id,
+                            source_execution_id=reference.source_execution_id,
+                            parameters=native_parameters,
+                            response_plan=plan,
+                            request_options={"max_retries": 0},
+                        )
+                    else:
+                        record = await self.backend.sdk_requests.create_sdk_execution_request(
+                            operation_id=operation_id,
+                            study_id=reference.study_id,
+                            source_execution_id=reference.source_execution_id,
+                            parameters=native_parameters,
+                            response_plan=plan,
+                            thread_id=reference.thread_id,
+                            request_options={"max_retries": 0},
+                        )
+                elif reference.thread_id is None:
                     record = await self.backend.sdk_requests.create_sdk_execution_request(
                         operation_id=operation_id,
                         study_id=reference.study_id,
@@ -240,15 +442,33 @@ class EpochClient:
                     )
             except ApiError as error:
                 if error.status_code == 409:
-                    raise EpochError(
-                        DomainError(
-                            code="IDEMPOTENCY_CONFLICT",
-                            message="This operation ID already has different accepted inputs. Use a new operation ID.",
-                            retryable=False,
-                        )
-                    ) from error
+                    raise await self._execution_admission_conflict(operation_id, error) from error
                 raise
             return await self._execution_operation(record)
+
+    async def _execution_admission_conflict(self, operation_id: str, error: ApiError) -> EpochError:
+        # Native checks an existing operation before evaluating a new plan.
+        # Other 409s (for example a frozen period) reject before admission;
+        # changing the ID cannot repair those and may duplicate accepted work.
+        try:
+            await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
+                operation_id, request_options={"max_retries": 0}
+            )
+        except ApiError as observation:
+            if observation.status_code != 404:
+                raise
+            try:
+                message = NativeErrorResponse.model_validate(error.body).message
+            except ValueError:
+                message = "The saved execution was rejected before admission."
+            return EpochError(DomainError(code="INVALID_STATE", message=message, retryable=False))
+        return EpochError(
+            DomainError(
+                code="IDEMPOTENCY_CONFLICT",
+                message="This operation ID already has different accepted inputs. Use a new operation ID.",
+                retryable=False,
+            )
+        )
 
     async def execution_operation(self, operation_id: str) -> ChosenExecution | ExecutionAccepted:
         """Read this prepared execution operation; start no job or agent."""
@@ -280,7 +500,11 @@ class EpochClient:
             raise
         if job.id != record.execution_id or job.definition_id != record.request.study_id:
             raise ValueError("The native execution differs from its accepted operation")
-        return ChosenExecution(
+        if record.request.response_plan is not None and (
+            record.response_phase is None or record.response_phase.value != "outputs_recorded"
+        ):
+            return accepted
+        result = ChosenExecution(
             execution=job,
             request_id=record.request_id,
             operation_id=record.request.operation_id,
@@ -290,6 +514,31 @@ class EpochClient:
                 thread_id=record.request.thread_id,
             ),
         )
+        if record.request.response_plan is not None:
+            if record.response_id is None or record.response_version is None:
+                raise ValueError("The completed execution plan has no pinned answer revision")
+            response = await self.response(record.response_id, version=record.response_version)
+            plan = record.request.response_plan
+            if (
+                response.request_id != record.request_id
+                or response.primary_execution_id != record.execution_id
+                or response.study_id != record.request.study_id
+                or response.response_plan is None
+                or response.response_plan.plan_id != plan.plan_id
+                or response.response_plan.version != plan.version
+                or (
+                    record.request.thread_id is not None
+                    and response.thread_id != record.request.thread_id
+                )
+            ):
+                raise ValueError(
+                    "The published execution answer differs from its exact admitted plan/source"
+                )
+            study = result.reusable_study.model_copy(
+                update={"response_plan": response.response_plan}
+            )
+            result = result.model_copy(update={"response": response, "reusable_study": study})
+        return result
 
     async def execution(self, execution_id: str) -> JobListItem:
         """Read queued/running/completed native status without a supervisor call."""
@@ -319,14 +568,17 @@ class EpochClient:
         *,
         thread_id: str | None = None,
         operation_id: str | None = None,
+        wait: bool = True,
     ) -> ResearchResult:
         request = RunRequest.model_validate(request.to_wire())
         if request.study_id is not None or request.source_execution_id is not None:
             raise ValueError("Use the separate saved-study execution action for prepared work")
         if request.auto_ingest:
             raise ValueError("Automatic ingestion is outside the core research capability")
+        if not wait and operation_id is None:
+            raise ValueError("Nonblocking research requires a readable operation_id")
         if operation_id is not None:
-            return await self._research_operation(request, operation_id, thread_id)
+            return await self._research_operation(request, operation_id, thread_id, wait=wait)
         async with _boundary(None):
             record = await self.backend.sdk_requests.create_sdk_request(
                 request=SdkContractRunRequest.model_validate(request.to_wire()),
@@ -355,7 +607,7 @@ class EpochClient:
             return await self._finish(record.request_id, outcome)
 
     async def _research_operation(
-        self, request: RunRequest, operation_id: str, thread_id: str | None
+        self, request: RunRequest, operation_id: str, thread_id: str | None, *, wait: bool = True
     ) -> ResearchResult:
         request = RunRequest.model_validate(request)
         if request.study_id is not None or request.source_execution_id is not None:
@@ -438,6 +690,8 @@ class EpochClient:
                     )
             if record.response_version is not None or record.error is not None:
                 return await self.research_status(record.request_id)
+            if not wait:
+                return await self.research_status(record.request_id)
             return await self._finish(
                 record.request_id, await self.supervisor.join_operation(self._handle(record))
             )
@@ -446,6 +700,8 @@ class EpochClient:
         self,
         waiting: NeedsInput,
         responses: dict[str, Answers],
+        *,
+        wait: bool = True,
     ) -> ResearchResult:
         async with _boundary(waiting.handle.request_id):
             record = await self.backend.sdk_requests.get_sdk_request(
@@ -466,7 +722,13 @@ class EpochClient:
             if record.phase.value not in {"active", "needs_input"}:
                 raise ValueError("The research request is already closed")
             try:
-                outcome = await self.supervisor.resume(waiting, responses)
+                if wait:
+                    outcome = await self.supervisor.resume(waiting, responses)
+                else:
+                    if record.operation_id is None:
+                        raise ValueError("Nonblocking resume requires a readable operation_id")
+                    await self.supervisor.start_resume(waiting, responses)
+                    return await self.research_status(record.request_id)
             except httpx.HTTPStatusError as error:
                 if record.operation_id is None or error.response.status_code != 409:
                     raise
@@ -547,6 +809,8 @@ class EpochClient:
                 source_execution_id=response.primary_execution_id,
                 thread_id=record.runtime.thread_id,
             )
+            if response.response_plan is not None:
+                reusable = reusable.model_copy(update={"response_plan": response.response_plan})
         completed = ResearchCompleted(
             status="succeeded", request_id=record.request_id, response=response
         )

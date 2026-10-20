@@ -26,5 +26,8 @@ jobs:
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
       - run: python tools/validate_research_workflow_contract.py
+      - run: python tools/validate_session_contract.py
+      - run: python tools/validate_response_plan_contract.py
       - run: python tools/validate_notebook_cases.py
+      - run: python tools/generate_demo_notebooks.py --check
       - run: python -m compileall -q python/epoch-sdk/src

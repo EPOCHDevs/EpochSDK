@@ -13,13 +13,10 @@ import os
 import time
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-from uuid import uuid4
 from typing import Literal, TypedDict
+from uuid import uuid4
 
-from pydantic import TypeAdapter
-from stratifyx.core.api_error import ApiError
-from stratifyx._release import SDK_RELEASE
-
+from epoch_sdk.output_validation import TableValue
 from epoch_sdk.research import (
     EpochClient,
     ExecutionAccepted,
@@ -27,8 +24,11 @@ from epoch_sdk.research import (
     ResearchResult,
 )
 from epoch_sdk.supervisor import Answer, Answers, ChosenExecution, NeedsInput
-from epoch_sdk.output_validation import TableValue
+from pydantic import TypeAdapter
+from stratifyx._release import SDK_RELEASE
+from stratifyx.core.api_error import ApiError
 from verify_research_services import (
+    TraceEvidence,
     capture_trace,
     connect,
     load_case,
@@ -39,7 +39,6 @@ from verify_research_services import (
     revision_content,
     verify_trace,
     verify_values,
-    TraceEvidence,
 )
 
 RESULT = TypeAdapter(ResearchResult)
@@ -114,8 +113,8 @@ async def research(client, mode, request, operation_id):
     return RESULT.validate_python(
         await mcp_call(
             client,
-            "epoch_research",
-            {"request": request.to_wire(), "operation_id": operation_id},
+            "epoch_run",
+            {**request.to_wire(), "operation_id": operation_id},
         )
     )
 
@@ -124,7 +123,7 @@ async def status(client, mode, operation_id):
     if mode == "sdk":
         return await client.research_status(operation_id=operation_id)
     return RESULT.validate_python(
-        await mcp_call(client, "epoch_research_status", {"operation_id": operation_id})
+        await mcp_call(client, "epoch_status", {"operation_id": operation_id})
     )
 
 
@@ -134,9 +133,9 @@ async def resume(client, mode, waiting, answers):
     return RESULT.validate_python(
         await mcp_call(
             client,
-            "epoch_resume_research",
+            "epoch_resume",
             {
-                "waiting": waiting.model_dump(mode="json"),
+                "operation_id": waiting.handle.operation_id,
                 "responses": {
                     key: value.model_dump(mode="json") for key, value in answers.items()
                 },
@@ -187,7 +186,7 @@ async def wait_claim(observer, operation_id, task, previous=None):
 
 async def execute(args, receipt: ProofReceipt):
     if (
-        receipt["epoch_sdk_version"] != "0.1.0a2"
+        receipt["epoch_sdk_version"] != "0.1.0a6"
         or receipt["native_sdk"]["backend_worktree_dirty"]
         or receipt["native_sdk"]["backend_git_sha"] != args.expected_backend_sha
     ):
@@ -390,10 +389,10 @@ async def execute(args, receipt: ProofReceipt):
                 task = asyncio.create_task(
                     mcp_call(
                         executor,
-                        "epoch_execute_saved",
+                        "epoch_execute",
                         {
                             "reference": args.operation_id,
-                            "parameters": case.request.parameters.to_wire(),
+                            **case.request.parameters.to_wire(),
                             "operation_id": execution_handle,
                         },
                     )
@@ -432,12 +431,12 @@ async def execute(args, receipt: ProofReceipt):
                     selected = EXECUTION.validate_python(
                         await mcp_call(
                             fresh,
-                            "epoch_execute_saved",
+                            "epoch_execute",
                             {
                                 "reference": completed.reusable_study.model_dump(
                                     mode="json"
                                 ),
-                                "parameters": case.request.parameters.to_wire(),
+                                **case.request.parameters.to_wire(),
                                 "operation_id": execution_handle,
                             },
                         )

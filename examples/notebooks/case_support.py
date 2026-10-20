@@ -61,9 +61,7 @@ def load_case(
             "The source answer must identify its saved study and execution."
         )
     base = load_case(entry["source_case"] + ".json")
-    if [output.to_wire() for output in reference.content.declarations] != [
-        output.to_wire() for output in base.outputs
-    ]:
+    if reference.content.declarations != base.outputs:
         raise ValueError(
             "This answer does not have the declared outputs of the source case."
         )
@@ -82,7 +80,11 @@ def load_case(
 
 
 async def read_case_tables(
-    epoch: EpochClient, completed: ResearchCompleted, *, page_size: int = 1000
+    epoch: EpochClient,
+    completed: ResearchCompleted,
+    *,
+    page_size: int = 1000,
+    verbose: bool = True,
 ) -> dict[str, list[dict]]:
     """Fetch every page of each table; JSON/text-only answers need no table call."""
     tables = {}
@@ -102,11 +104,21 @@ async def read_case_tables(
             total = page.total_rows
             names = [column.name for column in page.columns]
             rows.extend(dict(zip(names, row, strict=True)) for row in page.rows)
-            print(f"{output.name}: offset {page.offset}, next {page.next_offset}")
+            if verbose:
+                print(f"{output.name}: offset {page.offset}, next {page.next_offset}")
         if total is None or len(rows) != total:
             raise ValueError(f"Did not read the complete {output.name} table.")
+        expected = (
+            output.source.row_count
+            if output.source is not None
+            else len(output.rows or [])
+        )
+        if total != expected:
+            raise ValueError(
+                f"The {output.name} table differs from its saved row count."
+            )
         tables[output.name] = rows
-    if not tables:
+    if not tables and verbose:
         print("This answer requests JSON/text only; no table retrieval is needed.")
     return tables
 
@@ -135,6 +147,8 @@ def check_case_answer(
     request: RunRequest,
     completed: ResearchCompleted,
     tables: dict[str, list[dict]],
+    *,
+    verbose: bool = True,
 ) -> None:
     """Check the declared answer and case-specific arithmetic/ordering invariants.
 
@@ -143,8 +157,7 @@ def check_case_answer(
     """
     validate_outputs(request.outputs, completed.response.content.outputs)
     _require(
-        [output.to_wire() for output in completed.response.content.declarations]
-        == [output.to_wire() for output in request.outputs],
+        completed.response.content.declarations == request.outputs,
         "The saved answer declarations differ from the requested outputs.",
     )
     expected_tables = {
@@ -322,9 +335,10 @@ def check_case_answer(
                         <= row[f"{asset}_median_return"],
                         "Worst return exceeds the mean or median.",
                     )
-    print(
-        "Passed requested-output and internal-consistency checks; market-source accuracy still needs live review."
-    )
+    if verbose:
+        print(
+            "Passed requested-output and internal-consistency checks; market-source accuracy still needs live review."
+        )
 
 
 def check_variant_source(
@@ -332,6 +346,8 @@ def check_variant_source(
     source: ResearchCompleted,
     completed: ResearchCompleted,
     source_tables: dict[str, list[dict]],
+    *,
+    verbose: bool = True,
 ) -> None:
     """Require the original execution; compare every screener JSON cell to it."""
     original, answer = source.response, completed.response
@@ -366,4 +382,5 @@ def check_variant_source(
             value["shortlist"] == expected["shortlist"],
             "JSON values/order differ from the original saved table.",
         )
-    print("Verified the same execution/study and a distinct saved answer.")
+    if verbose:
+        print("Verified the same execution/study and a distinct saved answer.")

@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "ResolvedTextSettings": {
+      "additionalProperties": false,
+      "description": "Effective non-secret model settings captured by the owning AI service.",
+      "properties": {
+        "max_output_tokens": {
+          "minimum": 1,
+          "title": "Max Output Tokens",
+          "type": "integer"
+        },
+        "model_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Model Id",
+          "type": "string"
+        },
+        "model_policy": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Model Policy",
+          "type": "string"
+        },
+        "prompt_version": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "reasoning_effort": {
+          "enum": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "title": "Reasoning Effort",
+          "type": "string"
+        },
+        "temperature": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Temperature",
+          "type": "number"
+        }
+      },
+      "required": [
+        "model_policy",
+        "model_id",
+        "prompt_version",
+        "max_output_tokens"
+      ],
+      "title": "ResolvedTextSettings",
+      "type": "object"
+    },
+    "ResponseReference": {
+      "additionalProperties": false,
+      "description": "One published answer for a query, independent of its source execution.",
+      "properties": {
+        "primary_execution_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Primary Execution Id",
+          "type": "string"
+        },
+        "request_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "response_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Response Id",
+          "type": "string"
+        },
+        "response_plan": {
+          "$ref": "response-plan-reference.schema.json"
+        },
+        "study_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Study Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "response_id",
+        "request_id",
+        "thread_id",
+        "version"
+      ],
+      "title": "ResponseReference",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "created_at_ms": {
+      "minimum": 0,
+      "title": "Created At Ms",
+      "type": "integer"
+    },
+    "definition": {
+      "$ref": "response-plan-definition.schema.json"
+    },
+    "error": {
+      "$ref": "openapi.json#/components/schemas/Error"
+    },
+    "phase": {
+      "enum": [
+        "accepted",
+        "active",
+        "outputs_recorded",
+        "failed"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "plan_id": {
+      "pattern": "^rpl_[0-9a-f]{64}$",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "request_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "source_execution_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Source Execution Id",
+      "type": "string"
+    },
+    "text_settings": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ResolvedTextSettings"
+      },
+      "title": "Text Settings",
+      "type": "object"
+    },
+    "thread_id": {
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Thread Id",
+      "type": "string"
+    },
+    "verified_response": {
+      "$ref": "#/$defs/ResponseReference"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "plan_id",
+    "version",
+    "request_id",
+    "thread_id",
+    "source_execution_id",
+    "created_at_ms",
+    "phase",
+    "definition"
+  ],
+  "title": "SavedResponsePlan",
+  "type": "object"
+}

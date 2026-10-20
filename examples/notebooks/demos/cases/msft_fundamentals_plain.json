@@ -1,0 +1,14 @@
+{
+  "task": "Turn the Microsoft review into a short plain-text brief for the desk, using the same saved results.",
+  "context": [
+    "Use the completed FY2023–FY2025 MSFT review linked by the notebook, keeping its original source snapshot rather than refreshing the statements."
+  ],
+  "outputs": [
+    {
+      "name": "desk_brief",
+      "type": "text",
+      "format": "plain",
+      "instructions": "Write at most 150 words of plain text. Give the main FY2023–FY2025 finding with the relevant computed figures, explain capex/free-cash-flow and cash conversion, and identify the source snapshot basis. No Markdown table, JSON or extra response part."
+    }
+  ]
+}

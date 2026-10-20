@@ -16,6 +16,7 @@ from .contracts import (
     TextOutputRequest,
     parse_fetch,
 )
+from .dates import date_range
 from .errors import EpochError
 
 __all__ = [
@@ -33,5 +34,6 @@ __all__ = [
     "RunRequest",
     "TableOutputRequest",
     "TextOutputRequest",
+    "date_range",
     "parse_fetch",
 ]

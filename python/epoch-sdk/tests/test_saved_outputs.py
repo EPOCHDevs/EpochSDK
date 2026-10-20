@@ -481,6 +481,53 @@ def test_a_naive_timestamp_does_not_acquire_an_invented_timezone() -> None:
     asyncio.run(scenario())
 
 
+@pytest.mark.parametrize(
+    "unit,scale", [("s", 1), ("ms", 1000), ("us", 1000000), ("ns", 1000000000)]
+)
+def test_native_utc_midnight_timestamps_are_lossless_response_dates(unit, scale):
+    async def scenario():
+        value = only_table().to_wire()
+        value["declarations"][0]["schema"] = [
+            {"name": "period_end", "type": "date", "nullable": True}
+        ]
+        value["bindings"][0]["field_ids"] = ["native-period-end"]
+        table = pa.table(
+            {
+                "native-period-end": pa.array(
+                    [1751241600 * scale, None, -86400 * scale], type=pa.timestamp(unit, tz="UTC")
+                )
+            }
+        )
+        async with native_backend(data=arrow_bytes(table)) as (backend, _):
+            result = await read_saved_outputs(backend, SavedOutputManifest.model_validate(value))
+        assert result.outputs[0].rows == [["2025-06-30"], [None], ["1969-12-31"]]
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "stamp,zone",
+    [
+        (1751241600000000001, "UTC"),
+        (1751241601000000000, "UTC"),
+        (1751241600000000000, None),
+        (1751241600000000000, "America/New_York"),
+    ],
+)
+def test_response_dates_do_not_truncate_time_or_infer_timezone(stamp, zone):
+    async def scenario():
+        value = only_table().to_wire()
+        value["declarations"][0]["schema"] = [{"name": "period_end", "type": "date"}]
+        value["bindings"][0]["field_ids"] = ["native-period-end"]
+        table = pa.table({"native-period-end": pa.array([stamp], type=pa.timestamp("ns", tz=zone))})
+        async with native_backend(data=arrow_bytes(table)) as (backend, _):
+            with pytest.raises(EpochError) as raised:
+                await read_saved_outputs(backend, SavedOutputManifest.model_validate(value))
+        assert raised.value.error.code == "OUTPUT_VALIDATION_FAILED"
+
+    asyncio.run(scenario())
+
+
 def test_compressed_ipc_is_limited_by_its_decoded_values_too() -> None:
     async def scenario() -> None:
         table = pa.table({"native-year": [2024] * 1000, "native-value": [12.5] * 1000})

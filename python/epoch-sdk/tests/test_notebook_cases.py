@@ -217,3 +217,17 @@ def test_variant_rejects_a_different_primary_execution():
 
 def test_catalogue_looks_up_the_file_next_to_the_notebooks():
     assert case_info(Path("cases/aapl_trend_strategy.json"))["family"] == "single_asset_strategy"
+
+
+def test_source_checks_accept_explicit_native_defaults_and_preserve_definitions():
+    tables = fundamentals()
+    source = completed_for("msft_fundamentals", tables)
+    for declaration in source.response.content.declarations:
+        if declaration.type == "table":
+            for column in declaration.columns:
+                column.nullable = column.nullable
+    check_case_answer("msft_fundamentals.json", request_for("msft_fundamentals"), source, tables)
+    load_case("msft_fundamentals_plain.json", source=source)
+    source.response.content.declarations[0].columns[0].description = "Different fiscal definition"
+    with pytest.raises(ValueError, match="declared outputs"):
+        load_case("msft_fundamentals_plain.json", source=source)

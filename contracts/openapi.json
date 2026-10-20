@@ -1460,6 +1460,9 @@
           "parameters": {
             "$ref": "#/components/schemas/Native_SdkContract_RunParameters"
           },
+          "response_plan": {
+            "$ref": "#/components/schemas/Native_SdkContract_ResponsePlanReference"
+          },
           "source_execution_id": {
             "type": "string"
           },
@@ -2186,6 +2189,28 @@
         "type": "object",
         "x-native-schema-name": "SdkContract_Question"
       },
+      "Native_SdkContract_ResponsePlanReference": {
+        "additionalProperties": false,
+        "properties": {
+          "plan_id": {
+            "pattern": "^rpl_[0-9a-f]{64}$",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plan_id",
+          "version"
+        ],
+        "title": "ResponsePlanReference",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_ResponsePlanReference"
+      },
       "Native_SdkContract_RunParameters": {
         "additionalProperties": false,
         "description": "Only the closed parameter types supported by native Backend execution.",
@@ -2441,6 +2466,17 @@
           },
           "request_id": {
             "type": "string"
+          },
+          "response_id": {
+            "type": "string"
+          },
+          "response_phase": {
+            "$ref": "#/components/schemas/Native_SdkRequestPhase"
+          },
+          "response_version": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
           }
         },
         "required": [
@@ -6913,6 +6949,7 @@
       "Native_SdkContract_Manifest_TextBinding",
       "Native_SdkContract_OutputName",
       "Native_SdkContract_Question",
+      "Native_SdkContract_ResponsePlanReference",
       "Native_SdkContract_RunParameters",
       "Native_SdkContract_RunRequest",
       "Native_SdkContract_SavedOutputManifest",
@@ -6928,7 +6965,7 @@
       "Native_TemplatedGenericFunction_SlippageType",
       "Native_UpdateSdkRequest"
     ],
-    "sha256": "dd52cbd46535256e66682f87aac15b6369baca49d44facfb098127ed792fa397",
+    "sha256": "4faacb96c8cceb8acdf3ef61aec0114105a7d69381dd2175f92741ba559e2560",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",

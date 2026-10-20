@@ -49,7 +49,7 @@ def main() -> None:
         *(entry["file"] for entry in entries),
     }, "Every top-level request belongs in the case catalogue."
     cells = 0
-    for path in sorted(NOTEBOOKS.glob("*.ipynb")):
+    for path in sorted(NOTEBOOKS.rglob("*.ipynb")):
         notebook = json.loads(path.read_text())
         for cell in notebook["cells"]:
             if cell["cell_type"] == "code":

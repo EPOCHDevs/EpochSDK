@@ -1,14 +1,9 @@
 {
-  "task": "Review Microsoft's FY2023–FY2025 results for a US large-cap fundamental analyst. How did revenue growth, operating margin and cash conversion change? Reconcile operating cash flow, capital expenditure and free cash flow, and identify the main improvement or deterioration. Return the fiscal-year table and a short Markdown memo.",
+  "task": "Has Microsoft's growth become more cash-generative over FY2023–FY2025? Highlight what changed in margins, capex and cash conversion.",
   "context": [
-    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
-    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
-    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
-    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
-    "Resolve Microsoft common stock (MSFT, US listing). This is a retrospective company review using the statements available at retrieval time, not a historical point-in-time investment signal.",
-    "Publish exactly FY2023, FY2024 and FY2025, sorted by fiscal year. Load FY2022 revenue only as the growth comparison baseline. Join income and cash-flow statements by verified fiscal-period identity, not merely by equal filing dates.",
-    "Use annual statements, not trailing-twelve-month or calendar-year aggregates. Use unscaled USD and the exact formulas described in the output columns. Do not count a duplicate filing twice; resolve any differing revisions explicitly.",
-    "Cash conversion means operating cash flow / net income. Free cash flow means operating cash flow minus positive capex; do not silently include finance-lease additions or substitute a different free-cash-flow definition."
+    "MSFT annual financial statements, using the latest available revisions; this is a retrospective company review for a US equities desk.",
+    "FY2023–FY2025 in USD, with FY2022 revenue as the growth baseline.",
+    "Cash conversion means operating cash flow / net income; free cash flow is operating cash flow less cash capex."
   ],
   "parameters": {
     "period": {

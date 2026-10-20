@@ -1,16 +1,9 @@
 {
-  "task": "Test a fixed AAPL trend filter for a US equities systematic trader over 2016–2025. Hold AAPL when the completed daily close exceeds its 200-session simple moving average; otherwise hold cash. Trade at the next US regular-session daily open, charge 10 basis points of traded notional per transaction and assume zero cash interest. Compare with gross buy-and-hold AAPL total return. Return performance as a table, a JSON summary and a brief plain-text conclusion.",
+  "task": "Would a simple 200-day trend filter have improved AAPL's risk and return versus buy-and-hold over 2016–2025?",
   "context": [
-    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
-    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
-    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
-    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
-    "This is a fixed-rule descriptive prototype, not a parameter search or an independently validated investment strategy. Keep 200 sessions and every other assumption fixed even if the rule underperforms.",
-    "Evaluate 2016-01-01 through 2025-12-31; load at least 200 genuine daily observations before the evaluation start for warm-up. Use US regular-session daily bars only. A close equal to the SMA is a cash signal. A decision may only affect the next valid daily open.",
-    "Start with USD 1,000,000, no leverage, no shorting, one AAPL position and cash. Use the first eligible prior completed signal at the evaluation start. Invest the available equity net of costs; do not create daily rebalances while the held signal is unchanged.",
-    "The native commission Bps model is the all-in modeled transaction charge: 10 bps each way, with native slippage explicitly None. It is a simplified cost assumption, not a claim to model auction execution or market impact. Keep the native corporate-action/dividend account treatment; do not double-credit dividends.",
-    "Value any position still open at the final evaluation close; do not invent a liquidation fill. Cash earns zero interest. Benchmark is gross AAPL buy-and-hold total return over the identical valuation window; identify the cost asymmetry in the conclusion.",
-    "Calculate the strategy metrics from the actual executed account. The buy-and-hold benchmark is analytical; do not invent benchmark fills. Use consistent annualization and drawdown conventions across the table and JSON."
+    "AAPL vendor daily OHLC and corporate-action data; the feed does not verify exact regular-session or opening-auction prints.",
+    "Hold AAPL when its completed daily close is above its 200-session SMA, otherwise cash. Act at the next vendor daily open; keep the rule fixed.",
+    "Start with USD 1 million, no leverage or shorting, 10 bps each way, no additional slippage and zero cash interest. The comparator is gross dividend-inclusive buy-and-hold."
   ],
   "parameters": {
     "period": {
@@ -93,7 +86,7 @@
           },
           "trade_timing": {
             "type": "string",
-            "description": "Orders use the next regular-session daily open.",
+            "description": "Orders use the next available vendor daily open; no verified opening-auction claim.",
             "const": "next_session_open"
           },
           "transaction_cost_bps": {
@@ -197,7 +190,7 @@
       "name": "trader_conclusion",
       "type": "text",
       "format": "plain",
-      "instructions": "Write at most 120 words. State whether the fixed trend filter reduced drawdown and what return trade-off occurred, quoting computed figures. Mention next-open execution, 10 bps each way, zero cash interest and the gross benchmark. Do not imply that a successful run validates a trading edge. No Markdown table."
+      "instructions": "Write at most 120 words. State whether the fixed trend filter reduced drawdown and what return trade-off occurred, quoting computed figures. Mention next vendor-open execution, 10 bps each way, zero cash interest and the gross benchmark. Disclose that the daily feed's exact session/auction basis is not independently established. Do not imply that a successful run validates a trading edge. No Markdown table."
     }
   ]
 }

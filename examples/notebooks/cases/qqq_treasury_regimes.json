@@ -1,15 +1,9 @@
 {
-  "task": "For a US equities macro-risk review, compare QQQ and SPY over calendar months in 2016–2025 when the US 10-year Treasury yield rose at least 25 basis points, fell at least 25 basis points or moved less. Report observation counts, average and median returns, the worst monthly return and QQQ performance relative to SPY. Return a regime table and a concise Markdown assessment.",
+  "task": "How did QQQ perform versus SPY in months when US 10-year yields rose sharply, fell sharply or stayed fairly flat during 2016–2025?",
   "context": [
-    "Persona: a US equities desk. Use real observations available through configured Epoch data sources. This is an analysis request, not an order to trade.",
-    "Calculate numerical results in the saved study, inspect the actual execution evidence, and publish exactly the requested named outputs. Tables must reference saved computed relations and fields; do not enumerate or invent market observations.",
-    "Preserve actual source, coverage, fiscal/calendar basis, corporate-action policy and retrieval time. If required data or a capability is unavailable, report the concrete gap; do not substitute another security, source definition, period or model assumption.",
-    "The published answer is the response. Do not repeat it in a separate assistant narrative or create a matching dashboard table merely because a table response was requested.",
-    "Discover the daily US 10-year nominal Treasury constant-maturity yield, quoted as an annual percentage yield, through a configured macro source. Its economic definition is the Fed H.15 10-year constant-maturity Treasury series. Do not substitute a bond ETF return, another maturity, a real yield or another country.",
-    "Evaluate exactly January 2016 through December 2025. Load December 2015 prices and yields for the initial month-over-month comparison. Use a consistent dividend-inclusive total-return convention for QQQ and SPY.",
-    "For each calendar month use the last valid equity session and the latest valid yield observation no later than that date. Convert changes in percentage-point quoted yields to basis points by multiplying by 100. Do not carry a yield from a prior month when that month has no observation.",
-    "Regimes are monthly yield change >= +25 bp, <= -25 bp, and strictly between -25 and +25 bp. Apply each regime to the same month's equity returns: this is a contemporaneous descriptive association, not a tradable signal, a causal estimate or a forecast.",
-    "Use complete paired months only. State source, return basis, dates, sample count and any excluded months in the assessment. Publish all three regime rows, using null metrics only for an empty regime. Compute active median/worst returns from paired QQQ-minus-SPY observations rather than subtracting separate medians/minima."
+    "US 10-year nominal constant-maturity Treasury yields (Fed H.15 definition) and dividend-inclusive QQQ/SPY returns.",
+    "Calendar months January 2016–December 2025, with December 2015 as the baseline; align yields to the last equity session of each month.",
+    "Rising means a same-month yield increase of at least 25 bp; falling means a decrease of at least 25 bp; otherwise flat. This is a descriptive comparison, not a trading signal."
   ],
   "parameters": {
     "period": {

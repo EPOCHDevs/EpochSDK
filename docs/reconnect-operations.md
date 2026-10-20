@@ -45,14 +45,18 @@ Backend admits one native execution and retains its execution ID before starting
 
 IDs contain 1–128 ASCII letters, digits, hyphens or underscores and start with a letter or digit. They are case-sensitive and scoped to the authenticated Backend owner. Research and execution use their respective API namespaces.
 
-Matching normalized inputs attach. Changing the task, requested outputs, context, parameters or launch settings returns `IDEMPOTENCY_CONFLICT` (native HTTP 409). Use a new ID for that new operation. Accepted inputs remain readable in the native operation record. Omitting an operation ID preserves the existing unkeyed behavior.
+Matching normalized inputs attach. Changing the task, requested outputs, context, parameters or launch settings returns `IDEMPOTENCY_CONFLICT` (native HTTP 409). Use a new ID for that new operation. Accepted inputs remain readable in the native operation record. The advanced `research` API retains its historical unkeyed behavior. Public `run` always creates a reconnectable session, generating an ID if omitted.
 
 The native LangGraph admission hook atomically records one graph run in Backend. Concurrent SDK submissions attach to that recorded run. Clarification resumes record their new native run ID without creating a new research operation. Reads select checkpoints belonging to that operation/run, rather than the newest conversation query.
 
 ## MCP
 
-`epoch_research` accepts `operation_id` with the same `RunRequest`. `epoch_research_status` accepts either `request_id` or `operation_id`. `epoch_execute_saved` accepts the prepared study reference or a completed research handle, execution parameters and a separate operation ID. `epoch_execution_operation` reconnects by that execution handle.
-
-`epoch_run` can opt into readable-ID research with a concise Markdown answer. Use `epoch_research` to declare named table, JSON or text parts. Existing unkeyed conversation tools retain their behavior.
+`epoch_run` accepts task, optional context/output declarations/parameters and a
+readable operation ID. `epoch_resume` takes that ID and explicit responses.
+`epoch_status` reads the ID with `kind="run"` or `kind="execute"`.
+`epoch_execute` starts or attaches prepared work using a separate operation ID;
+`epoch_read` retrieves its saved answer or table pages. All five wrap the same
+public SDK operations. Omitting an ID on `run` generates one and still uses the
+shared session. See [the current interface](public-client-interface.md).
 
 Use the matching Backend, EpochAI admission hook and normally generated StratifyX SDK from this feature's linked PRs. This is healthy-service reconnect; automatic failed-run recovery, retry scheduling and retention remain ENG-2037 work.

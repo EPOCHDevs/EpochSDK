@@ -16,6 +16,33 @@ answer with named table, JSON and text parts. Prepared-study execution remains
 a separate direct Backend operation. [Readable operation IDs](../../docs/reconnect-operations.md)
 let notebooks and MCP clients attach after disconnecting.
 
+## One research session
+
+Install the `notebook` or `terminal` presentation extra and use:
+
+```python
+result = await epoch.run(request, operation_id="msft-quality-2025")
+```
+
+The SDK renders live Epoch activity, collects explicit replies, resumes the same
+native checkpoint and displays the saved answer once. The returned result stays
+ordinary Python data. `await epoch.run(operation_id="msft-quality-2025")`
+reconnects after a kernel/process restart. MCP consumes the same headless session
+core with structured progress and questions. See [interactive sessions](../../docs/interactive-sessions.md).
+
+## SDK and MCP use the same five operations
+
+Use `run`, `execute`, `resume`, `status` and `read`. The default MCP catalogue is
+`epoch_run`, `epoch_execute`, `epoch_resume`, `epoch_status` and `epoch_read`.
+A task string is sufficient; context, requested outputs and native parameters
+are optional. A task without output declarations receives a concise Markdown
+answer. Explicit table/JSON declarations use the same closed `RunRequest`
+contract. Publication and output binding are handled by Epoch.
+
+See [the shared public interface](../../docs/public-client-interface.md) for
+examples, reconnect IDs, structured clarification and the alpha13 migration.
+The older SDK methods remain available; their separate MCP tools are retired.
+
 ## Use the actual core contract
 
 `RunRequest`, `IngestRequest`, fresh/cursor fetch, refresh, acceptance and errors
@@ -67,7 +94,7 @@ prepared study execution. See the [current flow](../../docs/research-flow.md).
 ## Verify locally
 
 Install the reviewed native StratifyX wheel through its existing package
-workflow, then install `python/epoch-sdk[mcp,test]` in your isolated Python environment.
+workflow, then install `python/epoch-sdk[mcp,terminal,notebook,test]` in your isolated Python environment.
 Never edit or vendor the generated StratifyX models. From the repository root:
 
 ```bash

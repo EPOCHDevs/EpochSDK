@@ -37,9 +37,13 @@ def test_mcp_cleanup_preserves_the_domain_error_for_the_receipt(monkeypatch):
                 raise ExceptionGroup("MCP cleanup", [error])
 
     monkeypatch.setattr(proof, "Client", lambda *args, **kwargs: GroupingClient())
-    failure = EpochError(DomainError(
-        code="TEMPORARILY_UNAVAILABLE", message="Model unavailable", retryable=True,
-    ))
+    failure = EpochError(
+        DomainError(
+            code="TEMPORARILY_UNAVAILABLE",
+            message="Model unavailable",
+            retryable=True,
+        )
+    )
 
     async def scenario():
         async with proof.mcp_client("https://graph.invalid", "https://backend.invalid", "fixture"):
@@ -157,9 +161,9 @@ def test_referenced_case_checks_every_pinned_page(monkeypatch, mode, wrong_revis
         yield object()
 
     async def mcp_call(client, name, arguments):
-        assert name == "epoch_response_table"
+        assert name == "epoch_read"
         assert arguments["response_id"] == result.response.response_id
-        assert arguments["name"] == expected.name and arguments["version"] == 1
+        assert arguments["table"] == expected.name and arguments["version"] == 1
         offset = arguments["offset"]
         calls.append(offset)
         return page(offset).to_wire()

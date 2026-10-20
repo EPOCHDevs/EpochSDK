@@ -1,0 +1,108 @@
+{
+  "task": "Which S&P 500 names should be on our momentum watchlist? Give me the top 20 above their 200-day average, ranked by 12–1 month momentum.",
+  "context": [
+    "Current S&P 500 membership snapshot, with daily prices through 2026-10-16; this is a current-universe screen, not a historical membership backtest.",
+    "Use split-adjusted closes for price returns and compatible price/share units for dollar volume. The vendor daily feed does not verify exact regular-session or auction prints."
+  ],
+  "parameters": {
+    "period": {
+      "start": "2025-01-01",
+      "end": "2026-10-16"
+    }
+  },
+  "outputs": [
+    {
+      "name": "shortlist",
+      "type": "table",
+      "description": "Ranked current-universe shortlist; one row per ticker, ordered by rank.",
+      "schema": [
+        {
+          "name": "rank",
+          "type": "int64",
+          "description": "Sequential rank starting at 1; descending momentum with ticker ascending as the tie-break."
+        },
+        {
+          "name": "ticker",
+          "type": "string",
+          "description": "Unique US-listed constituent ticker; the row label is a security, not a timestamp."
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "description": "Company display name from the resolved asset metadata."
+        },
+        {
+          "name": "sector",
+          "type": "string",
+          "description": "Sector label from the resolved asset metadata."
+        },
+        {
+          "name": "as_of",
+          "type": "date",
+          "description": "Exact completed price session used by the screen: 2026-10-16."
+        },
+        {
+          "name": "momentum_12_1",
+          "type": "float64",
+          "description": "Split-adjusted close 21 sessions ago / split-adjusted close 252 sessions ago - 1.",
+          "unit": "fraction"
+        },
+        {
+          "name": "return_3m",
+          "type": "float64",
+          "description": "Split-adjusted close at as_of / close 63 sessions ago - 1; price return.",
+          "unit": "fraction"
+        },
+        {
+          "name": "distance_to_sma_200",
+          "type": "float64",
+          "description": "As-of split-adjusted close / its trailing 200-session SMA - 1; strictly positive.",
+          "unit": "fraction"
+        },
+        {
+          "name": "average_dollar_volume_20",
+          "type": "float64",
+          "description": "Mean of actual quoted close times traded shares over the last 20 sessions, with price/volume on a consistent split basis.",
+          "unit": "USD/day"
+        }
+      ]
+    },
+    {
+      "name": "screening_coverage",
+      "type": "table",
+      "description": "Exactly one coverage row for the captured roster and price cutoff.",
+      "schema": [
+        {
+          "name": "as_of",
+          "type": "date",
+          "description": "Price observation cutoff fixed for this case: 2026-10-16."
+        },
+        {
+          "name": "membership_snapshot_at",
+          "type": "datetime",
+          "description": "Actual retrieval timestamp of the current S&P 500 roster; not a claim of historical membership."
+        },
+        {
+          "name": "universe_count",
+          "type": "int64",
+          "description": "Number of unique constituent tickers in the captured roster."
+        },
+        {
+          "name": "excluded_missing_data_count",
+          "type": "int64",
+          "description": "Constituents excluded for missing required history, fields or metadata."
+        },
+        {
+          "name": "eligible_count",
+          "type": "int64",
+          "description": "Constituents with complete required data and a close strictly above their 200-session SMA."
+        },
+        {
+          "name": "returned_count",
+          "type": "int64",
+          "description": "min(20, eligible_count); do not pad the shortlist with failing names."
+        }
+      ]
+    }
+  ]
+}

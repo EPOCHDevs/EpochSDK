@@ -1,0 +1,198 @@
+{
+  "$defs": {
+    "NativeUIMessage": {
+      "additionalProperties": false,
+      "description": "Source envelope: langgraph.graph.ui.UIMessage.\n\nComponent names/props and metadata extensions are deliberately service-owned\nextension points, as in Portal's UIMessage registry. They remain JSON here;\nSDK session events themselves have closed, validated outer shapes.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "research-workflow.schema.json#/$defs/JsonValue"
+          },
+          "title": "Metadata",
+          "type": "object"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "props": {
+          "additionalProperties": {
+            "$ref": "research-workflow.schema.json#/$defs/JsonValue"
+          },
+          "title": "Props",
+          "type": "object"
+        },
+        "type": {
+          "const": "ui",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "name",
+        "props"
+      ],
+      "title": "NativeUIMessage",
+      "type": "object"
+    },
+    "SessionCompleted": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "completed",
+          "title": "Event",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "research-workflow.schema.json#/$defs/ResearchCompleted"
+        }
+      },
+      "required": [
+        "event",
+        "result"
+      ],
+      "title": "SessionCompleted",
+      "type": "object"
+    },
+    "SessionQuestions": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "questions",
+          "title": "Event",
+          "type": "string"
+        },
+        "waiting": {
+          "$ref": "research-workflow.schema.json#/$defs/NeedsInput"
+        }
+      },
+      "required": [
+        "event",
+        "waiting"
+      ],
+      "title": "SessionQuestions",
+      "type": "object"
+    },
+    "SessionStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "status",
+          "title": "Event",
+          "type": "string"
+        },
+        "handle": {
+          "anyOf": [
+            {
+              "$ref": "research-workflow.schema.json#/$defs/WorkflowHandle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "in_progress"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "operation_id",
+        "status"
+      ],
+      "title": "SessionStatus",
+      "type": "object"
+    },
+    "SessionUI": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "ui",
+          "title": "Event",
+          "type": "string"
+        },
+        "handle": {
+          "$ref": "research-workflow.schema.json#/$defs/WorkflowHandle"
+        },
+        "message": {
+          "$ref": "#/$defs/NativeUIMessage"
+        }
+      },
+      "required": [
+        "event",
+        "handle",
+        "message"
+      ],
+      "title": "SessionUI",
+      "type": "object"
+    },
+    "SessionUIRemoved": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "ui_removed",
+          "title": "Event",
+          "type": "string"
+        },
+        "handle": {
+          "$ref": "research-workflow.schema.json#/$defs/WorkflowHandle"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "handle",
+        "id"
+      ],
+      "title": "SessionUIRemoved",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "discriminator": {
+    "mapping": {
+      "completed": "#/$defs/SessionCompleted",
+      "questions": "#/$defs/SessionQuestions",
+      "status": "#/$defs/SessionStatus",
+      "ui": "#/$defs/SessionUI",
+      "ui_removed": "#/$defs/SessionUIRemoved"
+    },
+    "propertyName": "event"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/SessionStatus"
+    },
+    {
+      "$ref": "#/$defs/SessionUI"
+    },
+    {
+      "$ref": "#/$defs/SessionUIRemoved"
+    },
+    {
+      "$ref": "#/$defs/SessionQuestions"
+    },
+    {
+      "$ref": "#/$defs/SessionCompleted"
+    }
+  ]
+}
