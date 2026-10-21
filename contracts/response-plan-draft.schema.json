@@ -50,6 +50,7 @@
     },
     "PlanCellBinding": {
       "additionalProperties": false,
+      "description": "Read one scalar cell. Omit row_index only for an exactly one-row query.",
       "properties": {
         "field": {
           "$ref": "#/$defs/PlanQueryField"
@@ -81,6 +82,7 @@
     },
     "PlanColumnBinding": {
       "additionalProperties": false,
+      "description": "Read a complete scalar column as a JSON array in query order.",
       "properties": {
         "field": {
           "$ref": "#/$defs/PlanQueryField"
@@ -170,6 +172,7 @@
     },
     "PlanObjectBinding": {
       "additionalProperties": false,
+      "description": "Build nested JSON from child bindings; this does not select an Arrow struct.",
       "properties": {
         "fields": {
           "additionalProperties": {
@@ -194,6 +197,7 @@
     },
     "PlanParameterBinding": {
       "additionalProperties": false,
+      "description": "Read an existing native execution parameter using an exact JSON Pointer.",
       "properties": {
         "kind": {
           "const": "parameter",
@@ -215,9 +219,11 @@
     },
     "PlanQueryField": {
       "additionalProperties": false,
+      "description": "Select one scalar query column, not a nested Arrow struct/list/map.\n\nProject nested source values into scalar query columns before recording the\nquery. Build nested JSON with object bindings over those scalar columns.",
       "properties": {
         "encoding": {
           "default": "native",
+          "description": "native preserves supported scalar values; date requires an exact calendar date (timestamps must be UTC midnight); datetime emits UTC for zoned Arrow timestamps and preserves valid zoned ISO strings; decimal_string preserves an exact integer or decimal as text. None encodes a nested struct/list/map. Null remains null.",
           "enum": [
             "native",
             "date",
@@ -242,6 +248,7 @@
     },
     "PlanRowBinding": {
       "additionalProperties": false,
+      "description": "Map scalar columns from an exactly one-row query to named JSON properties.",
       "properties": {
         "fields": {
           "additionalProperties": {
@@ -273,6 +280,7 @@
     },
     "PlanRowsBinding": {
       "additionalProperties": false,
+      "description": "Map every query row to named scalar properties, preserving query order.",
       "properties": {
         "fields": {
           "additionalProperties": {
@@ -304,6 +312,7 @@
     },
     "PlanSchemaConstantBinding": {
       "additionalProperties": false,
+      "description": "Read this output property's accepted JSON Schema const; not a text fact.",
       "properties": {
         "kind": {
           "const": "schema_constant",
@@ -319,6 +328,7 @@
     },
     "PlanTableOutput": {
       "additionalProperties": false,
+      "description": "Concatenate complete ordered projections; this performs no implicit join.",
       "properties": {
         "name": {
           "maxLength": 100,
@@ -377,6 +387,7 @@
     },
     "PlanTextOutput": {
       "additionalProperties": false,
+      "description": "Interpret selected computed facts once under the server-owned text policy.",
       "properties": {
         "inputs": {
           "additionalProperties": {
@@ -422,6 +433,7 @@
     },
     "RecordedSqlPlanQuery": {
       "additionalProperties": false,
+      "description": "Use kind=recorded_sql with the query_ref issued after successful SQL execution.",
       "properties": {
         "kind": {
           "const": "recorded_sql",
