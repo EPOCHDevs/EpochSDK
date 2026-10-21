@@ -15,6 +15,8 @@ from .responses import ResponsePlanReference, ResponseReference, ResponseTableSo
 
 
 class RecordedSqlPlanQuery(Contract):
+    """Use kind=recorded_sql with the query_ref issued after successful SQL execution."""
+
     kind: Literal["recorded_sql"]
     name: OutputName
     # Minted by Backend only after the exact SQL successfully executes.
@@ -32,11 +34,28 @@ type ResponsePlanQuery = Annotated[
 
 
 class PlanQueryField(Contract):
+    """Select one scalar query column, not a nested Arrow struct/list/map.
+
+    Project nested source values into scalar query columns before recording the
+    query. Build nested JSON with object bindings over those scalar columns.
+    """
+
     field_id: NonBlank
-    encoding: Literal["native", "date", "datetime", "decimal_string"] = "native"
+    encoding: Literal["native", "date", "datetime", "decimal_string"] = Field(
+        default="native",
+        description=(
+            "native preserves supported scalar values; date requires an exact calendar "
+            "date (timestamps must be UTC midnight); datetime emits UTC for zoned Arrow "
+            "timestamps and preserves valid zoned ISO strings; decimal_string preserves "
+            "an exact integer or decimal as text. None encodes a nested "
+            "struct/list/map. Null remains null."
+        ),
+    )
 
 
 class PlanCellBinding(Contract):
+    """Read one scalar cell. Omit row_index only for an exactly one-row query."""
+
     kind: Literal["cell"]
     query: OutputName
     field: PlanQueryField
@@ -45,6 +64,8 @@ class PlanCellBinding(Contract):
 
 
 class PlanRowBinding(Contract):
+    """Map scalar columns from an exactly one-row query to named JSON properties."""
+
     kind: Literal["row"]
     query: OutputName
     # Names are requested JSON properties; columns are Backend query identities.
@@ -52,30 +73,40 @@ class PlanRowBinding(Contract):
 
 
 class PlanRowsBinding(Contract):
+    """Map every query row to named scalar properties, preserving query order."""
+
     kind: Literal["rows"]
     query: OutputName
     fields: Annotated[dict[str, PlanQueryField], Field(min_length=1)]
 
 
 class PlanColumnBinding(Contract):
+    """Read a complete scalar column as a JSON array in query order."""
+
     kind: Literal["column_array"]
     query: OutputName
     field: PlanQueryField
 
 
 class PlanParameterBinding(Contract):
+    """Read an existing native execution parameter using an exact JSON Pointer."""
+
     kind: Literal["parameter"]
     # JSON Pointer into this execution's native period/execution parameters.
     pointer: Annotated[str, Field(pattern=r"^(/([^~/]|~[01])*)+$")]
 
 
 class PlanSchemaConstantBinding(Contract):
+    """Read this output property's accepted JSON Schema const; not a text fact."""
+
     kind: Literal["schema_constant"]
     # Read this property's const from the accepted output JSON Schema. The
     # model cannot insert an arbitrary literal financial value into a recipe.
 
 
 class PlanObjectBinding(Contract):
+    """Build nested JSON from child bindings; this does not select an Arrow struct."""
+
     kind: Literal["object"]
     # Keys belong to the user's JSON schema, not a fixed SDK business model.
     fields: Annotated[dict[str, PlanJsonBinding], Field(min_length=1)]
@@ -94,6 +125,8 @@ class PlanTableProjection(Contract):
 
 
 class PlanTableOutput(Contract):
+    """Concatenate complete ordered projections; this performs no implicit join."""
+
     name: OutputName
     type: Literal["table"]
     # Concatenate complete projections in this explicit order. No implicit joins.
@@ -107,6 +140,8 @@ class PlanJsonOutput(Contract):
 
 
 class PlanTextOutput(Contract):
+    """Interpret selected computed facts once under the server-owned text policy."""
+
     name: OutputName
     type: Literal["text"]
     # Versioned server-owned model/settings policy; never a caller endpoint/key.
