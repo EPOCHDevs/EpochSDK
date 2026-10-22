@@ -3,8 +3,8 @@
 The [current SDK/MCP interface](docs/public-client-interface.md) distinguishes
 interactive SDK research from the default composable MCP. The latter lets the
 calling agent use native catalog/search/screening, then explicitly build and
-execute studies. Earlier MCP publication names below refer to the separate
-`epoch_sdk.workflow_mcp` compatibility module.
+execute studies. The separate `epoch_sdk.workflow_mcp` compatibility module
+provides the saved-answer research workflow.
 
 The [native discovery acceptance examples](examples/notebooks/native-discovery/README.md)
 cover the shared catalog, a named asset, an S&P 500 financial universe and GDP
@@ -20,13 +20,15 @@ Their [setup notes](examples/notebooks/README.md) explain the local kernel and E
 authentication. These market cases are prepared for live review, not claimed as
 completed research results.
 
-Readable operation IDs reconnect notebooks and MCP callers to the same research
+Readable operation IDs reconnect notebooks and workflow-MCP callers to the same research
 or prepared execution. See [reconnect usage and API semantics](docs/reconnect-operations.md).
 
 Research with an explicit output contract through `EpochClient.research`,
 `resume_research` and `research_status`. The result includes a saved response with
-the requested named table, JSON and text parts. Both notebooks and MCP use this
-flow; `execute_saved` remains a separate direct Backend action.
+the requested named table, JSON and text parts. These advanced SDK methods remain
+available alongside interactive `EpochClient.run`. The default composable MCP
+uses caller-selected native data and specialist operations; `execute_saved`
+remains a separate direct Backend action.
 
 See [the research flow](docs/research-flow.md) for the current API, ownership and
 validation limits. The older communication adapter remains available.
@@ -35,7 +37,8 @@ The local notebook/MCP cases and their scope are recorded in
 [the October 18 verification](docs/verification-2026-10-18.md).
 
 Public, multi-language clients for Epoch analysis workflows. Epoch SDK wraps
-LangGraph SDK and the generated StratifyX SDK; MCP uses the same client behavior.
+LangGraph SDK and the generated StratifyX SDK. Native data methods are shared
+with the default MCP; the explicit workflow MCP shares the research session core.
 
 ## Repository layout
 
@@ -52,30 +55,30 @@ remain in EpochBackend. Graph server implementations live with their services.
 This repository does not turn one language implementation into the API authority.
 
 The Python package supplies strict request/error contracts, actual-value output
-validation, a native-client access checker and a thin stateful supervisor/MCP
-adapter and a saved-output reader. The adapter returns native clarification questions and supports resuming
+validation, a native-client access checker, interactive research sessions and a
+saved-output reader. The research client returns native clarification questions and supports resuming
 the same thread, executing a saved study directly through Backend, or reading
 validated values from an explicit saved output mapping. See the
-[SDK/MCP example](docs/supervisor-workflow.md) and its current limits. The supplied-data research flow has passed through actual SDK and MCP services,
+[SDK workflow example](docs/supervisor-workflow.md) and its current limits. The supplied-data research flow passed through actual SDK and workflow-MCP services,
 including saved-answer reads and readable-ID reconnect.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 
-The saved research response API serves both notebook users and MCP agents. Use
+The saved research response API serves SDK and platform workflows. Use
 `SupervisorClient.publish_response(request_id, content, thread_id=thread_id, primary_execution_id=execution_id, expected_version=0)`
 after analysis, then `response(response_id, version=...)` to read the same
 Backend-owned answer. A response contains named table, JSON and text parts and
 their declarations; updates create another revision of that answer. Another query may reuse the
 same execution while retaining a different answer.
-MCP exposes `epoch_publish_response` and `epoch_response` over the same methods.
 Newly assembled tables reference native saved data. Use `response_table` or
-`iter_response_table` to read all rows in bounded pages; MCP uses
-`epoch_response_table`. See [table access](docs/response-tables.md) for the wire
+`iter_response_table` to read all rows in bounded pages. The explicit workflow
+MCP reads saved answers and tables through `epoch_read`; the default composable
+MCP lets its caller answer directly without publication. See [table access](docs/response-tables.md) for the wire
 contract, retrieval ordering and compatibility with older inline answers.
 This publication path starts no agent or engine job. The current package uses
-generated StratifyX 3.3.0rc4 APIs, including readable-operation admission. The
+generated StratifyX 3.3.0rc11 APIs, including readable-operation admission. The
 existing supervisor publication tool is integrated in EpochAI. Supplied-data
-research and saved-response checks have passed through SDK and MCP.
+research and saved-response checks have passed through SDK and workflow MCP.
 
 ## Development checks
 

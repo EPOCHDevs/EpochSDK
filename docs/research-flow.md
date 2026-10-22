@@ -1,6 +1,11 @@
 # One query, one published answer
 
-The Python SDK, MCP and ordinary EpochAI conversations share the existing
+This document covers SDK research, the explicit `epoch_sdk.workflow_mcp`
+compatibility module and ordinary EpochAI conversations. The default composable
+MCP uses the [caller-selected tools](public-client-interface.md) and does not
+require a supervisor or published answer.
+
+The SDK research workflow and ordinary EpochAI conversations share the existing
 checkpointed supervisor. Research and prepared-study execution remain separate
 operations. Research submits a query, discovers/builds when necessary, reviews
 actual results and publishes one answer. Questions pause the same thread.
@@ -12,7 +17,7 @@ SDK request pins its exact answer and revision; later edits do not change that r
 
 ```mermaid
 flowchart LR
-    Caller[Notebook, MCP or platform] --> Research[Existing supervisor]
+    Caller[Notebook, workflow MCP or platform] --> Research[Existing supervisor]
     Research --> Build[Discover and build when needed]
     Build --> Execute[Execute and read results]
     Execute --> Select[Explicitly select primary execution]
