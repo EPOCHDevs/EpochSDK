@@ -35,7 +35,7 @@ the derived `execution_id` differs from the source, and presentation edit zero
 is an exact saved version. Keep earlier answer/view pins when choosing a newer
 report. A page size bounds one read, never the complete table.
 
-The default MCP advertises14 tools. Diagnostic and comparison tools remain
+The default MCP advertises 14 tools. Diagnostic and comparison tools remain
 available until the separately tracked parity/retirement gate; this addition
 does not claim that they have been replaced in every result family.
 

@@ -72,7 +72,7 @@ The extension release requires the normal native `3.3.0rc15` package. Controlled
 transport captures are tested separately from real service/notebook/MCP/Portal
 acceptance; the ENG-2128 milestone record owns readiness.
 
-See [the public interface](../../docs/public-client-interface.md) for the eleven tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
+See [the public interface](../../docs/public-client-interface.md) for the fourteen tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
 
 ## Use the actual core contract
 
