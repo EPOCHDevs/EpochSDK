@@ -76,7 +76,7 @@ MCP reads saved answers and tables through `epoch_read`; the default composable
 MCP lets its caller answer directly without publication. See [table access](docs/response-tables.md) for the wire
 contract, retrieval ordering and compatibility with older inline answers.
 This publication path starts no agent or engine job. The current package uses
-generated StratifyX 3.3.0rc11 APIs, including readable-operation admission. The
+generated StratifyX 3.3.0rc15 APIs, including readable-operation admission. The
 existing supervisor publication tool is integrated in EpochAI. Supplied-data
 research and saved-response checks have passed through SDK and workflow MCP.
 

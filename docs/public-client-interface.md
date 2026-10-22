@@ -10,11 +10,34 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 | `epoch_inspect_source` | Read selected source observations and optional read-only queries. | None |
 | `epoch_build_study` | Author, validate and save studies from the selected references. | Existing study author |
 | `epoch_execute` | Execute a saved study for an explicit period. | None |
+| `epoch_extension_inputs` | Read exact selected retained tables, types and frozen source. | None |
+| `epoch_save_extension` | Compile/save caller-authored EpochScript over one saved execution. | None |
+| `epoch_execute_extension` | Execute or reconnect to that saved program by operation ID. | Only explicitly declared cached commentary |
 | `epoch_audit_run` | Ask targeted questions of completed execution IDs, including comparisons. | Existing audit specialist |
 | `epoch_find` | List owned tools workspaces or saved study IDs. | None |
-| `epoch_read` | Read workspace registries, saved study source, execution status, dashboards or original tool artifacts. | None |
-| `epoch_status` | Observe a tool handle or native execution ID. | None |
+| `epoch_read` | Read owned work, exact saved answer/table pages or pinned presentations. | None |
+| `epoch_status` | Observe a tool handle, native execution ID or extension operation ID. | None |
 | `epoch_resume` | Explicitly answer a specialist interrupt, when one exists. | Only the selected specialist continues |
+
+## Reuse saved results
+
+Both `AgentToolsClient` and `EpochClient` expose `extension_inputs`,
+`save_extension`, `execute_extension`, `extension_status`, `response`,
+`response_table` and `extension_presentation`. The three extension MCP tools
+call these same methods; they do not invoke a supervisor or study author.
+
+Read the source's selected input catalog, supply an EpochScript program using
+its flat enum references, save the returned definition, then execute it with
+the original `source_execution_id` and a reusable `operation_id`. Tables, JSON
+and native dashboard reporters are independent destinations. Text commentary
+is optional and explicitly model-backed. Read the confirmed output references:
+the derived `execution_id` differs from the source, and presentation edit zero
+is an exact saved version. Keep earlier answer/view pins when choosing a newer
+report. A page size bounds one read, never the complete table.
+
+The default MCP advertises14 tools. Diagnostic and comparison tools remain
+available until the separately tracked parity/retirement gate; this addition
+does not claim that they have been replaced in every result family.
 
 ## Reuse discovery
 
