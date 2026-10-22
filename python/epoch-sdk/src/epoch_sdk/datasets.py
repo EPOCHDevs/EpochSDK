@@ -87,7 +87,9 @@ class DatasetClient:
     async def read_dataset_search(
         self, result_ref: str, *, cursor: str | None = None, limit: int = 10
     ) -> DiscoveryStoredQueryResponse:
-        """Page an owned saved metadata search; no SQL or vendor search is rerun."""
+        """Read 1..10 saved metadata records; no SQL or vendor search is rerun."""
+        if type(limit) is not int or not 1 <= limit <= 10:
+            raise ValueError("Saved metadata page limit must be an integer in 1..10.")
         return await self.backend.discovery.query_stored_discovery(
             result_refs=[result_ref],
             operation=DiscoveryStoredOperation_Read(kind="read"),

@@ -124,7 +124,7 @@ variant alone, select another execution or refresh market data.
 ## Another environment
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
-distribution workflow. The current SDK is 0.1.0a15 and requires StratifyX
+distribution workflow. The current SDK is 0.1.0a16 and requires StratifyX
 3.3.0rc11 or later; historical acceptance ledgers retain their original package
 pins. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.

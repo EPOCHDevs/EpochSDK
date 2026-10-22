@@ -33,3 +33,41 @@ themselves. ENG-2162 requires executing the actual cells, checking source choice
 values and saved-reference reuse, and reviewing the matching traces for absence
 of a dedicated Discovery agent or hidden observation probe. Arithmetic and
 schema checks do not establish vendor-source or vintage correctness.
+
+
+## Acceptance record (22 October 2026, local services)
+
+The first full cell runs used published StratifyX 3.3.0rc11, EpochSDK 0.1.0a15,
+Native source efa98205b and the reviewed EpochAI PR #769 preview. The actual
+executed notebooks and full traces remain in the operator's private acceptance
+folder; these public examples intentionally contain no saved market values.
+
+- All four notebooks completed. The Apple answer had 21 daily return rows and a
+  103-word summary; its saved study/response plan executed again successfully.
+  Re-running the original research ID reattached in 2.17 seconds without a new
+  research submission.
+- The current S&P 500 screen retained 503 security members. Its cash-flow study
+  returned 10 issuer-deduplicated companies; saved rows passed date, ordering,
+  uniqueness and cash-flow arithmetic checks.
+- The GDP answer had eight quarterly First/Last comparisons and an 87-word
+  limitation note. The selected native growth-series identity appeared in a
+  returned ranked page before selection. Bedrock supplied relevance scores over
+  500 collected identities; full provider completeness remained unknown.
+- A separately installed MCP process listed 11 composable tools, matched the
+  SDK's catalog prose/options, built two studies using retained source evidence,
+  executed a study and read its dashboard. A direct native Arrow read checked
+  its 21 computed daily-return rows. This is MCP protocol evidence, not a claim
+  that an already-open Codex or Claude session refreshed its cached tools.
+- Full traces showed no dedicated Discovery agent. Metadata calls fetched no
+  observations. Requested study authoring and response text still use their
+  explicit model paths; this is not a zero-model research claim.
+
+Trace review found two fixed transport defects (integer fact coercion and
+`from_` versus `from` in returned source windows), plus a metadata page-bound
+mismatch and stale macro-source instructions. ENG-2166 through ENG-2169 track
+those corrections. The initial GDP run recovered from a schema tag error and
+paging error; it is not evidence that every discovery call was clean. A fresh
+run on the final guidance, final installation and compatibility inventory are
+still the acceptance gate before ENG-2162/ENG-2163 close. The 464 archived cases
+are hash-checked and classified; they have not all been replayed live. There is
+no paid before/after model-cost or source-recall benchmark claim.

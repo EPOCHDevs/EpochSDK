@@ -14,12 +14,12 @@ from mcp import Client
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import DatasetSearchQuery
+from test_agent_tools import CATALOG
 
 from epoch_sdk.agent_tools import AgentToolsClient
 from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient
 from epoch_sdk.supervisor import SupervisorClient
-from test_agent_tools import CATALOG
 
 FIXTURES = Path(__file__).parent / 'fixtures/dataset_search'
 QUERY = {"request_id": "company", "subjects": [{"kind": "asset_name", "name": "Apple"}]}
@@ -195,7 +195,7 @@ def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
     async def scenario():
         seen = []
         for owner in ('alice', 'bob'):
-            def backend(request):
+            def backend(request, owner=owner):
                 assert request.url.path == '/api/v1/discovery/catalog'
                 assert request.headers['Authorization'] == f'Bearer fixture-{owner}'
                 assert json.loads(request.content)['include_saved'] is True
@@ -222,4 +222,56 @@ def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
                     assert not actual.is_error
                     assert actual.structured_content == expected.model_dump(mode='json', by_alias=True, exclude_unset=True)
         assert seen == ['alice', 'alice', 'bob', 'bob']
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('limit', [0, 11, 100, True, 1.5, '10'])
+def test_metadata_page_bounds_reject_before_native_transport_and_match_mcp_schema(limit):
+    async def scenario():
+        from epoch_sdk.datasets import DatasetClient
+        def no_backend(request):
+            if request.method == 'GET' and request.url.path == '/api/v1/agent-tools':
+                return httpx.Response(200, json=CATALOG)
+            pytest.fail('An invalid metadata page must not reach Backend')
+        async with httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(no_backend)) as http:
+            backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
+            client = DatasetClient()
+            client.backend = backend
+            with pytest.raises(ValueError, match='integer in 1..10'):
+                await client.read_dataset_search('owned-result', limit=limit)
+            tools = AgentToolsClient(LangGraphClient(http), backend, http)
+            async with Client(create_server(tools)) as mcp:
+                listed = await mcp.list_tools()
+                read = next(tool for tool in listed.tools if tool.name == 'epoch_read')
+                assert read.input_schema['properties']['limit']['minimum'] == 1
+                assert read.input_schema['properties']['limit']['maximum'] == 10
+                result = await mcp.call_tool('epoch_read', {
+                    'kind': 'dataset_search', 'identifier': 'owned-result', 'limit': limit,
+                })
+                assert result.is_error
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('limit', [1, 10])
+def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
+    async def scenario():
+        from epoch_sdk.datasets import DatasetClient
+        search = fixture('search')
+        seen = []
+        def read(request):
+            body = json.loads(request.content)
+            assert body['limit'] == limit
+            assert body['cursor'] == 'native-cursor'
+            assert body['result_refs'] == ['owned-result']
+            seen.append(request)
+            return httpx.Response(200, json={
+                'columns': [], 'rows': [], 'records': [], 'result_refs': ['owned-result'],
+                'original_receipts': [search['receipt']], 'receipts': [search['receipt']],
+                'returned': 0, 'total_matching': 0, 'total_stored': 0, 'has_more': False,
+            })
+        async with httpx.AsyncClient(transport=httpx.MockTransport(read)) as http:
+            client = DatasetClient()
+            client.backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
+            await client.read_dataset_search('owned-result', cursor='native-cursor', limit=limit)
+            assert len(seen) == 1
     asyncio.run(scenario())

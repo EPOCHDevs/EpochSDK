@@ -8,7 +8,7 @@ import os
 from collections.abc import Awaitable
 from copy import deepcopy
 from importlib.resources import files
-from typing import Literal, cast
+from typing import Annotated, Literal, cast
 
 import httpx
 from jsonschema.exceptions import ValidationError as SchemaValidationError
@@ -16,10 +16,10 @@ from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
 from mcp.shared.exceptions import MCPError
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
-from pydantic import BaseModel, JsonValue, ValidationError
+from pydantic import BaseModel, Field, JsonValue, ValidationError
 from stratifyx import DatePeriodConfig, ExecutionOptions
-from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
 from stratifyx.core.api_error import ApiError
+from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
 
 from .agent_tools import AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
@@ -280,12 +280,13 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         handle: AgentToolHandle | None = None,
         category: str = "ALL",
         cursor: str | None = None,
-        limit: int = 10,
+        limit: Annotated[int, Field(ge=1, le=10, strict=True)] = 10,
     ) -> CallToolResult:
         """Read owned saved work without a model call or publication.
         Workspace returns study/execution registries; study returns the native
         definition; execution returns status. Tool reads require a handle and
         include the original saved artifact when available.
+        Dataset-search pages contain 1..10 records and retain native cursors.
         """
         if kind == "guide":
             if identifier is not None or handle is not None:
