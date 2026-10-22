@@ -68,7 +68,7 @@ dashboard table, and dashboard-only work creates no artificial answer. An
 unsupported source/type remains an explicit capability error. The existing
 audit/source/qualitative paths are retained until their parity work is accepted.
 
-The extension release requires the normal native `3.3.0rc14` package. Controlled
+The extension release requires the normal native `3.3.0rc15` package. Controlled
 transport captures are tested separately from real service/notebook/MCP/Portal
 acceptance; the ENG-2128 milestone record owns readiness.
 
