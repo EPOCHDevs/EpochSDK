@@ -275,3 +275,44 @@ def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
             await client.read_dataset_search('owned-result', cursor='native-cursor', limit=limit)
             assert len(seen) == 1
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('status', [403, 429, 502, 503, 504])
+def test_provider_failure_reaches_sdk_and_mcp_without_retry_or_replacement(status):
+    async def scenario():
+        calls = []
+        failure = {
+            'error': 'MetadataProviderFailure',
+            'message': 'Macrobond selected metadata request failed; no TE replacement was used',
+            'timestamp': '2026-10-22T12:00:00Z',
+        }
+        def native(request):
+            assert request.url.path == '/api/v1/discovery/datasets/search'
+            assert json.loads(request.content)['requests'] == [QUERY]
+            calls.append(request)
+            return httpx.Response(status, json=failure)
+        def graph(request):
+            assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
+            return httpx.Response(200, json=CATALOG)
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(native)) as native_http,
+            httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=native_http)
+            tools = AgentToolsClient(LangGraphClient(graph_http), backend, graph_http)
+            with pytest.raises(ApiError) as rejected:
+                await tools.search_dataset([DatasetSearchQuery.model_validate(QUERY)])
+            assert rejected.value.status_code == status
+            from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
+            body = rejected.value.body
+            if isinstance(body, NativeErrorResponse):
+                body = body.model_dump(mode='json', by_alias=True, exclude_unset=True)
+            assert body == failure
+            assert len(calls) == 1
+            async with Client(create_server(tools)) as mcp:
+                result = await mcp.call_tool('epoch_search_dataset', {'requests': [QUERY]})
+                assert result.is_error
+                assert result.structured_content == {'http_status': status, 'backend_error': failure}
+                assert failure['message'] in result.content[0].text
+            assert len(calls) == 2
+    asyncio.run(scenario())

@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field, JsonValue, ValidationError
 from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
+from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
 from .agent_tools import AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
@@ -49,8 +50,25 @@ async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
     except (ValueError, ValidationError) as error:
         return _failure(str(error))
     except ApiError as error:
-        return _failure(
-            f"Backend rejected the request (HTTP {error.status_code}); no replacement work was submitted."
+        try:
+            native = NativeErrorResponse.model_validate(error.body, strict=True)
+        except ValidationError:
+            return _failure(
+                f"Backend returned HTTP {error.status_code} without a valid native error response."
+            )
+        # Preserve the native cause through MCP, using only the source-owned
+        # error contract. Headers and arbitrary error-body extras stay private.
+        payload = native.model_dump(
+            mode="json", by_alias=True,
+            include={"error", "message", "timestamp", "additional_context"},
+            exclude_none=True,
+        )
+        return CallToolResult(
+            is_error=True,
+            content=[TextContent(
+                type="text", text=f"Backend returned HTTP {error.status_code}: {native.message}"
+            )],
+            structured_content={"http_status": error.status_code, "backend_error": payload},
         )
     except httpx.HTTPStatusError as error:
         return _failure(f"Epoch tools service returned HTTP {error.response.status_code}.")

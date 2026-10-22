@@ -60,3 +60,36 @@ def test_malformed_manifest_is_rejected_before_it_can_be_sent():
     value["bindings"][0]["unexpected"] = "invalid"
     with pytest.raises(ValidationError):
         SavedOutputManifest.model_validate(value)
+
+
+def test_composable_mcp_preserves_native_failure_without_retry_or_fallback():
+    from epoch_sdk.mcp import _call
+    from stratifyx.core.api_error import ApiError
+
+    async def scenario():
+        calls = 0
+        async def rejected():
+            nonlocal calls
+            calls += 1
+            raise ApiError(status_code=503, headers={"private-header": "must-not-leak"}, body={
+                "error": "ServiceUnavailable", "message": "Macrobond metadata search is at capacity",
+                "timestamp": "2026-10-22T12:00:00Z", "additionalContext": {"request_id": "macro-test"},
+                "private_extra": "must-not-leak",
+            })
+        result = await _call(rejected())
+        assert result.is_error and calls == 1
+        assert result.structured_content == {
+            "http_status": 503, "backend_error": {
+                "error": "ServiceUnavailable", "message": "Macrobond metadata search is at capacity",
+                "timestamp": "2026-10-22T12:00:00Z", "additionalContext": {"request_id": "macro-test"},
+            },
+        }
+        assert "Macrobond" in result.content[0].text
+        assert "must-not-leak" not in result.model_dump_json()
+        async def malformed():
+            raise ApiError(status_code=502, body={"raw_internal": "must-not-leak"})
+        invalid = await _call(malformed())
+        assert invalid.is_error
+        assert "without a valid native error" in invalid.content[0].text
+        assert "must-not-leak" not in invalid.model_dump_json()
+    asyncio.run(scenario())
