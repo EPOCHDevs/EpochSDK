@@ -49,7 +49,11 @@ Matching normalized inputs attach. Changing the task, requested outputs, context
 
 The native LangGraph admission hook atomically records one graph run in Backend. Concurrent SDK submissions attach to that recorded run. Clarification resumes record their new native run ID without creating a new research operation. Reads select checkpoints belonging to that operation/run, rather than the newest conversation query.
 
-## MCP
+## Workflow MCP compatibility
+
+This section describes `python -m epoch_sdk.workflow_mcp`. The default
+composable MCP reconnects through specialist handles and native execution IDs;
+see [its public interface](public-client-interface.md).
 
 `epoch_run` accepts task, optional context/output declarations/parameters and a
 readable operation ID. `epoch_resume` takes that ID and explicit responses.

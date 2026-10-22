@@ -27,8 +27,8 @@ from .agent_tools_contract import (
     ToolContract,
     ToolWorkspace,
 )
-from .json_schema import validate_schema
 from .datasets import DatasetClient
+from .json_schema import validate_schema
 from .supervisor import (
     Answers,
     GraphInterrupt,
@@ -342,7 +342,9 @@ class AgentToolsClient(DatasetClient):
             metadata={"epoch_tool_workspace": "v1"},
             limit=limit,
             offset=offset,
-            select=["thread_id"],
+            # The service's owner response filter needs metadata even though
+            # this public method returns IDs only.
+            select=["thread_id", "metadata"],
         )
         return [thread["thread_id"] for thread in threads]
 

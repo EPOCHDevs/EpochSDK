@@ -14,12 +14,12 @@ from mcp import Client
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import DatasetSearchQuery
+from test_agent_tools import CATALOG
 
 from epoch_sdk.agent_tools import AgentToolsClient
 from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient
 from epoch_sdk.supervisor import SupervisorClient
-from test_agent_tools import CATALOG
 
 FIXTURES = Path(__file__).parent / 'fixtures/dataset_search'
 QUERY = {"request_id": "company", "subjects": [{"kind": "asset_name", "name": "Apple"}]}
@@ -142,4 +142,136 @@ def test_a_failed_page_read_remains_an_error_instead_of_an_empty_or_complete_res
                 await client.search_dataset([DatasetSearchQuery.model_validate(QUERY)])
             assert error.value.status_code == 403
             assert len(service.calls) == 1
+    asyncio.run(scenario())
+
+
+def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
+    """Schema/transport fixture, not a production database connector or auth test.
+
+    Native catalog/Files tests own authorization. This checks that neither client
+    invents a database-specific tool or drops the existing schema/clock contract.
+    """
+    from stratifyx.types import SavedDataset
+
+    def saved(owner):
+        return SavedDataset.model_validate({
+            'dataset_ref': f'dataset:{owner}-signal@1', 'name': 'Internal revision signal',
+            'source_ref': f'source:{owner}-signal@1', 'saved_at': '2026-10-21T12:00:00Z',
+            'archived': False,
+            'descriptor': {
+                'content_sha256': 'a' * 64, 'schema_sha256': 'b' * 64,
+                'sources': [{'kind': 'dataset', 'dataset_ref': f'dataset:{owner}-export@1'}],
+                'limitations': ['Fixture database export snapshot; no live connector is installed.'],
+                'preparation': {
+                    'origin': 'derived', 'purpose': 'study_source', 'enrichment': 'user_defined',
+                    'implementation_version': 'fixture-sql-export-v1',
+                    'instruction': 'Preserve the supplied signal and its publication clock.',
+                    'schema_choice': {'mode': 'imported'},
+                },
+                'shape': {'format': 'table', 'coverage': {
+                    'row_count': 2, 'first_timestamp': '2026-10-21T12:00:00Z',
+                    'last_timestamp': '2026-10-21T12:01:00Z',
+                }, 'schema': {
+                    'frame_schema': {'columns': [
+                        {'name': 'known_at', 'dtype': 'timestamp[ns,UTC]', 'nullable': False, 'is_index': True, 'semantic': 'Timestamp'},
+                        {'name': 'issuer', 'dtype': 'string', 'nullable': False},
+                        {'name': 'revision_signal', 'dtype': 'float64', 'nullable': True, 'unit': 'fraction'},
+                    ], 'transforms': [{'kind': 'PromoteIndex'}]},
+                    'dataframe_metadata': {
+                        'data_type': 'user_dataset', 'description': 'Internal revision signal snapshot',
+                        'foundation': 'Nanosecond', 'entity_columns': ['issuer'],
+                        'source_capabilities': {
+                            'range': 'FullPayloadLocalSlice', 'future_rows': 'PastOrPresentOnly',
+                            'predecessor': 'Unsupported', 'availability_axis': 'None',
+                        },
+                    },
+                    'key_fields': ['issuer'], 'asset_field': 'issuer',
+                    'time_axis': {'meaning': 'publication', 'source_precision': 'nanosecond',
+                                  'source_timezone': 'UTC', 'assumed': False},
+                }},
+            },
+        })
+
+    async def scenario():
+        seen = []
+        for owner in ('alice', 'bob'):
+            def backend(request, owner=owner):
+                assert request.url.path == '/api/v1/discovery/catalog'
+                assert request.headers['Authorization'] == f'Bearer fixture-{owner}'
+                assert json.loads(request.content)['include_saved'] is True
+                seen.append(owner)
+                result = fixture('catalog')
+                result['saved'] = {'items': [saved(owner).model_dump(mode='json', by_alias=True, exclude_unset=True)]}
+                return httpx.Response(200, json=result)
+
+            def graph(request):
+                assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
+                return httpx.Response(200, json=CATALOG)
+
+            async with (
+                httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+                httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+            ):
+                native = AsyncStratifyX(base_url='https://backend.invalid', token=f'fixture-{owner}', httpx_client=native_http)
+                tools = AgentToolsClient(LangGraphClient(graph_http), native, graph_http)
+                expected = await tools.dataset_catalog()
+                assert expected.saved.items == [saved(owner)]
+                assert owner not in expected.overview
+                async with Client(create_server(tools)) as mcp:
+                    actual = await mcp.call_tool('epoch_dataset_catalog', {})
+                    assert not actual.is_error
+                    assert actual.structured_content == expected.model_dump(mode='json', by_alias=True, exclude_unset=True)
+        assert seen == ['alice', 'alice', 'bob', 'bob']
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('limit', [0, 11, 100, True, 1.5, '10'])
+def test_metadata_page_bounds_reject_before_native_transport_and_match_mcp_schema(limit):
+    async def scenario():
+        from epoch_sdk.datasets import DatasetClient
+        def no_backend(request):
+            if request.method == 'GET' and request.url.path == '/api/v1/agent-tools':
+                return httpx.Response(200, json=CATALOG)
+            pytest.fail('An invalid metadata page must not reach Backend')
+        async with httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(no_backend)) as http:
+            backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
+            client = DatasetClient()
+            client.backend = backend
+            with pytest.raises(ValueError, match='integer in 1..10'):
+                await client.read_dataset_search('owned-result', limit=limit)
+            tools = AgentToolsClient(LangGraphClient(http), backend, http)
+            async with Client(create_server(tools)) as mcp:
+                listed = await mcp.list_tools()
+                read = next(tool for tool in listed.tools if tool.name == 'epoch_read')
+                assert read.input_schema['properties']['limit']['minimum'] == 1
+                assert read.input_schema['properties']['limit']['maximum'] == 10
+                result = await mcp.call_tool('epoch_read', {
+                    'kind': 'dataset_search', 'identifier': 'owned-result', 'limit': limit,
+                })
+                assert result.is_error
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('limit', [1, 10])
+def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
+    async def scenario():
+        from epoch_sdk.datasets import DatasetClient
+        search = fixture('search')
+        seen = []
+        def read(request):
+            body = json.loads(request.content)
+            assert body['limit'] == limit
+            assert body['cursor'] == 'native-cursor'
+            assert body['result_refs'] == ['owned-result']
+            seen.append(request)
+            return httpx.Response(200, json={
+                'columns': [], 'rows': [], 'records': [], 'result_refs': ['owned-result'],
+                'original_receipts': [search['receipt']], 'receipts': [search['receipt']],
+                'returned': 0, 'total_matching': 0, 'total_stored': 0, 'has_more': False,
+            })
+        async with httpx.AsyncClient(transport=httpx.MockTransport(read)) as http:
+            client = DatasetClient()
+            client.backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
+            await client.read_dataset_search('owned-result', cursor='native-cursor', limit=limit)
+            assert len(seen) == 1
     asyncio.run(scenario())

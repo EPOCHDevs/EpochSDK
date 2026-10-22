@@ -13,10 +13,10 @@ from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
+from test_supervisor import INTERRUPT
 
 from epoch_sdk.agent_tools import AgentToolsClient
 from epoch_sdk.mcp import create_server
-from test_supervisor import INTERRUPT
 
 CATALOG = json.loads(
     (Path(__file__).resolve().parents[3] / "contracts/agent-tools-native.json").read_text()
@@ -423,3 +423,28 @@ def test_stdio_accepts_tools_url_without_unused_base_graph_url(monkeypatch):
     asyncio.run(module._stdio())
     assert captured["graph_url"] == "http://tools.invalid"
     assert server.ran and client.closed
+
+
+def test_workspace_find_retains_metadata_required_by_the_service_owner_filter():
+    async def scenario():
+        service = Service()
+        original_graph = service.graph
+        def projected_search(request):
+            if request.url.path != '/threads/search':
+                return original_graph(request)
+            body = json.loads(request.content)
+            assert body['metadata'] == {'epoch_tool_workspace': 'v1'}
+            original = {'thread_id': WORKSPACE, 'metadata': {'owner': 'fixture-owner', 'epoch_tool_workspace': 'v1'}}
+            projected = {name: original[name] for name in body['select']}
+            # The actual EpochAI response filter drops rows whose projected
+            # metadata cannot establish ownership. Keep that enforcement.
+            rows = [projected] if projected.get('metadata', {}).get('owner') == 'fixture-owner' else []
+            return httpx.Response(200, json=rows)
+        service.graph = projected_search
+        async with service.client() as client, Client(create_server(client)) as mcp:
+            assert await client.find(kind='workspaces') == [WORKSPACE]
+            result = await mcp.call_tool('epoch_find', {'kind': 'workspaces'})
+            assert not result.is_error
+            assert result.structured_content['ids'] == [WORKSPACE]
+            assert set(result.structured_content) == {'kind', 'ids', 'offset'}
+    asyncio.run(scenario())

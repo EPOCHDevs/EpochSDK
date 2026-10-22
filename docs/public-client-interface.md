@@ -19,7 +19,7 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 ## Reuse discovery
 
 1. Read `epoch_dataset_catalog` for supported datasets and their options. Ask for details of selected source IDs to see vintage/revision, fields and clock choices. The prose and schemas come from Backend.
-2. Use `epoch_search_dataset` for asset/series identities, or `epoch_screen_assets` for a whole cohort. Search returns its unchanged receipt and, when inline rows are omitted, one bounded stored page. Continue with `epoch_read(kind="dataset_search", identifier=result_ref, cursor=next_cursor)`; no provider search is repeated.
+2. Use `epoch_search_dataset` for asset/series identities, or `epoch_screen_assets` for a whole cohort. Search returns its unchanged receipt and, when inline rows are omitted, one bounded stored page. Continue with `epoch_read(kind="dataset_search", identifier=result_ref, cursor=next_cursor)`; no provider search is repeated. Metadata page limits are 1..10, matching Backend.
 3. Pass exact record/result references or the `universe_ref`, plus the selected dataset/options, as `source_refs` to `epoch_build_study`. It retains and validates them internally. A historical universe needs the requested study period inside its captured membership window. Metadata does not certify populated observations or account access.
 4. Keep the build handle and poll `epoch_status`. Its saved outcome returns retained `source_refs` for later builds, including after the original working search expires. Reuse the workspace and select a new study slot for a different study. Registry compatibility still applies.
 5. Execute a saved study ID with `epoch_execute`, then observe its native execution ID with `epoch_status(kind="execution")`.
