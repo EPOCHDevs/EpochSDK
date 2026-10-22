@@ -24,6 +24,18 @@ directly from the evidence you read.
    exact completed `execution_ids` and targeted natural-language questions.
    Multiple IDs allow an explicit comparison; never silently join unrelated grids.
 
+For a new report over a completed execution, `epoch_extension_inputs` reads the
+selected native table/field catalogue. Write the EpochScript yourself and use
+`epoch_save_extension`, then `epoch_execute_extension` with the returned study
+ID, original source execution ID, selected input tables and a reusable operation
+ID. This path uses no supervisor or authoring model and never reruns the source
+study. Tables/JSON and native dashboard reporters are independent destinations.
+An optional `llm_call` generates bounded cached text that explicit
+`response_text`, Markdown or `executive_summary` consumers can share.
+Read `epoch_status(kind="extension", operation_id=...)` until declared outputs
+are confirmed, then use `epoch_read` for exact answer revisions or presentation
+pins. Numerical completion alone does not establish text/publication completion.
+
 Specialist calls return a background-operation handle. Poll `epoch_status`
 with `kind="tool"` and that handle. Engine jobs use `kind="execution"` and the
 native execution ID. Reconnecting and status reads do not resubmit work. Keep
@@ -35,6 +47,9 @@ normal conversation when requirements must change. Use `epoch_resume` only
 when an actual pending native interrupt was returned; never choose a
 recommendation automatically.
 
-Only explicitly selected authoring and auditing use specialist LLMs. Native
-search may use Backend’s non-generative relevance ranker. Source inspection, native execution, catalogue/status/find/read operations
-make no LLM call. Model/vendor credentials remain on their services.
+Explicit authoring and auditing use their specialist LLMs; only a declared
+`llm_call` invokes the extension's bounded text model. A deterministic extension
+without that declaration uses no model. Native search may use Backend’s
+non-generative relevance ranker. Source inspection, ordinary `epoch_execute`,
+catalogue/status/find/read operations make no LLM call. Model/vendor credentials
+remain on their services.
