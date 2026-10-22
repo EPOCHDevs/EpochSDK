@@ -13,9 +13,9 @@ from stratifyx import AsyncStratifyX
 from test_supervisor import INTERRUPT, RUN, THREAD, job
 
 from epoch_sdk import RunRequest
-from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient, ResearchCompleted, ResearchError
 from epoch_sdk.supervisor import Answer, Answers, NeedsInput, SupervisorClient
+from epoch_sdk.workflow_mcp import create_server
 
 REQUEST_ID = "req_" + "1" * 32
 REQUEST = {

@@ -386,9 +386,9 @@ def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
     from mcp import Client
     from stratifyx import AsyncStratifyX
 
-    from epoch_sdk.mcp import create_server
     from epoch_sdk.research import EpochClient
     from epoch_sdk.supervisor import SupervisorClient
+    from epoch_sdk.workflow_mcp import create_server
 
     case = proof.load_case(CASE)
     original = completed(case)

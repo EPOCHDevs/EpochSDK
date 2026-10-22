@@ -19,13 +19,13 @@ from pathlib import Path
 import httpx
 from epoch_sdk.contracts import TableOutputRequest
 from epoch_sdk.errors import EpochError
-from epoch_sdk.mcp import create_server
 from epoch_sdk.responses import (
     ResearchResponseContent,
     ResponseTableSource,
     assemble_response,
 )
 from epoch_sdk.supervisor import SupervisorClient
+from epoch_sdk.workflow_mcp import create_server
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX

@@ -12,9 +12,9 @@ from stratifyx import AsyncStratifyX
 from test_responses import example
 
 from epoch_sdk import EpochError
-from epoch_sdk.mcp import create_server
 from epoch_sdk.responses import ResearchResponseContent, publish_response, read_response
 from epoch_sdk.supervisor import SupervisorClient
+from epoch_sdk.workflow_mcp import create_server
 
 
 @asynccontextmanager

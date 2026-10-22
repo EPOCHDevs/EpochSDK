@@ -51,7 +51,7 @@ class _RemoveUI(_Closed):
 
 
 _ui_adapter = TypeAdapter(NativeUIMessage | _RemoveUI)
-_stream_data = TypeAdapter(JsonValue)
+_stream_data: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
 
 
 class SessionStatus(_Closed):

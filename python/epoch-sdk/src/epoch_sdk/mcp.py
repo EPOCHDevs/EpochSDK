@@ -1,289 +1,349 @@
-"""Five MCP operations over the same public EpochClient used by SDK callers."""
+"""Composable Epoch tools: the calling coding agent is the supervisor."""
 
 from __future__ import annotations
 
 import asyncio
 import inspect
 import os
-from typing import Literal
+from collections.abc import Awaitable
+from copy import deepcopy
+from importlib.resources import files
+from typing import Literal, cast
 
+import httpx
+from jsonschema.exceptions import ValidationError as SchemaValidationError
 from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
-from mcp.server.mcpserver import Context
-from mcp.types import CallToolResult, ListToolsResult, TextContent
+from mcp.shared.exceptions import MCPError
+from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
+from pydantic import BaseModel, JsonValue, ValidationError
 from stratifyx import DatePeriodConfig, ExecutionOptions
+from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
+from stratifyx.core.api_error import ApiError
 
-from .contracts import ErrorResponse, OutputRequest, RunParameters
-from .errors import EpochError
-from .research import (
-    EpochClient,
-    ExecutionAccepted,
-    ResearchAccepted,
-    ResearchCompleted,
-    ResearchError,
-    ResearchResult,
-)
-from .responses import ResponseTablePage, SavedResearchResponse
-from .session import EventHandler, SessionCompleted, SessionEvent, SessionQuestions
-from .supervisor import (
-    Answers,
-    ChosenExecution,
-    InProgress,
-    NeedsInput,
-    NoExecution,
-    PublishedAnswer,
-    SavedStudy,
-    SupervisorClient,
-    SupervisorResult,
-)
+from .agent_tools import AgentToolsClient
+from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
+from .supervisor import Answers
+
+# Old handles remain readable through AgentToolsClient. New MCP discovery is
+# native Backend lookup; the legacy Discovery LLM is never advertised/invoked.
+_SPECIALIST_NAMES = {name: public for name, public in MCP_TOOL_NAMES.items() if name != "discovery"}
 
 
-def _result(value: SupervisorResult) -> CallToolResult:
-    if isinstance(value, NeedsInput):
-        text = value.feedback()
-    elif isinstance(value, ChosenExecution):
-        text = (
-            "Answer ready."
-            if value.response is not None
-            else f"Execution is {value.execution.status.value}."
-        )
-    elif isinstance(value, PublishedAnswer):
-        text = "Answer ready."
-    elif isinstance(value, InProgress):
-        text = "Still running. Reconnect with epoch_status using the same operation ID."
-    else:
-        text = value.reply or value.reason
-    wire = value.model_dump(mode="json", by_alias=True)
-    if isinstance(value, PublishedAnswer):
-        wire["response"] = value.response.to_wire()
-    elif isinstance(value, ChosenExecution) and value.response is not None:
-        wire["response"] = value.response.to_wire()
-    elif isinstance(value, NoExecution) and value.publication_error is not None:
-        wire["publication_error"] = value.publication_error.to_wire()
-    return CallToolResult(content=[TextContent(type="text", text=text)], structured_content=wire)
-
-
-def _value(
-    value: ResearchResult
-    | ChosenExecution
-    | ExecutionAccepted
-    | SavedResearchResponse
-    | ResponseTablePage,
-) -> CallToolResult:
-    if isinstance(value, ResearchCompleted):
-        text = "Answer ready."
-    elif isinstance(value, ResearchAccepted):
-        text = "Research accepted. Read epoch_status with kind=run and the same operation ID."
-    elif isinstance(value, ExecutionAccepted):
-        text = "Execution accepted. Read epoch_status with kind=execute and the same operation ID."
-    elif isinstance(value, ResponseTablePage):
-        text = "Table page ready. Follow next_offset using this version until it is null."
-    elif isinstance(value, SavedResearchResponse):
-        text = "Answer ready."
-    else:
-        return _result(value)
+def _value(value: BaseModel) -> CallToolResult:
     return CallToolResult(
-        content=[TextContent(type="text", text=text)],
-        structured_content=value.to_wire(),
+        content=[TextContent(type="text", text=value.model_dump_json(by_alias=True, exclude_unset=True))],
+        structured_content=value.model_dump(mode="json", by_alias=True, exclude_unset=True),
     )
 
 
-def _error(error: EpochError) -> CallToolResult:
-    response = (
-        error.response
-        if isinstance(error, ResearchError)
-        else ErrorResponse(
-            error=error.error,
-            **({"execution_id": error.execution_id} if error.execution_id else {}),
+def _failure(message: str) -> CallToolResult:
+    return CallToolResult(is_error=True, content=[TextContent(type="text", text=message)])
+
+
+async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
+    try:
+        return _value(await operation)
+    except SchemaValidationError as error:
+        return _failure("Invalid tool input: " + error.message)
+    except (ValueError, ValidationError) as error:
+        return _failure(str(error))
+    except ApiError as error:
+        return _failure(
+            f"Backend rejected the request (HTTP {error.status_code}); no replacement work was submitted."
         )
-    )
-    return CallToolResult(
-        content=[TextContent(type="text", text=str(error))],
-        structured_content=response.to_wire(),
-    )
+    except httpx.HTTPStatusError as error:
+        return _failure(f"Epoch tools service returned HTTP {error.response.status_code}.")
+    except httpx.HTTPError:
+        return _failure(
+            "The Epoch service could not be reached; retain any accepted handle before reconnecting."
+        )
 
 
-def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
+def create_server(client: AgentToolsClient) -> MCPServer:
     arguments: dict[str, set[str]] = {}
 
-    async def closed_arguments(
+    async def dispatch(
         ctx: ServerRequestContext[object, object], call_next: CallNext
     ) -> HandlerResult:
-        # MCP's function argument models otherwise silently discard extra keys.
+        name = ctx.params.get("name") if ctx.params is not None else None
+        if ctx.method == "tools/list" or (
+            ctx.method == "tools/call" and name in _SPECIALIST_NAMES.values()
+        ):
+            catalog = await client.catalog()
+        elif ctx.method == "tools/call":
+            catalog = None
+        else:
+            return await call_next(ctx)
         if ctx.method == "tools/call" and ctx.params is not None:
-            name = ctx.params.get("name")
-            supplied = ctx.params.get("arguments")
-            if isinstance(name, str) and name in arguments and isinstance(supplied, dict):
-                extra = supplied.keys() - arguments[name]
+            name, supplied = ctx.params.get("name"), ctx.params.get("arguments", {})
+            if not isinstance(supplied, dict):
+                raise ValueError("Tool arguments must be an object")
+            for tool in catalog.tools if catalog is not None else []:
+                if tool.name not in _SPECIALIST_NAMES:
+                    continue
+                if name != MCP_TOOL_NAMES[tool.name]:
+                    continue
+                values = dict(cast(dict[str, JsonValue], supplied))
+                task = values.pop("task", None)
+                workspace_id = values.pop("workspace_id", None)
+                if not isinstance(task, str) or (
+                    workspace_id is not None and not isinstance(workspace_id, str)
+                ):
+                    raise ValueError("Supply task and an optional workspace_id")
+                return await _call(
+                    client.invoke(
+                        tool.name,
+                        values,
+                        task=task,
+                        workspace_id=workspace_id,
+                    )
+                )
+            if isinstance(name, str) and name in arguments:
+                extra = cast(dict[str, JsonValue], supplied).keys() - arguments[name]
                 if extra:
                     return CallToolResult(
                         is_error=True,
                         content=[
                             TextContent(
-                                type="text",
-                                text="Unknown arguments: " + ", ".join(sorted(extra)),
+                                type="text", text="Unknown arguments: " + ", ".join(sorted(extra))
                             )
                         ],
                     )
         result = await call_next(ctx)
         if ctx.method == "tools/list" and result is not None:
-            result = ListToolsResult.model_validate(result)
-            for tool in result.tools:
+            if catalog is None:
+                raise ValueError("The specialist catalogue is unavailable")
+            listing = ListToolsResult.model_validate(result)
+            for tool in listing.tools:
                 tool.input_schema["additionalProperties"] = False
+            for definition in catalog.tools:
+                if definition.name not in _SPECIALIST_NAMES:
+                    continue
+                schema = deepcopy(definition.parameters)
+                properties, required = schema.get("properties", {}), schema.get("required", [])
+                if not isinstance(properties, dict) or not isinstance(required, list):
+                    raise TypeError("Invalid source-owned tool schema")
+                if {"task", "workspace_id"} & properties.keys():
+                    raise ValueError("A source tool conflicts with the MCP transport fields")
+                schema["properties"] = {
+                    **properties,
+                    "task": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The user's current task and approved context, retained as the source authority for this operation.",
+                    },
+                    "workspace_id": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Reuse a returned tools workspace to retain discovery and study references across calls.",
+                    },
+                }
+                schema["required"] = ["task", *required]
+                schema["additionalProperties"] = False
+                listing.tools.append(
+                    Tool(
+                        name=MCP_TOOL_NAMES[definition.name],
+                        description=definition.description
+                        + "\n"
+                        + (
+                            "Can use the existing specialist LLM; no Epoch supervisor is invoked. "
+                            if definition.llm == "specialist"
+                            else "Makes no LLM call. "
+                        )
+                        + "Returns a background-operation handle; use epoch_status. Publication is not required.",
+                        input_schema=schema,
+                    )
+                )
+            return listing
         return result
 
-    server = MCPServer("Epoch", middleware=[closed_arguments])
-    epoch = client if isinstance(client, EpochClient) else EpochClient(client)
-
-    def progress(context: Context[object, object]) -> EventHandler:
-        count = 0
-
-        async def update(event: SessionEvent) -> None:
-            nonlocal count
-            if isinstance(event, (SessionQuestions, SessionCompleted)):
-                return  # Questions and the saved answer are the structured tool result.
-            count += 1
-            await context.report_progress(
-                float(count), message=event.model_dump_json(exclude_none=True)
-            )
-
-        return update
-
-    async def run(
-        task: str,
-        ctx: Context[object, object],
-        context: list[str] | None = None,
-        outputs: list[OutputRequest] | None = None,
-        parameters: RunParameters | None = None,
-        operation_id: str | None = None,
-        thread_id: str | None = None,
-        auto_ingest: bool = False,
-    ) -> CallToolResult:
-        """Submit a task through the shared SDK workflow and receive its saved answer.
-        Context, output declarations and parameters are optional; the default answer
-        is concise Markdown. Reuse operation_id with identical inputs to reconnect.
-        Structured questions return without choosing an answer; use epoch_resume.
-        Discovery, study building, validation and publication are handled by Epoch.
-        """
+    async def checked_dispatch(
+        ctx: ServerRequestContext[object, object], call_next: CallNext
+    ) -> HandlerResult:
         try:
-            return _value(
-                await epoch.run(
-                    task,
-                    context=context,
-                    outputs=outputs,
-                    parameters=parameters,
-                    operation_id=operation_id,
-                    thread_id=thread_id,
-                    auto_ingest=auto_ingest,
-                    interface="headless",
-                    on_event=progress(ctx),
-                )
-            )
-        except EpochError as error:
-            return _error(error)
+            return await dispatch(ctx, call_next)
+        except (ValueError, ValidationError) as error:
+            if ctx.method == "tools/list":
+                raise MCPError(-32603, "The Epoch tools catalogue is invalid; check its service version.") from None
+            return _failure(str(error))
+        except httpx.HTTPStatusError as error:
+            message = f"Epoch tools catalogue is unavailable (HTTP {error.response.status_code}). Deploy the epoch-tools graph before connecting this MCP."
+            if ctx.method == "tools/list":
+                raise MCPError(-32603, message) from None
+            return _failure(message)
+
+    server = MCPServer(
+        "Epoch",
+        instructions=(
+            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. Read epoch_dataset_catalog for datasets/options, epoch_search_dataset for identities, and epoch_screen_assets for whole cohorts. "
+            "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
+            "Do not launch epoch-ai or publish merely to finish; explain results directly. "
+            "Specialist operations return handles; poll epoch_status rather than resubmitting. "
+            "Execution and reads use Backend directly. Only explicitly selected study authoring and auditing use specialist LLMs."
+        ),
+        middleware=[checked_dispatch],
+    )
 
     async def execute(
-        reference: SavedStudy | str,
+        study_id: str,
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
-        operation_id: str | None = None,
+        execution_id: str | None = None,
+        workspace_id: str | None = None,
     ) -> CallToolResult:
-        """Execute prepared work and wait for completion, without a supervisor.
-        A verified response plan also publishes its saved answer before returning.
-        Reference is the completed research operation ID or its returned reusable_study.
-        Supply a separate operation_id to reconnect to this execution. A different
-        period must be allowed by the saved plan. This does not rebuild the study.
+        """Execute a saved study through Backend, without a supervisor or publication.
+        Returns the native execution ID/status. Observe with epoch_status using
+        kind=execution; pass completed execution_ids to epoch_audit_run. Optional
+        execution_id is Backend's caller-selected ID. Never retry an uncertain
+        submission blindly: retain and read its accepted ID.
         """
-        try:
-            return _value(
-                await epoch.execute(
-                    reference,
-                    period=period,
-                    execution=execution,
-                    operation_id=operation_id,
-                )
+        return await _call(
+            client.execute(
+                study_id,
+                period=period,
+                execution=execution,
+                execution_id=execution_id,
+                workspace_id=workspace_id,
             )
-        except EpochError as error:
-            return _error(error)
+        )
 
-    async def resume(
-        operation_id: str,
-        responses: dict[str, Answers],
-        ctx: Context[object, object],
+    async def dataset_catalog(
+        source_ids: list[str] | None = None,
+        include_details: bool = False,
+        include_saved: bool = True,
+        saved_cursor: str | None = None,
+        saved_limit: int = 100,
     ) -> CallToolResult:
-        """Answer the current questions and continue the same operation to its answer.
-        Copy interrupt IDs and zero-based question/option indices from needs_input.
-        Explicit user/agent answers are required; recommendations are never selected.
+        """Read Backend's dataset directory and shared source guidance, without an LLM.
+        Request details for all supported loader options, including available
+        vintage/revision selectors. Saved datasets are caller-owned. Metadata
+        describes source capabilities; it does not prove access or data coverage.
         """
-        try:
-            return _value(
-                await epoch.resume(
-                    operation_id,
-                    responses,
-                    interface="headless",
-                    on_event=progress(ctx),
-                )
-            )
-        except EpochError as error:
-            return _error(error)
+        return await _call(client.dataset_catalog(
+            source_ids=source_ids or [], include_details=include_details,
+            include_saved=include_saved, saved_cursor=saved_cursor, saved_limit=saved_limit,
+        ))
+
+    async def search_dataset(
+        requests: list[DatasetSearchQuery], candidate_limit: int | None = None,
+    ) -> CallToolResult:
+        """Find assets/series by name, concept or exact native address through Backend.
+        No Discovery agent or generative LLM is invoked. Reuse exact returned
+        result_ref/record_ref in build_study source_refs; never invent identifiers.
+        Result retains original search facts. If inline records were omitted,
+        page contains the first saved page; continue with epoch_read(kind=dataset_search).
+        This is ranked identity lookup; use epoch_screen_assets for a whole cohort.
+        """
+        return await _call(client.search_dataset(requests, candidate_limit=candidate_limit))
+
+    async def screen_assets(request: ScreenAssetsRequest) -> CallToolResult:
+        """Create or reuse a complete saved asset universe through Backend, without an LLM.
+        Use explicit membership mode and a window for historical membership.
+        No relevance limit is applied. Keep qualifications/integrity visible;
+        pass universe_ref plus the desired dataset to build_study source_refs.
+        A missing universe_ref means no usable complete universe was established.
+        """
+        return await _call(client.screen_assets(request))
 
     async def status(
-        operation_id: str,
-        kind: Literal["run", "execute"] = "run",
+        kind: Literal["tool", "execution"],
+        handle: AgentToolHandle | None = None,
+        execution_id: str | None = None,
     ) -> CallToolResult:
-        """Read an existing operation's status, questions or pinned saved answer.
-        Use kind=run for research and kind=execute for a prepared execution.
-        This never submits work, resumes a question or starts a replacement job.
+        """Observe existing work only. Tool operations require their complete handle;
+        Backend executions require execution_id. No work is resubmitted or published.
         """
-        try:
-            return _value(await epoch.status(operation_id, kind=kind))
-        except EpochError as error:
-            return _error(error)
+        if kind == "tool" and handle is not None and execution_id is None:
+            return await _call(client.status(handle))
+        if kind == "execution" and execution_id is not None and handle is None:
+            return await _call(client.execution(execution_id))
+        return _failure("Supply only the handle or execution_id required by kind")
+
+    async def resume(handle: AgentToolHandle, responses: dict[str, Answers]) -> CallToolResult:
+        """Explicitly answer pending specialist questions and continue that operation.
+        Copy returned interrupt/question/option IDs. Recommendations are never
+        selected automatically. Completed operations cannot be resumed.
+        """
+        if handle.tool == "discovery":
+            return _failure(
+                "Legacy Discovery handles are read-only in the default MCP. "
+                "Use the explicit compatibility client to continue the original legacy operation."
+            )
+        return await _call(client.resume(handle, responses))
 
     async def read(
-        response_id: str,
-        table: str | None = None,
-        version: int | None = None,
-        offset: int = 0,
-        page_size: int = 1000,
+        kind: Literal[
+            "workspace", "study", "execution", "tool", "dashboard", "dashboard_metadata", "guide",
+            "dataset_search"
+        ],
+        identifier: str | None = None,
+        handle: AgentToolHandle | None = None,
+        category: str = "ALL",
+        cursor: str | None = None,
+        limit: int = 10,
     ) -> CallToolResult:
-        """Read a saved answer, or one table page when table is supplied.
-        Pin the returned version for subsequent pages and follow next_offset until
-        null. Page size limits one transfer; there is no total table row ceiling.
-        Reads call Backend only and never start a study or model call.
+        """Read owned saved work without a model call or publication.
+        Workspace returns study/execution registries; study returns the native
+        definition; execution returns status. Tool reads require a handle and
+        include the original saved artifact when available.
         """
-        try:
-            return _value(
-                await epoch.read(
-                    response_id,
-                    table=table,
-                    version=version,
-                    offset=offset,
-                    page_size=page_size,
-                )
-            )
-        except EpochError as error:
-            return _error(error)
+        if kind == "guide":
+            if identifier is not None or handle is not None:
+                return _failure("Guide reads do not take an identifier or handle")
+            guide = files("epoch_sdk").joinpath("data/agent-tools-guide.md").read_text()
+            return CallToolResult(content=[TextContent(type="text", text=guide)])
+        if kind == "tool" and handle is not None and identifier is None:
+            return await _call(client.status(handle, include_artifact=True))
+        if identifier is None or handle is not None:
+            return _failure("Supply identifier, or a tool handle for kind=tool")
+        if kind == "dataset_search":
+            return await _call(client.read_dataset_search(identifier, cursor=cursor, limit=limit))
+        if cursor is not None or limit != 10:
+            return _failure("Cursor and limit apply only to dataset_search reads")
+        if kind == "workspace":
+            return await _call(client.workspace(identifier))
+        if kind == "study":
+            return await _call(client.study(identifier))
+        if kind == "execution":
+            return await _call(client.execution(identifier))
+        if kind == "dashboard":
+            return await _call(client.dashboard(identifier, category=category))
+        if kind == "dashboard_metadata":
+            return await _call(client.dashboard_metadata(identifier))
+        return _failure("Tool reads require their handle")
+
+    async def find(
+        kind: Literal["workspaces", "studies", "executions"], limit: int = 20, offset: int = 0
+    ) -> CallToolResult:
+        """List owned reusable workspace or study IDs, paged by offset.
+        Read selected IDs to inspect them. Listing makes no vendor/model call.
+        """
+        ids = await client.find(kind=kind, limit=limit, offset=offset)
+        return CallToolResult(
+            content=[TextContent(type="text", text="Saved IDs ready.")],
+            structured_content={"kind": kind, "ids": ids, "offset": offset},
+        )
 
     for name, function in (
-        ("epoch_run", run),
+        ("epoch_dataset_catalog", dataset_catalog),
+        ("epoch_search_dataset", search_dataset),
+        ("epoch_screen_assets", screen_assets),
         ("epoch_execute", execute),
-        ("epoch_resume", resume),
         ("epoch_status", status),
+        ("epoch_resume", resume),
         ("epoch_read", read),
+        ("epoch_find", find),
     ):
-        arguments[name] = set(inspect.signature(function).parameters) - {"ctx"}
+        arguments[name] = set(inspect.signature(function).parameters)
         server.tool(name=name, structured_output=True)(function)
     return server
 
 
 async def _stdio() -> None:
-    client = SupervisorClient.connect(
-        graph_url=os.environ["EPOCH_GRAPH_URL"],
+    client = AgentToolsClient.connect(
+        graph_url=os.environ.get("EPOCH_MCP_GRAPH_URL") or os.environ["EPOCH_GRAPH_URL"],
         backend_url=os.environ["EPOCH_BACKEND_URL"],
         token=os.environ["EPOCH_TOKEN"],
-        assistant_id=os.environ.get("EPOCH_ASSISTANT_ID", "epoch-ai"),
-        ui_url=os.environ.get("EPOCH_UI_URL"),
     )
     try:
         await create_server(client).run_stdio_async()

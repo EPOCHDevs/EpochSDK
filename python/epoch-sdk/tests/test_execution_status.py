@@ -102,7 +102,7 @@ def test_installed_mcp_process_reads_native_status_without_a_graph():
     async def scenario():
         params = StdioServerParameters(
             command=sys.executable,
-            args=["-m", "epoch_sdk.mcp"],
+            args=["-m", "epoch_sdk.workflow_mcp"],
             env={
                 "EPOCH_BACKEND_URL": f"http://127.0.0.1:{server.server_port}",
                 "EPOCH_GRAPH_URL": "http://127.0.0.1:1",

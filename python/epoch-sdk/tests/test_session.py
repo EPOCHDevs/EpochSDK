@@ -17,7 +17,6 @@ from test_research import REQUEST, REQUEST_ID
 from test_supervisor import INTERRUPT, RUN
 
 from epoch_sdk import RunRequest
-from epoch_sdk.mcp import create_server
 from epoch_sdk.presentation import question_answer
 from epoch_sdk.research import ResearchCompleted, ResearchError
 from epoch_sdk.session import (
@@ -27,6 +26,7 @@ from epoch_sdk.session import (
     SessionUIRemoved,
 )
 from epoch_sdk.supervisor import Answer, Answers, NeedsInput
+from epoch_sdk.workflow_mcp import create_server
 
 RESUMED_RUN = "01900000-0000-7000-8000-000000000002"
 

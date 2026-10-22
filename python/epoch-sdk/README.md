@@ -14,7 +14,7 @@ The adapter handles native communication, execution selection and explicit
 [saved-output reads](../../docs/saved-output-reader.md). Research publishes a saved
 answer with named table, JSON and text parts. Prepared-study execution remains
 a separate direct Backend operation. [Readable operation IDs](../../docs/reconnect-operations.md)
-let notebooks and MCP clients attach after disconnecting.
+let notebook and explicit workflow-MCP clients attach after disconnecting.
 
 ## One research session
 
@@ -27,21 +27,15 @@ result = await epoch.run(request, operation_id="msft-quality-2025")
 The SDK renders live Epoch activity, collects explicit replies, resumes the same
 native checkpoint and displays the saved answer once. The returned result stays
 ordinary Python data. `await epoch.run(operation_id="msft-quality-2025")`
-reconnects after a kernel/process restart. MCP consumes the same headless session
-core with structured progress and questions. See [interactive sessions](../../docs/interactive-sessions.md).
+reconnects after a kernel/process restart. The explicit workflow MCP consumes that same headless session core; the default composable MCP uses the separate specialist interface. See [interactive sessions](../../docs/interactive-sessions.md).
 
-## SDK and MCP use the same five operations
+## SDK workflows and composable MCP
 
-Use `run`, `execute`, `resume`, `status` and `read`. The default MCP catalogue is
-`epoch_run`, `epoch_execute`, `epoch_resume`, `epoch_status` and `epoch_read`.
-A task string is sufficient; context, requested outputs and native parameters
-are optional. A task without output declarations receives a concise Markdown
-answer. Explicit table/JSON declarations use the same closed `RunRequest`
-contract. Publication and output binding are handled by Epoch.
+Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
 
-See [the shared public interface](../../docs/public-client-interface.md) for
-examples, reconnect IDs, structured clarification and the alpha13 migration.
-The older SDK methods remain available; their separate MCP tools are retired.
+The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies; only explicit authoring/auditing use specialist LLMs. No Epoch supervisor or publication is required.
+
+See [the public interface](../../docs/public-client-interface.md) for the eleven tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
 
 ## Use the actual core contract
 
