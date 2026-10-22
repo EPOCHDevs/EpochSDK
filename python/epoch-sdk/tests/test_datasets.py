@@ -11,9 +11,10 @@ import httpx
 import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
+from pydantic import TypeAdapter
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
-from stratifyx.types import DatasetSearchQuery
+from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
 from test_agent_tools import CATALOG
 
 from epoch_sdk.agent_tools import AgentToolsClient
@@ -277,18 +278,39 @@ def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize('status', [403, 429, 502, 503, 504])
-def test_provider_failure_reaches_sdk_and_mcp_without_retry_or_replacement(status):
+@pytest.mark.parametrize('status', [400, 401, 403, 404, 409, 410, 413, 422, 429, 502, 503, 504])
+@pytest.mark.parametrize('route', ['search', 'catalog', 'read', 'screen'])
+def test_native_discovery_failure_reaches_sdk_and_mcp_without_retry_or_replacement(status, route):
+    """Transport contract cases, not live auth/expiry/provider-fault evidence.
+
+    Owner, expiry, wrong-kind and cursor semantics belong to native store/HTTP
+    tests. Both clients must preserve their rejection instead of retrying,
+    rescreening, replacing a result or converting it into an empty response.
+    """
     async def scenario():
         calls = []
         failure = {
             'error': 'MetadataProviderFailure',
-            'message': 'Macrobond selected metadata request failed; no TE replacement was used',
+            'message': f'{route}: owner, expiry, cursor or provider rejection remains visible',
             'timestamp': '2026-10-22T12:00:00Z',
         }
         def native(request):
-            assert request.url.path == '/api/v1/discovery/datasets/search'
-            assert json.loads(request.content)['requests'] == [QUERY]
+            expected = {
+                'search': '/api/v1/discovery/datasets/search',
+                'catalog': '/api/v1/discovery/catalog',
+                'read': '/api/v1/discovery/query-stored',
+                'screen': '/api/v1/discovery/assets/screen',
+            }
+            assert request.method == 'POST' and request.url.path == expected[route]
+            body = json.loads(request.content)
+            if route == 'search':
+                assert body['requests'] == [QUERY]
+            elif route == 'read':
+                assert body['result_refs'] == ['owned-result']
+                assert body['cursor'] == 'native-cursor'
+                assert body['limit'] == 1
+            elif route == 'screen':
+                assert body == {'kind': 'saved', 'universe_ref': 'owned-cohort'}
             calls.append(request)
             return httpx.Response(status, json=failure)
         def graph(request):
@@ -301,7 +323,16 @@ def test_provider_failure_reaches_sdk_and_mcp_without_retry_or_replacement(statu
             backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=native_http)
             tools = AgentToolsClient(LangGraphClient(graph_http), backend, graph_http)
             with pytest.raises(ApiError) as rejected:
-                await tools.search_dataset([DatasetSearchQuery.model_validate(QUERY)])
+                if route == 'search':
+                    await tools.search_dataset([DatasetSearchQuery.model_validate(QUERY)])
+                elif route == 'catalog':
+                    await tools.dataset_catalog(include_saved=True, saved_cursor='native-cursor')
+                elif route == 'read':
+                    await tools.read_dataset_search('owned-result', cursor='native-cursor', limit=1)
+                else:
+                    await tools.screen_assets(TypeAdapter(ScreenAssetsRequest).validate_python({
+                        'kind': 'saved', 'universe_ref': 'owned-cohort',
+                    }))
             assert rejected.value.status_code == status
             from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
             body = rejected.value.body
@@ -310,7 +341,21 @@ def test_provider_failure_reaches_sdk_and_mcp_without_retry_or_replacement(statu
             assert body == failure
             assert len(calls) == 1
             async with Client(create_server(tools)) as mcp:
-                result = await mcp.call_tool('epoch_search_dataset', {'requests': [QUERY]})
+                if route == 'search':
+                    result = await mcp.call_tool('epoch_search_dataset', {'requests': [QUERY]})
+                elif route == 'catalog':
+                    result = await mcp.call_tool('epoch_dataset_catalog', {
+                        'include_saved': True, 'saved_cursor': 'native-cursor',
+                    })
+                elif route == 'read':
+                    result = await mcp.call_tool('epoch_read', {
+                        'kind': 'dataset_search', 'identifier': 'owned-result',
+                        'cursor': 'native-cursor', 'limit': 1,
+                    })
+                else:
+                    result = await mcp.call_tool('epoch_screen_assets', {
+                        'request': {'kind': 'saved', 'universe_ref': 'owned-cohort'},
+                    })
                 assert result.is_error
                 assert result.structured_content == {'http_status': status, 'backend_error': failure}
                 assert failure['message'] in result.content[0].text
