@@ -228,9 +228,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
-            "Execution and reads use Backend directly. Only explicitly selected study authoring and auditing use specialist LLMs."
+            "Execution and reads use Backend directly. Specialist LLMs run only for explicitly selected study authoring/auditing or a program's declared llm_call."
             " For a supported completed result, use epoch_extension_inputs, epoch_save_extension and epoch_execute_extension to author/reuse an execution-input program. "
-            "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit commentary declaration may use the cached text model. "
+            "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit llm_call declaration may use the cached text model. "
             "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
         ),
         middleware=[checked_dispatch],

@@ -33,7 +33,7 @@ reconnects after a kernel/process restart. The explicit workflow MCP consumes th
 
 Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
 
-The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies; only explicit authoring/auditing use specialist LLMs. No Epoch supervisor or publication is required.
+The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies. Specialist LLMs run only for explicitly selected authoring/auditing or a program's declared `llm_call`. No Epoch supervisor or publication is required.
 
 For supported completed results, application/notebook and MCP clients share the
 same native extension methods:
