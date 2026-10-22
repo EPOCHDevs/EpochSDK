@@ -56,3 +56,20 @@ Cross-reference, source ownership and actual replay semantics require the
 owning native service as well as schema checks. This is currently a contract
 draft; it does not claim that the native save/replay endpoints exist yet.
 See [response-plan execution design](../docs/response-plans.md).
+
+The native operation projection also includes saved-execution extension input
+catalogue/definition admission, output records, exact presentation reads and
+saved-answer/table reads. Regenerate it with `tools/sync_operation_contract.py
+--backend-openapi PATH`; native models and discriminator targets retain their
+`Native_` namespace. It is a projection of existing Backend endpoints, not a new
+gateway. `execution-extension.examples.json` holds documented transport examples:
+saved output examples come from native C++ captures, while the catalogue and
+definition-save request are explicit synthetic schema/authoring examples. None
+establishes a live HTTP, model, notebook or Portal acceptance result.
+
+The saved-answer schema references the projected native
+`ExecutionExtensionProvenance` directly. Keep that attribution when reading or
+pinning answers. The source execution, derived output execution, publication,
+catalogue revision and presentation edit version are distinct identities.
+Presentation edit zero is valid. Existing answers without extension attribution
+retain their legacy read contract.

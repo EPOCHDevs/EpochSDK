@@ -16,14 +16,21 @@ from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
 from mcp.shared.exceptions import MCPError
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
-from pydantic import BaseModel, Field, JsonValue, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError
 from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
-from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
+from stratifyx.types import (
+    CreateSdkExecutionRequest,
+    DatasetSearchQuery,
+    ExecutionPresentationPin,
+    ScreenAssetsRequest,
+    SdkExecutionRecord,
+)
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
 from .agent_tools import AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
+from .errors import EpochError
 from .supervisor import Answers
 
 # Old handles remain readable through AgentToolsClient. New MCP discovery is
@@ -31,8 +38,15 @@ from .supervisor import Answers
 _SPECIALIST_NAMES = {name: public for name, public in MCP_TOOL_NAMES.items() if name != "discovery"}
 
 
+class _ExtensionExecutionRequest(CreateSdkExecutionRequest):
+    """The native input shape is closed; read-side SDK extensions stay intact."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
 def _value(value: BaseModel) -> CallToolResult:
     return CallToolResult(
+        is_error=isinstance(value, SdkExecutionRecord) and value.error is not None,
         content=[TextContent(type="text", text=value.model_dump_json(by_alias=True, exclude_unset=True))],
         structured_content=value.model_dump(mode="json", by_alias=True, exclude_unset=True),
     )
@@ -49,6 +63,12 @@ async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
         return _failure("Invalid tool input: " + error.message)
     except (ValueError, ValidationError) as error:
         return _failure(str(error))
+    except EpochError as error:
+        return CallToolResult(
+            is_error=True,
+            content=[TextContent(type="text", text=error.error.message)],
+            structured_content={"error": error.error.to_wire(), "execution_id": error.execution_id},
+        )
     except ApiError as error:
         try:
             native = NativeErrorResponse.model_validate(error.body, strict=True)
@@ -198,6 +218,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
             "Execution and reads use Backend directly. Only explicitly selected study authoring and auditing use specialist LLMs."
+            " For a supported completed result, use epoch_extension_inputs, epoch_save_extension and epoch_execute_extension to author/reuse an execution-input program. "
+            "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit commentary declaration may use the cached text model. "
+            "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
         ),
         middleware=[checked_dispatch],
     )
@@ -264,18 +287,57 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         return await _call(client.screen_assets(request))
 
     async def status(
-        kind: Literal["tool", "execution"],
+        kind: Literal["tool", "execution", "extension"],
         handle: AgentToolHandle | None = None,
         execution_id: str | None = None,
+        operation_id: str | None = None,
     ) -> CallToolResult:
         """Observe existing work only. Tool operations require their complete handle;
-        Backend executions require execution_id. No work is resubmitted or published.
+        Backend executions require execution_id; extensions require operation_id.
+        Extension records separate native computation from saved output completion
+        and retain exact publication/answer revisions. No work is resubmitted.
         """
-        if kind == "tool" and handle is not None and execution_id is None:
+        if kind == "tool" and handle is not None and execution_id is None and operation_id is None:
             return await _call(client.status(handle))
-        if kind == "execution" and execution_id is not None and handle is None:
+        if kind == "execution" and execution_id is not None and handle is None and operation_id is None:
             return await _call(client.execution(execution_id))
-        return _failure("Supply only the handle or execution_id required by kind")
+        if kind == "extension" and operation_id is not None and handle is None and execution_id is None:
+            return await _call(client.extension_status(operation_id))
+        return _failure("Supply only the handle, execution_id or operation_id required by kind")
+
+    async def extension_inputs(execution_id: str, tables: list[str]) -> CallToolResult:
+        """Read selected retained tables' exact types, flat enum refs and frozen code.
+        Backend owner-checks the completed source and rejects unsupported inputs.
+        This is metadata, not sample rows, discovery or a model call. Reuse the
+        source for multiple programs; do not embed its execution ID in EpochScript.
+        """
+        return await _call(client.extension_inputs(execution_id, tables=tables))
+
+    async def save_extension(
+        thread_id: str, source_execution_id: str, tables: list[str], source: str,
+        name: str, description: str, parent_definition_id: str | None = None,
+    ) -> CallToolResult:
+        """Compile and save supplied EpochScript over an explicit execution_input.
+        Use the returned catalog's flat ExecutionTable/field enum refs. Declare
+        response_table/response_json and/or native reporters independently; text
+        commentary is optional and explicitly model-backed. This saves an immutable
+        definition, uses no authoring LLM and runs no study. Keep the returned ID.
+        """
+        return await _call(client.save_extension(
+            thread_id,source_execution_id=source_execution_id,tables=tables,source=source,
+            name=name,description=description,parent_definition_id=parent_definition_id,
+        ))
+
+    async def execute_extension(request: _ExtensionExecutionRequest) -> CallToolResult:
+        """Start or attach one saved-execution extension through Backend.
+        study_id is the saved extension, source_execution_id is the original owned
+        result, input_tables selects its data and parameters may be empty. Reuse
+        operation_id for identical accepted inputs; changed inputs conflict. It
+        never reruns the original study or launches a supervisor. Only explicitly
+        declared commentary may call the bounded text model. Read epoch_status
+        with kind=extension and operation_id for exact completed output pins.
+        """
+        return await _call(client.execute_extension(request))
 
     async def resume(handle: AgentToolHandle, responses: dict[str, Answers]) -> CallToolResult:
         """Explicitly answer pending specialist questions and continue that operation.
@@ -292,20 +354,43 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     async def read(
         kind: Literal[
             "workspace", "study", "execution", "tool", "dashboard", "dashboard_metadata", "guide",
-            "dataset_search"
+            "dataset_search", "response", "presentation"
         ],
         identifier: str | None = None,
         handle: AgentToolHandle | None = None,
         category: str = "ALL",
         cursor: str | None = None,
         limit: Annotated[int, Field(ge=1, le=10, strict=True)] = 10,
+        version: Annotated[int, Field(ge=1, strict=True)] | None = None,
+        table: str | None = None,
+        offset: Annotated[int, Field(ge=0, strict=True)] = 0,
+        page_size: Annotated[int, Field(ge=1, le=10000, strict=True)] = 1000,
+        presentation: ExecutionPresentationPin | None = None,
     ) -> CallToolResult:
         """Read owned saved work without a model call or publication.
         Workspace returns study/execution registries; study returns the native
         definition; execution returns status. Tool reads require a handle and
         include the original saved artifact when available.
         Dataset-search pages contain 1..10 records and retain native cursors.
+        Response reads accept a pinned version; table selects one paged named
+        table using offset/page_size. Page size never caps the full result.
+        Presentation reads require the exact publication/catalog/edit pin from
+        extension_outputs; edit zero is a real version, not a latest lookup.
         """
+        if kind == "presentation":
+            if (presentation is None or identifier is not None or handle is not None
+                    or cursor is not None or limit != 10 or version is not None
+                    or table is not None or offset != 0 or page_size != 1000):
+                return _failure("Presentation reads require only their exact pin and optional category")
+            return await _call(client.extension_presentation(
+                presentation, category=None if category == "ALL" else category,
+            ))
+        if presentation is not None:
+            return _failure("Presentation pins apply only to presentation reads")
+        if kind != "response" and (
+            version is not None or table is not None or offset != 0 or page_size != 1000
+        ):
+            return _failure("Version, table, offset and page_size apply only to response reads")
         if kind == "guide":
             if identifier is not None or handle is not None:
                 return _failure("Guide reads do not take an identifier or handle")
@@ -315,6 +400,14 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             return await _call(client.status(handle, include_artifact=True))
         if identifier is None or handle is not None:
             return _failure("Supply identifier, or a tool handle for kind=tool")
+        if kind == "response":
+            if cursor is not None or limit != 10:
+                return _failure("Cursor and limit apply only to dataset_search reads")
+            if table is not None:
+                return await _call(client.response_table(identifier, table, version=version, offset=offset, page_size=page_size))
+            if offset != 0 or page_size != 1000:
+                return _failure("Response paging requires a table name")
+            return await _call(client.response(identifier, version=version))
         if kind == "dataset_search":
             return await _call(client.read_dataset_search(identifier, cursor=cursor, limit=limit))
         if cursor is not None or limit != 10:
@@ -348,6 +441,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         ("epoch_search_dataset", search_dataset),
         ("epoch_screen_assets", screen_assets),
         ("epoch_execute", execute),
+        ("epoch_extension_inputs", extension_inputs),
+        ("epoch_save_extension", save_extension),
+        ("epoch_execute_extension", execute_extension),
         ("epoch_status", status),
         ("epoch_resume", resume),
         ("epoch_read", read),

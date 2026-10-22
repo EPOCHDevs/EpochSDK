@@ -12,6 +12,9 @@ from epoch_sdk.responses import ResponseTablePage, SavedResearchResponse
 
 def project(model=SavedResearchResponse):
     schema = model.model_json_schema()
+    native = {
+        "ExecutionExtensionProvenance": "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance",
+    }
     shared = {
         "Column",
         "TableOutputRequest",
@@ -26,7 +29,9 @@ def project(model=SavedResearchResponse):
         if isinstance(value, dict):
             result = {}
             for key, item in value.items():
-                if key == "$ref" and item.removeprefix("#/$defs/") in shared:
+                if key == "$ref" and item.removeprefix("#/$defs/") in native:
+                    result[key] = native[item.removeprefix("#/$defs/")]
+                elif key == "$ref" and item.removeprefix("#/$defs/") in shared:
                     name = item.removeprefix("#/$defs/")
                     result[key] = "openapi.json#/components/schemas/" + (
                         "JsonSchema" if name == "JsonSchemaDocument" else name
@@ -37,7 +42,23 @@ def project(model=SavedResearchResponse):
         return value
 
     schema = rewrite(schema)
-    schema["$defs"] = {k: v for k, v in schema["$defs"].items() if k not in shared}
+    definitions = schema.pop("$defs", {})
+    selected = {}
+    def visit(node):
+        if isinstance(node, dict):
+            ref = node.get("$ref", "")
+            if ref.startswith("#/$defs/"):
+                name = ref.removeprefix("#/$defs/")
+                if name not in selected:
+                    selected[name] = definitions[name]
+                    visit(definitions[name])
+            for value in node.values():
+                visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+    visit(schema)
+    schema["$defs"] = selected
     return {"$schema": "https://json-schema.org/draft/2020-12/schema", **schema}
 
 

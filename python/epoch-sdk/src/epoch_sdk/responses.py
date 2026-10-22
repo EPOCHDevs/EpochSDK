@@ -8,6 +8,7 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, model_validator
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
+from stratifyx.types import ExecutionExtensionProvenance
 
 from .contracts import (
     Column,
@@ -61,6 +62,9 @@ class ResponseReference(Contract):
     primary_execution_id: NonBlank | None = None
     study_id: NonBlank | None = None
     response_plan: ResponsePlanReference | None = None
+    # Preserve the exact native attribution instead of duplicating its DTO or
+    # confusing the original input execution with this derived answer's run.
+    extension: ExecutionExtensionProvenance | None = None
 
     @model_validator(mode="after")
     def paired_source(self) -> Self:
@@ -68,6 +72,11 @@ class ResponseReference(Contract):
             raise ValueError("An execution-backed answer requires both execution and study")
         if self.response_plan is not None and self.primary_execution_id is None:
             raise ValueError("A planned answer requires its source execution")
+        if self.extension is not None and (
+            self.primary_execution_id != self.extension.execution_id
+            or self.study_id != self.extension.study_id
+        ):
+            raise ValueError("The extension attribution differs from this saved answer's execution/study")
         return self
 
 

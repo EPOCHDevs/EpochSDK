@@ -334,6 +334,9 @@
     "content": {
       "$ref": "#/$defs/ResearchResponseContent"
     },
+    "extension": {
+      "$ref": "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance"
+    },
     "primary_execution_id": {
       "minLength": 1,
       "pattern": "\\S",

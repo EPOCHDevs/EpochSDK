@@ -1,0 +1,630 @@
+{
+  "create_agent_study_definition": {
+    "request": {
+      "data": {
+        "assets": []
+      },
+      "description": "Example supplied EpochScript, compiled against the selected saved result.",
+      "execution_input": {
+        "source_execution_id": "original",
+        "tables": [
+          "orders"
+        ]
+      },
+      "name": "Recorded orders",
+      "source": "trades=execution_table(table=ExecutionTable.Orders,fields=(ExecutionTableOrders.Quantity,))\nanalysis=sql_program(queries={\"rows\":\"SELECT quantity FROM trades\"},outputs={\"rows\":relation_output(columns=[relation_field(\"quantity\",Float64)])})(trades)\nresponse_table(name=\"orders\",source=analysis.rows)",
+      "study_type": "research"
+    },
+    "response": {
+      "id": "extension-study",
+      "message": "Example definition identity"
+    }
+  },
+  "describeExecutionInputs": {
+    "request": {
+      "tables": [
+        "orders"
+      ]
+    },
+    "response": {
+      "source": {
+        "execution_id": "original",
+        "family": "research",
+        "source": "retained_fixture()",
+        "study_id": "original-study"
+      },
+      "tables": [
+        {
+          "field_enum": "ExecutionTableOrders",
+          "fields": [
+            {
+              "arrow_type": "double",
+              "name": "quantity",
+              "nullable": false,
+              "reference": "ExecutionTableOrders.Quantity"
+            }
+          ],
+          "reference": "ExecutionTable.Orders",
+          "row_count": 6,
+          "table": "orders"
+        }
+      ]
+    }
+  },
+  "getPreparedExecutionCommentary": {
+    "response": {
+      "fact_annotations": {
+        "additionalProperties": false,
+        "properties": {
+          "orders": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "number",
+            "unit": "contracts"
+          }
+        },
+        "required": [
+          "orders",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "fact_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "orders": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "orders",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "fact_types": [
+        {
+          "arrow_type": "int64",
+          "encoding": "Native",
+          "kind": "cell",
+          "logical_type": "Integer",
+          "nullable": true,
+          "path": [
+            "orders"
+          ]
+        },
+        {
+          "arrow_type": "double",
+          "encoding": "Native",
+          "kind": "cell",
+          "logical_type": "Decimal",
+          "nullable": true,
+          "path": [
+            "quantity"
+          ]
+        }
+      ],
+      "format": "markdown",
+      "inputs": {
+        "orders": 2,
+        "quantity": -2.25
+      },
+      "instructions": "Describe the supplied count and quantity. Preserve their units and sign.",
+      "policy": {
+        "model_policy": "execution_commentary.v1",
+        "renderer": "canonical-json-v1",
+        "schema_version": 1,
+        "settings": {
+          "base_model_id": "test-model",
+          "deployment_revision": "native-test-1",
+          "max_output_tokens": 2048,
+          "max_retries": 0,
+          "model_id": "test-model",
+          "provider": "bedrock-mantle-responses",
+          "reasoning_effort": "low",
+          "region": "us-east-1",
+          "streaming": false
+        },
+        "system_prompt": "Describe only computed facts."
+      },
+      "source": {
+        "config_sha256": "007e7e47ad0794dd04f433c6ff67df4998b09da7538fe91eb54a820a6de8a39e",
+        "execution_id": "derived",
+        "generation_sha256": "b920edd49ca4630f988f6cb2280586b7c714d0ae5df4d9f40af442cb03d94b63",
+        "output_name": "brief",
+        "request_id": "operation",
+        "study_id": "extension-study"
+      }
+    }
+  },
+  "getResearchResponse": {
+    "response": {
+      "content": {
+        "declarations": [
+          {
+            "name": "orders_by_asset",
+            "schema": [
+              {
+                "name": "asset",
+                "nullable": false,
+                "type": "string"
+              },
+              {
+                "name": "side",
+                "nullable": false,
+                "type": "string"
+              },
+              {
+                "name": "orders",
+                "nullable": true,
+                "type": "int64"
+              },
+              {
+                "name": "quantity",
+                "nullable": true,
+                "type": "float64"
+              }
+            ],
+            "type": "table"
+          },
+          {
+            "name": "counts",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "orders": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "orders"
+              ],
+              "type": "object"
+            },
+            "type": "json"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "orders_by_asset",
+            "schema": [
+              {
+                "name": "asset",
+                "nullable": false,
+                "type": "string"
+              },
+              {
+                "name": "side",
+                "nullable": false,
+                "type": "string"
+              },
+              {
+                "name": "orders",
+                "nullable": true,
+                "type": "int64"
+              },
+              {
+                "name": "quantity",
+                "nullable": true,
+                "type": "float64"
+              }
+            ],
+            "source": {
+              "execution_id": "e5b2c82d-73a1-4875-a2c1-575509be427b",
+              "field_ids": [
+                "asset",
+                "side",
+                "orders",
+                "quantity"
+              ],
+              "row_count": 2,
+              "table": "rqt_1b77e5f8580cf32d76bdf0d49f88e0569a4d9787e9aceadfb15e871f07dd5fd7"
+            },
+            "type": "table"
+          },
+          {
+            "name": "counts",
+            "type": "json",
+            "value": {
+              "orders": 3
+            }
+          }
+        ]
+      },
+      "extension": {
+        "compiled_schema_version": 77,
+        "config_sha256": "729b6e8d58af4999435925aacdccf3034b48947945abbb938d060ed8e1b0c9e4",
+        "execution_id": "e5b2c82d-73a1-4875-a2c1-575509be427b",
+        "execution_parameter_bindings": {},
+        "input_snapshot_sha256": "09398095a9c6b5fbb4f7e92b504c75789de36144367d2a7d0e06e34445c9b66e",
+        "inputs": [
+          {
+            "content_sha256": "3b18940d5a7b47f2a8f1d77a95363c1eff6f4f7917cae8183e8705872193e250",
+            "generation_sha256": "71ac2b626bed4f3f13fd203290d3c42eceed253ccf0bf7e8ca9c3453ca2ae20f",
+            "relation_id": "analysis:input.trades",
+            "schema_sha256": "c26b5514406df05df122d8b8512c7bdc0576fcfbc98f6c2660abb691f765812a"
+          }
+        ],
+        "output_declarations_sha256": "13fdf74d85d87fc14baaa9be4c89db81bc3ab2343c5d5fa8aade5b4c04f99bcb",
+        "source_execution_id": "original",
+        "study_id": "extension-study"
+      },
+      "primary_execution_id": "e5b2c82d-73a1-4875-a2c1-575509be427b",
+      "published_at_ms": 1792671187391,
+      "request_id": "req_a4e0766bed54a49947e6b6e2ec18bb54",
+      "response_id": "rsp_68d4163b30c53b0e8901a363205f998b51e7078913cb177e1de9b3b9e02222d0",
+      "study_id": "extension-study",
+      "thread_id": "e5b2c82d-73a1-4875-a2c1-575509be427b",
+      "version": 1
+    }
+  },
+  "readPresentation": {
+    "response": {
+      "catalog_revision": "c25b16b44551814420bc040c3f3ea01a17766c5927538fe9059376651706a751",
+      "dashboard": {
+        "charts": [
+          {
+            "category": "Review",
+            "chart_def": {
+              "kind": "Pie",
+              "pie_series": [
+                {
+                  "colors": [],
+                  "name": "Quantity by side",
+                  "points": [
+                    {
+                      "coordinate_member": {
+                        "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579343a73696465363a737472696e67",
+                        "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631343a73696465363a737472696e67",
+                        "member_id": "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31343a73696465363a737472696e67333a427579"
+                      },
+                      "name": "Buy",
+                      "y": 25
+                    },
+                    {
+                      "coordinate_member": {
+                        "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579343a73696465363a737472696e67",
+                        "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631343a73696465363a737472696e67",
+                        "member_id": "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31343a73696465363a737472696e67343a53656c6c"
+                      },
+                      "name": "Sell",
+                      "y": 75
+                    }
+                  ],
+                  "size": "100%"
+                }
+              ]
+            },
+            "data_id": "",
+            "id": "side-composition",
+            "index": 0,
+            "order": 20,
+            "reference_lines": [],
+            "series_coordinate_domain": {
+              "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579343a73696465363a737472696e67",
+              "levels": [
+                {
+                  "atom_type": "string",
+                  "atoms": [
+                    {
+                      "string_value": "Buy",
+                      "type": "string"
+                    },
+                    {
+                      "string_value": "Sell",
+                      "type": "string"
+                    }
+                  ],
+                  "display_values": [
+                    "Buy",
+                    "Sell"
+                  ],
+                  "id": "side",
+                  "label": "Side"
+                }
+              ],
+              "member_ids": [
+                "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31343a73696465363a737472696e67333a427579",
+                "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31343a73696465363a737472696e67343a53656c6c"
+              ],
+              "revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631343a73696465363a737472696e67",
+              "version": 1
+            },
+            "table_name": "",
+            "title": "Quantity by side",
+            "x_axis": {
+              "categories": []
+            },
+            "x_bands": [],
+            "y_axis": {
+              "categories": []
+            },
+            "y_bands": []
+          },
+          {
+            "category": "Review",
+            "chart_def": {
+              "area": false,
+              "kind": "Lines",
+              "series": [
+                {
+                  "area": false,
+                  "coordinate_member": {
+                    "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631323a6279323a6279363a737472696e67",
+                    "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631323a6279363a737472696e67",
+                    "member_id": "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31323a6279363a737472696e67333a427579"
+                  },
+                  "id": "line_0",
+                  "name": "Buy"
+                },
+                {
+                  "area": false,
+                  "coordinate_member": {
+                    "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631323a6279323a6279363a737472696e67",
+                    "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631323a6279363a737472696e67",
+                    "member_id": "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31323a6279363a737472696e67343a53656c6c"
+                  },
+                  "id": "line_1",
+                  "name": "Sell"
+                }
+              ],
+              "smooth": false,
+              "stack_type": "NoStack",
+              "step": "NoStep"
+            },
+            "data_id": "chart_1",
+            "id": "side-totals",
+            "index": 1,
+            "order": 25,
+            "reference_lines": [],
+            "series_coordinate_domain": {
+              "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631323a6279323a6279363a737472696e67",
+              "levels": [
+                {
+                  "atom_type": "string",
+                  "atoms": [
+                    {
+                      "string_value": "Buy",
+                      "type": "string"
+                    },
+                    {
+                      "string_value": "Sell",
+                      "type": "string"
+                    }
+                  ],
+                  "display_values": [
+                    "Buy",
+                    "Sell"
+                  ],
+                  "id": "by",
+                  "label": "By"
+                }
+              ],
+              "member_ids": [
+                "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31323a6279363a737472696e67333a427579",
+                "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31323a6279363a737472696e67343a53656c6c"
+              ],
+              "revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631323a6279363a737472696e67",
+              "version": 1
+            },
+            "table_name": "dashboard_7d6273dc122f1793bd925a3bf339e1c3b64fc866f890a1d8597b5de4b5df65b1",
+            "title": "Recorded quantity",
+            "x_axis": {
+              "categories": [
+                "Orders"
+              ],
+              "coordinate_domain": {
+                "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579333a6b6579363a737472696e67",
+                "levels": [
+                  {
+                    "atom_type": "string",
+                    "atoms": [
+                      {
+                        "string_value": "Orders",
+                        "type": "string"
+                      }
+                    ],
+                    "display_values": [
+                      "Orders"
+                    ],
+                    "id": "key",
+                    "label": "Key"
+                  }
+                ],
+                "member_ids": [
+                  "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31333a6b6579363a737472696e67363a4f7264657273"
+                ],
+                "revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631333a6b6579363a737472696e67",
+                "version": 1
+              },
+              "label": "",
+              "type": "Category",
+              "value_type": "DecimalValue"
+            },
+            "x_bands": [],
+            "y_axis": {
+              "categories": [],
+              "label": "",
+              "type": "Linear",
+              "value_type": "DecimalValue"
+            },
+            "y_bands": []
+          }
+        ],
+        "content": {
+          "categories": [
+            {
+              "id": "category_aff0766a5290e117b8433c351bae7b7b23bed682b2369bd822d88a647cc58512",
+              "label_origin": "Derived",
+              "native_category": "Review",
+              "title": "Review"
+            }
+          ],
+          "graphs": [],
+          "markdown": [
+            {
+              "anchor": {
+                "order": 0,
+                "placement": "Right",
+                "target": {
+                  "category": "Review",
+                  "id": "trade-breakdown",
+                  "kind": "Table"
+                }
+              },
+              "id": "trade-method",
+              "markdown": "## Method\\nQuantity is aggregated from the saved orders; missing quantity contributes zero. This is not a new backtest."
+            }
+          ],
+          "sections": [
+            {
+              "category": "category_aff0766a5290e117b8433c351bae7b7b23bed682b2369bd822d88a647cc58512",
+              "id": "section_5b7e6bf2dc4a32a6aa4770cd5639c2c7af890fc86c273b5c8567fe5382086bf3",
+              "items": [
+                {
+                  "id": "trade-method",
+                  "kind": "MarkdownRef"
+                }
+              ],
+              "title": "Method"
+            }
+          ],
+          "shared_parts": [],
+          "studies": []
+        },
+        "event_marker_notes": {},
+        "tables": [
+          {
+            "cards": [],
+            "category": "Review",
+            "columns": [
+              {
+                "id": "key",
+                "name": "Key",
+                "type": "StringValue"
+              },
+              {
+                "id": "c0",
+                "name": "orders",
+                "type": "IntegerValue"
+              },
+              {
+                "id": "c1",
+                "name": "quantity",
+                "type": "DecimalValue"
+              }
+            ],
+            "data_id": "table_0",
+            "flavor": "Detailed",
+            "id": "trade-breakdown",
+            "index": 0,
+            "order": 10,
+            "row_coordinate_binding": {
+              "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579353a6173736574363a737472696e67343a73696465363a737472696e67",
+              "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631353a6173736574363a737472696e67343a73696465363a737472696e67",
+              "legacy_label_field": "key",
+              "level_fields": [
+                "__epoch_table_row_0_asset",
+                "__epoch_table_row_1_side"
+              ],
+              "levels": [
+                {
+                  "atom_type": "string",
+                  "id": "asset",
+                  "label": "Asset"
+                },
+                {
+                  "atom_type": "string",
+                  "id": "side",
+                  "label": "Side"
+                }
+              ],
+              "member_id_field": "__epoch_table_row_member_id",
+              "version": 1
+            },
+            "table_name": "dashboard_b383c97e1e14149eb583ef8e9436f4b0da96dd03ccf3bb22d71853376aeba0a0",
+            "title": "Trade breakdown"
+          },
+          {
+            "card_coordinate_domain": {
+              "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579333a6b6579363a737472696e67",
+              "levels": [
+                {
+                  "atom_type": "string",
+                  "atoms": [
+                    {
+                      "string_value": "Orders",
+                      "type": "string"
+                    }
+                  ],
+                  "display_values": [
+                    "Orders"
+                  ],
+                  "id": "key",
+                  "label": "Key"
+                }
+              ],
+              "member_ids": [
+                "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31333a6b6579363a737472696e67363a4f7264657273"
+              ],
+              "revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631333a6b6579363a737472696e67",
+              "version": 1
+            },
+            "cards": [
+              {
+                "coordinate_member": {
+                  "domain_id": "coord1:636f6f7264696e6174652d646f6d61696e2d7631333a6b6579333a6b6579363a737472696e67",
+                  "domain_revision": "coord-v1:636f6f7264696e6174652d7265766973696f6e2d7631333a6b6579363a737472696e67",
+                  "member_id": "mk1:636f6f7264696e6174652d6d656d6265722d7631313a31333a6b6579363a737472696e67363a4f7264657273"
+                },
+                "title": "Orders",
+                "type": "IntegerValue",
+                "value": 3
+              }
+            ],
+            "category": "Review",
+            "columns": [],
+            "data_id": "",
+            "flavor": "Cards",
+            "id": "order-count",
+            "index": 1,
+            "order": 30,
+            "table_name": "",
+            "title": "Orders"
+          }
+        ]
+      },
+      "edit_version": 0,
+      "editable_fields": [],
+      "publication_id": "pub_61291b2ecee98cc485cfe625e38cab9976b37cf22abcb89e7904c3216d788257"
+    }
+  },
+  "readResearchResponseTable": {
+    "request": {
+      "field_ids": [
+        "label",
+        "value"
+      ],
+      "offset": 0,
+      "order_by": [],
+      "page_size": 1000,
+      "table": "computed_results"
+    },
+    "response": {
+      "$description": "Finite binary Arrow IPC page; counts and offset are supplied by the native response headers."
+    }
+  }
+}

@@ -28,6 +28,7 @@ from .agent_tools_contract import (
     ToolWorkspace,
 )
 from .datasets import DatasetClient
+from .extensions import ExecutionExtensionClient
 from .json_schema import validate_schema
 from .supervisor import (
     Answers,
@@ -133,7 +134,7 @@ class _WorkspaceState(BaseModel):
         )
 
 
-class AgentToolsClient(DatasetClient):
+class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
     def __init__(
         self, graph: LangGraphClient, backend: AsyncStratifyX, graph_http: httpx.AsyncClient
     ):

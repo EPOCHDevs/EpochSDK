@@ -18,21 +18,20 @@ PREFIX = "#/components/schemas/"
 
 def project(source: Path, contract: dict) -> dict:
     native = json.loads(source.read_text())
+    extension_examples = json.loads((ROOT / "contracts/execution-extension.examples.json").read_text())
     selected = {}
 
     def rewrite(node):
+        if isinstance(node, str) and node.startswith(PREFIX):
+            name = node.removeprefix(PREFIX)
+            if name not in selected:
+                selected[name] = None
+                selected[name] = rewrite(native["components"]["schemas"][name])
+            return PREFIX + "Native_" + name
         if isinstance(node, dict):
-            result = {}
-            for key, value in node.items():
-                if key == "$ref" and value.startswith(PREFIX):
-                    name = value.removeprefix(PREFIX)
-                    if name not in selected:
-                        selected[name] = None
-                        selected[name] = rewrite(native["components"]["schemas"][name])
-                    result[key] = PREFIX + "Native_" + name
-                else:
-                    result[key] = rewrite(value)
-            return result
+            # OpenAPI discriminator.mapping values are references as well;
+            # preserving only $ref leaves generated union targets dangling.
+            return {key: rewrite(value) for key, value in node.items()}
         if isinstance(node, list):
             return [rewrite(value) for value in node]
         return node
@@ -42,6 +41,11 @@ def project(source: Path, contract: dict) -> dict:
         for path, operations in native["paths"].items()
         if path.startswith("/api/v1/integration/requests")
         or path.startswith("/api/v1/integration/execution-requests")
+        or path == "/api/v1/studies/executions/{executionId}/inputs"
+        or path == "/api/v1/agents/threads/{threadId}/studies/definitions"
+        or path == "/api/v1/research/responses/{responseId}"
+        or path == "/api/v1/studies/executions/{executionId}/response-tables"
+        or path == "/api/v1/contexts/publications/{publicationId}/presentation"
     }
     previous = contract.get("x-epoch-native-operations", {})
     for path in previous.get("paths", []):
@@ -54,7 +58,28 @@ def project(source: Path, contract: dict) -> dict:
             operation["servers"] = native["servers"]
             operation["description"] = (
                 "Existing EpochBackend native API. Use the configured Backend origin. "
-                "Readable operation IDs attach to the original accepted owner-scoped inputs; "
+                "The owning service validates the exact caller/source contract."
+            )
+            response = operation.get("responses", {}).get("200", {}).get("content", {}).get("application/json", {})
+            response_ref = response.get("schema", {}).get("$ref")
+            # Input catalogues, prepared facts and definition creation have
+            # different native DTOs/statuses. Never attach an operation-record
+            # example to their responses or invent a second creation protocol.
+            if response_ref not in {
+                PREFIX + "Native_SdkRequestRecord", PREFIX + "Native_SdkExecutionRecord"
+            }:
+                example = extension_examples[operation["operationId"]]
+                for container, name in (
+                    (operation.get("requestBody", {}), "request"),
+                    *[(body, "response") for code, body in operation.get("responses", {}).items()
+                      if str(code).startswith("2")],
+                ):
+                    for media, content in container.get("content", {}).items():
+                        if media == "application/json" and name in example:
+                            content["examples"] = {"nativeExtension": {"value": example[name]}}
+                continue
+            operation["description"] += (
+                " Readable operation IDs attach to the original accepted owner-scoped inputs; "
                 "changed inputs conflict with HTTP 409. See docs/reconnect-operations.md."
             )
             research_input = {
@@ -133,7 +158,7 @@ def project(source: Path, contract: dict) -> dict:
         "projections of existing EpochBackend native operation APIs; their Native_ schema "
         "names identify source-owned DTOs. The earlier illustrative /v1 proposals are "
         "historical and do not assert a deployed gateway. Research uses the existing "
-        "checkpointed EpochAI supervisor; prepared execution calls Backend directly. "
+        "checkpointed EpochAI supervisor; prepared and execution-input programs call Backend directly. "
         "See docs/research-flow.md and docs/reconnect-operations.md."
     )
     return contract
