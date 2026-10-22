@@ -64,8 +64,9 @@ folder; these public examples intentionally contain no saved market values.
 
 Trace review found two fixed transport defects (integer fact coercion and
 `from_` versus `from` in returned source windows), plus a metadata page-bound
-mismatch and stale macro-source instructions. ENG-2166 through ENG-2169 track
-those corrections. The initial GDP run recovered from a schema tag error and
+mismatch and stale macro-source instructions. ENG-2166 through ENG-2170 track
+those corrections, including the ownership metadata needed to list existing MCP
+workspaces. The initial GDP run recovered from a schema tag error and
 paging error; it is not evidence that every discovery call was clean. A fresh
 run on the final guidance, final installation and compatibility inventory are
 still the acceptance gate before ENG-2162/ENG-2163 close. The 464 archived cases
