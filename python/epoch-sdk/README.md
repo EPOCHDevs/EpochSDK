@@ -35,7 +35,44 @@ Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `stat
 
 The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies; only explicit authoring/auditing use specialist LLMs. No Epoch supervisor or publication is required.
 
-See [the public interface](../../docs/public-client-interface.md) for the eleven tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
+For supported completed results, application/notebook and MCP clients share the
+same native extension methods:
+
+- `extension_inputs(execution_id, tables=[...])` reads exact types, flat enum
+  references and the frozen executed source. It returns metadata, not sample rows.
+- `save_extension(thread_id, source_execution_id=..., tables=[...], source=...,
+  name=..., description=...)` compiles and saves supplied EpochScript as an
+  immutable definition. This call uses no authoring model and runs no study.
+- `execute_extension(CreateSdkExecutionRequest(...))` starts or attaches one
+  operation. Supply the saved extension's `study_id`, the original
+  `source_execution_id`, explicit `input_tables`, `parameters={}` when no engine
+  period is needed, and a readable `operation_id` for reconnecting.
+- `extension_status(operation_id)` only reads that operation. The original and
+  derived execution IDs remain separate. Numerical status is distinct from
+  `response_phase`; confirmed declared destinations appear in `extension_outputs`.
+- `response(response_id, version=...)`, `response_table(...)` and
+  `extension_presentation(pin)` read exact saved outputs. Presentation edit zero
+  is a real pin; it is never replaced by a latest-version lookup.
+
+MCP exposes `epoch_extension_inputs`, `epoch_save_extension` and
+`epoch_execute_extension` over these same methods. Use `epoch_status` with
+`kind="extension"` and `operation_id`. Use `epoch_read` with `kind="response"`
+and its answer revision (optionally `table`, `offset`, `page_size`), or
+`kind="presentation"` with the returned publication/catalog/edit pin.
+
+The calling coding agent can author the program itself. Tables, JSON and native
+reporters calculate directly in Backend; an explicit `commentary` declaration
+may invoke the bounded cached text model. There is no supervisor, vendor query
+or original-study rerun in this path. A response table does not force a matching
+dashboard table, and dashboard-only work creates no artificial answer. An
+unsupported source/type remains an explicit capability error. The existing
+audit/source/qualitative paths are retained until their parity work is accepted.
+
+The extension release requires the normal native `3.3.0rc15` package. Controlled
+transport captures are tested separately from real service/notebook/MCP/Portal
+acceptance; the ENG-2128 milestone record owns readiness.
+
+See [the public interface](../../docs/public-client-interface.md) for the fourteen tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
 
 ## Use the actual core contract
 

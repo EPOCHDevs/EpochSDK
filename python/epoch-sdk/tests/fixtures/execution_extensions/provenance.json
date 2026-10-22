@@ -1,0 +1,10 @@
+{
+  "scope": "Controlled HTTP fixtures captured by native compiled_response_test.cpp in Backend #516; no real HTTP/provider acceptance claimed.",
+  "backend_merge": "3f6f91999c50e24492d956df30cd9ea3663962ef",
+  "files": {
+    "execution-request.json": "2dd26d2c0b61d19eb7ff486bd28b6678a72041643651a7135c99c002ba43e3c3",
+    "execution-record.json": "2efd7e1d19cffa3a8925704efaed1b3ff000702f3a5d695d651473eb9f676e95",
+    "response-v1.json": "6064f705a8cbaebc8ec3120f99f43287a5cb691d3036fa45f80b19cbc63d6c1b",
+    "dashboard-v0.json": "c7b9d29587b7d1793afab40a51e0785a3093e9b59470627148b9b55abc90587c"
+  }
+}
