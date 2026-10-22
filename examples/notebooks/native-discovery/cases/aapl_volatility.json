@@ -1,0 +1,40 @@
+{
+  "task": "How volatile were Apple's shares in September 2026? Give daily closes and price returns, with a short desk summary.",
+  "context": [
+    "US equity desk. Use the available vendor daily split-adjusted close series; this is a retrospective price-return analysis.",
+    "Publish the requested answer only; no dashboard is requested."
+  ],
+  "outputs": [
+    {
+      "name": "daily_returns",
+      "type": "table",
+      "description": "One chronological row per available September 2026 observation.",
+      "schema": [
+        {
+          "name": "date",
+          "type": "date",
+          "description": "Vendor daily observation date."
+        },
+        {
+          "name": "close",
+          "type": "float64",
+          "description": "Daily split-adjusted close.",
+          "unit": "USD"
+        },
+        {
+          "name": "daily_return",
+          "type": "float64",
+          "description": "Close / previous available daily close - 1.",
+          "unit": "fraction",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "desk_summary",
+      "type": "text",
+      "format": "markdown",
+      "instructions": "At most 120 words. Summarize the saved price-return findings and disclose the source/basis or actual missing data. Do not repeat the whole table."
+    }
+  ]
+}

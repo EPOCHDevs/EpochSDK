@@ -1,0 +1,44 @@
+{
+  "task": "Which ten current S&P 500 companies generated the most free cash flow in their latest reported fiscal year? Show the cash-flow components and reporting dates.",
+  "context": [
+    "Current membership snapshot, latest available annual statements, USD. Fiscal years may differ; retain their actual period-end dates.",
+    "Free cash flow is operating cash flow less cash capex, with capex shown as a positive outflow. Return a saved table only; no dashboard is requested."
+  ],
+  "outputs": [
+    {
+      "name": "cash_flow_leaders",
+      "type": "table",
+      "description": "Top ten positive free-cash-flow companies, descending FCF, one row per company. Preserve genuine loading/coverage limitations.",
+      "schema": [
+        {
+          "name": "ticker",
+          "type": "string",
+          "description": "Native resolved stock symbol."
+        },
+        {
+          "name": "period_end",
+          "type": "date",
+          "description": "Actual fiscal-year period end."
+        },
+        {
+          "name": "operating_cash_flow",
+          "type": "float64",
+          "description": "Annual operating cash flow.",
+          "unit": "USD"
+        },
+        {
+          "name": "capex",
+          "type": "float64",
+          "description": "Capital expenditure as a positive cash outflow.",
+          "unit": "USD"
+        },
+        {
+          "name": "free_cash_flow",
+          "type": "float64",
+          "description": "Operating cash flow minus positive capex.",
+          "unit": "USD"
+        }
+      ]
+    }
+  ]
+}

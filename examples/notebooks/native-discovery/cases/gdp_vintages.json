@@ -1,0 +1,45 @@
+{
+  "task": "How much did US quarterly real GDP growth for 2023\u20132024 change between the first recorded print and the latest revised value? Compare the two by quarter.",
+  "context": [
+    "Use quarter-on-quarter annualized growth in percent, with the native source documenting the same definition for both versions.",
+    "First recorded print is the supported native first-vintage product, not a promise of immutable real-time publication timestamps. Publish the requested answer only."
+  ],
+  "outputs": [
+    {
+      "name": "gdp_revisions",
+      "type": "table",
+      "description": "One row per available calendar quarter in 2023\u20132024; preserve the native clock and any vintage limitations.",
+      "schema": [
+        {
+          "name": "quarter",
+          "type": "string",
+          "description": "Calendar quarter label, such as 2023-Q1."
+        },
+        {
+          "name": "first_growth",
+          "type": "float64",
+          "description": "First recorded quarterly real GDP growth, annualized.",
+          "unit": "percent"
+        },
+        {
+          "name": "latest_growth",
+          "type": "float64",
+          "description": "Latest revised quarterly real GDP growth, annualized.",
+          "unit": "percent"
+        },
+        {
+          "name": "revision_pp",
+          "type": "float64",
+          "description": "Latest minus first growth.",
+          "unit": "percentage_points"
+        }
+      ]
+    },
+    {
+      "name": "source_note",
+      "type": "text",
+      "format": "plain",
+      "instructions": "At most 100 words. State source, units, native first/latest semantics and any actual vintage or coverage limitation."
+    }
+  ]
+}

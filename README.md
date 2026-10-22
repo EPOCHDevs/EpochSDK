@@ -1,5 +1,16 @@
 # Epoch SDK
 
+The [current SDK/MCP interface](docs/public-client-interface.md) distinguishes
+interactive SDK research from the default composable MCP. The latter lets the
+calling agent use native catalog/search/screening, then explicitly build and
+execute studies. Earlier MCP publication names below refer to the separate
+`epoch_sdk.workflow_mcp` compatibility module.
+
+The [native discovery acceptance examples](examples/notebooks/native-discovery/README.md)
+cover the shared catalog, a named asset, an S&P 500 financial universe and GDP
+vintages. Their cells are prepared for live service/trace acceptance; no market
+results are committed.
+
 Start with the runnable [research/execute](examples/notebooks/01_research_and_execute.ipynb)
 and [clarification/reconnect](examples/notebooks/02_clarification_and_reconnect.ipynb)
 notebooks. The [US equities desk cases](examples/notebooks/cases/README.md) cover

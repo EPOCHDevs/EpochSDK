@@ -1,5 +1,10 @@
 # Try the SDK with a US equities desk case
 
+The [native discovery notebooks](native-discovery/README.md) separately exercise
+the shared catalog/search/screening interface and its new supervisor integration.
+See [the current SDK/MCP interface](../../docs/public-client-interface.md) for the
+default composable MCP tool set.
+
 For sharing and demos, use the [individual case notebooks](demos/README.md).
 There is one notebook for each of the five desk cases, two separate format
 follow-ups and a clarification/reconnect example. The cells use shared `connect`,
@@ -101,7 +106,11 @@ are committed with empty outputs. The old deterministic supplied-data fixture
 remains at `examples/research-service-proof.case.json` for its automated proof
 runner; it is not a desk case or a notebook default.
 
-## MCP uses the same requests
+## Legacy workflow MCP
+
+The following calls apply to the explicit `python -m epoch_sdk.workflow_mcp`
+compatibility module. The default `epoch-mcp` uses the composable catalog,
+search/screen, build and execute tools described in the current interface above.
 
 Pass the selected base file's object to `epoch_run`, with its own readable
 operation ID. No notebook-specific SDK or server is involved. The notebook's
@@ -115,8 +124,9 @@ variant alone, select another execution or refresh market data.
 ## Another environment
 
 Use Python 3.12 or later and the matching native StratifyX package from its normal
-distribution workflow. The current acceptance environment uses StratifyX 3.3.0rc8
-and Epoch SDK 0.1.0a12. Install this checkout's `python/epoch-sdk[notebook]`, plus
+distribution workflow. The current SDK is 0.1.0a15 and requires StratifyX
+3.3.0rc11 or later; historical acceptance ledgers retain their original package
+pins. Install this checkout's `python/epoch-sdk[notebook]`, plus
 `ipykernel` and `jupyterlab`, in the selected environment.
 
 Supply only these client settings to the notebook process:
