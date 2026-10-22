@@ -84,7 +84,7 @@ class ExecutionExtensionClient:
 
         Keep operation_id to reconnect. Matching inputs attach; changed inputs
         conflict. Numerical completion and declared output completion are distinct.
-        Declared commentary may use the bounded cached model step; deterministic
+        An explicit llm_call may use the bounded cached text step; deterministic
         table/JSON/dashboard programs make no model call. No supervisor is used.
         """
         if request.input_tables is None:

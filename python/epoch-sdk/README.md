@@ -61,8 +61,9 @@ and its answer revision (optionally `table`, `offset`, `page_size`), or
 `kind="presentation"` with the returned publication/catalog/edit pin.
 
 The calling coding agent can author the program itself. Tables, JSON and native
-reporters calculate directly in Backend; an explicit `commentary` declaration
-may invoke the bounded cached text model. There is no supervisor, vendor query
+reporters calculate directly in Backend. An explicit `llm_call` returns text
+that `response_text`, Markdown or `executive_summary` can consume independently
+or together, sharing one bounded cached generation. There is no supervisor, vendor query
 or original-study rerun in this path. A response table does not force a matching
 dashboard table, and dashboard-only work creates no artificial answer. An
 unsupported source/type remains an explicit capability error. The existing

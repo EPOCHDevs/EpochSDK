@@ -330,9 +330,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     ) -> CallToolResult:
         """Compile and save supplied EpochScript over an explicit execution_input.
         Use the returned catalog's flat ExecutionTable/field enum refs. Declare
-        response_table/response_json and/or native reporters independently; text
-        commentary is optional and explicitly model-backed. This saves an immutable
-        definition, uses no authoring LLM and runs no study. Keep the returned ID.
+        response_table/response_json and/or native reporters independently. Text
+        uses an explicit llm_call result with response_text, Markdown or summary
+        consumers. This saves an immutable definition, uses no authoring LLM and
+        runs no study. Keep the returned ID.
         """
         return await _call(client.save_extension(
             thread_id,source_execution_id=source_execution_id,tables=tables,source=source,
@@ -345,7 +346,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         result, input_tables selects its data and parameters may be empty. Reuse
         operation_id for identical accepted inputs; changed inputs conflict. It
         never reruns the original study or launches a supervisor. Only explicitly
-        declared commentary may call the bounded text model. Read epoch_status
+        declared llm_call may call the bounded cached text model. Read epoch_status
         with kind=extension and operation_id for exact completed output pins.
         """
         return await _call(client.execute_extension(request))
