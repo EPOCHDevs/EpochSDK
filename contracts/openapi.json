@@ -6969,5 +6969,13 @@
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
-  "x-parameter-source": "contracts/native-parameters.json"
+  "x-parameter-source": "contracts/native-parameters.json",
+  "x-epoch-agent-tools": {
+    "service": "graph",
+    "catalogue_path": "/api/v1/agent-tools",
+    "assistant_id": "epoch-tools",
+    "transport_schema": "agent-tools.schema.json",
+    "source_catalogue_snapshot": "agent-tools-native.json",
+    "schema_owner": "EpochAI registered execution tools"
+  }
 }

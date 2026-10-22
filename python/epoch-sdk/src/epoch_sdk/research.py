@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 from uuid import uuid4
 
 import httpx
@@ -36,6 +36,7 @@ from .contracts import (
     TextOutputRequest,
 )
 from .errors import EpochError
+from .datasets import DatasetClient
 from .responses import ResponseTablePage, SavedResearchResponse
 from .supervisor import (
     Answers,
@@ -52,6 +53,11 @@ from .supervisor import (
 
 if TYPE_CHECKING:
     from .session import EventHandler, ResearchSession
+
+
+class _TaskOverrides(TypedDict, total=False):
+    parameters: RunParameters
+    auto_ingest: bool
 
 
 class ResearchAccepted(Contract):
@@ -143,7 +149,7 @@ async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
         raise ResearchError(failure) from error
 
 
-class EpochClient:
+class EpochClient(DatasetClient):
     """Research explicitly; prepared study execution remains a separate action.
 
     Backend owns accepted requests and response revisions. LangGraph owns the
@@ -222,11 +228,16 @@ class EpochClient:
             if task is not None:
                 raise ValueError("Supply task or the legacy request keyword, not both.")
             task = request
-        request = task
+        parsed = task
         additions = (context, outputs, parameters)
-        if isinstance(request, str):
-            request = RunRequest(
-                task=request,
+        if isinstance(parsed, str):
+            overrides: _TaskOverrides = {}
+            if parameters is not None:
+                overrides["parameters"] = parameters
+            if auto_ingest:
+                overrides["auto_ingest"] = True
+            parsed = RunRequest(
+                task=parsed,
                 context=[] if context is None else context,
                 outputs=outputs
                 if outputs is not None
@@ -238,16 +249,15 @@ class EpochClient:
                         instructions="Answer the task concisely using the research evidence.",
                     )
                 ],
-                **({"parameters": parameters} if parameters is not None else {}),
-                **({"auto_ingest": True} if auto_ingest else {}),
+                **overrides,
             )
         elif any(value is not None for value in additions) or auto_ingest:
             raise ValueError("Supply task fields with a plain task, or put them in RunRequest.")
-        if request is None and operation_id is None:
+        if parsed is None and operation_id is None:
             raise ValueError("Supply a task to start work or operation_id to reconnect.")
         return await run_interactive(
             self.session(
-                request,
+                parsed,
                 operation_id=operation_id if operation_id is not None else "run-" + uuid4().hex,
                 thread_id=thread_id,
             ),
@@ -267,7 +277,7 @@ class EpochClient:
         from .interactive import run_interactive
 
         waiting = await self.research_status(operation_id=operation_id)
-        if not isinstance(waiting, NeedsInput):
+        if waiting.status != "needs_input":
             raise ValueError("This operation is not waiting for an answer.")
         session = self.session(operation_id=operation_id)
         await session.resume(waiting, responses)

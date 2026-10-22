@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epoch-sdk"
-version = "0.1.0a13.post1"
+version = "0.1.0a15"
 description = "Epoch integration contracts and client adapters over LangGraph and StratifyX"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,7 @@ dependencies = [
   "pydantic>=2.11,<3",
   "jsonschema>=4.23,<5",
   "referencing>=0.36,<1",
-  "stratifyx>=3.3.0rc7,<4",
+  "stratifyx>=3.3.0rc11,<4",
 ]
 
 [project.urls]
@@ -35,7 +35,7 @@ epoch = "epoch_sdk.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-epoch_sdk = ["py.typed", "data/*.json"]
+epoch_sdk = ["py.typed", "data/*.json", "data/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

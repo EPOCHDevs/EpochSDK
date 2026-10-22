@@ -13,9 +13,9 @@ from mcp import Client
 from stratifyx import AsyncStratifyX
 
 from epoch_sdk import EpochError
-from epoch_sdk.mcp import create_server
 from epoch_sdk.responses import SavedResearchResponse, read_response_table_page
 from epoch_sdk.supervisor import SupervisorClient
+from epoch_sdk.workflow_mcp import create_server
 
 ROOT = Path(__file__).resolve().parents[3]
 

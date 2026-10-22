@@ -14,8 +14,8 @@ from test_session import StreamService
 from test_supervisor import THREAD, job
 
 from epoch_sdk import EpochError, RunRequest
-from epoch_sdk.mcp import create_server
 from epoch_sdk.supervisor import SavedStudy
+from epoch_sdk.workflow_mcp import create_server
 
 
 def test_sdk_task_fields_and_mcp_have_identical_requests_results_and_session_behavior():
@@ -29,7 +29,7 @@ def test_sdk_task_fields_and_mcp_have_identical_requests_results_and_session_beh
                 if mode == "sdk":
                     events = []
 
-                    async def observe(event):
+                    async def observe(event, events=events):
                         events.append(event)
 
                     value = await client.run(

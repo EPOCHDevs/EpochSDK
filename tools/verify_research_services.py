@@ -476,7 +476,7 @@ async def mcp_client(
             env[key] = value
     server = StdioServerParameters(
         command=sys.executable,
-        args=["-m", "epoch_sdk.mcp"],
+        args=["-m", "epoch_sdk.workflow_mcp"],
         env=env,
     )
     failure: EpochError | None = None

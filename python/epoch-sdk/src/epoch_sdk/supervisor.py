@@ -244,7 +244,7 @@ class _State(BaseModel):
         return ""
 
 
-def _api_url(value: str) -> str:
+def api_url(value: str) -> str:
     parsed = urlsplit(value)
     if (
         parsed.scheme not in ("http", "https")
@@ -335,8 +335,8 @@ class SupervisorClient:
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
     ) -> SupervisorClient:
-        graph_url = _api_url(graph_url)
-        backend_url = _api_url(backend_url)
+        graph_url = api_url(graph_url)
+        backend_url = api_url(backend_url)
         graph_http = httpx.AsyncClient(
             base_url=graph_url, headers={"Authorization": f"Bearer {token}"}, timeout=None
         )
@@ -527,7 +527,7 @@ class SupervisorClient:
         return await self.status(handle)
 
     @staticmethod
-    def _resume_command(waiting: NeedsInput, responses: dict[str, Answers]) -> Command:
+    def resume_command(waiting: NeedsInput, responses: dict[str, Answers]) -> Command:
         expected = {item.id for item in waiting.interrupts}
         if not expected:
             raise ValueError("There are no pending interrupts to resume")
@@ -565,7 +565,7 @@ class SupervisorClient:
 
     async def start_resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> None:
         """Resume the exact native interrupt in a kept background run."""
-        command = self._resume_command(waiting, responses)
+        command = self.resume_command(waiting, responses)
         await cast(_RunsAdmission, self.graph.runs).create(
             waiting.handle.thread_id,
             waiting.handle.assistant_id,
@@ -583,7 +583,7 @@ class SupervisorClient:
         )
 
     async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
-        return await self._wait(waiting.handle, command=self._resume_command(waiting, responses))
+        return await self._wait(waiting.handle, command=self.resume_command(waiting, responses))
 
     async def _wait(
         self,

@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/AgentToolsCatalog"
+    },
+    {
+      "$ref": "#/$defs/AgentToolHandle"
+    },
+    {
+      "$ref": "#/$defs/AgentToolOperation"
+    },
+    {
+      "$ref": "#/$defs/ToolWorkspace"
+    }
+  ],
+  "$defs": {
+    "AgentToolDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "discovery",
+            "inspect_source",
+            "build_study",
+            "audit_run"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "llm": {
+          "enum": [
+            "none",
+            "specialist"
+          ],
+          "title": "Llm",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "parameters",
+        "llm"
+      ],
+      "title": "AgentToolDefinition",
+      "type": "object"
+    },
+    "AgentToolHandle": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "minLength": 1,
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "run_id": {
+          "minLength": 1,
+          "title": "Run Id",
+          "type": "string"
+        },
+        "tool_call_id": {
+          "minLength": 1,
+          "title": "Tool Call Id",
+          "type": "string"
+        },
+        "tool": {
+          "enum": [
+            "discovery",
+            "inspect_source",
+            "build_study",
+            "audit_run"
+          ],
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "run_id",
+        "tool_call_id",
+        "tool"
+      ],
+      "title": "AgentToolHandle",
+      "type": "object"
+    },
+    "AgentToolOperation": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "in_progress",
+            "completed",
+            "failed",
+            "needs_input"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "handle": {
+          "$ref": "#/$defs/AgentToolHandle"
+        },
+        "native_status": {
+          "enum": [
+            "pending",
+            "running",
+            "error",
+            "success",
+            "timeout",
+            "interrupted"
+          ],
+          "title": "Native Status",
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/$defs/JsonValue",
+          "default": null
+        },
+        "tool_status": {
+          "anyOf": [
+            {
+              "enum": [
+                "success",
+                "error"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Status"
+        },
+        "interrupts": {
+          "items": {
+            "$ref": "#/$defs/GraphInterrupt"
+          },
+          "title": "Interrupts",
+          "type": "array"
+        },
+        "workspace": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ToolWorkspace"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "artifact": {
+          "$ref": "#/$defs/JsonValue",
+          "default": null
+        }
+      },
+      "required": [
+        "status",
+        "handle",
+        "native_status"
+      ],
+      "title": "AgentToolOperation",
+      "type": "object"
+    },
+    "AgentToolsCatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "default": 1,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Version",
+          "type": "integer"
+        },
+        "assistant_id": {
+          "const": "epoch-tools",
+          "default": "epoch-tools",
+          "title": "Assistant Id",
+          "type": "string"
+        },
+        "tools": {
+          "items": {
+            "$ref": "#/$defs/AgentToolDefinition"
+          },
+          "title": "Tools",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tools"
+      ],
+      "title": "AgentToolsCatalog",
+      "type": "object"
+    },
+    "GraphInterrupt": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "response_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Response Schema"
+        }
+      },
+      "required": [
+        "id",
+        "value"
+      ],
+      "title": "GraphInterrupt",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "ToolWorkspace": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "studies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Studies",
+          "type": "object"
+        },
+        "executions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Executions",
+          "type": "object"
+        }
+      },
+      "required": [
+        "workspace_id"
+      ],
+      "title": "ToolWorkspace",
+      "type": "object"
+    }
+  }
+}

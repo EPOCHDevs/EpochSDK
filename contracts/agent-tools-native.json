@@ -1,0 +1,1878 @@
+{
+  "source": "EpochAI agent_src/agent_tools/catalog.py::tool_catalog",
+  "source_commit": "86e6fb1e52557f78d34bd8e59c761020e4eeec7e",
+  "catalog": {
+    "version": 1,
+    "assistant_id": "epoch-tools",
+    "tools": [
+      {
+        "name": "discovery",
+        "description": "Resolve unresolved source identity, access, schema and coverage metadata.\n\n    Batch every unresolved need in one call. Discovery exposes exactly search,\n    query_stored and submit; it never loads observations or answers a numerical\n    query. It returns exact selected metadata data_refs, independent source\n    ranges, qualifications and resolved/unavailable/unknown/error outcomes.\n    An echoed requested address is not a provider-confirmed identity; retain\n    that distinction when reusing selected metadata refs.\n    Reuse unchanged thread selections. A healthy source remains retained when a\n    different need fails. Source relevance does not establish availability or\n    choose a vendor, proxy, shortened window or definition.\n\n    For numerical data questions, select the exact native source and use the\n    separate inspect_source tool to retrieve observations. A metadata range or\n    field roster cannot certify values, population, gaps or point-in-time rows.\n    For studies, pass only the selected immutable data_refs to build_study;\n    the author implements topology, calculations and runtime handling. Preserve\n    previous selected sources and user approvals when updating a study. A new\n    study window is not a reason to recreate an unchanged catalog identity.",
+        "parameters": {
+          "$defs": {
+            "DataSourceRegistryFamily": {
+              "enum": [
+                "market",
+                "fundamentals",
+                "corporate_actions",
+                "macro",
+                "dataset"
+              ],
+              "title": "DataSourceRegistryFamily",
+              "type": "string"
+            },
+            "DiscoveryNeed": {
+              "additionalProperties": false,
+              "description": "One caller-described fact for discovery to resolve.",
+              "properties": {
+                "kind": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/DataSourceRegistryFamily"
+                    },
+                    {
+                      "const": "screen",
+                      "type": "string"
+                    }
+                  ],
+                  "description": "market: tradable bars; macro: published economic series/releases; fundamentals: company statement/metric fields; corporate_actions: IPO calendars, dividends, splits and earnings; screen: a rule-based universe.",
+                  "title": "Kind"
+                },
+                "description": {
+                  "description": "The exact instrument, series, fundamentals field/category, or universe to resolve. This is the binding need, not contextual prose.",
+                  "title": "Description",
+                  "type": "string"
+                },
+                "coverage_only": {
+                  "default": false,
+                  "description": "True when the caller asks only which datasets/bar families exist and their reported coverage. No field selection, study window or loaded-row inspection is required to answer that question. Keep false for specific field/option requirements, measured values or study-input validation. Use the caller's meaning, not a keyword or the source family alone.",
+                  "title": "Coverage Only",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "kind",
+                "description"
+              ],
+              "title": "DiscoveryNeed",
+              "type": "object"
+            }
+          },
+          "description": "Resolve unresolved source identity, access, schema and coverage metadata.\n\nBatch every unresolved need in one call. Discovery exposes exactly search,\nquery_stored and submit; it never loads observations or answers a numerical\nquery. It returns exact selected metadata data_refs, independent source\nranges, qualifications and resolved/unavailable/unknown/error outcomes.\nAn echoed requested address is not a provider-confirmed identity; retain\nthat distinction when reusing selected metadata refs.\nReuse unchanged thread selections. A healthy source remains retained when a\ndifferent need fails. Source relevance does not establish availability or\nchoose a vendor, proxy, shortened window or definition.\n\nFor numerical data questions, select the exact native source and use the\nseparate inspect_source tool to retrieve observations. A metadata range or\nfield roster cannot certify values, population, gaps or point-in-time rows.\nFor studies, pass only the selected immutable data_refs to build_study;\nthe author implements topology, calculations and runtime handling. Preserve\nprevious selected sources and user approvals when updating a study. A new\nstudy window is not a reason to recreate an unchanged catalog identity.",
+          "properties": {
+            "needs": {
+              "description": "Every still-unresolved data need. Kinds: market (bars), macro (economic series/releases), fundamentals (statement/metric fields), corporate_actions (IPO calendar/dividends/splits/earnings), screen (rule-based universe). Give each a compact, exact self-contained description, not bare keywords or the whole study brief, including any prior history required by that need's changes, returns, lags, or rolling calculations. Leave out facts already resolved by this thread's applicable source evidence; discovery assigns its own temporary accounting ids. Example macro need: 'US core CPI MoM releases: release timestamp, actual and consensus.' Example screen need: 'Current-snapshot US-listed semiconductor common stocks.' Preserve the user's chosen definition; examples are not defaults.",
+              "items": {
+                "$ref": "#/$defs/DiscoveryNeed"
+              },
+              "minItems": 1,
+              "title": "Needs",
+              "type": "array"
+            },
+            "decision_refs": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Exact ask_user decision refs relevant to this invocation; omitted means empty. Each receipt proves its own question/selected answers, not blanket method approval.",
+              "title": "Decision Refs"
+            },
+            "context": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Optional short request context only when it changes how the listed needs should be interpreted. Do not repeat the needs here.",
+              "title": "Context"
+            },
+            "from_": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "ISO semantic requested-window start for a dated binding or screen. Omit for explicit available_history or metadata_only scope. Do not move this shared boundary earlier for one calculation's history; state that history in the owning need so discovery extends only its source metadata request.",
+              "title": "From"
+            },
+            "to": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Optional ISO semantic requested-window end or as-of boundary. Requires from_ in requested_window scope; available_history/metadata_only may specify only this upper bound.",
+              "title": "To"
+            },
+            "history_scope": {
+              "default": "requested_window",
+              "description": "Use available_history only for an explicit full-history ask; metadata_only for source facts without a dated binding. Neither invents a shared start; omit from_ for these scopes.",
+              "enum": [
+                "requested_window",
+                "available_history",
+                "metadata_only"
+              ],
+              "title": "History Scope",
+              "type": "string"
+            }
+          },
+          "required": [
+            "needs"
+          ],
+          "title": "discovery",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "llm": "specialist"
+      },
+      {
+        "name": "inspect_source",
+        "description": "Explicitly inspect provider observations to answer a numerical data question.\n\n    This is separate from metadata Discovery. It loads only the exact supplied\n    native sources and runs read-only SQL; no discovery, proxy choice or nested\n    agent is invoked. Results certify only their actual loaded source/window and\n    retain native duplicates/nulls. Use selected sources and supported native\n    descriptors. A metadata range alone is insufficient for a numerical answer.\n    A missing or rejected descriptor is an inspection-contract limitation,\n    not evidence that the source has no data. Do not guess its selectors.",
+        "parameters": {
+          "$defs": {
+            "ArrowQuerySpec": {
+              "additionalProperties": true,
+              "properties": {
+                "name": {
+                  "title": "Name",
+                  "type": "string"
+                },
+                "sql": {
+                  "title": "Sql",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "sql"
+              ],
+              "title": "ArrowQuerySpec",
+              "type": "object"
+            },
+            "AssetClass": {
+              "enum": [
+                "Stocks",
+                "FX",
+                "Crypto",
+                "Futures"
+              ],
+              "title": "AssetClass",
+              "type": "string"
+            },
+            "DiscoveryInspectionSource": {
+              "additionalProperties": false,
+              "properties": {
+                "market_options": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestFuturesContracts"
+                    },
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsCrypto"
+                    },
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFx"
+                    },
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFutures"
+                    },
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsStocks"
+                    },
+                    {
+                      "$ref": "#/$defs/ProbeMarketRequestStudyAssets"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Market Options"
+                },
+                "record_ref": {
+                  "title": "Record Ref",
+                  "type": "string"
+                },
+                "result_ref": {
+                  "title": "Result Ref",
+                  "type": "string"
+                },
+                "window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/DiscoveryRequestedWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "record_ref",
+                "result_ref"
+              ],
+              "title": "DiscoveryInspectionSource",
+              "type": "object"
+            },
+            "DiscoveryRequestedWindow": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "title": "DiscoveryRequestedWindow",
+              "type": "object"
+            },
+            "FundamentalsIndexBy": {
+              "enum": [
+                "FilingDate",
+                "AcceptanceDate",
+                "ObservationDate"
+              ],
+              "title": "FundamentalsIndexBy",
+              "type": "string"
+            },
+            "FuturesRollMethod": {
+              "enum": [
+                "Expiration",
+                "Combined",
+                "FirstOfMonth"
+              ],
+              "title": "FuturesRollMethod",
+              "type": "string"
+            },
+            "FuturesRollMode": {
+              "enum": [
+                "Nearest",
+                "BackAdjusted",
+                "RatioAdjusted"
+              ],
+              "title": "FuturesRollMode",
+              "type": "string"
+            },
+            "ProbeDataHandle": {
+              "additionalProperties": true,
+              "properties": {
+                "asset_class": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/AssetClass"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "category": {
+                  "title": "Category",
+                  "type": "string"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "id": {
+                  "title": "Id",
+                  "type": "string"
+                },
+                "index_by": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FundamentalsIndexBy"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "kind": {
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "market_source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ProbeMarketSource"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "nth": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Nth"
+                },
+                "period": {
+                  "title": "Period",
+                  "type": "string"
+                },
+                "relation_role": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ProbeMarketRelationRole"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "replay_fingerprint": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Replay Fingerprint"
+                },
+                "request_fingerprint": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Request Fingerprint"
+                },
+                "revision": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/VintageRevision"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "roll_days": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Roll Days"
+                },
+                "roll_method": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMethod"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "roll_mode": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMode"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "source_basis_fingerprint": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Source Basis Fingerprint"
+                },
+                "target_timeframe": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Target Timeframe"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                },
+                "trading_hours": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/TradingHoursType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "vendor": {
+                  "$ref": "#/$defs/ProbeVendor"
+                }
+              },
+              "required": [
+                "category",
+                "from",
+                "id",
+                "kind",
+                "period",
+                "to",
+                "vendor"
+              ],
+              "title": "ProbeDataHandle",
+              "type": "object"
+            },
+            "ProbeMarketRelationRole": {
+              "enum": [
+                "source",
+                "execution_prices",
+                "adjusted_reference"
+              ],
+              "title": "ProbeMarketRelationRole",
+              "type": "string"
+            },
+            "ProbeMarketRequestFuturesContracts": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestFuturesContractsSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestFuturesContracts",
+              "type": "object"
+            },
+            "ProbeMarketRequestFuturesContractsSource": {
+              "enum": [
+                "futures_contracts"
+              ],
+              "title": "ProbeMarketRequestFuturesContractsSource",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsCrypto": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "asset_class": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsCryptoAssetClass"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsCryptoSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset",
+                "asset_class",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsCrypto",
+              "type": "object"
+            },
+            "ProbeMarketRequestReferenceAssetsCryptoAssetClass": {
+              "enum": [
+                "Crypto"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsCryptoAssetClass",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsCryptoSource": {
+              "enum": [
+                "reference_assets"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsCryptoSource",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsFutures": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "asset_class": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFuturesAssetClass"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "nth": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Nth"
+                },
+                "roll_days": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Roll Days"
+                },
+                "roll_method": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMethod"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "roll_mode": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMode"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFuturesSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset",
+                "asset_class",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFutures",
+              "type": "object"
+            },
+            "ProbeMarketRequestReferenceAssetsFuturesAssetClass": {
+              "enum": [
+                "Futures"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFuturesAssetClass",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsFuturesSource": {
+              "enum": [
+                "reference_assets"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFuturesSource",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsFx": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "asset_class": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFxAssetClass"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsFxSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset",
+                "asset_class",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFx",
+              "type": "object"
+            },
+            "ProbeMarketRequestReferenceAssetsFxAssetClass": {
+              "enum": [
+                "FX"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFxAssetClass",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsFxSource": {
+              "enum": [
+                "reference_assets"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsFxSource",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsStocks": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "asset_class": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsStocksAssetClass"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestReferenceAssetsStocksSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset",
+                "asset_class",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsStocks",
+              "type": "object"
+            },
+            "ProbeMarketRequestReferenceAssetsStocksAssetClass": {
+              "enum": [
+                "Stocks"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsStocksAssetClass",
+              "type": "string"
+            },
+            "ProbeMarketRequestReferenceAssetsStocksSource": {
+              "enum": [
+                "reference_assets"
+              ],
+              "title": "ProbeMarketRequestReferenceAssetsStocksSource",
+              "type": "string"
+            },
+            "ProbeMarketRequestStudyAssets": {
+              "additionalProperties": false,
+              "properties": {
+                "asset": {
+                  "title": "Asset",
+                  "type": "string"
+                },
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "nth": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Nth"
+                },
+                "roll_days": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Roll Days"
+                },
+                "roll_method": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMethod"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "roll_mode": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FuturesRollMode"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "source": {
+                  "$ref": "#/$defs/ProbeMarketRequestStudyAssetsSource"
+                },
+                "target_timeframe": {
+                  "title": "Target Timeframe",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                },
+                "trading_hours": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/TradingHoursType"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "asset",
+                "from",
+                "source",
+                "target_timeframe",
+                "to"
+              ],
+              "title": "ProbeMarketRequestStudyAssets",
+              "type": "object"
+            },
+            "ProbeMarketRequestStudyAssetsSource": {
+              "enum": [
+                "study_assets"
+              ],
+              "title": "ProbeMarketRequestStudyAssetsSource",
+              "type": "string"
+            },
+            "ProbeMarketSource": {
+              "enum": [
+                "study_assets",
+                "reference_assets",
+                "futures_contracts"
+              ],
+              "title": "ProbeMarketSource",
+              "type": "string"
+            },
+            "ProbeVendor": {
+              "enum": [
+                "macrobond",
+                "barchart",
+                "fmp",
+                "trading_economics"
+              ],
+              "title": "ProbeVendor",
+              "type": "string"
+            },
+            "TradingHoursType": {
+              "enum": [
+                "RTH",
+                "Extended",
+                "PreMarket",
+                "PostMarket"
+              ],
+              "title": "TradingHoursType",
+              "type": "string"
+            },
+            "VintageRevision": {
+              "enum": [
+                "Last",
+                "First",
+                "NthFromLast"
+              ],
+              "title": "VintageRevision",
+              "type": "string"
+            }
+          },
+          "description": "Explicitly inspect provider observations to answer a numerical data question.\n\nThis is separate from metadata Discovery. It loads only the exact supplied\nnative sources and runs read-only SQL; no discovery, proxy choice or nested\nagent is invoked. Results certify only their actual loaded source/window and\nretain native duplicates/nulls. Use selected sources and supported native\ndescriptors. A metadata range alone is insufficient for a numerical answer.\nA missing or rejected descriptor is an inspection-contract limitation,\nnot evidence that the source has no data. Do not guess its selectors.",
+          "properties": {
+            "handles": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/ProbeDataHandle"
+                  },
+                  "maxItems": 20,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Previously returned exact native probe/inspection handles, including their explicit window. Use sources for Discovery selections whose descriptors have not been prepared. Barchart handles require market_source, relation_role, asset_class and target_timeframe; study_assets also requires trading_hours and roll_mode/roll_days/roll_method/nth. For Barchart, kind/category/period must be empty and revision/index_by absent. Do not guess defaults or construct selectors from loader names. Supply handles or sources, not both.",
+              "title": "Handles"
+            },
+            "sources": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/DiscoveryInspectionSource"
+                  },
+                  "maxItems": 10,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Copy Discovery's inspection_source (or bounded inspection_sources value), then add the explicit retrieval window. Its result_ref and record_ref are inspection addresses; data_ref is for authoring. Backend derives provider selectors from the owned native binding; no symbol or selector guessing. Omit window only for a windowless relation. Barchart additionally needs authored market_options because metadata does not define execution/reference relation selectors. Supply sources or already-returned handles, not both.",
+              "title": "Sources"
+            },
+            "queries": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/ArrowQuerySpec"
+                  },
+                  "maxItems": 10,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Read-only SELECT queries with source-native table/column names. Omit to describe the given exact relations and a small sample first. If any source fails preparation, explicit SQL is blocked; sample the returned healthy handles before authoring new SQL.",
+              "title": "Queries"
+            },
+            "limit": {
+              "default": 10,
+              "maximum": 10,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          "title": "inspect_source",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "llm": "none"
+      },
+      {
+        "name": "build_study",
+        "description": "Build and save Epoch studies. New/changed definitions use study_author; operation must be exactly create, update, or clone (lowercase). For a saved-study clone use base.kind=saved_study and base.slot_id; a curated source uses base.kind=exemplar. Call only after choices/owned metadata handoff, without certifying every source fact. Each item has a caller-owned research or strategy form. For create, authoring_brief is the current self-contained objective, QA outcomes and enriched design. Update and saved-study clone carry only a self-contained change_directive. Choose the build route internally, without a reuse question. Binding selects exact prepared refs; never copy vendor/probe payloads. The author chooses source constructors and final DataOption from the brief and neutral legacy market bindings. Native source_refs instead pin the chosen dataset/schema, and an admitted universe owns the final cohort. Put authoring decision_refs in the command for audit; write their applicable values/defaults in the brief/delta. The author receives no QA ledger or original request. It does NOT interrupt. Terminal for this attempt; only the supervisor's typed recovery policy permits a retry. One studies array is a sequential batch; use it for dependent authoring operations. Independent lifecycle calls may run together on distinct outputs. RETURNS one closed BuildResult: aggregate status plus one discriminated outcome per command. Saved outcomes return the actionable logical slot_id, operation, name, form, optional final_note and mechanical validation evidence; Backend UUIDs stay in state. Preserve material validation qualifications; warnings alone do not authorize changing the requested methods. That saved slot_id is the exact logical study_slot_id consumed by run_study. The caller gives each distinct execution its own logical run_slot_id; neither tool exposes Backend UUIDs. Failed/infeasible outcomes report typed errors; author_infeasible concerns this supplied brief. Review who imposed the unmet requirement before asking. Use typed outcomes, not narration, for control flow.",
+        "parameters": {
+          "$defs": {
+            "CloneStudyCommand": {
+              "additionalProperties": false,
+              "properties": {
+                "slot_id": {
+                  "description": "Canonical identity of the saved study/version line.",
+                  "title": "Slot Id",
+                  "type": "string"
+                },
+                "form": {
+                  "description": "Caller-owned research or strategy form; never infer or change it.",
+                  "enum": [
+                    "strategy",
+                    "research"
+                  ],
+                  "title": "Form",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Explicit caller-owned saved-description override, persisted unchanged. Omit to use the author's updated summary; omit for curated CLONE (tool-owned).",
+                  "title": "Description"
+                },
+                "decision_refs": {
+                  "description": "Authoring-only ask_user refs for audit; exclude execution decisions. Write values in brief/delta; author sees no receipts. [] if none.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Decision Refs",
+                  "type": "array"
+                },
+                "data_refs": {
+                  "description": "Exact observation:... or fundamentals:... refs. CREATE: all; UPDATE/saved CLONE: delta; curated CLONE: [].",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Data Refs",
+                  "type": "array"
+                },
+                "source_refs": {
+                  "description": "Exact Backend record/universe refs plus dataset/selectors; retained and validated internally. Reuse across studies. Historical universes require study_from/to from the task. Legacy observation refs stay in data_refs.",
+                  "items": {
+                    "discriminator": {
+                      "mapping": {
+                        "record": "#/$defs/StudyDataSelection_Record",
+                        "universe": "#/$defs/StudyDataSelection_Universe"
+                      },
+                      "propertyName": "kind"
+                    },
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Record"
+                      },
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Universe"
+                      }
+                    ]
+                  },
+                  "title": "Source Refs",
+                  "type": "array"
+                },
+                "study_from": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window start.",
+                  "title": "Study From"
+                },
+                "study_to": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window end.",
+                  "title": "Study To"
+                },
+                "operation": {
+                  "const": "clone",
+                  "title": "Operation",
+                  "type": "string"
+                },
+                "base": {
+                  "description": "Namespaced clone source: kind=exemplar for a curated exemplar, or kind=saved_study with its logical slot_id. It must resolve; cloning never falls back to scratch.",
+                  "discriminator": {
+                    "mapping": {
+                      "exemplar": "#/$defs/ExemplarCloneBase",
+                      "saved_study": "#/$defs/SavedStudyCloneBase"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/ExemplarCloneBase"
+                    },
+                    {
+                      "$ref": "#/$defs/SavedStudyCloneBase"
+                    }
+                  ],
+                  "title": "Base"
+                },
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Name of a saved-study clone. Omit for an authorized curated-exemplar clone; its immutable approved name is preserved.",
+                  "title": "Name"
+                },
+                "change_directive": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "The settled change to apply to a saved-study base. Omit for an authorized curated-exemplar clone, which is always verbatim. Changed exemplar requirements use CREATE with exemplar_ids instead.",
+                  "title": "Change Directive"
+                }
+              },
+              "required": [
+                "slot_id",
+                "form",
+                "decision_refs",
+                "data_refs",
+                "operation",
+                "base"
+              ],
+              "title": "CloneStudyCommand",
+              "type": "object"
+            },
+            "CreateStudyCommand": {
+              "additionalProperties": false,
+              "properties": {
+                "slot_id": {
+                  "description": "Canonical identity of the saved study/version line.",
+                  "title": "Slot Id",
+                  "type": "string"
+                },
+                "form": {
+                  "description": "Caller-owned research or strategy form; never infer or change it.",
+                  "enum": [
+                    "strategy",
+                    "research"
+                  ],
+                  "title": "Form",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Explicit caller-owned saved-description override, persisted unchanged. Omit to use the author's updated summary; omit for curated CLONE (tool-owned).",
+                  "title": "Description"
+                },
+                "decision_refs": {
+                  "description": "Authoring-only ask_user refs for audit; exclude execution decisions. Write values in brief/delta; author sees no receipts. [] if none.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Decision Refs",
+                  "type": "array"
+                },
+                "data_refs": {
+                  "description": "Exact observation:... or fundamentals:... refs. CREATE: all; UPDATE/saved CLONE: delta; curated CLONE: [].",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Data Refs",
+                  "type": "array"
+                },
+                "source_refs": {
+                  "description": "Exact Backend record/universe refs plus dataset/selectors; retained and validated internally. Reuse across studies. Historical universes require study_from/to from the task. Legacy observation refs stay in data_refs.",
+                  "items": {
+                    "discriminator": {
+                      "mapping": {
+                        "record": "#/$defs/StudyDataSelection_Record",
+                        "universe": "#/$defs/StudyDataSelection_Universe"
+                      },
+                      "propertyName": "kind"
+                    },
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Record"
+                      },
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Universe"
+                      }
+                    ]
+                  },
+                  "title": "Source Refs",
+                  "type": "array"
+                },
+                "study_from": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window start.",
+                  "title": "Study From"
+                },
+                "study_to": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window end.",
+                  "title": "Study To"
+                },
+                "operation": {
+                  "const": "create",
+                  "title": "Operation",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Name of the new study.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "authoring_brief": {
+                  "description": "Current self-contained objective, QA values/defaults and enriched design; no vendor payloads. Execution owns native backtest outputs.",
+                  "title": "Authoring Brief",
+                  "type": "string"
+                },
+                "exemplar_ids": {
+                  "description": "Optional existing approved same-form examples; omit when none is already available. Never invent an example id or inherit its requirements. An example does not grant clone authority.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 2,
+                  "title": "Exemplar Ids",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "slot_id",
+                "form",
+                "decision_refs",
+                "data_refs",
+                "operation",
+                "name",
+                "authoring_brief"
+              ],
+              "title": "CreateStudyCommand",
+              "type": "object"
+            },
+            "DataCategory": {
+              "enum": [
+                "DailyBars",
+                "MinuteBars",
+                "OpenInterest",
+                "Dividends",
+                "Splits",
+                "Earnings",
+                "Events",
+                "BalanceSheets",
+                "CashFlowStatements",
+                "IncomeStatements",
+                "Ratios",
+                "KeyMetrics",
+                "EnterpriseValues",
+                "OwnerEarnings",
+                "BalanceSheetGrowth",
+                "IncomeStatementGrowth",
+                "CashFlowGrowth",
+                "FinancialGrowth",
+                "RevenueProductSegmentation",
+                "RevenueGeographicSegmentation",
+                "Ipos",
+                "MacrobondData",
+                "MacrobondVintageData",
+                "MacrobondRevisionInfo",
+                "MacrobondReleaseSchedule",
+                "TradingEconomicsHistorical",
+                "TradingEconomicsCalendar",
+                "TradingEconomicsMarkets",
+                "TradingEconomicsRatings",
+                "TradingEconomicsForecast",
+                "TradingEconomicsMarketForecast",
+                "ReferenceAgg",
+                "HistoricalMarketCap",
+                "IpoProspectus",
+                "EarningsCalendar",
+                "DividendsCalendar",
+                "SplitsCalendar",
+                "HistoricalEmployeeCount",
+                "EtfInformation",
+                "EtfHoldings",
+                "AssetCatalog"
+              ],
+              "title": "DataCategory",
+              "type": "string"
+            },
+            "DiscoveryDatasetRequest": {
+              "additionalProperties": false,
+              "properties": {
+                "category": {
+                  "$ref": "#/$defs/DataCategory"
+                },
+                "fields": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Fields"
+                },
+                "requested_window": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/DiscoveryRequestedWindow"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "selectors": {
+                  "anyOf": [
+                    {
+                      "discriminator": {
+                        "mapping": {
+                          "financial": "#/$defs/DiscoverySelectors_Financial",
+                          "vintage": "#/$defs/DiscoverySelectors_Vintage"
+                        },
+                        "propertyName": "kind"
+                      },
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/DiscoverySelectors_Financial"
+                        },
+                        {
+                          "$ref": "#/$defs/DiscoverySelectors_Vintage"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Selectors"
+                }
+              },
+              "required": [
+                "category"
+              ],
+              "title": "DiscoveryDatasetRequest",
+              "type": "object"
+            },
+            "DiscoveryRequestedWindow": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "title": "From",
+                  "type": "string"
+                },
+                "to": {
+                  "title": "To",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "title": "DiscoveryRequestedWindow",
+              "type": "object"
+            },
+            "DiscoverySelectors_Financial": {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "financial",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "index_by": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FundamentalsIndexBy"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "period": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/FinancialsTimeframe"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "title": "DiscoverySelectors_Financial",
+              "type": "object"
+            },
+            "DiscoverySelectors_Vintage": {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "vintage",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "full_tape": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Full Tape"
+                },
+                "nth": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Nth"
+                },
+                "revision": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/VintageRevision"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "title": "DiscoverySelectors_Vintage",
+              "type": "object"
+            },
+            "ExemplarCloneBase": {
+              "additionalProperties": false,
+              "description": "An exact curated EpochResearch exemplar selected for this clone slot.",
+              "properties": {
+                "kind": {
+                  "const": "exemplar",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "exemplar_id": {
+                  "title": "Exemplar Id",
+                  "type": "string"
+                },
+                "authorization_ref": {
+                  "description": "Current-turn exact-request exemplar-recall:... or unchanged legacy exemplar-confirmation:... ref.",
+                  "title": "Authorization Ref",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "exemplar_id",
+                "authorization_ref"
+              ],
+              "title": "ExemplarCloneBase",
+              "type": "object"
+            },
+            "FinancialsTimeframe": {
+              "enum": [
+                "quarterly",
+                "annual",
+                "trailing_twelve_months"
+              ],
+              "title": "FinancialsTimeframe",
+              "type": "string"
+            },
+            "FundamentalsIndexBy": {
+              "enum": [
+                "FilingDate",
+                "AcceptanceDate",
+                "ObservationDate"
+              ],
+              "title": "FundamentalsIndexBy",
+              "type": "string"
+            },
+            "SavedStudyCloneBase": {
+              "additionalProperties": false,
+              "description": "A Backend study already registered under a slot in this thread.",
+              "properties": {
+                "kind": {
+                  "const": "saved_study",
+                  "description": "Exact kind for an existing study saved in this thread: saved_study.",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "slot_id": {
+                  "title": "Slot Id",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "slot_id"
+              ],
+              "title": "SavedStudyCloneBase",
+              "type": "object"
+            },
+            "StudyDataSelection_Record": {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "record",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "dataset": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/DiscoveryDatasetRequest"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "record_ref": {
+                  "title": "Record Ref",
+                  "type": "string"
+                },
+                "result_ref": {
+                  "title": "Result Ref",
+                  "type": "string"
+                },
+                "selection_id": {
+                  "title": "Selection Id",
+                  "type": "string"
+                },
+                "source_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Source Id"
+                }
+              },
+              "required": [
+                "kind",
+                "record_ref",
+                "result_ref",
+                "selection_id"
+              ],
+              "title": "StudyDataSelection_Record",
+              "type": "object"
+            },
+            "StudyDataSelection_Universe": {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "universe",
+                  "title": "Kind",
+                  "type": "string"
+                },
+                "dataset": {
+                  "$ref": "#/$defs/DiscoveryDatasetRequest"
+                },
+                "selection_id": {
+                  "title": "Selection Id",
+                  "type": "string"
+                },
+                "source_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Source Id"
+                },
+                "universe_ref": {
+                  "title": "Universe Ref",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "dataset",
+                "selection_id",
+                "universe_ref"
+              ],
+              "title": "StudyDataSelection_Universe",
+              "type": "object"
+            },
+            "UpdateStudyCommand": {
+              "additionalProperties": false,
+              "properties": {
+                "slot_id": {
+                  "description": "Canonical identity of the saved study/version line.",
+                  "title": "Slot Id",
+                  "type": "string"
+                },
+                "form": {
+                  "description": "Caller-owned research or strategy form; never infer or change it.",
+                  "enum": [
+                    "strategy",
+                    "research"
+                  ],
+                  "title": "Form",
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Explicit caller-owned saved-description override, persisted unchanged. Omit to use the author's updated summary; omit for curated CLONE (tool-owned).",
+                  "title": "Description"
+                },
+                "decision_refs": {
+                  "description": "Authoring-only ask_user refs for audit; exclude execution decisions. Write values in brief/delta; author sees no receipts. [] if none.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Decision Refs",
+                  "type": "array"
+                },
+                "data_refs": {
+                  "description": "Exact observation:... or fundamentals:... refs. CREATE: all; UPDATE/saved CLONE: delta; curated CLONE: [].",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Data Refs",
+                  "type": "array"
+                },
+                "source_refs": {
+                  "description": "Exact Backend record/universe refs plus dataset/selectors; retained and validated internally. Reuse across studies. Historical universes require study_from/to from the task. Legacy observation refs stay in data_refs.",
+                  "items": {
+                    "discriminator": {
+                      "mapping": {
+                        "record": "#/$defs/StudyDataSelection_Record",
+                        "universe": "#/$defs/StudyDataSelection_Universe"
+                      },
+                      "propertyName": "kind"
+                    },
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Record"
+                      },
+                      {
+                        "$ref": "#/$defs/StudyDataSelection_Universe"
+                      }
+                    ]
+                  },
+                  "title": "Source Refs",
+                  "type": "array"
+                },
+                "study_from": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window start.",
+                  "title": "Study From"
+                },
+                "study_to": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "ISO window end.",
+                  "title": "Study To"
+                },
+                "operation": {
+                  "const": "update",
+                  "title": "Operation",
+                  "type": "string"
+                },
+                "change_directive": {
+                  "description": "Self-contained settled delta including QA outcomes. Parent supplies unchanged code; state removals/replacements explicitly.",
+                  "title": "Change Directive",
+                  "type": "string"
+                },
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional new name. Omit to preserve the Backend-owned parent name.",
+                  "title": "Name"
+                }
+              },
+              "required": [
+                "slot_id",
+                "form",
+                "decision_refs",
+                "data_refs",
+                "operation",
+                "change_directive"
+              ],
+              "title": "UpdateStudyCommand",
+              "type": "object"
+            },
+            "VintageRevision": {
+              "enum": [
+                "Last",
+                "First",
+                "NthFromLast"
+              ],
+              "title": "VintageRevision",
+              "type": "string"
+            }
+          },
+          "description": "Build and save Epoch studies. New/changed definitions use study_author; operation must be exactly create, update, or clone (lowercase). For a saved-study clone use base.kind=saved_study and base.slot_id; a curated source uses base.kind=exemplar. Call only after choices/owned metadata handoff, without certifying every source fact. Each item has a caller-owned research or strategy form. For create, authoring_brief is the current self-contained objective, QA outcomes and enriched design. Update and saved-study clone carry only a self-contained change_directive. Choose the build route internally, without a reuse question. Binding selects exact prepared refs; never copy vendor/probe payloads. The author chooses source constructors and final DataOption from the brief and neutral legacy market bindings. Native source_refs instead pin the chosen dataset/schema, and an admitted universe owns the final cohort. Put authoring decision_refs in the command for audit; write their applicable values/defaults in the brief/delta. The author receives no QA ledger or original request. It does NOT interrupt. Terminal for this attempt; only the supervisor's typed recovery policy permits a retry. One studies array is a sequential batch; use it for dependent authoring operations. Independent lifecycle calls may run together on distinct outputs. RETURNS one closed BuildResult: aggregate status plus one discriminated outcome per command. Saved outcomes return the actionable logical slot_id, operation, name, form, optional final_note and mechanical validation evidence; Backend UUIDs stay in state. Preserve material validation qualifications; warnings alone do not authorize changing the requested methods. That saved slot_id is the exact logical study_slot_id consumed by run_study. The caller gives each distinct execution its own logical run_slot_id; neither tool exposes Backend UUIDs. Failed/infeasible outcomes report typed errors; author_infeasible concerns this supplied brief. Review who imposed the unmet requirement before asking. Use typed outcomes, not narration, for control flow.",
+          "properties": {
+            "studies": {
+              "description": "All study operations for this batch. Each command owns one form and one canonical slot and is structurally one of create, update, or clone.",
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "clone": "#/$defs/CloneStudyCommand",
+                    "create": "#/$defs/CreateStudyCommand",
+                    "update": "#/$defs/UpdateStudyCommand"
+                  },
+                  "propertyName": "operation"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/CreateStudyCommand"
+                  },
+                  {
+                    "$ref": "#/$defs/UpdateStudyCommand"
+                  },
+                  {
+                    "$ref": "#/$defs/CloneStudyCommand"
+                  }
+                ]
+              },
+              "minItems": 1,
+              "title": "Studies",
+              "type": "array"
+            }
+          },
+          "required": [
+            "studies"
+          ],
+          "title": "build_study",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "llm": "specialist"
+      },
+      {
+        "name": "audit_run",
+        "description": "Analyze executed source and persisted outputs from completed logical runs.\n\n    The analyst sees the frozen executed script, recorded ordinary-run input\n    snapshot and method context, not the supervisor's conversation. Source and\n    captured-input questions do not require SQL relations. Include relevant approved choices in the question.\n    Source findings explain implementation with excerpts; queried rows measure\n    results. An answered status is not certification of analytical correctness.\n    The supervisor interprets evidence; build_study owns any authorized edits.\n    For an active SDK response request, successful queries automatically include\n    recorder-owned query references and field metadata. Ask for the needed\n    facts and shape; the analyst cannot mint or certify a receipt before the\n    query runs. Read receipt availability from the returned answer fields.\n    A recorded query for a requested response table preserves its complete\n    requested rowset; the tool bounds the inline preview independently. Do not\n    replace a requested full table with summary questions to fit that preview.\n\n    Backend DESCRIBE is the sole catalog authority. Queryable data includes\n    explicitly authored values and Backend-owned execution/report relations\n    such as orders, positions, account, event markers, tuning trials, and\n    Monte Carlo returns when DESCRIBE lists them. Unnamed or presentation-only\n    values are not implied. This analyst does not receive inline dashboard\n    Summary cells or the supervisor's prior conversation. Do not call it to\n    re-verify a method/configuration fact already rendered inline. If such a\n    fact is quoted in a question, absence from DESCRIBE means it cannot be\n    independently rederived here; it does not contradict the rendered fact.\n    Independently sealed grids are never implicitly aligned or joined.\n\n    Use inline results first. Ask here for a necessary non-inline value in the\n    original answer, a material plausibility check, or a follow-up. A targeted\n    read of existing outputs does not launch another execution. Split questions\n    by the measurements actually available; do not invent cross-grid joins.\n    Report a typed unanswerable result as a scoped evidence limit, not as zero,\n    proof of absence, or permission to change and rerun the study.",
+        "parameters": {
+          "additionalProperties": false,
+          "properties": {
+            "execution_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Execution Ids",
+              "type": "array"
+            },
+            "questions": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Questions",
+              "type": "array"
+            }
+          },
+          "required": [
+            "execution_ids",
+            "questions"
+          ],
+          "title": "AuditExecutionsRequest",
+          "type": "object"
+        },
+        "llm": "specialist"
+      }
+    ]
+  }
+}

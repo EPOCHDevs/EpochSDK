@@ -16,7 +16,6 @@ from test_research import REQUEST, REQUEST_ID, saved_response
 from test_supervisor import INTERRUPT, RUN, THREAD, job
 
 from epoch_sdk import EpochError, RunRequest
-from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient, ExecutionAccepted, ResearchCompleted, ResearchError
 from epoch_sdk.response_plans import ResponsePlanReference
 from epoch_sdk.supervisor import (
@@ -28,6 +27,7 @@ from epoch_sdk.supervisor import (
     SupervisorClient,
     WorkflowHandle,
 )
+from epoch_sdk.workflow_mcp import create_server
 
 
 class ObservedRunStream(httpx.AsyncByteStream):

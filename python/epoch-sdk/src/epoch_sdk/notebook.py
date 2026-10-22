@@ -28,7 +28,8 @@ from .session import (
 )
 from .supervisor import Answer, Answers, NeedsInput, Question
 
-_selection = TypeAdapter(int | tuple[int, ...] | None)
+type _WidgetSelection = int | tuple[int, ...] | None
+_selection: TypeAdapter[_WidgetSelection] = TypeAdapter(_WidgetSelection)
 _markdown = MarkdownIt("commonmark", {"html": False}).enable("table")
 
 

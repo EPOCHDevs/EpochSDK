@@ -12,8 +12,8 @@ from test_research import REQUEST
 from test_session import StreamService
 from test_supervisor import INTERRUPT, clients, published
 
-from epoch_sdk.mcp import _result, create_server
 from epoch_sdk.supervisor import NoExecution, PublishedAnswer
+from epoch_sdk.workflow_mcp import _result, create_server
 
 
 def test_public_surface_has_five_tools_and_task_is_the_only_required_run_field():

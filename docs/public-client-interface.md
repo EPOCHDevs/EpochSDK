@@ -1,76 +1,65 @@
-# Shared SDK and MCP interface
+# SDK workflows and composable MCP tools
 
-The default MCP server exposes five operations over `EpochClient`. It has no
-separate agent, controller or workflow implementation. Notebook, terminal and
-MCP callers share the same research session; only rendering and input differ.
+The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller chooses when to discover data, reuse it across studies, build, execute, compare and answer. The MCP does not call `epoch-ai`, require publication or create a final answer on the caller’s behalf.
 
-| SDK | MCP | Behavior |
+| Tool | Purpose | Epoch model call |
 | --- | --- | --- |
-| `run` | `epoch_run` | Submit a task, handle the research flow and return its published answer. |
-| `execute` | `epoch_execute` | Execute prepared work and wait for completion/publication, without a supervisor. |
-| `resume` | `epoch_resume` | Answer current questions by operation ID and continue the same session. |
-| `status` | `epoch_status` | Read progress, pending questions or the pinned result. |
-| `read` | `epoch_read` | Read an answer or one page of a named table. |
+| `epoch_dataset_catalog` | Read the Backend dataset directory, complete loader options and saved-dataset metadata. | None |
+| `epoch_search_dataset` | Resolve native instruments/series and rank metadata alternatives. | No generative model |
+| `epoch_screen_assets` | Resolve or reuse a complete asset universe with explicit membership semantics. | None |
+| `epoch_inspect_source` | Read selected source observations and optional read-only queries. | None |
+| `epoch_build_study` | Author, validate and save studies from the selected references. | Existing study author |
+| `epoch_execute` | Execute a saved study for an explicit period. | None |
+| `epoch_audit_run` | Ask targeted questions of completed execution IDs, including comparisons. | Existing audit specialist |
+| `epoch_find` | List owned tools workspaces or saved study IDs. | None |
+| `epoch_read` | Read workspace registries, saved study source, execution status, dashboards or original tool artifacts. | None |
+| `epoch_status` | Observe a tool handle or native execution ID. | None |
+| `epoch_resume` | Explicitly answer a specialist interrupt, when one exists. | Only the selected specialist continues |
 
-A plain task is enough to start. Optional context, output declarations and native
-parameters make the request more precise. If outputs are omitted, `run` uses a
-concise Markdown answer. Explicit table/JSON schemas retain the same validation
-as a typed `RunRequest`. Unknown tool arguments fail before service work begins.
-Output preparation, validation and publication belong
-to Epoch; the calling agent never constructs internal manifests or publishes
-copied table values.
+## Reuse discovery
+
+1. Read `epoch_dataset_catalog` for supported datasets and their options. Ask for details of selected source IDs to see vintage/revision, fields and clock choices. The prose and schemas come from Backend.
+2. Use `epoch_search_dataset` for asset/series identities, or `epoch_screen_assets` for a whole cohort. Search returns its unchanged receipt and, when inline rows are omitted, one bounded stored page. Continue with `epoch_read(kind="dataset_search", identifier=result_ref, cursor=next_cursor)`; no provider search is repeated.
+3. Pass exact record/result references or the `universe_ref`, plus the selected dataset/options, as `source_refs` to `epoch_build_study`. It retains and validates them internally. A historical universe needs the requested study period inside its captured membership window. Metadata does not certify populated observations or account access.
+4. Keep the build handle and poll `epoch_status`. Its saved outcome returns retained `source_refs` for later builds, including after the original working search expires. Reuse the workspace and select a new study slot for a different study. Registry compatibility still applies.
+5. Execute a saved study ID with `epoch_execute`, then observe its native execution ID with `epoch_status(kind="execution")`.
+6. Read dashboard values directly, or use `epoch_audit_run` for targeted analysis of exact completed execution IDs. The caller answers the user; publication is not a completion requirement.
+
+A workspace is an ordinary owner-scoped LangGraph thread using the `epoch-tools` graph. That graph has only admission and tool-execution nodes: no supervisor model, planner, next-action model or publication loop. Original typed specialist state and native checkpoints stay in EpochAI. Do not submit internal state, bearer tokens, approval receipts or `ToolRuntime` as tool arguments.
+
+Specialist operations return a native background run handle. Reading status, reconnecting or closing an MCP client does not submit the tool again. Never blindly repeat an uncertain mutation; retain the accepted handle or execution ID. This initial surface adds no recovery worker, retry policy or separate operation database.
+
+## Native ownership
+
+Dataset catalog/search/screening, metadata paging, execution, study reads and dashboard reads use the generated StratifyX client directly. They do not route through EpochAI. Execution reads and audit bindings verify the owned per-execution snapshot before trusting an execution ID. A response plan is neither required nor replayed by this MCP’s `epoch_execute`.
+
+Specialist tool schemas come from authenticated `GET /api/v1/agent-tools` on EpochAI. Parameter schemas are generated from the actual tool owners, retaining their recursive definitions, constraints and tags. MCP adds `task` and optional `workspace_id` to those specialist calls. Native data methods share `DatasetClient` with the workflow SDK; they do not invoke the tools graph or a Discovery agent. Schema loading is a read-only service request, not a model call.
+
+The SDK exposes this same transport as `epoch_sdk.agent_tools.AgentToolsClient`. For example:
 
 ```python
-result = await epoch.run(
-    "Has Microsoft's growth become more cash-generative?",
-    context=["Use annual income and cash-flow statements."],
-    operation_id="msft-quality",
-)
+from stratifyx.types import DatasetSearchQuery
+
+catalog = await tools.dataset_catalog(source_ids=["cash_flow"], include_details=True)
+found = await tools.search_dataset([DatasetSearchQuery.model_validate({
+    "request_id": "issuer",
+    "subjects": [{"kind": "asset_name", "name": "Microsoft", "asset_type": "Stocks"}],
+})])
 ```
 
-The matching MCP call is `epoch_run` with those same task fields. The SDK also
-continues to accept an existing typed `RunRequest` as its first argument. Do not
-combine a typed request with overrides for its task fields.
+`EpochClient` exposes those same `dataset_catalog`, `search_dataset`,
+`screen_assets` and `read_dataset_search` methods. Only user authentication and
+service URLs belong in the client; vendor/model credentials stay on the services.
+Native search can use Backend's non-generative reranker. The retired
+`epoch_discover` LLM tool is not advertised by the default MCP; old operation
+handles remain readable through the compatibility client.
 
-`run` always uses the shared session, including when the caller omits an
-operation ID. An omitted ID is generated and returned; provide a readable ID
-before a long call so it is available for reconnecting after a disconnect.
-Matching inputs attach; changed inputs conflict. An explicitly blank ID is an
-error, not a request to generate a replacement.
+## Notebook and workflow SDK
 
-MCP consumes structured progress notifications and returns `needs_input` without
-selecting recommendations or blocking on notebook/terminal input. Call
-`epoch_resume` with `operation_id` and explicit `responses` keyed by the returned
-interrupt IDs. The SDK retrieves and validates the current waiting state; the
-caller does not copy an entire checkpoint into the tool arguments.
+`EpochClient.run`, `execute`, `resume`, `status` and `read` keep their existing research/published-answer workflow. Notebook and terminal rendering are unchanged. Saved response plans still replay through that explicit workflow interface.
 
-`execute` accepts a completed research operation ID or its `reusable_study`, a
-native `period`, optional native `execution` options and a separate operation ID.
-It waits by reading that same Backend operation. It never restarts discovery,
-rebuilds the study, retries a failed job or invokes the supervisor. A saved plan
-can include a bounded text interpretation step owned by EpochAI. Cancelling the
-local wait does not cancel server work.
+The old five-tool MCP remains an explicit compatibility module, `python -m epoch_sdk.workflow_mcp`. It is not the default MCP installation. See the [historical alpha13 contract](alpha13-workflow-interface.md) for those operation IDs and pinned-response semantics. The default `epoch-mcp` command uses the composable tools above; reconnect the MCP host after upgrading.
 
-Use `status(operation_id, kind="run")` for research and `kind="execute"` for a
-prepared execution. Status never submits work. `read(response_id)` returns the
-saved answer; add `table`, `version`, `offset` and `page_size` to read table pages.
-Pin the returned version and follow `next_offset` until null. A page size limits
-one transfer, not the complete table.
+## Local services
 
-## Alpha 13 migration
-
-The previous 13-tool MCP catalogue is replaced by these five tools. Reconnect
-the MCP host to refresh its tool list. There is no legacy default MCP profile:
-`epoch_research` becomes `epoch_run`; `epoch_execute_saved` becomes
-`epoch_execute`; separate research/execution status calls become `epoch_status`;
-answer/table reads become `epoch_read`. Resume now takes an operation ID rather
-than a full `waiting` object.
-
-Advanced SDK methods (`research`, `research_status`, `resume_research`,
-`execute_saved`, `execution`, `response`, `response_table` and owner publication)
-remain available for existing typed callers and service tooling. They are not
-additional default MCP tools. Older unkeyed request records remain readable
-through those SDK methods and their saved answer IDs.
-
-Changing EpochAI's supervisor, introducing a graph or fine-tuning its model
-belongs behind this contract. It does not require another client tool surface.
+The composable graph must be deployed before switching clients. `EPOCH_MCP_GRAPH_URL` can select a separate Python preview service while notebooks continue using their existing graph URL. Clients receive only the Epoch identity and service addresses; vendor/model credentials remain server-side.
