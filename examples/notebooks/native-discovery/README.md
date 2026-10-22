@@ -68,7 +68,29 @@ mismatch and stale macro-source instructions. ENG-2166 through ENG-2170 track
 those corrections, including the ownership metadata needed to list existing MCP
 workspaces. The initial GDP run recovered from a schema tag error and
 paging error; it is not evidence that every discovery call was clean. A fresh
-run on the final guidance, final installation and compatibility inventory are
-still the acceptance gate before ENG-2162/ENG-2163 close. The 464 archived cases
+run on the final guidance, final installation and compatibility inventory were
+required before ENG-2162/ENG-2163 could close. The 464 archived cases
 are hash-checked and classified; they have not all been replayed live. There is
 no paid before/after model-cost or source-recall benchmark claim.
+
+The final local pass used Native `0b998e82`, EpochAI `4d9f1d96`, frozen
+EpochSDK `0.1.0a17` and StratifyX `3.3.0rc11`. All four fresh notebooks completed
+with the same row counts, including Apple saved-plan replay and all eight GDP
+quarters. The final installed stdio MCP also matched shared source prose/options,
+read 1- and 10-record pages, continued a native cursor, rejected invalid bounds,
+listed an owned workspace and read pre-upgrade studies without model submissions.
+Native validation passed 99 cases / 19,928 assertions. Actual executed copies and
+full traces remain private; these committed notebooks stay unexecuted.
+
+The cash-flow run recovered from a selector-tag error and an authoring requirement
+added by the supervisor. Its audit repaired indented source excerpts rejected by
+a prompt/validation mismatch (ENG-2172). Calculation/plan replay can make an
+explicit bounded text-model call; it does not promise identical prose. None of
+these checks independently certifies vendor values or complete statement history.
+
+Broad instrument relevance is still open in ENG-2171: real API searches reproduced
+missing Google/Facebook issuer candidates, a micro-futures name miss, opposite FX
+pair queries with identical ordering and a typo candidate lost behind prefixes.
+Maintain the separate accuracy/library evaluation gate; successful examples do
+not establish general search quality. Final installation, host reconnection and
+compatibility retirement must be reported separately.
