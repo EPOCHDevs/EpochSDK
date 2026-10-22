@@ -11,6 +11,7 @@ from importlib.resources import files
 from typing import Annotated, Literal, cast
 
 import httpx
+from jsonschema.exceptions import SchemaError
 from jsonschema.exceptions import ValidationError as SchemaValidationError
 from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
@@ -108,7 +109,17 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         if ctx.method == "tools/list" or (
             ctx.method == "tools/call" and name in _SPECIALIST_NAMES.values()
         ):
-            catalog = await client.catalog()
+            try:
+                catalog = await client.catalog()
+            except httpx.HTTPStatusError as error:
+                raise MCPError(code=-32603, message=
+                    f"Epoch tools catalog returned HTTP {error.response.status_code}; no tool list was substituted.") from None
+            except httpx.HTTPError:
+                raise MCPError(code=-32603, message=
+                    "Epoch tools service is unreachable; the required tool catalog could not be loaded.") from None
+            except (ValueError, SchemaError):
+                raise MCPError(code=-32603, message=
+                    "Epoch tools service returned an invalid tool catalog.") from None
         elif ctx.method == "tools/call":
             catalog = None
         else:

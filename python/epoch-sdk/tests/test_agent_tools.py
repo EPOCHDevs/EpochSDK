@@ -451,3 +451,52 @@ def test_workspace_find_retains_metadata_required_by_the_service_owner_filter():
             assert result.structured_content['ids'] == [WORKSPACE]
             assert set(result.structured_content) == {'kind', 'ids', 'offset'}
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("failure", ["connect", "timeout", "status", "invalid", "schema"])
+def test_mcp_catalog_listing_reports_required_service_failure_without_partial_tools(failure):
+    from mcp.shared.exceptions import MCPError
+
+    async def scenario():
+        calls = []
+        def rejected(request):
+            calls.append(request)
+            if failure == "connect":
+                raise httpx.ConnectError("private transport details", request=request)
+            if failure == "timeout":
+                raise httpx.ReadTimeout("private transport details", request=request)
+            if failure == "status":
+                return httpx.Response(503, json={"private": "must-not-leak"})
+            if failure == "schema":
+                catalog = copy.deepcopy(CATALOG)
+                catalog["tools"][0]["parameters"] = {"type": "must-not-leak"}
+                return httpx.Response(200, json=catalog)
+            return httpx.Response(200, json={"private": "must-not-leak"})
+        async with httpx.AsyncClient(base_url="https://graph.invalid",
+                transport=httpx.MockTransport(rejected)) as http:
+            client = AgentToolsClient(LangGraphClient(http), AsyncStratifyX(base_url="https://backend.invalid"),
+                                      graph_http=http)
+            try:
+                async with Client(create_server(client)) as mcp:
+                    with pytest.raises(MCPError) as caught:
+                        await mcp.list_tools()
+                    assert caught.value.code == -32603
+                    message = str(caught.value)
+                    assert "Epoch tools" in message and "catalog" in message
+                    assert "must-not-leak" not in message and "private transport" not in message
+                    assert "Internal server error" not in message
+                    assert len(calls) == 1 and client._catalog is None
+                    # A rejected schema/body must not be cached and served by
+                    # a later listing after the first error was reported.
+                    with pytest.raises(MCPError):
+                        await mcp.list_tools()
+                    with pytest.raises(MCPError) as specialist:
+                        await mcp.call_tool("epoch_build_study", {"task": "Do not run with an invalid catalog"})
+                    assert "must-not-leak" not in str(specialist.value)
+                    assert "private transport" not in str(specialist.value)
+                    assert "Epoch tools" in str(specialist.value)
+                assert len(calls) == 3
+                assert client._catalog is None
+            finally:
+                await client.aclose()
+    asyncio.run(scenario())

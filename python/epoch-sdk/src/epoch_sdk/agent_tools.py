@@ -166,9 +166,10 @@ class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
         if self._catalog is None:
             response = await self.graph_http.get("/api/v1/agent-tools")
             response.raise_for_status()
-            self._catalog = AgentToolsCatalog.model_validate_json(response.content)
-            for tool in self._catalog.tools:
+            catalog = AgentToolsCatalog.model_validate_json(response.content)
+            for tool in catalog.tools:
                 validate_schema(tool.parameters)
+            self._catalog = catalog
         return self._catalog
 
     async def _workspace(self, identifier: str) -> None:
