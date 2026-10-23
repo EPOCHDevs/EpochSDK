@@ -1,0 +1,72 @@
+{
+  "source_environment": "EPOCH_MSFT_EXECUTION_ID",
+  "request": {
+    "task": "Put Microsoft's annual revenue and operating cash flow in fiscal-year order. Give me matching JSON and a table.",
+    "context": [
+      "Use the completed analysis's annual result rows and their reported USD units. No new data, dashboard or narrative is requested."
+    ],
+    "outputs": [
+      {
+        "name": "annual_json",
+        "type": "json",
+        "description": "Machine-readable annual figures",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fiscal_year": {
+                    "type": "string"
+                  },
+                  "revenue": {
+                    "type": "number"
+                  },
+                  "operating_cash_flow": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "fiscal_year",
+                  "revenue",
+                  "operating_cash_flow"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "rows"
+          ],
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "annual_table",
+        "type": "table",
+        "description": "Annual figures for the desk",
+        "schema": [
+          {
+            "name": "fiscal_year",
+            "type": "string",
+            "description": "Fiscal year label"
+          },
+          {
+            "name": "revenue",
+            "type": "float64",
+            "unit": "USD",
+            "description": "Reported annual revenue"
+          },
+          {
+            "name": "operating_cash_flow",
+            "type": "float64",
+            "unit": "USD",
+            "description": "Reported annual operating cash flow"
+          }
+        ]
+      }
+    ]
+  }
+}

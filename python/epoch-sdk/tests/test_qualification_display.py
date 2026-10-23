@@ -43,14 +43,19 @@ def test_terminal_renders_qualifications_without_dropping_unknowns_or_answer():
     assert 'Unknown basis' in output and 'Computed result.' in output
 
 
-def test_notebook_renders_escaped_basis_and_all_bound_facts(monkeypatch):
+@pytest.mark.parametrize("mode", ["session", "saved"])
+def test_notebook_renders_escaped_basis_and_all_bound_facts(monkeypatch, mode):
     pytest.importorskip('ipywidgets')
     pytest.importorskip('IPython')
     from epoch_sdk import notebook
     displayed=[]
     monkeypatch.setattr(notebook,'display',displayed.append)
-    view=notebook.NotebookView(SimpleNamespace(operation_id='example'))
-    asyncio.run(view._answer(result()))
+    client=SimpleNamespace()
+    if mode == 'session':
+        view=notebook.NotebookView(SimpleNamespace(operation_id='example', client=client))
+        asyncio.run(view._answer(result()))
+    else:
+        asyncio.run(notebook.display_answer(client, result().response))
     html='\n'.join(str(item.data)for item in displayed if hasattr(item,'data'))
     assert 'Observed &lt;source&gt; coverage' in html
     assert any(getattr(item,'data',None)=={'observed':7,'expected':8,'unknown':None,'zero':0,'available':False}for item in displayed)

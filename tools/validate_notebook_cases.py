@@ -48,6 +48,18 @@ def main() -> None:
         "index.json",
         *(entry["file"] for entry in entries),
     }, "Every top-level request belongs in the case catalogue."
+    reports = list((NOTEBOOKS / "saved-reports/cases").glob("*.json"))
+    for path in reports:
+        case = json.loads(path.read_text())
+        assert set(case) == {"source_environment", "request"}, path.name
+        assert case["source_environment"] in {
+            "EPOCH_MSFT_EXECUTION_ID",
+            "EPOCH_AAPL_EXECUTION_ID",
+        }, path.name
+        validator.validate(case["request"])
+        for output in case["request"]["outputs"]:
+            if output["type"] == "json":
+                Draft202012Validator.check_schema(output["schema"])
     cells = 0
     for path in sorted(NOTEBOOKS.rglob("*.ipynb")):
         notebook = json.loads(path.read_text())
@@ -64,7 +76,7 @@ def main() -> None:
                 )
                 cells += 1
     print(
-        f"Validated {len(entries)} local requests and {cells} unexecuted notebook code cells."
+        f"Validated {len(entries) + len(reports)} local requests and {cells} unexecuted notebook code cells."
     )
     print(
         "Offline validation only; no vendor/model calls or market-data results were tested."

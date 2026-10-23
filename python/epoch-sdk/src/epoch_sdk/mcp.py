@@ -256,7 +256,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     ) -> CallToolResult:
         """Execute a saved study through Backend, without a supervisor or publication.
         Returns the native execution ID/status. Observe with epoch_status using
-        kind=execution; pass completed execution_ids to epoch_audit_run. Optional
+        kind=execution. Use a native extension for new supported single-source
+        calculations; retain epoch_audit_run for explicit diagnostics/comparisons. Optional
         execution_id is Backend's caller-selected ID. Never retry an uncertain
         submission blindly: retain and read its accepted ID.
         """
@@ -317,7 +318,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """Observe existing work only. Tool operations require their complete handle;
         Backend executions require execution_id; extensions require operation_id.
         Extension records separate native computation from saved output completion
-        and retain exact publication/answer revisions. No work is resubmitted.
+        and retain exact publication/answer revisions. Check error/response_phase;
+        outputs_recorded with extension_outputs confirms publication. Admission
+        phase may remain active; kind=execution reads numerical job status.
+        No work is resubmitted.
         """
         if kind == "tool" and handle is not None and execution_id is None and operation_id is None:
             return await _call(client.status(handle))

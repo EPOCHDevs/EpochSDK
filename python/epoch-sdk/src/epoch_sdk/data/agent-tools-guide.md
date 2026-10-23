@@ -20,11 +20,14 @@ directly from the evidence you read.
    not rewrite fixed dates or fiscal labels in a script; inspect the saved
    study before using another window.
 7. Read dashboard metadata/values directly with `epoch_read` when they answer
-   the question. For necessary non-inline analysis, call `epoch_audit_run` with
-   exact completed `execution_ids` and targeted natural-language questions.
-   Multiple IDs allow an explicit comparison; never silently join unrelated grids.
+   the question. New supported single-source calculations use the native
+   extension path below, even for ordinary short questions. Retain
+   `epoch_audit_run` for explicit diagnostics and comparisons with exact supported
+   execution bindings. Multiple IDs permit an explicit comparison, not an implicit
+   join of unrelated grids or publication-only inputs.
 
-For a new report over a completed execution, `epoch_extension_inputs` reads the
+For new calculations or requested outputs over one supported completed execution,
+`epoch_extension_inputs` reads the
 selected native table/field catalogue. If table names are unknown, inspect with
 `tables=[]`, then choose exact relevant names for the saved program. Inspection
 does not bind every table, author a study or start an execution. Write the EpochScript yourself and use
@@ -37,6 +40,9 @@ An optional `llm_call` generates bounded cached text that explicit
 Read `epoch_status(kind="extension", operation_id=...)` until declared outputs
 are confirmed, then use `epoch_read` for exact answer revisions or presentation
 pins. Numerical completion alone does not establish text/publication completion.
+Check error and response_phase; outputs_recorded with extension_outputs confirms
+publication. Admission phase may remain active after numeric completion or output
+failure. Use kind=execution with the exact execution ID for numerical job status.
 
 Specialist calls return a background-operation handle. Poll `epoch_status`
 with `kind="tool"` and that handle. Engine jobs use `kind="execution"` and the

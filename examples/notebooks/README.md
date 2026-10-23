@@ -5,6 +5,11 @@ the shared catalog/search/screening interface and its new supervisor integration
 See [the current SDK/MCP interface](../../docs/public-client-interface.md) for the
 default composable MCP tool set.
 
+For already completed results, use the separate
+[saved-report notebooks](saved-reports/README.md): Microsoft JSON/table, AAPL
+order activity, direct prepared-report execution/text reuse and an unavailable
+input. Their helpers and case files live together; they need SDK alpha23+.
+
 For sharing and demos, use the [individual case notebooks](demos/README.md).
 There is one notebook for each of the five desk cases, two separate format
 follow-ups and a clarification/reconnect example. The cells use shared `connect`,
