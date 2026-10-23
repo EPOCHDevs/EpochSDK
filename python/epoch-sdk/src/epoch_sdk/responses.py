@@ -59,7 +59,7 @@ class ResearchResponseContent(Contract):
     declarations: Annotated[list[OutputRequest], Field(min_length=1)]
     outputs: Annotated[list[OutputValue], Field(min_length=1)]
     qualifications: Annotated[list[ResponseQualification], Field(max_length=16)] = Field(
-        default_factory=list,
+        default_factory=lambda: list[ResponseQualification](),
         description="Required computed qualifications; these are not additional answer parts.",
     )
 

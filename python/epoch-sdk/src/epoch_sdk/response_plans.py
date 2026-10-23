@@ -187,7 +187,7 @@ class ResponsePlanDraft(Contract):
     queries: Annotated[list[ResponsePlanQuery], Field(min_length=1)]
     outputs: Annotated[list[ResponsePlanOutput], Field(min_length=1)]
     qualifications: Annotated[list[PlanQualification], Field(max_length=16)] = Field(
-        default_factory=list,
+        default_factory=lambda: list[PlanQualification](),
     )
 
     @model_validator(mode="after")
