@@ -9,17 +9,21 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 from stratifyx import AsyncStratifyX
 from stratifyx.types import (
     AssetUniverseResponse,
+    DatasetCatalogRequest,
     DatasetCatalogResponse,
     DatasetSearchQuery,
+    DatasetSearchRequest,
     DiscoverySearchResponse,
     DiscoveryStoredQueryResponse,
     ScreenAssetsRequest,
 )
 from stratifyx.types.discovery_stored_operation import DiscoveryStoredOperation_Read
+
+_SCREEN_REQUEST = TypeAdapter(ScreenAssetsRequest)
 
 
 class DatasetSearchResult(BaseModel):
@@ -53,12 +57,16 @@ class DatasetClient:
         Select source_ids and include_details for constructor schemas, vintage
         and revision options. Saved entries remain scoped to the caller.
         """
+        request = DatasetCatalogRequest.model_validate({
+            "source_ids": source_ids, "include_details": include_details,
+            "include_saved": include_saved, "saved_cursor": saved_cursor, "saved_limit": saved_limit,
+        })
         return await self.backend.discovery.read_dataset_catalog(
-            source_ids=source_ids,
-            include_details=include_details,
-            include_saved=include_saved,
-            saved_cursor=saved_cursor,
-            saved_limit=saved_limit,
+            source_ids=request.source_ids,
+            include_details=request.include_details,
+            include_saved=request.include_saved,
+            saved_cursor=request.saved_cursor,
+            saved_limit=request.saved_limit,
             request_options={"max_retries": 0},
         )
 
@@ -74,9 +82,12 @@ class DatasetClient:
         An omitted inline preview is read once from its saved pool. Search does
         not create a cohort; use screen_assets for a complete universe.
         """
+        request = DatasetSearchRequest.model_validate({
+            "requests": requests, "candidate_limit": candidate_limit,
+        })
         result = await self.backend.discovery.search_dataset(
-            requests=requests,
-            candidate_limit=candidate_limit,
+            requests=request.requests,
+            candidate_limit=request.candidate_limit,
             request_options={"max_retries": 0},
         )
         page = None
@@ -106,5 +117,5 @@ class DatasetClient:
         universe. Screening never applies relevance top-k.
         """
         return await self.backend.discovery.screen_asset_universe(
-            request=request, request_options={"max_retries": 0}
+            request=_SCREEN_REQUEST.validate_python(request), request_options={"max_retries": 0}
         )
