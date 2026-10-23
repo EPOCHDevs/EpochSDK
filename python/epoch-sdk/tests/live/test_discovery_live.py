@@ -1,8 +1,9 @@
 """Opt-in Discovery acceptance over real SDK and registered stdio MCP paths.
 
 Run with EPOCH_LIVE_DISCOVERY=1 and ordinary client URLs/token. Provider secrets
-remain in Backend. Each test makes one public search, then reads saved pages;
-it never retries a failed first attempt. Fixtures distinguish binding semantics
+remain in Backend. Each test makes one public search. Explicit SDK pool reads are independent
+test diagnostics and never rescue a missing first-response match; no agent
+paging tool is invoked and a failed first attempt is never retried. Fixtures distinguish binding semantics
 from the separate natural-language caller acceptance scenarios.
 """
 
@@ -246,14 +247,7 @@ async def drain_records(result, page, route: str, epoch: EpochClient, mcp):
         assert not value.original_receipts, "Fresh search unexpectedly became an archival handoff"
 
     if not result.records_complete and page is None:
-        if route == "sdk":
-            page = await epoch.read_dataset_search(result.receipt.result_ref)
-        else:
-            value = await mcp.call_tool("epoch_read", {
-                "kind": "dataset_search", "identifier": result.receipt.result_ref,
-            })
-            assert not value.is_error, value.model_dump(mode="json", by_alias=True)
-            page = DiscoveryStoredQueryResponse.model_validate(value.structured_content)
+        page = await epoch.read_dataset_search(result.receipt.result_ref)
     records = list(page.records if page is not None else result.records)
     pages = 1 if page is not None else 0
     if page is not None:
@@ -263,15 +257,7 @@ async def drain_records(result, page, route: str, epoch: EpochClient, mcp):
         assert page.next_cursor not in cursors, "Repeated saved-page cursor"
         cursors.add(page.next_cursor)
         assert len(records) < result.counts.stored_records, "More pages after declared row count"
-        if route == "sdk":
-            page = await epoch.read_dataset_search(result.receipt.result_ref, cursor=page.next_cursor)
-        else:
-            value = await mcp.call_tool("epoch_read", {
-                "kind": "dataset_search", "identifier": result.receipt.result_ref,
-                "cursor": page.next_cursor,
-            })
-            assert not value.is_error, value.model_dump(mode="json", by_alias=True)
-            page = DiscoveryStoredQueryResponse.model_validate(value.structured_content)
+        page = await epoch.read_dataset_search(result.receipt.result_ref, cursor=page.next_cursor)
         records.extend(page.records)
         check_page(page)
         pages += 1
@@ -382,9 +368,22 @@ async def exercise(case, route, env, receipt):
                     saved_cursor=request.saved_cursor,
                 )
             else:
-                value = await mcp.call_tool("epoch_dataset_catalog", wire(case.request))
+                value = await mcp.call_tool("epoch_read", {"kind": "guide"})
                 assert not value.is_error, value.model_dump(mode="json", by_alias=True)
-                response = DatasetCatalogResponse.model_validate(value.structured_content)
+                guide = "\n".join(part.text for part in value.content if part.type == "text")
+                # Independent SDK reference proves the live MCP briefing is the
+                # exact Backend prose. Detailed field schemas are an SDK/author
+                # contract, not a second default supervisor catalog tool.
+                response = await epoch.dataset_catalog(
+                    source_ids=case.request.source_ids,
+                    include_details=case.request.include_details,
+                    include_saved=case.request.include_saved,
+                    saved_limit=case.request.saved_limit,
+                    saved_cursor=case.request.saved_cursor,
+                )
+                assert response.overview in guide
+                receipt["catalog_reference_calls"] = 1
+                receipt["mcp_briefing_sha256"] = hashlib.sha256(response.overview.encode()).hexdigest()
             receipt["response"] = wire(response)
             assert sorted(entry.source.source_id for entry in response.sources) == sorted(
                 case.expected_source_ids
@@ -409,7 +408,7 @@ async def exercise(case, route, env, receipt):
         result, records, pages, lookup_seconds, initial_records = await search_once(case, route, epoch, mcp)
         receipt.update(result=wire(result), records=[wire(row) for row in records],
                        initial_page_records=[wire(row) for row in initial_records],
-                       saved_pages=pages, lookup_seconds=lookup_seconds)
+                       diagnostic_pool_pages=pages, lookup_seconds=lookup_seconds)
         expected = case.expected
         assert records, "Supported binding returned no saved records"
         if isinstance(expected, NoBindingExpectation):
@@ -493,7 +492,13 @@ async def exercise(case, route, env, receipt):
                                                 if identity in wanted],
                 "acceptance_page_limit": expected.top_k,
             }
-            assert len(initial_records) <= expected.top_k
+            delivered_by_need = {}
+            for row in initial_records:
+                if row.identity:
+                    key = (row.request_item_id, json.dumps(wire(row.requested_dataset), sort_keys=True))
+                    delivered_by_need.setdefault(key, set()).add(json.dumps(wire(row.identity), sort_keys=True))
+            assert all(len(identities) <= expected.top_k for identities in delivered_by_need.values())
+            receipt["acceptance_scope"] = "First response, independently bounded per subject/product; archived-pool reads are diagnostics only"
             matching = [row for row in initial_records if row.identity
                         and wire(row.identity) in wanted and row.availability != "unavailable"]
             assert matching, [wire(row.identity) if row.identity else None for row in initial_records]
