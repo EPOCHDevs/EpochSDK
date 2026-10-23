@@ -33,7 +33,7 @@ reconnects after a kernel/process restart. The explicit workflow MCP consumes th
 
 Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
 
-The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies; only explicit authoring/auditing use specialist LLMs. No Epoch supervisor or publication is required.
+The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies. Specialist LLMs run only for explicitly selected authoring/auditing or a program's declared `llm_call`. No Epoch supervisor or publication is required.
 
 For supported completed results, application/notebook and MCP clients share the
 same native extension methods:
@@ -61,8 +61,9 @@ and its answer revision (optionally `table`, `offset`, `page_size`), or
 `kind="presentation"` with the returned publication/catalog/edit pin.
 
 The calling coding agent can author the program itself. Tables, JSON and native
-reporters calculate directly in Backend; an explicit `commentary` declaration
-may invoke the bounded cached text model. There is no supervisor, vendor query
+reporters calculate directly in Backend. An explicit `llm_call` returns text
+that `response_text`, Markdown or `executive_summary` can consume independently
+or together, sharing one bounded cached generation. There is no supervisor, vendor query
 or original-study rerun in this path. A response table does not force a matching
 dashboard table, and dashboard-only work creates no artificial answer. An
 unsupported source/type remains an explicit capability error. The existing

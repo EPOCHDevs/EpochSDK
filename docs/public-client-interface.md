@@ -12,7 +12,7 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 | `epoch_execute` | Execute a saved study for an explicit period. | None |
 | `epoch_extension_inputs` | Read exact selected retained tables, types and frozen source. | None |
 | `epoch_save_extension` | Compile/save caller-authored EpochScript over one saved execution. | None |
-| `epoch_execute_extension` | Execute or reconnect to that saved program by operation ID. | Only explicitly declared cached commentary |
+| `epoch_execute_extension` | Execute or reconnect to that saved program by operation ID. | Only explicitly declared cached `llm_call` |
 | `epoch_audit_run` | Ask targeted questions of completed execution IDs, including comparisons. | Existing audit specialist |
 | `epoch_find` | List owned tools workspaces or saved study IDs. | None |
 | `epoch_read` | Read owned work, exact saved answer/table pages or pinned presentations. | None |
@@ -29,8 +29,9 @@ call these same methods; they do not invoke a supervisor or study author.
 Read the source's selected input catalog, supply an EpochScript program using
 its flat enum references, save the returned definition, then execute it with
 the original `source_execution_id` and a reusable `operation_id`. Tables, JSON
-and native dashboard reporters are independent destinations. Text commentary
-is optional and explicitly model-backed. Read the confirmed output references:
+and native dashboard reporters are independent destinations. Optional `llm_call`
+produces text for explicit `response_text`, Markdown and/or `executive_summary`
+consumers. Those destinations share its one bounded cached generation. Read the confirmed output references:
 the derived `execution_id` differs from the source, and presentation edit zero
 is an exact saved version. Keep earlier answer/view pins when choosing a newer
 report. A page size bounds one read, never the complete table.

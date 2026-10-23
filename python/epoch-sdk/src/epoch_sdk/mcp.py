@@ -228,9 +228,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
-            "Execution and reads use Backend directly. Only explicitly selected study authoring and auditing use specialist LLMs."
+            "Execution and reads use Backend directly. Specialist LLMs run only for explicitly selected study authoring/auditing or a program's declared llm_call."
             " For a supported completed result, use epoch_extension_inputs, epoch_save_extension and epoch_execute_extension to author/reuse an execution-input program. "
-            "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit commentary declaration may use the cached text model. "
+            "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit llm_call declaration may use the cached text model. "
             "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
         ),
         middleware=[checked_dispatch],
@@ -330,9 +330,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     ) -> CallToolResult:
         """Compile and save supplied EpochScript over an explicit execution_input.
         Use the returned catalog's flat ExecutionTable/field enum refs. Declare
-        response_table/response_json and/or native reporters independently; text
-        commentary is optional and explicitly model-backed. This saves an immutable
-        definition, uses no authoring LLM and runs no study. Keep the returned ID.
+        response_table/response_json and/or native reporters independently. Text
+        uses an explicit llm_call result with response_text, Markdown or summary
+        consumers. This saves an immutable definition, uses no authoring LLM and
+        runs no study. Keep the returned ID.
         """
         return await _call(client.save_extension(
             thread_id,source_execution_id=source_execution_id,tables=tables,source=source,
@@ -345,7 +346,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         result, input_tables selects its data and parameters may be empty. Reuse
         operation_id for identical accepted inputs; changed inputs conflict. It
         never reruns the original study or launches a supervisor. Only explicitly
-        declared commentary may call the bounded text model. Read epoch_status
+        declared llm_call may call the bounded cached text model. Read epoch_status
         with kind=extension and operation_id for exact completed output pins.
         """
         return await _call(client.execute_extension(request))
