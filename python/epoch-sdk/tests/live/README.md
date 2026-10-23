@@ -5,7 +5,7 @@ explicitly selected stdio MCP launcher. It makes one primary operation per case,
 then reads its saved pages and optionally checks saved-universe reuse. It does not retry a failed lookup, change its query,
 fetch observations, author a study, or invoke the supervisor.
 
-The initial corpus has 310 cases, each run through both clients:
+The corpus has 314 cases, each run through both clients:
 
 | Group | Cases | What is checked |
 | --- | ---: | --- |
@@ -17,7 +17,7 @@ The initial corpus has 310 cases, each run through both clients:
 | Market | 6 | Daily/minute primary/reference bars, FX, crypto and raw futures contracts |
 | Screens | 18 | Explicit rosters, boolean membership, listing filters, current/historical index semantics and saved reuse |
 | Boundaries | 20 | Inconsistent selectors/windows, unknown identities, quarantine, unsupported products and invalid fields |
-| Concept search | 6 | Independent GDP/CPI/yield labels and measurement facts in the first returned page; first-place accuracy recorded separately |
+| Concept search | 10 | Six independent GDP/CPI/yield queries and four revision-history filter variants; measurement facts and exact products in the first page, first-place accuracy recorded separately |
 | Batches | 7 | Multiple groups, subjects and products, distinct selectors, mixed unknown/success and atomic request errors |
 
 `asset_catalog` and `custom_data` are constructor-only entries, not external
