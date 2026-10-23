@@ -16,6 +16,7 @@ from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, Run, RunCreateMetadata, StreamMode
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
+from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import DomainError
@@ -624,6 +625,9 @@ class SupervisorClient:
 
     async def status(self, handle: WorkflowHandle) -> SupervisorResult:
         """Read this request after a human resumes in the UI; start no graph run."""
+        native = await self._native_research_outcome(handle)
+        if native is not None:
+            return native
         if handle.operation_id is not None and handle.run_id is None:
             return InProgress(handle=handle)
         if handle.run_id is not None and handle.operation_id is not None:
@@ -700,7 +704,60 @@ class SupervisorClient:
         if state.authority_turn_id not in (None, f"user-turn:{handle.request_id}"):
             raise ValueError("This thread has moved to another request; use its current handle")
 
+    async def _native_research_outcome(self, handle: WorkflowHandle) -> SupervisorResult | None:
+        identifier = handle.request_id
+        if (
+            len(identifier) != 36
+            or not identifier.startswith("req_")
+            or any(char not in "0123456789abcdef" for char in identifier[4:])
+        ):
+            return None
+        try:
+            record = await self.backend.sdk_requests.get_sdk_request(
+                identifier, request_options={"max_retries": 0}
+            )
+        except ApiError as error:
+            if error.status_code == 404:
+                return None  # A generic graph handle is not a Backend research record.
+            raise
+        if record.native_execution_request_id is None:
+            return None
+        if (
+            record.request_id != handle.request_id
+            or record.runtime is None
+            or record.runtime.thread_id != handle.thread_id
+            or record.runtime.assistant_id != handle.assistant_id
+            or (handle.operation_id is not None and record.operation_id != handle.operation_id)
+        ):
+            raise ValueError(
+                "The native research operation belongs to another request or conversation"
+            )
+        if record.error is not None:
+            error = DomainError.model_validate_json(record.error.error.model_dump_json())
+            return NoExecution(
+                handle=handle,
+                reason=error.message,
+                publication_failed=True,
+                publication_error=error,
+                execution_id=record.error.execution_id,
+            )
+        if record.response_id is None or record.response_version is None:
+            return InProgress(handle=handle)
+        answer = await self.response(record.response_id, version=record.response_version)
+        if (
+            answer.request_id != record.native_execution_request_id
+            or answer.thread_id != handle.thread_id
+            or answer.primary_execution_id != record.current_execution_id
+            or answer.version != record.response_version
+            or answer.extension is None
+        ):
+            raise ValueError("The answer differs from the linked native research operation")
+        return PublishedAnswer(handle=handle, response=answer.reference())
+
     async def _select(self, handle: WorkflowHandle, state: _State) -> SupervisorResult:
+        native = await self._native_research_outcome(handle)
+        if native is not None:
+            return native
         self._check_request(handle, state)
         if state.interrupts:
             return NeedsInput(
