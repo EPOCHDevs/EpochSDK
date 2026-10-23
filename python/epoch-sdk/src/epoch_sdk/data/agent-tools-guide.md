@@ -25,7 +25,9 @@ directly from the evidence you read.
    Multiple IDs allow an explicit comparison; never silently join unrelated grids.
 
 For a new report over a completed execution, `epoch_extension_inputs` reads the
-selected native table/field catalogue. Write the EpochScript yourself and use
+selected native table/field catalogue. If table names are unknown, inspect with
+`tables=[]`, then choose exact relevant names for the saved program. Inspection
+does not bind every table, author a study or start an execution. Write the EpochScript yourself and use
 `epoch_save_extension`, then `epoch_execute_extension` with the returned study
 ID, original source execution ID, selected input tables and a reusable operation
 ID. This path uses no supervisor or authoring model and never reruns the source

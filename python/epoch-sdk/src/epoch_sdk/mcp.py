@@ -330,7 +330,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     async def extension_inputs(execution_id: str, tables: list[str]) -> CallToolResult:
         """Read selected retained tables' exact types, flat enum refs and frozen code.
         Backend owner-checks the completed source and rejects unsupported inputs.
-        This is metadata, not sample rows, discovery or a model call. Reuse the
+        Pass tables=[] to discover native table names, then select an explicit
+        subset when saving a program. This inspection does not bind every table.
+        It reads metadata, without sample rows, vendor discovery or a model call. Reuse the
         source for multiple programs; do not embed its execution ID in EpochScript.
         """
         return await _call(client.extension_inputs(execution_id, tables=tables))
