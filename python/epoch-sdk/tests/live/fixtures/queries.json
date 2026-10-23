@@ -1,0 +1,1039 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Macro query labels are held outside requests and verified against captured vendor definitions; exact identities are never injected into concept inputs. Batch labels use independently reviewed identities and native selector contracts. These public calls do not invoke a supervisor.",
+  "cases": [
+    {
+      "id": "concept-gdp-latest",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-latest",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": []
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            },
+            "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-gdp-first",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-first",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": []
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_vintage_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "revision": "First"
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+            "effective_selectors": {
+              "kind": "vintage",
+              "revision": "First"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-gdp-tape",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-tape",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": []
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_revision_tape"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "full_tape": true
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+            "effective_selectors": {
+              "kind": "vintage",
+              "full_tape": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-te-headline-inflation",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-te-headline-inflation",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States headline consumer price inflation, all items CPI, year-over-year percent change; not core, trimmed mean or inflation expectations",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "inflation"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsHistorical"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "trading_economics",
+            "series_id": "CPI YOY"
+          }
+        ],
+        "top_k": 10,
+        "unit": "percent",
+        "frequency": "monthly",
+        "required_vendors": [
+          "trading_economics"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "trading_economics",
+              "series_id": "CPI YOY"
+            },
+            "source_ids": [
+              "te_series"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsHistorical"
+            },
+            "schema_ref": "data_category/TradingEconomicsHistorical/endpoint/trading_economics.historical"
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-us10y-history",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-us10y-history",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States 10-year government Treasury bond yield nominal level, not TIPS or a daily change",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "10 year"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarkets"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "te_market",
+            "symbol": "USGG10YR:IND"
+          }
+        ],
+        "top_k": 10,
+        "unit": "percent",
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "te_market",
+              "symbol": "USGG10YR:IND"
+            },
+            "source_ids": [
+              "te_index"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsMarkets"
+            },
+            "schema_ref": "data_category/TradingEconomicsMarkets/endpoint/trading_economics.markets_historical"
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-us10y-forecast",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-us10y-forecast",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States 10-year government Treasury bond yield market forecast",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "10 year"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarketForecast"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "te_market",
+            "symbol": "USGG10YR:IND"
+          }
+        ],
+        "top_k": 10,
+        "unit": "percent",
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "te_market",
+              "symbol": "USGG10YR:IND"
+            },
+            "source_ids": [
+              "te_market_forecast"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsMarketForecast"
+            },
+            "schema_ref": "data_category/TradingEconomicsMarketForecast/endpoint/trading_economics.markets_forecast"
+          }
+        ]
+      }
+    },
+    {
+      "id": "batch-two-subjects",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "issuers",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              },
+              {
+                "kind": "asset",
+                "ticker": "AAPL",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "batch",
+        "rows": [
+          {
+            "request_item_id": "issuers/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          },
+          {
+            "request_item_id": "issuers/subject/1",
+            "identity": {
+              "kind": "asset",
+              "ticker": "AAPL",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "batch-same-identity-different-selectors",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "annual",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          },
+          {
+            "request_id": "quarter",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "batch",
+        "rows": [
+          {
+            "request_item_id": "annual/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          },
+          {
+            "request_item_id": "quarter/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "quarterly",
+                "index_by": "ObservationDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "batch-multiple-products",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "products",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              },
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              },
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "batch",
+        "rows": [
+          {
+            "request_item_id": "products/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          },
+          {
+            "request_item_id": "products/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "income_statement",
+            "requested_dataset": {
+              "category": "IncomeStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "quarterly",
+                "index_by": "AcceptanceDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          },
+          {
+            "request_item_id": "products/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "balance_sheet",
+            "requested_dataset": {
+              "category": "BalanceSheets",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "ObservationDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "batch-success-and-unknown",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "mixed",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              },
+              {
+                "kind": "asset",
+                "ticker": "not-a-registered-instrument",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "batch",
+        "rows": [
+          {
+            "request_item_id": "mixed/subject/0",
+            "identity": {
+              "kind": "asset",
+              "ticker": "MSFT",
+              "asset_type": "Stocks"
+            },
+            "source_id": "cash_flow",
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            }
+          },
+          {
+            "request_item_id": "mixed/subject/1",
+            "identity": null,
+            "source_id": null,
+            "requested_dataset": {
+              "category": "CashFlowStatements",
+              "selectors": {
+                "kind": "financial",
+                "period": "annual",
+                "index_by": "FilingDate"
+              },
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            },
+            "status": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "id": "batch-quarantined-peer",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "healthy",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          },
+          {
+            "request_id": "quarantined",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "PARA",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 503,
+        "message_contains": "ASSET_ISSUER_IDENTITY_CONFLICT"
+      }
+    },
+    {
+      "id": "batch-duplicate-request-id",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "same",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          },
+          {
+            "request_id": "same",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "AAPL",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "duplicate request_id"
+      }
+    },
+    {
+      "id": "batch-empty-request-id",
+      "group": "batch",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "request_id is blank"
+      }
+    }
+  ],
+  "candidate_acceptance": "The existing search API returns candidates, not a selected study source. Correct source/measurement facts must be present in the first returned page on one public query; top-rank correctness is reported separately and is not semantic authority. Unique instrument and exact-address cases retain their independent stricter expectations. Natural-language caller acceptance must verify actual selection from the page. Original top1 experiment failures are preserved."
+}

@@ -1,0 +1,685 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Independent frozen native constructor/options inventory; constructor-only sources are catalog cases, not invented vendor lookups.",
+  "cases": [
+    {
+      "id": "catalog-overview",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "include_saved": false,
+        "source_ids": [],
+        "include_details": false
+      },
+      "expected_source_ids": []
+    },
+    {
+      "id": "catalog-all-options",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "include_saved": false,
+        "include_details": true,
+        "source_ids": []
+      },
+      "expected_source_ids": [
+        "asset_catalog",
+        "balance_sheet",
+        "balance_sheet_growth",
+        "cash_flow",
+        "cash_flow_growth",
+        "custom_data",
+        "dividends",
+        "dividends_calendar",
+        "earnings",
+        "earnings_calendar",
+        "enterprise_values",
+        "etf_holdings",
+        "etf_info",
+        "financial_growth",
+        "futures_contracts",
+        "historical_employee_count",
+        "historical_market_cap",
+        "income_statement",
+        "income_statement_growth",
+        "ipo_calendar",
+        "ipo_prospectus",
+        "key_metrics",
+        "mb_data",
+        "mb_release_schedule",
+        "mb_revision_tape",
+        "mb_vintage_data",
+        "owner_earnings",
+        "ratios",
+        "reference_assets",
+        "revenue_geographic_segmentation",
+        "revenue_product_segmentation",
+        "splits",
+        "splits_calendar",
+        "study_assets",
+        "te_calendar",
+        "te_calendar_all",
+        "te_forecast",
+        "te_index",
+        "te_market_forecast",
+        "te_rating",
+        "te_series"
+      ]
+    },
+    {
+      "id": "catalog-asset_catalog",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "asset_catalog"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "asset_catalog"
+      ]
+    },
+    {
+      "id": "catalog-balance_sheet",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "balance_sheet"
+      ]
+    },
+    {
+      "id": "catalog-balance_sheet_growth",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "balance_sheet_growth"
+      ]
+    },
+    {
+      "id": "catalog-cash_flow",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "cash_flow"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "cash_flow"
+      ]
+    },
+    {
+      "id": "catalog-cash_flow_growth",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "cash_flow_growth"
+      ]
+    },
+    {
+      "id": "catalog-custom_data",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "custom_data"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "custom_data"
+      ]
+    },
+    {
+      "id": "catalog-dividends",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "dividends"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "dividends"
+      ]
+    },
+    {
+      "id": "catalog-dividends_calendar",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "dividends_calendar"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "dividends_calendar"
+      ]
+    },
+    {
+      "id": "catalog-earnings",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "earnings"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "earnings"
+      ]
+    },
+    {
+      "id": "catalog-earnings_calendar",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "earnings_calendar"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "earnings_calendar"
+      ]
+    },
+    {
+      "id": "catalog-enterprise_values",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "enterprise_values"
+      ]
+    },
+    {
+      "id": "catalog-etf_holdings",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "etf_holdings"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "etf_holdings"
+      ]
+    },
+    {
+      "id": "catalog-etf_info",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "etf_info"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "etf_info"
+      ]
+    },
+    {
+      "id": "catalog-financial_growth",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "financial_growth"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "financial_growth"
+      ]
+    },
+    {
+      "id": "catalog-futures_contracts",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "futures_contracts"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "futures_contracts"
+      ]
+    },
+    {
+      "id": "catalog-historical_employee_count",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "historical_employee_count"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "historical_employee_count"
+      ]
+    },
+    {
+      "id": "catalog-historical_market_cap",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "historical_market_cap"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "historical_market_cap"
+      ]
+    },
+    {
+      "id": "catalog-income_statement",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "income_statement"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "income_statement"
+      ]
+    },
+    {
+      "id": "catalog-income_statement_growth",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "income_statement_growth"
+      ]
+    },
+    {
+      "id": "catalog-ipo_calendar",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "ipo_calendar"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "ipo_calendar"
+      ]
+    },
+    {
+      "id": "catalog-ipo_prospectus",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "ipo_prospectus"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "ipo_prospectus"
+      ]
+    },
+    {
+      "id": "catalog-key_metrics",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "key_metrics"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "key_metrics"
+      ]
+    },
+    {
+      "id": "catalog-mb_data",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "mb_data"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "mb_data"
+      ]
+    },
+    {
+      "id": "catalog-mb_release_schedule",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "mb_release_schedule"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "mb_release_schedule"
+      ]
+    },
+    {
+      "id": "catalog-mb_revision_tape",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "mb_revision_tape"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "mb_revision_tape"
+      ]
+    },
+    {
+      "id": "catalog-mb_vintage_data",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "mb_vintage_data"
+      ]
+    },
+    {
+      "id": "catalog-owner_earnings",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "owner_earnings"
+      ]
+    },
+    {
+      "id": "catalog-ratios",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "ratios"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "ratios"
+      ]
+    },
+    {
+      "id": "catalog-reference_assets",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "reference_assets"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "reference_assets"
+      ]
+    },
+    {
+      "id": "catalog-revenue_geographic_segmentation",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "revenue_geographic_segmentation"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "revenue_geographic_segmentation"
+      ]
+    },
+    {
+      "id": "catalog-revenue_product_segmentation",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "revenue_product_segmentation"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "revenue_product_segmentation"
+      ]
+    },
+    {
+      "id": "catalog-splits",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "splits"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "splits"
+      ]
+    },
+    {
+      "id": "catalog-splits_calendar",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "splits_calendar"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "splits_calendar"
+      ]
+    },
+    {
+      "id": "catalog-study_assets",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "study_assets"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "study_assets"
+      ]
+    },
+    {
+      "id": "catalog-te_calendar",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_calendar"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_calendar"
+      ]
+    },
+    {
+      "id": "catalog-te_calendar_all",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_calendar_all"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_calendar_all"
+      ]
+    },
+    {
+      "id": "catalog-te_forecast",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_forecast"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_forecast"
+      ]
+    },
+    {
+      "id": "catalog-te_index",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_index"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_index"
+      ]
+    },
+    {
+      "id": "catalog-te_market_forecast",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_market_forecast"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_market_forecast"
+      ]
+    },
+    {
+      "id": "catalog-te_rating",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_rating"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_rating"
+      ]
+    },
+    {
+      "id": "catalog-te_series",
+      "group": "catalog",
+      "operation": "catalog",
+      "request": {
+        "source_ids": [
+          "te_series"
+        ],
+        "include_saved": false,
+        "include_details": true
+      },
+      "expected_source_ids": [
+        "te_series"
+      ]
+    }
+  ]
+}

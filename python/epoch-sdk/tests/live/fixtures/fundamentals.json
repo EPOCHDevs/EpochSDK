@@ -1,0 +1,5552 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Supported period/date-axis branches from independently reviewed Backend catalog; native binding, not natural-language selection or observed values.",
+  "cases": [
+    {
+      "id": "financial-balance_sheet-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-trailing_twelve_months-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-trailing_twelve_months-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-trailing_twelve_months-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-trailing_twelve_months-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-trailing_twelve_months-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-trailing_twelve_months-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-trailing_twelve_months-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-trailing_twelve_months-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-trailing_twelve_months-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-trailing_twelve_months-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-trailing_twelve_months-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-trailing_twelve_months-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-trailing_twelve_months-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-trailing_twelve_months-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-trailing_twelve_months-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-trailing_twelve_months-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-trailing_twelve_months-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-trailing_twelve_months-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "trailing_twelve_months",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "trailing_twelve_months",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-annual-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-annual-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-annual-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-annual-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-annual-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-annual-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-quarterly-AcceptanceDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-quarterly-AcceptanceDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "AcceptanceDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "AcceptanceDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "AcceptanceDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-quarterly-FilingDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-quarterly-FilingDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "FilingDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "FilingDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-quarterly-ObservationDate",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-quarterly-ObservationDate",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly",
+                  "index_by": "ObservationDate"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly",
+            "index_by": "ObservationDate"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly",
+          "index_by": "ObservationDate"
+        }
+      }
+    },
+    {
+      "id": "financial-revenue_geographic_segmentation-annual",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-revenue_geographic_segmentation-annual",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "RevenueGeographicSegmentation",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "revenue_geographic_segmentation"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "RevenueGeographicSegmentation",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual"
+        }
+      }
+    },
+    {
+      "id": "financial-revenue_geographic_segmentation-quarterly",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-revenue_geographic_segmentation-quarterly",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "RevenueGeographicSegmentation",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "revenue_geographic_segmentation"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "RevenueGeographicSegmentation",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly"
+        }
+      }
+    },
+    {
+      "id": "financial-revenue_product_segmentation-annual",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-revenue_product_segmentation-annual",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "RevenueProductSegmentation",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "revenue_product_segmentation"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "RevenueProductSegmentation",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual"
+        }
+      }
+    },
+    {
+      "id": "financial-revenue_product_segmentation-quarterly",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-revenue_product_segmentation-quarterly",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "RevenueProductSegmentation",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "quarterly"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "revenue_product_segmentation"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "RevenueProductSegmentation",
+          "selectors": {
+            "kind": "financial",
+            "period": "quarterly"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "quarterly"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheets",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheets",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-balance_sheet_growth-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-balance_sheet_growth-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "BalanceSheetGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "balance_sheet_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "BalanceSheetGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-cash_flow_growth-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-cash_flow_growth-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "cash_flow_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "CashFlowGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-enterprise_values-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-enterprise_values-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EnterpriseValues",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "enterprise_values"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EnterpriseValues",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-financial_growth-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-financial_growth-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "financial_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "FinancialGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatements",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-income_statement_growth-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-income_statement_growth-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IncomeStatementGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "income_statement_growth"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IncomeStatementGrowth",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-key_metrics-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-key_metrics-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "KeyMetrics",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "key_metrics"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "KeyMetrics",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-owner_earnings-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-owner_earnings-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "OwnerEarnings",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "owner_earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "OwnerEarnings",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    },
+    {
+      "id": "financial-ratios-annual-default-date-basis",
+      "group": "fundamentals",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "financial-ratios-annual-default-date-basis",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ratios"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ratios",
+          "selectors": {
+            "kind": "financial",
+            "period": "annual"
+          },
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "effective_selectors": {
+          "kind": "financial",
+          "period": "annual",
+          "index_by": "FilingDate"
+        }
+      }
+    }
+  ]
+}

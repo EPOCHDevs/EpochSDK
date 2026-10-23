@@ -1,0 +1,1858 @@
+{
+  "schema_version": 1,
+  "expectation_basis": {
+    "native_corpus_sha256": "edb926baabd0f47060aea3868791d06ee43c3f215751585bed5d3b9663a16841",
+    "evaluation": "Recall of at least one independently reviewable relevant identity within top_k. Explicit directed FX codes require rank one; broad names allow ambiguity. US desk equity cases supply the intended listing venue. This bounded catalog test does not certify vendor truth or all queries. Google/Facebook require genuine source enrichment, never test-only aliases.",
+    "scope": "48 existing independently labeled name cases plus 12 exact native identities. Catalog relevance is not external vendor truth.",
+    "oracle_corrections": [
+      {
+        "case": "instrument-name-37",
+        "oracle_receipt_sha256": "5f1c64e9ad1abe988cdc96c225311ce3e7f3cd9b33c6ab2f6b97092e7f8fd9d7",
+        "raw_source": {
+          "catalog_generation": "3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "columns_read": [
+            "id",
+            "ticker",
+            "name",
+            "asset_class",
+            "exchange",
+            "currency"
+          ],
+          "generation_directory": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "manifest_path": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb/catalog_manifest.json",
+          "manifest_sha256": "3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "parquet_path": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb/asset_specs.parquet.gzip",
+          "parquet_row_count": 96839,
+          "parquet_sha256": "5374113db70e91661fee89b25d17ad14d22c7950fd9dafc88712386c9c297da2"
+        },
+        "extraction": {
+          "basis": "Only the raw selected asset catalog was used to derive the identities and full names. Search/ranking output was not used as the label source.",
+          "condition": "row[\"asset_class\"] == \"FX\" and \"euro\" in row[\"name\"].lower() and \"dollar\" in row[\"name\"].lower()",
+          "matching_rows": 30,
+          "ordering": "id ascending"
+        },
+        "reason": "Original USD-only failures are retained. This changes an unsupported unique-currency assumption, not the native rank output or the explicit directional tests."
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "instrument-name-01",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-01",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Microsoft Corporation",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "MSFT-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-02",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-02",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Microsfot",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "MSFT-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-03",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-03",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Apple Inc.",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AAPL-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-04",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-04",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Aplpe",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AAPL-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-05",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-05",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Alphabet",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "GOOG-Stocks",
+          "GOOGL-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "instrument-name-06",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-06",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Google",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ABEA.DE-Stocks",
+          "ABEA.F-Stocks",
+          "ABEC.DE-Stocks",
+          "ABEC.F-Stocks",
+          "GOOG-Stocks",
+          "GOOG.NE-Stocks",
+          "GOOGL-Stocks",
+          "GOOGL.SW-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Unscoped original brand lookup: permit genuine Alphabet issuer listings across venues, excluding trackers. Requires real source-backed brand evidence; listings are not interchangeable for execution.",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "instrument-name-07",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-07",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Meta Platforms",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "META-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-08",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-08",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Facebook",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "META-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Known brand/company relation requires source-owned profile/history evidence."
+      }
+    },
+    {
+      "id": "instrument-name-09",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-09",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Intell",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "INTC-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-10",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-10",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Berkshire Hathaway",
+                "asset_type": "Stocks",
+                "exchange": "NYSE"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "BRK.A-Stocks",
+          "BRK.B-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "instrument-name-11",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-11",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "NVIDIA",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "NVDA-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-12",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-12",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Amazon",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AMZN-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-13",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-13",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Tesla",
+                "asset_type": "Stocks",
+                "exchange": "NASDAQ"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "TSLA-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-14",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-14",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Exxon Mobil",
+                "asset_type": "Stocks",
+                "exchange": "NYSE"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "XOM-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-15",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-15",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Brent",
+                "asset_type": "Futures"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "CB-Futures",
+          "SC-Futures",
+          "ZD-Futures",
+          "QA-Futures",
+          "S$-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "instrument-name-16",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-16",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Crude Oil Brent",
+                "asset_type": "Futures",
+                "exchange": "ICE"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "CB-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-17",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-17",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "ICE Mini Brent",
+                "asset_type": "Futures",
+                "exchange": "ICESI"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ZD-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-18",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-18",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Micro E-mini S&P 500",
+                "asset_type": "Futures",
+                "exchange": "GBLX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ET-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-19",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-19",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "S&P 500 E-Mini",
+                "asset_type": "Futures",
+                "exchange": "GBLX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ES-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-20",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-20",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Gold",
+                "asset_type": "Futures",
+                "exchange": "COMEX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "GC-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-21",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-21",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Gold Mini",
+                "asset_type": "Futures",
+                "exchange": "CXMI"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "QO-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-22",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-22",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Natural Gas",
+                "asset_type": "Futures",
+                "exchange": "NYMEX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "NG-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-23",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-23",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "High Grade Copper",
+                "asset_type": "Futures",
+                "exchange": "COMEX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "HG-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-24",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-24",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Corn",
+                "asset_type": "Futures",
+                "exchange": "CBOT"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ZC-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-25",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-25",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Wheat",
+                "asset_type": "Futures",
+                "exchange": "CBOT"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ZW-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-26",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-26",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Soybean",
+                "asset_type": "Futures",
+                "exchange": "CBOT"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ZS-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-27",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-27",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "10-Year T-Note",
+                "asset_type": "Futures",
+                "exchange": "CBOT"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ZN-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-28",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-28",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Russell 2000 Micro",
+                "asset_type": "Futures",
+                "exchange": "GBLX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "RX-Futures"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-29",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-29",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "EUR/USD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "EURUSD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-30",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-30",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "USD/EUR",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "USDEUR-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-31",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-31",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "GBP/USD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "GBPUSD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-32",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-32",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "USD/JPY",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "USDJPY-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-33",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-33",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "USD/CHF",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "USDCHF-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-34",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-34",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "AUD/USD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AUDUSD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-35",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-35",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "USD/CAD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "USDCAD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-36",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-36",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "NZD/USD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "NZDUSD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Explicit ordered currency legs require the directed native pair at rank one."
+      }
+    },
+    {
+      "id": "instrument-name-37",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-37",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Euro Dollar",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AUDEUR-FX",
+          "BBDEUR-FX",
+          "BMDEUR-FX",
+          "CADEUR-FX",
+          "EURAUD-FX",
+          "EURBBD-FX",
+          "EURBMD-FX",
+          "EURBND-FX",
+          "EURBSD-FX",
+          "EURBZD-FX",
+          "EURCAD-FX",
+          "EURFJD-FX",
+          "EURGYD-FX",
+          "EURHKD-FX",
+          "EURJMD-FX",
+          "EURKYD-FX",
+          "EURLRD-FX",
+          "EURNAD-FX",
+          "EURNZD-FX",
+          "EURSGD-FX",
+          "EURTTD-FX",
+          "EURTWD-FX",
+          "EURUSD-FX",
+          "HKDEUR-FX",
+          "JMDEUR-FX",
+          "KYDEUR-FX",
+          "NZDEUR-FX",
+          "SGDEUR-FX",
+          "TWDEUR-FX",
+          "USDEUR-FX"
+        ],
+        "top_k": 5,
+        "reason": "Ambiguous Euro/Dollar-family query: source names include AUD/BMD/CAD/HKD/NZD/USD and other dollar legs; neither USD nor pair direction was specified. Labels independently extracted from the selected raw Parquet, not rank output.",
+        "ambiguous": true,
+        "diagnostic_relevant_ids": [
+          "EURUSD-FX",
+          "USDEUR-FX"
+        ]
+      }
+    },
+    {
+      "id": "instrument-name-38",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-38",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Japanese Yen",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AEDJPY-FX",
+          "ARSJPY-FX",
+          "AUDJPY-FX",
+          "BDTJPY-FX",
+          "BRLJPY-FX",
+          "CADJPY-FX",
+          "CHFJPY-FX",
+          "CNHJPY-FX",
+          "CNYJPY-FX",
+          "CZKJPY-FX",
+          "DKKJPY-FX",
+          "EGPJPY-FX",
+          "EURJPY-FX",
+          "GBPJPY-FX",
+          "HKDJPY-FX",
+          "HUFJPY-FX",
+          "IDRJPY-FX",
+          "ILSJPY-FX",
+          "INRJPY-FX",
+          "JPYAED-FX",
+          "JPYARS-FX",
+          "JPYAUD-FX",
+          "JPYBRL-FX",
+          "JPYCAD-FX",
+          "JPYCHF-FX",
+          "JPYCLP-FX",
+          "JPYCNY-FX",
+          "JPYCZK-FX",
+          "JPYDKK-FX",
+          "JPYEUR-FX",
+          "JPYGBP-FX",
+          "JPYHKD-FX",
+          "JPYIDR-FX",
+          "JPYILS-FX",
+          "JPYINR-FX",
+          "JPYKRW-FX",
+          "JPYMXN-FX",
+          "JPYMYR-FX",
+          "JPYNOK-FX",
+          "JPYNZD-FX",
+          "JPYPKR-FX",
+          "JPYPLN-FX",
+          "JPYRSD-FX",
+          "JPYRUB-FX",
+          "JPYSAR-FX",
+          "JPYSEK-FX",
+          "JPYTHB-FX",
+          "JPYTWD-FX",
+          "JPYUSD-FX",
+          "JPYZAR-FX",
+          "KRWJPY-FX",
+          "MXNJPY-FX",
+          "MYRJPY-FX",
+          "NGNJPY-FX",
+          "NOKJPY-FX",
+          "NZDJPY-FX",
+          "PHPJPY-FX",
+          "PKRJPY-FX",
+          "PLNJPY-FX",
+          "RUBJPY-FX",
+          "SARJPY-FX",
+          "SEKJPY-FX",
+          "SGDJPY-FX",
+          "THBJPY-FX",
+          "TRYJPY-FX",
+          "TWDJPY-FX",
+          "USDJPY-FX",
+          "VNDJPY-FX",
+          "XAGJPY-FX",
+          "XAUJPY-FX",
+          "ZARJPY-FX"
+        ],
+        "top_k": 5,
+        "reason": "Broad yen search allows each native yen pair; no unstated counter currency is assumed.",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "instrument-name-39",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-39",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Bitcoin USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "BTCUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-40",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-40",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Ethereum USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ETHUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-41",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-41",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Solana USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "SOLUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-42",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-42",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "XRP USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "XRPUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-43",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-43",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Litecoin USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "LTCUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-44",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-44",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Cardano USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ADAUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-45",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-45",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Binance COIN USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "BNBUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-46",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-46",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Dogecoin USD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "DOGEUSD-Crypto"
+        ],
+        "top_k": 5,
+        "reason": "Published native identity and instrument name; no invented ticker aliases."
+      }
+    },
+    {
+      "id": "instrument-name-47",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-47",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "MUNCHENER",
+                "asset_type": "Stocks",
+                "exchange": "XETRA"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "MUV2.DE-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Case and accent normalization; original source name contains M\u00fcnchen/M\u00fcnchener."
+      }
+    },
+    {
+      "id": "instrument-name-48",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-name-48",
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Nestle",
+                "asset_type": "Stocks",
+                "exchange": "SIX"
+              }
+            ]
+          }
+        ],
+        "candidate_limit": 5
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "NESN.SW-Stocks"
+        ],
+        "top_k": 5,
+        "reason": "Accent normalization; original source name is Nestl\u00e9 S.A."
+      }
+    },
+    {
+      "id": "instrument-id-msft",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-msft",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "MSFT-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-aapl",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-aapl",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "AAPL",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "AAPL-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-meta",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-meta",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "META",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "META-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-goog",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-goog",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "GOOG",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "GOOG-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-muv2-de",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-muv2-de",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MUV2.DE",
+                "asset_type": "Stocks"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "MUV2.DE-Stocks"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-cb",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-cb",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "CB",
+                "asset_type": "Futures"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "CB-Futures"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-es",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-es",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "ES",
+                "asset_type": "Futures"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ES-Futures"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-gc",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-gc",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "GC",
+                "asset_type": "Futures"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "GC-Futures"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-eurusd",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-eurusd",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "EURUSD",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "EURUSD-FX"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-usdjpy",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-usdjpy",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "USDJPY",
+                "asset_type": "FX"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "USDJPY-FX"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-btcusd",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-btcusd",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "BTCUSD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "BTCUSD-Crypto"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    },
+    {
+      "id": "instrument-id-ethusd",
+      "group": "instruments",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "instrument-id-ethusd",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "ETHUSD",
+                "asset_type": "Crypto"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "identities",
+        "relevant_ids": [
+          "ETHUSD-Crypto"
+        ],
+        "top_k": 1,
+        "reason": "Exact identity independently labeled in the reviewed native instrument corpus; no name substitution."
+      }
+    }
+  ]
+}

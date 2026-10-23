@@ -1,0 +1,2213 @@
+{
+  "schema_version": 1,
+  "expectation_basis": {
+    "proposal_sha256": "28a6d7a1c8e968c38ca25a81e59f623b372eb5b0044586b2727bd0dcc2207d03",
+    "identity_labels": {
+      "MacrobondGDP": {
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "description": "United States, Gross Domestic Product, Total, Constant Prices, SA, AR, Change P/P",
+        "unit": "Percent",
+        "frequency": "quarterly"
+      },
+      "MacrobondRelease": {
+        "identity": {
+          "kind": "mb_release",
+          "release_id": "rel_usbeana"
+        },
+        "basis": "Exact release_ids member from captured GDP metadata.source_definition; not a guessed ID"
+      },
+      "TradingEconomicsHistorical": {
+        "identity": {
+          "kind": "series",
+          "vendor": "trading_economics",
+          "series_id": "CPI YOY"
+        },
+        "display_name": "United States Inflation Rate",
+        "country": "US",
+        "note": "Preserve HistoricalDataSymbol space; not the CPI16%trimmed-mean candidate"
+      },
+      "TradingEconomicsIndicator": {
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "basis": "Canonical US/Inflation Rate tuple in existing direct-source fixture plus captured CPI YOY headline label. A new live test must still verify current provider tuple; this proposal makes no new provider-availability claim."
+      },
+      "TradingEconomicsMarket": {
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "display_name": "US 10Y",
+        "country": "United States"
+      },
+      "GlobalCalendar": {
+        "identity": {
+          "kind": "global_source",
+          "source_id": "te_calendar_all"
+        },
+        "basis": "Source-owned shared scope and empty identity keys"
+      },
+      "TradingEconomicsRatings": {
+        "identity": {
+          "kind": "te_ratings",
+          "country": "US"
+        },
+        "basis": "CountryUS from captured provider metadata and native country-map address contract; no ratings observations queried"
+      }
+    },
+    "source_evidence": [
+      {
+        "file": "eng2184-v3-actual-host-positive.json",
+        "sha256": "858c2a9265861add1ea4c4822e749dc0e3e66ddaf1e7f2e9d92ed49a8e683e6b"
+      },
+      {
+        "file": "eng2184-v3-cold-sdk.json",
+        "sha256": "41c08c28006d69b00e646bf659da282996a4504abff866079686c3c3f44d4707"
+      },
+      {
+        "file": "eng2184-v3-both_macro_providers-sdk.json",
+        "sha256": "7b987e2f92eb237993969ee65e92125f498e9ad2bdac4899659b7e01ff28b280"
+      },
+      {
+        "file": "eng2184-v3-market_forecast-sdk.json",
+        "sha256": "118ee0427c7249792ecf3e8a6c302beb03a116fcc12a6bedfc776dae09b70319"
+      }
+    ],
+    "scope": "36 exact-address metadata binding cases covering all11macro constructors; native model validation only, no query/provider/model/study calls. Natural-language retrieval/measurement-fit cases remain separate.",
+    "oracle_requirements": [
+      "Preserve the exact requested_dataset independently from effective defaults.",
+      "Check resolved status, expected count, binding refs, constructor/category and selector-specific schema_ref.",
+      "Only compare declared effective-selector keys; omitted full_tape is semantically false, not a requirement to materialize false.",
+      "Latest-series/market positive cases permit available or unknown metadata; do not require a weaker verdict or accept unavailable.",
+      "Calendar/vintage/forecast cases preserve unknown product coverage and first_snapshot/tracking/current-snapshot qualifications.",
+      "No preliminary revision-info operation. Schema_ref names an observation endpoint but does not authorize calling it during Discovery."
+    ],
+    "constructor_only_options": [
+      "include_previous_observation",
+      "TE update_country/update_tickers",
+      "source raw argument lists/window anchors/role/runtime controls"
+    ],
+    "review_correction": "Native value-column projection excludes indexes; full catalog preserves index definitions. TE exact historical/rating base metadata intentionally leaves identity status unknown. Original first-run operator expectation failures remain in private acceptance evidence."
+  },
+  "cases": [
+    {
+      "id": "macro-mb-latest-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-latest-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+      }
+    },
+    {
+      "id": "macro-mb-latest-value",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-latest-value",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "value"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "value"
+          ]
+        },
+        "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+      }
+    },
+    {
+      "id": "macro-mb-latest-observation-clock",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-latest-observation-clock",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondData",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "observation_date"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondData",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "observation_date"
+          ]
+        },
+        "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+      }
+    },
+    {
+      "id": "macro-mb-vintage-default-last",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-default-last",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "Last"
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-last",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-last",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "Last"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "revision": "Last"
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "Last"
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-first",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-first",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "revision": "First"
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "First"
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-nth1",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-nth1",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "NthFromLast",
+                  "nth": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "revision": "NthFromLast",
+            "nth": 1
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "NthFromLast",
+          "nth": 1
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-nth2",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-nth2",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "NthFromLast",
+                  "nth": 2
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "revision": "NthFromLast",
+            "nth": 2
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "NthFromLast",
+          "nth": 2
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-explicit-not-tape",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-explicit-not-tape",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "full_tape": false
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "Last",
+          "full_tape": false
+        }
+      }
+    },
+    {
+      "id": "macro-mb-vintage-first-native-clocks",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-vintage-first-native-clocks",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "observation_date",
+                  "release_kind"
+                ],
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_vintage_data"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "observation_date",
+            "release_kind"
+          ],
+          "selectors": {
+            "kind": "vintage",
+            "revision": "First"
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+        "effective_selectors": {
+          "kind": "vintage",
+          "revision": "First"
+        }
+      }
+    },
+    {
+      "id": "macro-mb-tape-default-fields",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-tape-default-fields",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_revision_tape"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "selectors": {
+            "kind": "vintage",
+            "full_tape": true
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "full_tape": true
+        }
+      }
+    },
+    {
+      "id": "macro-mb-tape-change-fields",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-tape-change-fields",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "value",
+                  "revision",
+                  "value_changed",
+                  "release_kind"
+                ],
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_revision_tape"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "value",
+            "revision",
+            "value_changed",
+            "release_kind"
+          ],
+          "selectors": {
+            "kind": "vintage",
+            "full_tape": true
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "full_tape": true
+        }
+      }
+    },
+    {
+      "id": "macro-mb-tape-native-clocks",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-tape-native-clocks",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "observation_date",
+                  "release_kind"
+                ],
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_revision_tape"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "macrobond",
+          "series_id": "usnaac0381"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondVintageData",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "observation_date",
+            "release_kind"
+          ],
+          "selectors": {
+            "kind": "vintage",
+            "full_tape": true
+          }
+        },
+        "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+        "effective_selectors": {
+          "kind": "vintage",
+          "full_tape": true
+        }
+      }
+    },
+    {
+      "id": "macro-mb-release-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-release-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "mb_release",
+                  "release_id": "rel_usbeana"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondReleaseSchedule"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_release_schedule"
+        ],
+        "identity": {
+          "kind": "mb_release",
+          "release_id": "rel_usbeana"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondReleaseSchedule"
+        },
+        "schema_ref": "data_category/MacrobondReleaseSchedule/endpoint/macrobond.release_upcoming_releases"
+      }
+    },
+    {
+      "id": "macro-mb-release-expected-kind",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-release-expected-kind",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "mb_release",
+                  "release_id": "rel_usbeana"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondReleaseSchedule",
+                "fields": [
+                  "expected_release_time",
+                  "kind"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_release_schedule"
+        ],
+        "identity": {
+          "kind": "mb_release",
+          "release_id": "rel_usbeana"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondReleaseSchedule",
+          "fields": [
+            "expected_release_time",
+            "kind"
+          ]
+        },
+        "schema_ref": "data_category/MacrobondReleaseSchedule/endpoint/macrobond.release_upcoming_releases"
+      }
+    },
+    {
+      "id": "macro-mb-release-source-reference",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-mb-release-source-reference",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "mb_release",
+                  "release_id": "rel_usbeana"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondReleaseSchedule",
+                "fields": [
+                  "source_release_time",
+                  "reference_period_date"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "mb_release_schedule"
+        ],
+        "identity": {
+          "kind": "mb_release",
+          "release_id": "rel_usbeana"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "MacrobondReleaseSchedule",
+          "fields": [
+            "source_release_time",
+            "reference_period_date"
+          ]
+        },
+        "schema_ref": "data_category/MacrobondReleaseSchedule/endpoint/macrobond.release_upcoming_releases"
+      }
+    },
+    {
+      "id": "macro-te-series-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-series-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "trading_economics",
+                  "series_id": "CPI YOY"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsHistorical",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_series"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "trading_economics",
+          "series_id": "CPI YOY"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsHistorical",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/TradingEconomicsHistorical/endpoint/trading_economics.historical",
+        "status": "unknown"
+      }
+    },
+    {
+      "id": "macro-te-series-value",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-series-value",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "trading_economics",
+                  "series_id": "CPI YOY"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsHistorical",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "value"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_series"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "trading_economics",
+          "series_id": "CPI YOY"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsHistorical",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "value"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsHistorical/endpoint/trading_economics.historical",
+        "status": "unknown"
+      }
+    },
+    {
+      "id": "macro-te-series-observation-clock",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-series-observation-clock",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "trading_economics",
+                  "series_id": "CPI YOY"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsHistorical",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "observation_date"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_series"
+        ],
+        "identity": {
+          "kind": "series",
+          "vendor": "trading_economics",
+          "series_id": "CPI YOY"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsHistorical",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "observation_date"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsHistorical/endpoint/trading_economics.historical",
+        "status": "unknown"
+      }
+    },
+    {
+      "id": "macro-te_calendar-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te_calendar-actual-consensus",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar-actual-consensus",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "actual",
+                  "forecast",
+                  "previous"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "actual",
+            "forecast",
+            "previous"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te_calendar-publication-reference",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar-publication-reference",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "release_date",
+                  "reference_date",
+                  "calendar_id"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "release_date",
+            "reference_date",
+            "calendar_id"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te_calendar_all-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar_all-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "te_calendar_all"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar_all"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "te_calendar_all"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te_calendar_all-actual-consensus",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar_all-actual-consensus",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "te_calendar_all"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "actual",
+                  "forecast",
+                  "previous"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar_all"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "te_calendar_all"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "actual",
+            "forecast",
+            "previous"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te_calendar_all-publication-reference",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te_calendar_all-publication-reference",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "te_calendar_all"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "release_date",
+                  "reference_date",
+                  "calendar_id"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_calendar_all"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "te_calendar_all"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "release_date",
+            "reference_date",
+            "calendar_id"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsCalendar/endpoint/trading_economics.calendar"
+      }
+    },
+    {
+      "id": "macro-te-forecast-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-forecast-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsForecast"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_forecast"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsForecast"
+        },
+        "schema_ref": "data_category/TradingEconomicsForecast/endpoint/trading_economics.forecast"
+      }
+    },
+    {
+      "id": "macro-te-forecast-latest-value",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-forecast-latest-value",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsForecast",
+                "fields": [
+                  "latest_value",
+                  "latest_value_date"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_forecast"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsForecast",
+          "fields": [
+            "latest_value",
+            "latest_value_date"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsForecast/endpoint/trading_economics.forecast"
+      }
+    },
+    {
+      "id": "macro-te-forecast-horizon-points",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-forecast-horizon-points",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_indicator",
+                  "country": "US",
+                  "indicator": "Inflation Rate"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsForecast",
+                "fields": [
+                  "q1",
+                  "q1_date",
+                  "year_end"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_forecast"
+        ],
+        "identity": {
+          "kind": "te_indicator",
+          "country": "US",
+          "indicator": "Inflation Rate"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsForecast",
+          "fields": [
+            "q1",
+            "q1_date",
+            "year_end"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsForecast/endpoint/trading_economics.forecast"
+      }
+    },
+    {
+      "id": "macro-te-market-history-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-history-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarkets",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_index"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarkets",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/TradingEconomicsMarkets/endpoint/trading_economics.markets_historical"
+      }
+    },
+    {
+      "id": "macro-te-market-history-close",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-history-close",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarkets",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "close"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_index"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarkets",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "close"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsMarkets/endpoint/trading_economics.markets_historical"
+      }
+    },
+    {
+      "id": "macro-te-market-history-ohlc",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-history-ohlc",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarkets",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "open",
+                  "high",
+                  "low",
+                  "close"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_index"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "available",
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarkets",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "open",
+            "high",
+            "low",
+            "close"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsMarkets/endpoint/trading_economics.markets_historical"
+      }
+    },
+    {
+      "id": "macro-te-market-forecast-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-forecast-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarketForecast"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_market_forecast"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarketForecast"
+        },
+        "schema_ref": "data_category/TradingEconomicsMarketForecast/endpoint/trading_economics.markets_forecast"
+      }
+    },
+    {
+      "id": "macro-te-market-forecast-horizon",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-forecast-horizon",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarketForecast",
+                "fields": [
+                  "q1",
+                  "q1_date"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_market_forecast"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarketForecast",
+          "fields": [
+            "q1",
+            "q1_date"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsMarketForecast/endpoint/trading_economics.markets_forecast"
+      }
+    },
+    {
+      "id": "macro-te-market-forecast-native-clocks",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-market-forecast-native-clocks",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_market",
+                  "symbol": "USGG10YR:IND"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsMarketForecast",
+                "fields": [
+                  "quote_date",
+                  "retrieved_at",
+                  "last_forecast_update"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_market_forecast"
+        ],
+        "identity": {
+          "kind": "te_market",
+          "symbol": "USGG10YR:IND"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsMarketForecast",
+          "fields": [
+            "quote_date",
+            "retrieved_at",
+            "last_forecast_update"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsMarketForecast/endpoint/trading_economics.markets_forecast"
+      }
+    },
+    {
+      "id": "macro-te-ratings-default",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-ratings-default",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_ratings",
+                  "country": "US"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsRatings",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_rating"
+        ],
+        "identity": {
+          "kind": "te_ratings",
+          "country": "US"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsRatings",
+          "requested_window": {
+            "from": "2023-01-01",
+            "to": "2024-12-31"
+          }
+        },
+        "schema_ref": "data_category/TradingEconomicsRatings/endpoint/trading_economics.ratings_historical",
+        "status": "unknown"
+      }
+    },
+    {
+      "id": "macro-te-ratings-action-fields",
+      "group": "macro",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "macro-te-ratings-action-fields",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "te_ratings",
+                  "country": "US"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "TradingEconomicsRatings",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-03-31"
+                },
+                "fields": [
+                  "action_date",
+                  "agency",
+                  "rating_numeric"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "te_rating"
+        ],
+        "identity": {
+          "kind": "te_ratings",
+          "country": "US"
+        },
+        "availability": [
+          "unknown"
+        ],
+        "requested_dataset": {
+          "category": "TradingEconomicsRatings",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-03-31"
+          },
+          "fields": [
+            "action_date",
+            "agency",
+            "rating_numeric"
+          ]
+        },
+        "schema_ref": "data_category/TradingEconomicsRatings/endpoint/trading_economics.ratings_historical",
+        "status": "unknown"
+      }
+    }
+  ]
+}
