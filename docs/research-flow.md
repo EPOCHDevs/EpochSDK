@@ -27,10 +27,15 @@ flowchart LR
     Publish --> End[End turn; render saved answer once]
     Research --> Questions[Clarification]
     Questions --> Research
+    Research --> Extension[Author a report over saved results]
+    Extension --> Native[Backend links the request and runs the saved script]
+    Native --> NativeSave[Backend saves the declared answer and dashboard]
+    NativeSave --> End
 ```
 
-Publication is the final supervisor tool and ends the turn without a second model
-answer. A runtime policy rejects unpersisted final assistant answers. Ordinary
+Ordinary publication is the final supervisor tool and ends the turn without a second model
+answer. A saved-input extension instead ends through its confirmed native publication;
+it does not call the publication tool again. A runtime policy rejects unpersisted final assistant answers. Ordinary
 conversation defaults to concise Markdown named `answer`. SDK output declarations
 remain exact. Progress, clarification and failure events keep their existing paths.
 
@@ -50,6 +55,31 @@ evidence the caller has read. Existing dashboard
 exhibits may still serve the dashboard's own purpose. A response does not mandate
 another dashboard Markdown narrative or execution-summary report.
 
+## Reports over saved results
+
+An execution extension reads an explicitly selected completed execution. Its script
+uses native computation and SQL to produce table/JSON outputs. An optional
+`llm_call` turns complete computed facts into text; independent `response_text`,
+Markdown and summary sinks can share that text. A dashboard is optional.
+
+Source declarations preserve each requested part's description and order. Tables
+can declare their complete canonical Column schema, including nullability,
+descriptions and units. Native and requested null guarantees are checked over every
+row. The bounded text call does not construct financial JSON or enumerate table cells.
+
+For SDK research, `research_request_id` on native admission names the existing
+accepted research attempt. Backend confirms its immutable
+`native_execution_request_id` link before starting native work. Reconnect waits for
+confirmed output completion and pins the original answer without another model run
+or publication callback. A later conversation turn or manual answer revision does
+not replace that pin.
+
+`ResearchCompleted.request_id` identifies the research attempt;
+`ResearchCompleted.response.request_id` retains the original native operation ID.
+Native extension completion does not create a generic `SavedStudy` handle that
+would lose the selected input. Use the explicit extension interfaces to retain
+that input for a subsequent execution.
+
 Current native routes:
 
 | Owner | Surface |
@@ -63,8 +93,10 @@ Current native routes:
 | LangGraph | Native state, run/wait and interrupt/resume |
 | EpochSDK/MCP | Wrap native LangGraph and generated StratifyX clients |
 
-The public SDK and MCP share five operations: `run`, `execute`, `resume`,
-`status` and `read`. A task string plus optional context, output declarations and
+The SDK research session exposes `run`, `execute`, `resume`, `status` and `read`;
+the explicit workflow-MCP compatibility module mirrors that workflow. The default
+composable MCP exposes caller-selected tools and does not start a supervisor.
+A task string plus optional context, output declarations and
 parameters goes through one session. Epoch owns discovery, building, output
 validation and publication. See [the interface](public-client-interface.md).
 
@@ -97,7 +129,7 @@ tree belong to the new-design work.
 
 The illustrative combined `/v1/run` contract remains historical design material;
 no extra deployed proxy is introduced. Automatic multi-study merging, recovery
-workers, retention, custom presentation and new response transforms remain deferred.
+workers, retention and custom presentation remain separate work.
 The user approved the structure review, and the local model/engine cases now pass
 through the Python SDK and MCP. See [the verification record](verification-2026-10-18.md)
 for the cases, error checks and rollout boundaries.
