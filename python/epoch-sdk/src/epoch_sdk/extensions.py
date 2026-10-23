@@ -51,8 +51,9 @@ class ExecutionExtensionClient:
     ) -> ExecutionInputCatalogResponse:
         """Read exact owned schemas, flat enum references and frozen source.
 
-        Select named retained tables. This is metadata, not a data preview or
-        an invocation. Backend explicitly rejects unsupported source capabilities.
+        Use tables=[] when the native table names are unknown, then select an
+        explicit subset for save/execute. This inspection saves no selection and
+        starts no work. Backend rejects unsupported or oversized catalogues.
         """
         return await self.backend.studies_executions.describe_execution_inputs(
             execution_id, tables=tables, request_options={"max_retries": 0}
