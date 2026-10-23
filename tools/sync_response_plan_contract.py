@@ -63,6 +63,9 @@ def schemas():
         "JsonSchema" if name == "JsonSchemaDocument" else "Error" if name == "DomainError" else name)
         for name in ["RunParameters", "DomainError", "Column", "TableOutputRequest",
                      "JsonOutputRequest", "TextOutputRequest", "JsonSchemaDocument"]}
+    core["ExecutionExtensionProvenance"] = (
+        "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance"
+    )
     result = {}
     for filename, model in MODELS:
         result[filename] = project(model, core)

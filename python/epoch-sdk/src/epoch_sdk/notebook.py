@@ -238,6 +238,13 @@ class NotebookView:
                     + "</pre></details>"
                 )
             )
+        for qualification in saved.content.qualifications:
+            with self.answer_output:
+                display(HTML("<h4>" + html.escape(qualification.description) + "</h4>"))
+                if isinstance(qualification.value, (dict, list)):
+                    display(JSON(qualification.value, expanded=True))
+                else:
+                    display(HTML("<pre>" + html.escape(json.dumps(qualification.value)) + "</pre>"))
         for part in saved.content.outputs:
             with self.answer_output:
                 display(HTML("<h4>" + html.escape(part.name) + "</h4>"))

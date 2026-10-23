@@ -50,6 +50,14 @@
       "title": "Outputs",
       "type": "array"
     },
+    "qualifications": {
+      "items": {
+        "$ref": "response-plan-draft.schema.json#/$defs/PlanQualification"
+      },
+      "maxItems": 16,
+      "title": "Qualifications",
+      "type": "array"
+    },
     "queries": {
       "items": {
         "$ref": "response-plan-draft.schema.json#/$defs/ResponsePlanQuery"

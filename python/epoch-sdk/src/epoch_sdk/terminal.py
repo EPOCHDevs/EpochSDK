@@ -113,6 +113,11 @@ class TerminalView:
     async def _answer(self, result: ResearchCompleted) -> None:
         saved = result.response
         self.console.print(Text(f"Saved answer · revision {saved.version}", style="bold green"))
+        for qualification in saved.content.qualifications:
+            self.console.print(Panel(
+                Text(json.dumps(qualification.value, ensure_ascii=False, indent=2)),
+                title=Text(qualification.description),
+            ))
         for part in saved.content.outputs:
             if isinstance(part, TextValue):
                 value = Markdown(part.value) if part.format == "markdown" else Text(part.value)
