@@ -654,7 +654,11 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             record = await self.backend.sdk_requests.get_sdk_request(
                 record.request_id, request_options={"max_retries": 0}
             )
-            if record.response_version is not None or record.error is not None:
+            if (
+                record.response_version is not None
+                or record.error is not None
+                or record.native_execution_request_id is not None
+            ):
                 return await self.research_status(record.request_id)
             if record.runtime is None:
                 try:
@@ -686,6 +690,12 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                         record = await self.backend.sdk_requests.get_sdk_request(
                             record.request_id, request_options={"max_retries": 0}
                         )
+            if (
+                record.response_version is not None
+                or record.error is not None
+                or record.native_execution_request_id is not None
+            ):
+                return await self.research_status(record.request_id)
             if record.graph_run_id is None and record.response_version is None:
                 try:
                     await self.supervisor.start_operation(self._handle(record), request.task)
@@ -695,11 +705,21 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 record = await self.backend.sdk_requests.get_sdk_request(
                     record.request_id, request_options={"max_retries": 0}
                 )
+                if (
+                    record.response_version is not None
+                    or record.error is not None
+                    or record.native_execution_request_id is not None
+                ):
+                    return await self.research_status(record.request_id)
                 if record.graph_run_id is None:
                     raise ValueError(
                         "The conversation is busy; this operation has not started a native run. Reattach when it is available."
                     )
-            if record.response_version is not None or record.error is not None:
+            if (
+                record.response_version is not None
+                or record.error is not None
+                or record.native_execution_request_id is not None
+            ):
                 return await self.research_status(record.request_id)
             if not wait:
                 return await self.research_status(record.request_id)
@@ -777,6 +797,10 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 )
             if record.response_version is not None:
                 return await self._completed(record)
+            if record.native_execution_request_id is not None:
+                # Backend retains the admitted native operation independently
+                # of this client and of a later turn on the same conversation.
+                return InProgress(handle=self._handle(record))
             if record.runtime is None or (
                 record.operation_id is not None and record.graph_run_id is None
             ):
@@ -799,7 +823,8 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             record.request.model_dump_json(by_alias=True, exclude_unset=True)
         )
         if (
-            response.request_id != record.request_id
+            response.request_id != (record.native_execution_request_id or record.request_id)
+            or response.version != record.response_version
             or record.runtime is None
             or response.thread_id != record.runtime.thread_id
             or response.primary_execution_id != record.current_execution_id
@@ -813,8 +838,38 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 ),
                 execution_id=record.current_execution_id,
             )
+        if record.native_execution_request_id is not None:
+            native = await self.backend.sdk_requests.get_sdk_execution_request(
+                record.native_execution_request_id, request_options={"max_retries": 0}
+            )
+            if (
+                native.request_id != record.native_execution_request_id
+                or native.request.input_tables is None
+                or (
+                    native.request.research_request_id is not None
+                    and native.request.research_request_id != record.request_id
+                )
+                or native.request.thread_id != record.runtime.thread_id
+                or native.execution_id != record.current_execution_id
+                or native.response_phase is None
+                or native.response_phase.value != "outputs_recorded"
+                or native.error is not None
+                or native.response_id != response.response_id
+                or native.response_version != response.version
+                or native.extension_outputs is None
+                or native.extension_outputs.response_id != response.response_id
+                or native.extension_outputs.response_version != response.version
+                or native.extension_outputs.provenance != response.extension
+                or response.response_plan is not None
+            ):
+                raise ValueError("The research answer differs from its original native operation")
         reusable = None
-        if response.primary_execution_id is not None and response.study_id is not None:
+        if (
+            record.native_execution_request_id is None
+            and response.extension is None
+            and response.primary_execution_id is not None
+            and response.study_id is not None
+        ):
             reusable = SavedStudy(
                 study_id=response.study_id,
                 source_execution_id=response.primary_execution_id,
@@ -886,6 +941,8 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             return await self._completed(record)
         if record.error is not None:
             return await self.research_status(request_id)
+        if record.native_execution_request_id is not None:
+            return InProgress(handle=self._handle(record))
         if (
             record.operation_id is not None
             and outcome.handle is not None
