@@ -233,7 +233,7 @@ async def execute(
     )
     record = await epoch.execute_extension(request)
     deadline = time.monotonic() + 300
-    while record.extension_outputs is None:
+    while True:
         if (
             record.error is not None
             or record.phase == SdkRequestPhase.FAILED
@@ -242,8 +242,13 @@ async def execute(
             raise RuntimeError(
                 f"Report stopped. Inspect operation {operation_id}; do not resubmit changed inputs."
             )
+        if record.response_phase == SdkRequestPhase.OUTPUTS_RECORDED:
+            if record.extension_outputs is None:
+                raise ValueError(
+                    "Recorded outputs are missing their confirmed references."
+                )
+            return record
         if time.monotonic() >= deadline:
             raise TimeoutError(f"Still pending. Reconnect to operation {operation_id}.")
         await asyncio.sleep(1)
         record = await epoch.extension_status(operation_id)
-    return record
