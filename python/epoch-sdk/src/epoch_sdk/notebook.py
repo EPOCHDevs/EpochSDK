@@ -16,7 +16,8 @@ from pydantic import TypeAdapter
 from .errors import EpochError
 from .output_validation import JsonValueOutput, TableValue
 from .presentation import ui_text
-from .research import ResearchCompleted
+from .research import EpochClient, ResearchCompleted
+from .responses import SavedResearchResponse
 from .session import (
     EventHandler,
     ResearchSession,
@@ -40,6 +41,89 @@ def _markdown_view(value: str) -> widgets.HTML:
     rendered = widgets.HTML(value=_markdown.render(value))
     rendered.add_class("jp-RenderedHTMLCommon")  # pyright: ignore[reportUnknownMemberType]
     return rendered
+
+
+async def display_answer(client: EpochClient, saved: SavedResearchResponse) -> None:
+    """Display an already saved answer with the ordinary notebook renderer.
+
+    This reads bounded table previews from Backend. It starts no research,
+    numerical execution or model call; use iter_response_table for all rows.
+    """
+    output = widgets.Output()
+    display(output)
+    await _render_saved_answer(client, saved, output)
+
+
+async def _render_saved_answer(
+    client: EpochClient, saved: SavedResearchResponse, output: widgets.Output
+) -> None:
+    with output:
+        display(
+            HTML(
+                "<p><strong>Saved answer · revision "
+                + str(saved.version)
+                + "</strong></p><details><summary>Answer and source identities</summary><pre>"
+                + html.escape(saved.reference().model_dump_json(indent=2))
+                + "</pre></details>"
+            )
+        )
+    for part in saved.content.outputs:
+        with output:
+            display(HTML("<h4>" + html.escape(part.name) + "</h4>"))
+        if isinstance(part, TableValue):
+            page = await client.response_table(
+                saved.response_id, part.name, version=saved.version, page_size=100
+            )
+            headers = "".join(
+                '<th title="'
+                + html.escape(column.description or "", quote=True)
+                + '">'
+                + html.escape(column.name + (f" ({column.unit})" if column.unit else ""))
+                + "</th>"
+                for column in page.columns
+            )
+            rows = "".join(
+                "<tr>"
+                + "".join(
+                    "<td>" + html.escape("—" if cell is None else str(cell)) + "</td>"
+                    for cell in row
+                )
+                + "</tr>"
+                for row in page.rows
+            )
+            with output:
+                display(
+                    HTML(
+                        '<div style="overflow:auto;max-height:480px"><table><thead><tr>'
+                        + headers
+                        + "</tr></thead><tbody>"
+                        + rows
+                        + "</tbody></table></div>"
+                    )
+                )
+                if page.next_offset is not None:
+                    display(
+                        HTML(
+                            f"<p>Preview: {len(page.rows)} of {page.total_rows} rows. "
+                            "Use <code>iter_response_table(...)</code> to read every row "
+                            "of this saved revision.</p>"
+                        )
+                    )
+        elif isinstance(part, JsonValueOutput):
+            with output:
+                if isinstance(part.value, (dict, list)):
+                    display(JSON(part.value, expanded=True))
+                else:
+                    display(HTML("<pre>" + html.escape(json.dumps(part.value)) + "</pre>"))
+        else:
+            with output:
+                display(
+                    _markdown_view(part.value)
+                    if part.format == "markdown"
+                    else HTML(
+                        '<pre style="white-space:pre-wrap">' + html.escape(part.value) + "</pre>"
+                    )
+                )
 
 
 @dataclass
@@ -227,76 +311,7 @@ class NotebookView:
             self.pending_reply = None
 
     async def _answer(self, result: ResearchCompleted) -> None:
-        saved = result.response
-        with self.answer_output:
-            display(
-                HTML(
-                    "<p><strong>Saved answer · revision "
-                    + str(saved.version)
-                    + "</strong></p><details><summary>Answer and source identities</summary><pre>"
-                    + html.escape(saved.reference().model_dump_json(indent=2))
-                    + "</pre></details>"
-                )
-            )
-        for part in saved.content.outputs:
-            with self.answer_output:
-                display(HTML("<h4>" + html.escape(part.name) + "</h4>"))
-            if isinstance(part, TableValue):
-                page = await self.session.client.response_table(
-                    saved.response_id, part.name, version=saved.version, page_size=100
-                )
-                headers = "".join(
-                    '<th title="'
-                    + html.escape(column.description or "", quote=True)
-                    + '">'
-                    + html.escape(column.name + (f" ({column.unit})" if column.unit else ""))
-                    + "</th>"
-                    for column in page.columns
-                )
-                rows = "".join(
-                    "<tr>"
-                    + "".join(
-                        "<td>" + html.escape("—" if cell is None else str(cell)) + "</td>"
-                        for cell in row
-                    )
-                    + "</tr>"
-                    for row in page.rows
-                )
-                with self.answer_output:
-                    display(
-                        HTML(
-                            '<div style="overflow:auto;max-height:480px"><table><thead><tr>'
-                            + headers
-                            + "</tr></thead><tbody>"
-                            + rows
-                            + "</tbody></table></div>"
-                        )
-                    )
-                    if page.next_offset is not None:
-                        display(
-                            HTML(
-                                f"<p>Preview: {len(page.rows)} of {page.total_rows} rows. "
-                                "Use <code>iter_response_table(...)</code> to read every row "
-                                "of this saved revision.</p>"
-                            )
-                        )
-            elif isinstance(part, JsonValueOutput):
-                with self.answer_output:
-                    if isinstance(part.value, (dict, list)):
-                        display(JSON(part.value, expanded=True))
-                    else:
-                        display(HTML("<pre>" + html.escape(json.dumps(part.value)) + "</pre>"))
-            else:
-                with self.answer_output:
-                    display(
-                        _markdown_view(part.value)
-                        if part.format == "markdown"
-                        else HTML(
-                            '<pre style="white-space:pre-wrap">'
-                            + html.escape(part.value)
-                            + "</pre>"
-                        )
-                    )
+        await _render_saved_answer(self.session.client, result.response, self.answer_output)
 
     async def run(self, *, on_event: EventHandler | None = None) -> ResearchCompleted | NeedsInput:
         async def update(event: SessionEvent) -> None:

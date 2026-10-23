@@ -131,7 +131,12 @@ class ExecutionExtensionClient:
         )
 
     async def extension_status(self, operation_id: str) -> SdkExecutionRecord:
-        """Read one accepted extension and its exact output pins; start no work."""
+        """Read one accepted extension and its exact output pins; start no work.
+
+        Check error/response_phase first. Confirmed extension_outputs belong to
+        outputs_recorded; admission phase may remain active after computation or
+        output failure. Read the underlying execution for numerical job status.
+        """
         record = await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
             operation_id, request_options={"max_retries": 0}
         )

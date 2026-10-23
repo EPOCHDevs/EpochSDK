@@ -1,0 +1,36 @@
+{
+  "source_environment": "EPOCH_AAPL_EXECUTION_ID",
+  "request": {
+    "task": "Summarize recorded AAPL order activity by side. Give me the counts, a short desk note, and a dashboard chart of the side mix.",
+    "context": [
+      "Use the selected completed AAPL backtest's recorded orders. Order intent does not establish fills, turnover, costs or returns; state that limit.",
+      "The dashboard should contain only the side-mix chart; keep the table and note in the answer."
+    ],
+    "outputs": [
+      {
+        "name": "orders_by_side",
+        "type": "table",
+        "description": "Recorded orders grouped by side",
+        "schema": [
+          {
+            "name": "side",
+            "type": "string",
+            "description": "Recorded order side"
+          },
+          {
+            "name": "orders",
+            "type": "int64",
+            "unit": "orders",
+            "description": "Count of recorded order rows"
+          }
+        ]
+      },
+      {
+        "name": "desk_note",
+        "type": "text",
+        "format": "markdown",
+        "instructions": "At most 110 words. Describe the measured side counts and the limit of order-intent evidence. Do not infer unsupplied fills, returns or costs."
+      }
+    ]
+  }
+}

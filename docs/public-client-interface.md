@@ -36,6 +36,18 @@ the derived `execution_id` differs from the source, and presentation edit zero
 is an exact saved version. Keep earlier answer/view pins when choosing a newer
 report. A page size bounds one read, never the complete table.
 
+Check `error` and `response_phase` before treating an extension as ready. Confirmed
+`extension_outputs` identify recorded publications. Admission `phase` may still
+be `active` after numeric completion or required-output failure; read the exact
+underlying execution ID for its numerical job status. Do not poll admission phase
+waiting for an invented `completed` value.
+
+Notebook clients can use `epoch_sdk.notebook.display_answer(client, saved_answer)`
+to display a saved native answer through the same renderer as `EpochClient.run`.
+It reads bounded table previews and starts no research or model call. The
+[saved-result walkthroughs](../examples/notebooks/saved-reports/README.md) also
+read all table pages and demonstrate direct prepared-report execution.
+
 The default MCP advertises 14 tools. Diagnostic and comparison tools remain
 available until the separately tracked parity/retirement gate; this addition
 does not claim that they have been replaced in every result family.
@@ -47,7 +59,7 @@ does not claim that they have been replaced in every result family.
 3. Pass exact record/result references or the `universe_ref`, plus the selected dataset/options, as `source_refs` to `epoch_build_study`. It retains and validates them internally. A historical universe needs the requested study period inside its captured membership window. Metadata does not certify populated observations or account access.
 4. Keep the build handle and poll `epoch_status`. Its saved outcome returns retained `source_refs` for later builds, including after the original working search expires. Reuse the workspace and select a new study slot for a different study. Registry compatibility still applies.
 5. Execute a saved study ID with `epoch_execute`, then observe its native execution ID with `epoch_status(kind="execution")`.
-6. Read dashboard values directly, or use `epoch_audit_run` for targeted analysis of exact completed execution IDs. The caller answers the user; publication is not a completion requirement.
+6. Read already available dashboard values directly. New calculations over one supported completed result use the native extension lifecycle above. Retain `epoch_audit_run` for explicit diagnostic/comparison cases with exact supported execution bindings. The caller answers the user; publication is not a completion requirement.
 
 A workspace is an ordinary owner-scoped LangGraph thread using the `epoch-tools` graph. That graph has only admission and tool-execution nodes: no supervisor model, planner, next-action model or publication loop. Original typed specialist state and native checkpoints stay in EpochAI. Do not submit internal state, bearer tokens, approval receipts or `ToolRuntime` as tool arguments.
 
