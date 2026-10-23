@@ -4,6 +4,8 @@ Response fixtures were captured from EpochBackend's native [dataset_clients]
 test. Paging variants below are explicitly synthetic metadata transport cases.
 """
 import asyncio
+from copy import deepcopy
+from importlib.resources import files
 import json
 from pathlib import Path
 
@@ -11,7 +13,7 @@ import httpx
 import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import DatasetSearchQuery, ScreenAssetsRequest
@@ -24,6 +26,154 @@ from epoch_sdk.supervisor import SupervisorClient
 
 FIXTURES = Path(__file__).parent / 'fixtures/dataset_search'
 QUERY = {"request_id": "company", "subjects": [{"kind": "asset_name", "name": "Apple"}]}
+
+
+def malformed_inputs():
+    for name, values in {
+        'candidate_limit': (True, 1.0, '2', 0, 26),
+    }.items():
+        for value in values:
+            yield 'search', {'requests': [QUERY], name: value}
+    for name, values in {
+        'saved_limit': (None, True, 1.0, '2', 0, 101),
+        'include_saved': (None, 0, 1, 'true', 'false'),
+        'include_details': (None, 0, 1, 'true', 'false'),
+        'source_ids': (False, '', 'cash_flow', 0),
+    }.items():
+        for value in values:
+            yield 'catalog', {name: value}
+    vintage = {
+        'request_id': 'macro',
+        'subjects': [{'kind': 'macro_concept', 'concept': 'Real US GDP'}],
+        'datasets': [{'category': 'MacrobondVintageData',
+                      'selectors': {'kind': 'vintage', 'revision': 'NthFromLast', 'nth': 2}}],
+    }
+    for name, values in {
+        'nth': (True, 1.0, '2'), 'full_tape': (0, 1, 'true', 'false'),
+    }.items():
+        for value in values:
+            query = deepcopy(vintage)
+            query['datasets'][0]['selectors'][name] = value
+            yield 'search', {'requests': [query]}
+    for name in ('include_discontinued', 'must_have_revisions'):
+        for value in (0, 1, 'false', 'true'):
+            query = deepcopy(vintage)
+            query['subjects'][0]['macrobond'] = {
+                'category': [], 'currency': [], 'data_type': [], 'exchange': [],
+                'frequency': [], 'klass': [], name: value,
+            }
+            yield 'search', {'requests': [query]}
+    for name, values in {
+        'ipo_shares_min': (True, 1.0, '2'), 'ipo_shares_max': (True, 1.0, '2'),
+        'max_assets': (True, 1.0, '2'),
+        'ipo_price_min': (True, '2', float('inf'), float('-inf'), float('nan')),
+        'ipo_price_max': (True, '2', float('inf'), float('-inf'), float('nan')),
+        'ipo_market_cap_min': (True, '2', float('inf'), float('-inf'), float('nan')),
+        'ipo_market_cap_max': (True, '2', float('inf'), float('-inf'), float('nan')),
+    }.items():
+        for value in values:
+            screen = {'all_of': [], 'any_of': [], name: value}
+            # A nested "not" exercises the foreign recursive request component.
+            yield 'screen', {'request': {'kind': 'screen', 'screen': {
+                'all_of': [], 'any_of': [], 'not': screen,
+            }}}
+    for request in ({'kind': 'saved', 'universe_ref': 'owned-cohort'},
+                    {'kind': 'screen', 'screen': {'all_of': [], 'any_of': []}}):
+        for name in ('current_cap_min_exclusive', 'current_cap_max_exclusive'):
+            for value in (True, '2', float('inf'), float('-inf'), float('nan')):
+                yield 'screen', {'request': {**request, name: value}}
+
+
+@pytest.mark.parametrize('route,arguments', list(malformed_inputs()))
+def test_sdk_and_mcp_reject_coercion_before_native_transport(route, arguments):
+    async def scenario():
+        def no_backend(request):
+            pytest.fail('Malformed Discovery input reached Backend')
+        def graph(request):
+            assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
+            return httpx.Response(200, json=CATALOG)
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(no_backend)) as native_http,
+            httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            native = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=native_http)
+            tools = AgentToolsClient(LangGraphClient(graph_http), native, graph_http)
+            with pytest.raises(ValidationError):
+                if route == 'search':
+                    await tools.search_dataset(**arguments)
+                elif route == 'catalog':
+                    await tools.dataset_catalog(**arguments)
+                else:
+                    await tools.screen_assets(**arguments)
+            # Nonfinite Python floats are rejected by the SDK; JSON has no such
+            # values to send through MCP. The finite bool/string cases cover MCP.
+            try:
+                json.dumps(arguments, allow_nan=False)
+            except ValueError:
+                return
+            async with Client(create_server(tools)) as mcp:
+                result = await mcp.call_tool({
+                    'search': 'epoch_search_dataset', 'catalog': 'epoch_dataset_catalog',
+                    'screen': 'epoch_screen_assets',
+                }[route], arguments)
+                assert result.is_error
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('candidate_limit', [None, 1, 25])
+@pytest.mark.parametrize('saved_limit', [1, 100])
+def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limit, saved_limit):
+    async def scenario():
+        from stratifyx.types import DatasetCatalogRequest, DatasetSearchRequest
+        calls = []
+        query = {
+            'request_id': 'macro',
+            'subjects': [{'kind': 'macro_concept', 'concept': 'GDP'}],
+            'datasets': [{'category': 'MacrobondVintageData',
+                          'selectors': {'kind': 'vintage', 'revision': 'NthFromLast',
+                                        'nth': 2, 'full_tape': False},
+                          'requested_window': {'from': '2020-01-01', 'to': '2024-12-31'}}],
+        }
+        def backend(request):
+            body = json.loads(request.content)
+            calls.append((request.url.path, body))
+            return httpx.Response(200, json=fixture('search' if request.url.path.endswith('/search') else 'catalog'))
+        def graph(request):
+            assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
+            return httpx.Response(200, json=CATALOG)
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+            httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            native = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=native_http)
+            tools = AgentToolsClient(LangGraphClient(graph_http), native, graph_http)
+            await tools.search_dataset([query], candidate_limit=candidate_limit)
+            await tools.dataset_catalog(saved_limit=saved_limit, include_details=True, include_saved=False)
+            await tools.dataset_catalog()
+            async with Client(create_server(tools)) as mcp:
+                listed = (await mcp.list_tools()).tools
+                search_schema = next(tool for tool in listed if tool.name == 'epoch_search_dataset').input_schema
+                catalog_schema = next(tool for tool in listed if tool.name == 'epoch_dataset_catalog').input_schema
+                candidate = next(arm for arm in search_schema['properties']['candidate_limit']['anyOf']
+                                 if arm.get('type') == 'integer')
+                owner_candidate = next(arm for arm in DatasetSearchRequest.model_json_schema()['properties']['candidate_limit']['anyOf']
+                                       if arm.get('type') == 'integer')
+                for key in ('minimum', 'maximum'):
+                    assert candidate[key] == owner_candidate[key]
+                    assert catalog_schema['properties']['saved_limit'][key] == DatasetCatalogRequest.model_json_schema()['properties']['saved_limit'][key]
+                assert catalog_schema['properties']['saved_limit']['default'] == DatasetCatalogRequest.model_fields['saved_limit'].default
+                for name, args in [
+                    ('epoch_search_dataset', {'requests': [query], 'candidate_limit': candidate_limit}),
+                    ('epoch_dataset_catalog', {'saved_limit': saved_limit, 'include_details': True, 'include_saved': False}),
+                    ('epoch_dataset_catalog', {}),
+                ]:
+                    assert not (await mcp.call_tool(name, args)).is_error
+            assert calls[:3] == calls[3:]
+            assert calls[0][1]['requests'] == [query]
+            assert calls[1][1]['saved_limit'] == saved_limit
+            assert calls[2][1]['saved_limit'] == 100
+            assert calls[2][1]['include_saved'] is True
+    asyncio.run(scenario())
 
 
 def fixture(name):
@@ -146,15 +296,25 @@ def test_a_failed_page_read_remains_an_error_instead_of_an_empty_or_complete_res
     asyncio.run(scenario())
 
 
-def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
+@pytest.mark.parametrize('dataset_format', ['table', 'json'])
+def test_customer_table_or_json_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp(dataset_format):
     """Schema/transport fixture, not a production database connector or auth test.
 
     Native catalog/Files tests own authorization. This checks that neither client
     invents a database-specific tool or drops the existing schema/clock contract.
     """
     from stratifyx.types import SavedDataset
+    # This example is owned by Backend and shipped in the native SDK. It is a
+    # JSON schema descriptor, not a table or a JSON preview payload.
+    canonical_json = json.loads(files('stratifyx').joinpath('contract_examples/user_files.json').read_text())['saved_json']
 
     def saved(owner):
+        if dataset_format == 'json':
+            value = deepcopy(canonical_json)
+            value['dataset_ref'] = f'dataset:{owner}-profile@1'
+            value['descriptor']['sources'][0]['file_ref'] = f'file:{owner}-annual-report'
+            value['descriptor']['evidence_ref'] = f'evidence:{owner}-annual-report'
+            return SavedDataset.model_validate(value)
         return SavedDataset.model_validate({
             'dataset_ref': f'dataset:{owner}-signal@1', 'name': 'Internal revision signal',
             'source_ref': f'source:{owner}-signal@1', 'saved_at': '2026-10-21T12:00:00Z',
@@ -217,6 +377,12 @@ def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
                 tools = AgentToolsClient(LangGraphClient(graph_http), native, graph_http)
                 expected = await tools.dataset_catalog()
                 assert expected.saved.items == [saved(owner)]
+                item = expected.saved.items[0]
+                assert item.descriptor.shape.format == dataset_format
+                if dataset_format == 'json':
+                    assert item.source_ref is None
+                    assert 'source_ref' not in item.model_dump(exclude_unset=True)
+                    assert item.descriptor.shape.json_schema_text == canonical_json['descriptor']['shape']['json_schema_text']
                 assert owner not in expected.overview
                 async with Client(create_server(tools)) as mcp:
                     actual = await mcp.call_tool('epoch_dataset_catalog', {})
@@ -226,7 +392,7 @@ def test_customer_table_snapshot_fits_the_owner_scoped_catalog_in_sdk_and_mcp():
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize('limit', [0, 11, 100, True, 1.5, '10'])
+@pytest.mark.parametrize('limit', [None, 0, 11, 100, True, 1.0, 1.5, '10'])
 def test_metadata_page_bounds_reject_before_native_transport_and_match_mcp_schema(limit):
     async def scenario():
         from epoch_sdk.datasets import DatasetClient
