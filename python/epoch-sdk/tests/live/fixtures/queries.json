@@ -53,7 +53,7 @@
             "series_id": "usnaac0381"
           }
         ],
-        "top_k": 1,
+        "top_k": 10,
         "unit": "Percent",
         "frequency": "quarterly",
         "description_fragments": [
@@ -64,6 +64,31 @@
         ],
         "required_vendors": [
           "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            },
+            "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+          }
         ]
       }
     },
@@ -122,7 +147,7 @@
             "series_id": "usnaac0381"
           }
         ],
-        "top_k": 1,
+        "top_k": 10,
         "unit": "Percent",
         "frequency": "quarterly",
         "description_fragments": [
@@ -133,6 +158,39 @@
         ],
         "required_vendors": [
           "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_vintage_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "revision": "First"
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+            "effective_selectors": {
+              "kind": "vintage",
+              "revision": "First"
+            }
+          }
         ]
       }
     },
@@ -191,7 +249,7 @@
             "series_id": "usnaac0381"
           }
         ],
-        "top_k": 1,
+        "top_k": 10,
         "unit": "Percent",
         "frequency": "quarterly",
         "description_fragments": [
@@ -202,6 +260,39 @@
         ],
         "required_vendors": [
           "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_revision_tape"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "full_tape": true
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+            "effective_selectors": {
+              "kind": "vintage",
+              "full_tape": true
+            }
+          }
         ]
       }
     },
@@ -240,11 +331,32 @@
             "series_id": "CPI YOY"
           }
         ],
-        "top_k": 1,
+        "top_k": 10,
         "unit": "percent",
         "frequency": "monthly",
         "required_vendors": [
           "trading_economics"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "trading_economics",
+              "series_id": "CPI YOY"
+            },
+            "source_ids": [
+              "te_series"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsHistorical"
+            },
+            "schema_ref": "data_category/TradingEconomicsHistorical/endpoint/trading_economics.historical"
+          }
         ]
       }
     },
@@ -282,8 +394,28 @@
             "symbol": "USGG10YR:IND"
           }
         ],
-        "top_k": 1,
-        "unit": "percent"
+        "top_k": 10,
+        "unit": "percent",
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "te_market",
+              "symbol": "USGG10YR:IND"
+            },
+            "source_ids": [
+              "te_index"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsMarkets"
+            },
+            "schema_ref": "data_category/TradingEconomicsMarkets/endpoint/trading_economics.markets_historical"
+          }
+        ]
       }
     },
     {
@@ -320,8 +452,28 @@
             "symbol": "USGG10YR:IND"
           }
         ],
-        "top_k": 1,
-        "unit": "percent"
+        "top_k": 10,
+        "unit": "percent",
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "te_market",
+              "symbol": "USGG10YR:IND"
+            },
+            "source_ids": [
+              "te_market_forecast"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "TradingEconomicsMarketForecast"
+            },
+            "schema_ref": "data_category/TradingEconomicsMarketForecast/endpoint/trading_economics.markets_forecast"
+          }
+        ]
       }
     },
     {
@@ -882,5 +1034,6 @@
         "message_contains": "request_id is blank"
       }
     }
-  ]
+  ],
+  "candidate_acceptance": "The existing search API returns candidates, not a selected study source. Correct source/measurement facts must be present in the first returned page on one public query; top-rank correctness is reported separately and is not semantic authority. Unique instrument and exact-address cases retain their independent stricter expectations. Natural-language caller acceptance must verify actual selection from the page. Original top1 experiment failures are preserved."
 }

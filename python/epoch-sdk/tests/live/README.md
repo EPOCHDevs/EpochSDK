@@ -17,7 +17,7 @@ The initial corpus has 310 cases, each run through both clients:
 | Market | 6 | Daily/minute primary/reference bars, FX, crypto and raw futures contracts |
 | Screens | 18 | Explicit rosters, boolean membership, listing filters, current/historical index semantics and saved reuse |
 | Boundaries | 20 | Inconsistent selectors/windows, unknown identities, quarantine, unsupported products and invalid fields |
-| Concept search | 6 | Independent GDP/CPI/yield labels, source units/definitions and first-call relevance |
+| Concept search | 6 | Independent GDP/CPI/yield labels and measurement facts in the first returned page; first-place accuracy recorded separately |
 | Batches | 7 | Multiple groups, subjects and products, distinct selectors, mixed unknown/success and atomic request errors |
 
 `asset_catalog` and `custom_data` are constructor-only entries, not external
@@ -75,6 +75,12 @@ index case checks an intersection with two explicit IDs, not a full current
 roster. The historical index case checks the complete delivered pool and its
 saved reuse; it does not certify vendor membership history independently.
 
+The original `Euro Dollar` oracle assumed USD despite omitting its country/code.
+The revised case measures broad catalog ambiguity across independently observed
+dollar-family names. It also records the original EURUSD/USDEUR top-five recall
+as a separate diagnostic, preserving the earlier failures. Passing ambiguity is
+not a claim that the former narrower common-name ranking target was restored.
+
 These are live integration tests, not a claim of universal retrieval accuracy
 or financial correctness. They do not prove that an agent chooses the right
 dataset from a natural-language research task. That separate acceptance lane
@@ -84,6 +90,15 @@ provider outages and deployment validation also remain distinct evidence.
 Native instrument names use lexical matching. Macro and TE-market retrieval
 may use Backend's non-generative relevance ranker and vendor metadata APIs, so these tests can incur those costs even
 though they make no generative AI calls.
+
+Macro search returns ranked candidates, not a semantically verified source
+selection. Its acceptance gate requires the correct source and measurement facts
+within the first returned page of ten on one public query; receipts separately
+report the correct source's position and first-place accuracy. A top result with
+the wrong unit or definition must not be selected by the caller. Initial stricter
+first-place failures are retained as ranking-quality evidence, not rewritten as
+successful runs. The representative caller lane must prove that it chooses the
+correct source before authoring or executing anything.
 
 The frozen catalog inventory intentionally makes new sources/options/schema
 changes fail review until the corpus is updated. Do not regenerate labels from

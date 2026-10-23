@@ -10,8 +10,10 @@ import asyncio
 from datetime import datetime, timezone
 import importlib.metadata
 import hashlib
+import inspect
 import json
 import os
+import sys
 from pathlib import Path
 import time
 from typing import Annotated, Literal
@@ -24,6 +26,7 @@ from stratifyx.types import (
     DatasetCatalogResponse,
     DatasetSearchRequest,
     DiscoveryDatasetRequest,
+    DiscoveryMetadataRecord,
     DiscoverySearchResponse,
     DiscoverySelectors,
     DiscoverySourceAddress,
@@ -63,6 +66,8 @@ class IdentityExpectation(BaseModel):
     relevant_ids: list[str]
     top_k: int = Field(ge=1, le=5)
     reason: str
+    ambiguous: bool = False
+    diagnostic_relevant_ids: list[str] = []
 
 
 class ErrorExpectation(BaseModel):
@@ -87,6 +92,7 @@ class SeriesExpectation(BaseModel):
     frequency: str | None = None
     description_fragments: list[str] = []
     required_vendors: list[Literal["macrobond", "trading_economics"]] = []
+    products: list[BindingExpectation] = Field(min_length=1)
 
 
 class BatchRow(BaseModel):
@@ -178,6 +184,45 @@ def contract_shape(value):
     return value
 
 
+def assert_bindings(expected: BindingExpectation, records: list[DiscoveryMetadataRecord]) -> None:
+    assert all(str(row.status) == expected.status for row in records), [wire(row) for row in records]
+    assert len(records) == len(expected.source_ids), "Unexpected binding multiplicity"
+    assert len({row.binding_ref for row in records}) == len(records), "Duplicate binding"
+    assert {row.loader.source_id for row in records if row.loader} == set(expected.source_ids)
+    for row in records:
+        assert row.identity and wire(row.identity) == wire(expected.identity)
+        assert row.loader and row.loader.schema_ref and row.loader.registry_version
+        assert row.binding_ref
+        allowed = (expected.availability if isinstance(expected.availability, list)
+                   else [expected.availability])
+        assert str(row.availability) in allowed
+        if str(row.availability) == "unknown":
+            assert row.qualifications, "Unknown coverage needs an explicit qualification"
+        assert row.requested_dataset
+        requested = row.requested_dataset
+        original = expected.requested_dataset
+        assert requested.category == original.category
+        # Native canonicalization emits an empty field vector for an
+        # omitted selection. Both mean no column narrowing; extra fields
+        # must still fail the comparison.
+        assert (requested.fields or []) == (original.fields or [])
+        assert requested.selectors == original.selectors
+        assert requested.requested_window == original.requested_window
+        assert row.loader.category == expected.requested_dataset.category
+        if expected.requested_dataset.selectors:
+            assert row.loader.selectors
+            provided = wire(expected.requested_dataset.selectors)
+            actual = wire(row.loader.selectors)
+            assert all(actual.get(key) == value for key, value in provided.items())
+        if expected.effective_selectors is not None:
+            assert row.loader.selectors
+            effective = wire(row.loader.selectors)
+            assert all(effective.get(key) == value
+                       for key, value in wire(expected.effective_selectors).items())
+        if expected.schema_ref is not None:
+            assert row.loader.schema_ref == expected.schema_ref
+
+
 def client_environment() -> dict[str, str]:
     required = ("EPOCH_BACKEND_URL", "EPOCH_GRAPH_URL", "EPOCH_TOKEN")
     missing = [name for name in required if not os.environ.get(name)]
@@ -251,8 +296,9 @@ async def search_once(case: SearchCase, route: str, epoch: EpochClient, mcp):
             if value.structured_content.get("page") else None
         )
     lookup_seconds = time.monotonic() - began
+    initial_records = list(page.records if page is not None else result.records)
     records, pages = await drain_records(result, page, route, epoch, mcp)
-    return result, records, pages, lookup_seconds
+    return result, records, pages, lookup_seconds, initial_records
 
 
 async def exercise(case, route, env, receipt):
@@ -300,6 +346,7 @@ async def exercise(case, route, env, receipt):
             assert len(identities) == len(set(identities)), "A screen duplicated a member"
             assert response.asset_count == len(identities), "Screen count and saved pool differ"
             assert response.result.receipt.stored_complete
+            assert str(response.result.source_completeness) == "AuthoritativeComplete"
             assert len(identities) >= case.minimum_members
             if case.expected_asset_ids is not None:
                 assert set(identities) == set(case.expected_asset_ids), identities
@@ -359,8 +406,9 @@ async def exercise(case, route, env, receipt):
                 # implementations, including futures roll/session controls.
                 assert contract_shape(wire(entry)) == expected["contract"], entry.source.source_id
             return
-        result, records, pages, lookup_seconds = await search_once(case, route, epoch, mcp)
+        result, records, pages, lookup_seconds, initial_records = await search_once(case, route, epoch, mcp)
         receipt.update(result=wire(result), records=[wire(row) for row in records],
+                       initial_page_records=[wire(row) for row in initial_records],
                        saved_pages=pages, lookup_seconds=lookup_seconds)
         expected = case.expected
         assert records, "Supported binding returned no saved records"
@@ -419,8 +467,23 @@ async def exercise(case, route, env, receipt):
                     identities.append(identity)
                     candidates.append(row)
             wanted = [wire(identity) for identity in expected.relevant_identities]
-            matching = [row for row in candidates[:expected.top_k] if wire(row.identity) in wanted]
-            assert matching, identities[:expected.top_k]
+            receipt["ranking_quality"] = {
+                "first_rank_matches": bool(initial_records and initial_records[0].identity
+                                           and wire(initial_records[0].identity) in wanted),
+                "relevant_record_positions": [index + 1 for index, row in enumerate(records)
+                                              if row.identity and wire(row.identity) in wanted],
+                "relevant_identity_positions": [index + 1 for index, identity in enumerate(identities)
+                                                if identity in wanted],
+                "acceptance_page_limit": expected.top_k,
+            }
+            assert len(initial_records) <= expected.top_k
+            matching = [row for row in initial_records if row.identity
+                        and wire(row.identity) in wanted and row.availability != "unavailable"]
+            assert matching, [wire(row.identity) if row.identity else None for row in initial_records]
+            for product in expected.products:
+                product_rows = [row for row in matching if row.identity == product.identity
+                                and row.loader and row.loader.source_id in product.source_ids]
+                assert_bindings(product, product_rows)
             for row in matching:
                 assert row.metadata
                 if expected.unit:
@@ -442,43 +505,20 @@ async def exercise(case, route, env, receipt):
                 if identity not in identities:
                     identities.append(identity)
             assert set(identities[:expected.top_k]) & set(expected.relevant_ids), identities
+            if expected.diagnostic_relevant_ids:
+                receipt["original_oracle_quality"] = {
+                    "top_k_hit": bool(set(identities[:expected.top_k])
+                                      & set(expected.diagnostic_relevant_ids)),
+                    "positions": {identity: identities.index(identity) + 1
+                                  for identity in expected.diagnostic_relevant_ids
+                                  if identity in identities},
+                    "scope": "Preserved narrower quality target; not broad-ambiguity authority",
+                }
+            if expected.ambiguous:
+                assert len(identities) > 1, "An ambiguous name became an unjustified unique answer"
+                assert all(str(row.status) == "candidate" for row in records)
             return
-        assert all(str(row.status) == expected.status for row in records), receipt["records"]
-        assert len(records) == len(expected.source_ids), "Unexpected binding multiplicity"
-        assert len({row.binding_ref for row in records}) == len(records), "Duplicate binding"
-        assert {row.loader.source_id for row in records if row.loader} == set(expected.source_ids)
-        for row in records:
-            assert row.identity and wire(row.identity) == wire(expected.identity)
-            assert row.loader and row.loader.schema_ref and row.loader.registry_version
-            assert row.binding_ref
-            allowed = (expected.availability if isinstance(expected.availability, list)
-                       else [expected.availability])
-            assert str(row.availability) in allowed
-            if str(row.availability) == "unknown":
-                assert row.qualifications, "Unknown coverage needs an explicit qualification"
-            assert row.requested_dataset
-            requested = row.requested_dataset
-            original = expected.requested_dataset
-            assert requested.category == original.category
-            # Native canonicalization emits an empty field vector for an
-            # omitted selection. Both mean no column narrowing; extra fields
-            # must still fail the comparison.
-            assert (requested.fields or []) == (original.fields or [])
-            assert requested.selectors == original.selectors
-            assert requested.requested_window == original.requested_window
-            assert row.loader.category == expected.requested_dataset.category
-            if expected.requested_dataset.selectors:
-                assert row.loader.selectors
-                provided = wire(expected.requested_dataset.selectors)
-                actual = wire(row.loader.selectors)
-                assert all(actual.get(key) == value for key, value in provided.items())
-            if expected.effective_selectors is not None:
-                assert row.loader.selectors
-                effective = wire(row.loader.selectors)
-                assert all(effective.get(key) == value
-                           for key, value in wire(expected.effective_selectors).items())
-            if expected.schema_ref is not None:
-                assert row.loader.schema_ref == expected.schema_ref
+        assert_bindings(expected, records)
 
     try:
         if route == "sdk":
@@ -513,6 +553,9 @@ def test_discovery_live(case: SearchCase | CatalogCase | ScreenCase, route: str)
         "passed": False, "started_at": datetime.now(timezone.utc).isoformat(),
         "versions": {name: importlib.metadata.version(name)
                      for name in ("stratifyx", "epoch-sdk")},
+        "runtime": {"interpreter": sys.executable, "prefix": sys.prefix,
+                    "epoch_client_module": inspect.getfile(EpochClient),
+                    "native_request_module": inspect.getfile(DatasetSearchRequest)},
         "test_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     }
     start = time.monotonic()

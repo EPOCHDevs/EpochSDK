@@ -3,7 +3,37 @@
   "expectation_basis": {
     "native_corpus_sha256": "edb926baabd0f47060aea3868791d06ee43c3f215751585bed5d3b9663a16841",
     "evaluation": "Recall of at least one independently reviewable relevant identity within top_k. Explicit directed FX codes require rank one; broad names allow ambiguity. US desk equity cases supply the intended listing venue. This bounded catalog test does not certify vendor truth or all queries. Google/Facebook require genuine source enrichment, never test-only aliases.",
-    "scope": "48 existing independently labeled name cases plus 12 exact native identities. Catalog relevance is not external vendor truth."
+    "scope": "48 existing independently labeled name cases plus 12 exact native identities. Catalog relevance is not external vendor truth.",
+    "oracle_corrections": [
+      {
+        "case": "instrument-name-37",
+        "oracle_receipt_sha256": "5f1c64e9ad1abe988cdc96c225311ce3e7f3cd9b33c6ab2f6b97092e7f8fd9d7",
+        "raw_source": {
+          "catalog_generation": "3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "columns_read": [
+            "id",
+            "ticker",
+            "name",
+            "asset_class",
+            "exchange",
+            "currency"
+          ],
+          "generation_directory": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "manifest_path": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb/catalog_manifest.json",
+          "manifest_sha256": "3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb",
+          "parquet_path": "/home/adesola/.codex/worktrees/eng2152-dataset-search/EpochBackend/.sdk-dist-eng2152-work/runtime/eng2175-catalog/generations/3b15e416b1ef662110e1c9201b147d63fad0301be6f557ade19c8c633f9f11eb/asset_specs.parquet.gzip",
+          "parquet_row_count": 96839,
+          "parquet_sha256": "5374113db70e91661fee89b25d17ad14d22c7950fd9dafc88712386c9c297da2"
+        },
+        "extraction": {
+          "basis": "Only the raw selected asset catalog was used to derive the identities and full names. Search/ranking output was not used as the label source.",
+          "condition": "row[\"asset_class\"] == \"FX\" and \"euro\" in row[\"name\"].lower() and \"dollar\" in row[\"name\"].lower()",
+          "matching_rows": 30,
+          "ordering": "id ascending"
+        },
+        "reason": "Original USD-only failures are retained. This changes an unsupported unique-currency assumption, not the native rank output or the explicit directional tests."
+      }
+    ]
   },
   "cases": [
     {
@@ -149,7 +179,8 @@
           "GOOGL-Stocks"
         ],
         "top_k": 5,
-        "reason": "Published native identity and instrument name; no invented ticker aliases."
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
       }
     },
     {
@@ -184,7 +215,8 @@
           "GOOGL.SW-Stocks"
         ],
         "top_k": 5,
-        "reason": "Unscoped original brand lookup: permit genuine Alphabet issuer listings across venues, excluding trackers. Requires real source-backed brand evidence; listings are not interchangeable for execution."
+        "reason": "Unscoped original brand lookup: permit genuine Alphabet issuer listings across venues, excluding trackers. Requires real source-backed brand evidence; listings are not interchangeable for execution.",
+        "ambiguous": true
       }
     },
     {
@@ -301,7 +333,8 @@
           "BRK.B-Stocks"
         ],
         "top_k": 5,
-        "reason": "Published native identity and instrument name; no invented ticker aliases."
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
       }
     },
     {
@@ -449,7 +482,8 @@
           "S$-Futures"
         ],
         "top_k": 5,
-        "reason": "Published native identity and instrument name; no invented ticker aliases."
+        "reason": "Published native identity and instrument name; no invented ticker aliases.",
+        "ambiguous": true
       }
     },
     {
@@ -1075,11 +1109,44 @@
       "expected": {
         "kind": "identities",
         "relevant_ids": [
+          "AUDEUR-FX",
+          "BBDEUR-FX",
+          "BMDEUR-FX",
+          "CADEUR-FX",
+          "EURAUD-FX",
+          "EURBBD-FX",
+          "EURBMD-FX",
+          "EURBND-FX",
+          "EURBSD-FX",
+          "EURBZD-FX",
+          "EURCAD-FX",
+          "EURFJD-FX",
+          "EURGYD-FX",
+          "EURHKD-FX",
+          "EURJMD-FX",
+          "EURKYD-FX",
+          "EURLRD-FX",
+          "EURNAD-FX",
+          "EURNZD-FX",
+          "EURSGD-FX",
+          "EURTTD-FX",
+          "EURTWD-FX",
           "EURUSD-FX",
+          "HKDEUR-FX",
+          "JMDEUR-FX",
+          "KYDEUR-FX",
+          "NZDEUR-FX",
+          "SGDEUR-FX",
+          "TWDEUR-FX",
           "USDEUR-FX"
         ],
         "top_k": 5,
-        "reason": "Broad currency name allows either directed pair; quote direction was not explicit."
+        "reason": "Ambiguous Euro/Dollar-family query: source names include AUD/BMD/CAD/HKD/NZD/USD and other dollar legs; neither USD nor pair direction was specified. Labels independently extracted from the selected raw Parquet, not rank output.",
+        "ambiguous": true,
+        "diagnostic_relevant_ids": [
+          "EURUSD-FX",
+          "USDEUR-FX"
+        ]
       }
     },
     {
@@ -1177,7 +1244,8 @@
           "ZARJPY-FX"
         ],
         "top_k": 5,
-        "reason": "Broad yen search allows each native yen pair; no unstated counter currency is assumed."
+        "reason": "Broad yen search allows each native yen pair; no unstated counter currency is assumed.",
+        "ambiguous": true
       }
     },
     {
