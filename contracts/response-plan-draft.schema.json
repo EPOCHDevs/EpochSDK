@@ -217,6 +217,35 @@
       "title": "PlanParameterBinding",
       "type": "object"
     },
+    "PlanQualification": {
+      "additionalProperties": false,
+      "description": "Recompute qualification facts from retained queries, without a model call.\n\nThe description labels the basis; measured counts/limitations belong in the\nbinding rather than static prose that would go stale on replay.",
+      "properties": {
+        "description": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/PlanJsonBinding"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "value"
+      ],
+      "title": "PlanQualification",
+      "type": "object"
+    },
     "PlanQueryField": {
       "additionalProperties": false,
       "description": "Select one scalar query column, not a nested Arrow struct/list/map.\n\nProject nested source values into scalar query columns before recording the\nquery. Build nested JSON with object bindings over those scalar columns.",
@@ -533,6 +562,14 @@
       },
       "minItems": 1,
       "title": "Outputs",
+      "type": "array"
+    },
+    "qualifications": {
+      "items": {
+        "$ref": "#/$defs/PlanQualification"
+      },
+      "maxItems": 16,
+      "title": "Qualifications",
       "type": "array"
     },
     "queries": {

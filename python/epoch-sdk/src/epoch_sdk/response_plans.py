@@ -108,7 +108,7 @@ class PlanObjectBinding(Contract):
     """Build nested JSON from child bindings; this does not select an Arrow struct."""
 
     kind: Literal["object"]
-    # Keys belong to the user's JSON schema, not a fixed SDK business model.
+    # Keys belong to the selected answer/fact mapping, not a fixed business model.
     fields: Annotated[dict[str, PlanJsonBinding], Field(min_length=1)]
 
 
@@ -151,6 +151,18 @@ class PlanTextOutput(Contract):
     inputs: Annotated[dict[str, PlanJsonBinding], Field(min_length=1)]
 
 
+class PlanQualification(Contract):
+    """Recompute qualification facts from retained queries, without a model call.
+
+    The description labels the basis; measured counts/limitations belong in the
+    binding rather than static prose that would go stale on replay.
+    """
+
+    name: OutputName
+    description: Annotated[NonBlank, Field(max_length=1024)]
+    value: PlanJsonBinding
+
+
 type ResponsePlanOutput = Annotated[
     PlanTableOutput | PlanJsonOutput | PlanTextOutput, Field(discriminator="type")
 ]
@@ -174,6 +186,9 @@ class ResponsePlanDraft(Contract):
     format_version: Literal[1]
     queries: Annotated[list[ResponsePlanQuery], Field(min_length=1)]
     outputs: Annotated[list[ResponsePlanOutput], Field(min_length=1)]
+    qualifications: Annotated[list[PlanQualification], Field(max_length=16)] = Field(
+        default_factory=list,
+    )
 
     @model_validator(mode="after")
     def exact_references(self) -> Self:
@@ -193,6 +208,12 @@ class ResponsePlanDraft(Contract):
                     if _has_schema_constant(binding):
                         raise ValueError("Text inputs have no output JSON Schema constant to read")
                     used.extend(_query_references(binding))
+        if len({item.name for item in self.qualifications}) != len(self.qualifications):
+            raise ValueError("Qualification names must be unique")
+        for qualification in self.qualifications:
+            if _has_schema_constant(qualification.value):
+                raise ValueError("Qualification facts have no output JSON Schema constant to read")
+            used.extend(_query_references(qualification.value))
         if not set(used) <= set(names):
             raise ValueError("Every mapping must reference an exact named plan query")
         return self

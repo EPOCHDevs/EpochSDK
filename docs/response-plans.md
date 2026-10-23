@@ -1,5 +1,24 @@
 # Saved response plans
 
+Plans can include `qualifications` independently of their accepted answer parts.
+Each qualification has a unique name, a short description of its basis, and a
+`value` built with the existing query/parameter bindings. Counts, missing
+identities and other changing facts belong in that binding, not static prose.
+Qualifications have no output JSON Schema from which to read a `schema_constant`.
+
+Backend recomputes every declared qualification against the chosen execution
+before publication and before optional text generation. Missing fields, ambiguous
+scalar reads, invalid encodings or oversized metadata fail output validation;
+they do not silently remove a qualification or fail the completed engine run.
+There are at most 16 qualifications, with descriptions up to 1024 characters and
+at most 64 KiB of computed qualification metadata in total.
+
+Saved `content.qualifications` is visible in notebook/terminal views and retained
+by SDK/MCP reads alongside the table, JSON or text outputs. It does not add an
+answer part or change a frozen table schema/description. Computed qualifications
+require a source-backed response plan; direct publication cannot claim that
+certification. Historical plans and answers that omit the field remain unchanged.
+
 Research establishes a study and a verified response plan. Deployment executes
 that saved sequence without a supervisor. Account returns, fills and costs exist
 after execution, so a requested performance table can come from post-run queries;

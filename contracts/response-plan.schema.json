@@ -59,6 +59,9 @@
       "additionalProperties": false,
       "description": "One published answer for a query, independent of its source execution.",
       "properties": {
+        "extension": {
+          "$ref": "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance"
+        },
         "primary_execution_id": {
           "minLength": 1,
           "pattern": "\\S",
