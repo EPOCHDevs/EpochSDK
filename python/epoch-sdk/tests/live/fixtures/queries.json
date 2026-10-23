@@ -1033,7 +1033,408 @@
         "status": 400,
         "message_contains": "request_id is blank"
       }
+    },
+    {
+      "id": "concept-gdp-latest-revision-required",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-latest-revision-required",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": [],
+                  "must_have_revisions": true
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              }
+            },
+            "schema_ref": "data_category/MacrobondData/endpoint/macrobond.series_fetch_series"
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-gdp-first-revision-required",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-first-revision-required",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": [],
+                  "must_have_revisions": true
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_vintage_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "revision": "First"
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+            "effective_selectors": {
+              "kind": "vintage",
+              "revision": "First"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-gdp-tape-revision-required",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-tape-revision-required",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": [],
+                  "must_have_revisions": true
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_revision_tape"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "full_tape": true
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_all_vintage_series",
+            "effective_selectors": {
+              "kind": "vintage",
+              "full_tape": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-gdp-first-revision-unfiltered",
+      "group": "macro_search",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "concept-gdp-first-revision-unfiltered",
+            "subjects": [
+              {
+                "kind": "macro_concept",
+                "concept": "United States Bureau of Economic Analysis quarterly total real gross domestic product, seasonally adjusted annualized percent change from previous quarter",
+                "geographies": [
+                  "United States"
+                ],
+                "keywords": "Gross Domestic Product",
+                "macrobond": {
+                  "category": [
+                    "naac"
+                  ],
+                  "currency": [],
+                  "data_type": [],
+                  "exchange": [],
+                  "frequency": [
+                    "quarterly"
+                  ],
+                  "klass": [],
+                  "must_have_revisions": false
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "requested_window": {
+                  "from": "2023-01-01",
+                  "to": "2024-12-31"
+                },
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "series",
+        "relevant_identities": [
+          {
+            "kind": "series",
+            "vendor": "macrobond",
+            "series_id": "usnaac0381"
+          }
+        ],
+        "top_k": 10,
+        "unit": "Percent",
+        "frequency": "quarterly",
+        "description_fragments": [
+          "Constant Prices",
+          "SA",
+          "AR",
+          "Change P/P"
+        ],
+        "required_vendors": [
+          "macrobond"
+        ],
+        "products": [
+          {
+            "kind": "bindings",
+            "identity": {
+              "kind": "series",
+              "vendor": "macrobond",
+              "series_id": "usnaac0381"
+            },
+            "source_ids": [
+              "mb_vintage_data"
+            ],
+            "availability": [
+              "unknown",
+              "available"
+            ],
+            "requested_dataset": {
+              "category": "MacrobondVintageData",
+              "requested_window": {
+                "from": "2023-01-01",
+                "to": "2024-12-31"
+              },
+              "selectors": {
+                "kind": "vintage",
+                "revision": "First"
+              }
+            },
+            "schema_ref": "data_category/MacrobondVintageData/endpoint/macrobond.series_fetch_nth_release",
+            "effective_selectors": {
+              "kind": "vintage",
+              "revision": "First"
+            }
+          }
+        ]
+      }
     }
   ],
-  "candidate_acceptance": "The existing search API returns candidates, not a selected study source. Correct source/measurement facts must be present in the first returned page on one public query; top-rank correctness is reported separately and is not semantic authority. Unique instrument and exact-address cases retain their independent stricter expectations. Natural-language caller acceptance must verify actual selection from the page. Original top1 experiment failures are preserved."
+  "candidate_acceptance": "The existing search API returns candidates, not a selected study source. Correct source/measurement facts must be present in the first returned page on one public query; top-rank correctness is reported separately and is not semantic authority. Unique instrument and exact-address cases retain their independent stricter expectations. Natural-language caller acceptance must verify actual selection from the page. Original top1 experiment failures are preserved.",
+  "revision_filter_basis": "ENG-2185: use the existing independently labelled GDP measurement/products with explicit true/false revision-history facets. True must agree with every returned Macrobond row's native history metadata; false is unfiltered, not a request for series without history. This is binding/filter acceptance, not natural-language routing."
 }

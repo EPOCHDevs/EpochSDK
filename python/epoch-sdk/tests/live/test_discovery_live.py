@@ -456,6 +456,23 @@ async def exercise(case, route, env, receipt):
             assert len(matched) == len(records)
             return
         assert all(row.error is None for row in records), receipt["records"]
+        revision_filtered_requests = {
+            query.request_id for query in case.request.requests
+            if query.subjects and all(
+                subject.kind == "macro_concept" and subject.macrobond is not None
+                and subject.macrobond.must_have_revisions is True
+                for subject in query.subjects
+            )
+        }
+        if revision_filtered_requests:
+            macro_rows = [row for row in records
+                          if row.request_id in revision_filtered_requests and row.identity is not None
+                          and row.identity.kind == "series"
+                          and row.identity.vendor == "macrobond"]
+            assert macro_rows, "Revision filter returned no Macrobond series"
+            assert all(row.metadata is not None and row.metadata.has_revision_history is True
+                       for row in macro_rows), "Revision filter disagrees with returned source facts"
+            receipt["revision_filtered_macrobond_rows"] = len(macro_rows)
         if isinstance(expected, SeriesExpectation):
             candidates = []
             identities = []
