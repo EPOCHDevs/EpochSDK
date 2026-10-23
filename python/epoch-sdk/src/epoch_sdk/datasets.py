@@ -27,10 +27,11 @@ _SCREEN_REQUEST = TypeAdapter(ScreenAssetsRequest)
 
 
 class DatasetSearchResult(BaseModel):
-    """Original search facts plus the first stored page when inline rows end.
+    """Backend-ranked selections for every requested subject/product.
 
-    The original completeness/receipt is never rewritten to imply a whole
-    pool was delivered. Continue with read_dataset_search and page.next_cursor.
+    The original completeness/receipt still describes the full captured pool.
+    page is retained only to decode historical client/checkpoint deliveries;
+    ordinary search returns its complete selection without a metadata read.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -75,25 +76,28 @@ class DatasetClient:
         requests: Sequence[DatasetSearchQuery],
         *,
         candidate_limit: int | None = None,
+        saved_query: str | None = None,
     ) -> DatasetSearchResult:
         """Find native asset/series identities, optionally with a constructor.
 
         Copy exact returned record_ref/result_ref into build_study source_refs.
-        An omitted inline preview is read once from its saved pool. Search does
-        not create a cohort; use screen_assets for a complete universe.
+        Backend delivers relevant candidates per requested subject and product.
+        saved_query finds caller-owned datasets by descriptive metadata or exact
+        returned references. Search does not create an asset cohort; use
+        screen_assets for a complete universe.
         """
         request = DatasetSearchRequest.model_validate({
-            "requests": requests, "candidate_limit": candidate_limit,
+            "requests": requests, "candidate_limit": candidate_limit, "saved_query": saved_query,
         })
         result = await self.backend.discovery.search_dataset(
             requests=request.requests,
             candidate_limit=request.candidate_limit,
-            request_options={"max_retries": 0},
+            saved_query=request.saved_query,
+            request_options={"max_retries": 0, "additional_headers": {"X-Epoch-Dataset-Selection": "v1"}},
         )
-        page = None
-        if not result.records_complete:
-            page = await self.read_dataset_search(result.receipt.result_ref)
-        return DatasetSearchResult(result=result, page=page)
+        if not result.records_complete and not result.records:
+            raise RuntimeError("Backend returned an incomplete search without ranked candidates; update the Backend dataset-search service. No candidate paging was started.")
+        return DatasetSearchResult(result=result)
 
     async def read_dataset_search(
         self, result_ref: str, *, cursor: str | None = None, limit: int = 10

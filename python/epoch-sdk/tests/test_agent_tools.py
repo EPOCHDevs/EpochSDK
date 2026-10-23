@@ -178,7 +178,6 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
         async with service.client() as client, Client(create_server(client)) as mcp:
             tools = {tool.name: tool for tool in (await mcp.list_tools()).tools}
             assert set(tools) == {
-                "epoch_dataset_catalog",
                 "epoch_search_dataset",
                 "epoch_screen_assets",
                 "epoch_inspect_source",

@@ -4,7 +4,6 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 
 | Tool | Purpose | Epoch model call |
 | --- | --- | --- |
-| `epoch_dataset_catalog` | Read the Backend dataset directory, complete loader options and saved-dataset metadata. | None |
 | `epoch_search_dataset` | Resolve native instruments/series and rank metadata alternatives. | No generative model |
 | `epoch_screen_assets` | Resolve or reuse a complete asset universe with explicit membership semantics. | None |
 | `epoch_inspect_source` | Read selected source observations and optional read-only queries. | None |
@@ -54,8 +53,8 @@ does not claim that they have been replaced in every result family.
 
 ## Reuse discovery
 
-1. Read `epoch_dataset_catalog` for supported datasets and their options. Ask for details of selected source IDs to see vintage/revision, fields and clock choices. The prose and schemas come from Backend.
-2. Use `epoch_search_dataset` for asset/series identities, or `epoch_screen_assets` for a whole cohort. Search returns its unchanged receipt and, when inline rows are omitted, one bounded stored page. Continue with `epoch_read(kind="dataset_search", identifier=result_ref, cursor=next_cursor)`; no provider search is repeated. Metadata page limits are 1..10, matching Backend.
+1. Read `epoch_read(kind="guide")` once for the current Backend-generated dataset briefing, including option meanings/defaults and vintage/revision/clock choices. Exact field schemas remain available to study authoring.
+2. Use `epoch_search_dataset` for asset/series identities or caller-owned saved datasets (`saved_query`), and `epoch_screen_assets` for complete cohorts. Search returns ranked candidates for each requested subject/product, with definitions, qualifications and collected/delivered counts. Backend owns retrieval and ranking; the caller checks semantic fit without browsing candidate pages. SDK catalog and explicit stored reads remain application APIs.
 3. Pass exact record/result references or the `universe_ref`, plus the selected dataset/options, as `source_refs` to `epoch_build_study`. It retains and validates them internally. A historical universe needs the requested study period inside its captured membership window. Metadata does not certify populated observations or account access.
 4. Keep the build handle and poll `epoch_status`. Its saved outcome returns retained `source_refs` for later builds, including after the original working search expires. Reuse the workspace and select a new study slot for a different study. Registry compatibility still applies.
 5. Execute a saved study ID with `epoch_execute`, then observe its native execution ID with `epoch_status(kind="execution")`.

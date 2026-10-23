@@ -153,22 +153,18 @@ def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limi
             async with Client(create_server(tools)) as mcp:
                 listed = (await mcp.list_tools()).tools
                 search_schema = next(tool for tool in listed if tool.name == 'epoch_search_dataset').input_schema
-                catalog_schema = next(tool for tool in listed if tool.name == 'epoch_dataset_catalog').input_schema
+                assert 'epoch_dataset_catalog' not in {tool.name for tool in listed}
                 candidate = next(arm for arm in search_schema['properties']['candidate_limit']['anyOf']
                                  if arm.get('type') == 'integer')
                 owner_candidate = next(arm for arm in DatasetSearchRequest.model_json_schema()['properties']['candidate_limit']['anyOf']
                                        if arm.get('type') == 'integer')
                 for key in ('minimum', 'maximum'):
                     assert candidate[key] == owner_candidate[key]
-                    assert catalog_schema['properties']['saved_limit'][key] == DatasetCatalogRequest.model_json_schema()['properties']['saved_limit'][key]
-                assert catalog_schema['properties']['saved_limit']['default'] == DatasetCatalogRequest.model_fields['saved_limit'].default
                 for name, args in [
                     ('epoch_search_dataset', {'requests': [query], 'candidate_limit': candidate_limit}),
-                    ('epoch_dataset_catalog', {'saved_limit': saved_limit, 'include_details': True, 'include_saved': False}),
-                    ('epoch_dataset_catalog', {}),
                 ]:
                     assert not (await mcp.call_tool(name, args)).is_error
-            assert calls[:3] == calls[3:]
+            assert calls[0] == calls[3]
             assert calls[0][1]['requests'] == [query]
             assert calls[1][1]['saved_limit'] == saved_limit
             assert calls[2][1]['saved_limit'] == 100
@@ -187,7 +183,7 @@ class MetadataService:
         self.search = fixture('search')
         self.rows = [dict(self.search['records'][0], record_ref=f'fixture-record-{i}') for i in range(15)]
         if not inline:
-            self.search['records'] = []
+            self.search['records'] = self.rows[:10]
             self.search['records_complete'] = False
             self.search['counts']['stored_records'] = 15
             self.search['counts']['candidates'] = 15
@@ -200,6 +196,7 @@ class MetadataService:
             assert body['include_details'] is True
             return httpx.Response(200, json=fixture('catalog'))
         if request.url.path == '/api/v1/discovery/datasets/search':
+            assert request.headers['X-Epoch-Dataset-Selection'] == 'v1'
             assert body['requests'][0] == QUERY
             return httpx.Response(200, json=self.search)
         if request.url.path == '/api/v1/discovery/assets/screen':
@@ -248,15 +245,13 @@ def test_sdk_and_mcp_share_native_contracts_and_bound_first_page_without_researc
             result = await epoch.search_dataset([query])
             assert result.result.model_dump(mode='json', by_alias=True, exclude_unset=True) == service.search
             assert result.result.records_complete is inline
-            if inline:
-                assert result.page is None
-                assert len(service.calls) == 2
-            else:
-                assert result.page.returned == 10 and result.page.has_more
-                assert len(service.calls) == 3
-                later = await tools.read_dataset_search(result.result.receipt.result_ref, cursor=result.page.next_cursor)
+            assert result.page is None
+            assert len(service.calls) == 2
+            if not inline:
+                first = await tools.read_dataset_search(result.result.receipt.result_ref)
+                later = await tools.read_dataset_search(result.result.receipt.result_ref, cursor=first.next_cursor)
                 assert len(later.records) == 5 and not later.has_more
-                assert {r.record_ref for r in result.page.records}.isdisjoint(r.record_ref for r in later.records)
+                assert {r.record_ref for r in first.records}.isdisjoint(r.record_ref for r in later.records)
 
             assert not graph_calls
             async with Client(create_server(tools)) as mcp:
@@ -266,9 +261,6 @@ def test_sdk_and_mcp_share_native_contracts_and_bound_first_page_without_researc
                 screen = await mcp.call_tool('epoch_screen_assets', {'request': {'kind': 'saved', 'universe_ref': 'owned-cohort'}})
                 assert not screen.is_error
                 assert screen.structured_content['definition']['membership_screen']['index_membership_mode'] == 'PointInTime'
-                if not inline:
-                    page = await mcp.call_tool('epoch_read', {'kind': 'dataset_search', 'identifier': result.result.receipt.result_ref, 'cursor': result.page.next_cursor})
-                    assert not page.is_error and page.structured_content['returned'] == 5
                 before = len(service.calls)
                 invalid = await mcp.call_tool('epoch_screen_assets', {'request': {'kind': 'invented'}})
                 assert invalid.is_error and len(service.calls) == before
@@ -277,21 +269,16 @@ def test_sdk_and_mcp_share_native_contracts_and_bound_first_page_without_researc
     asyncio.run(scenario())
 
 
-def test_a_failed_page_read_remains_an_error_instead_of_an_empty_or_complete_result():
+def test_search_does_not_hide_an_empty_incomplete_delivery_with_a_page_read():
     async def scenario():
         service = MetadataService(False)
-        def transport(request):
-            if request.url.path.endswith('/query-stored'):
-                return httpx.Response(403, json={'error': 'Forbidden', 'message': 'Not owned', 'timestamp': '2026-10-21T00:00:00Z'})
-            return service.transport(request)
-        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
-            # Only the native Backend is used by DatasetClient methods.
+        service.search['records'] = []
+        async with httpx.AsyncClient(transport=httpx.MockTransport(service.transport)) as http:
             from epoch_sdk.datasets import DatasetClient
             client = DatasetClient()
             client.backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
-            with pytest.raises(ApiError) as error:
+            with pytest.raises(RuntimeError, match='incomplete search without ranked candidates'):
                 await client.search_dataset([DatasetSearchQuery.model_validate(QUERY)])
-            assert error.value.status_code == 403
             assert len(service.calls) == 1
     asyncio.run(scenario())
 
@@ -357,12 +344,17 @@ def test_customer_table_or_json_snapshot_fits_the_owner_scoped_catalog_in_sdk_an
         seen = []
         for owner in ('alice', 'bob'):
             def backend(request, owner=owner):
-                assert request.url.path == '/api/v1/discovery/catalog'
                 assert request.headers['Authorization'] == f'Bearer fixture-{owner}'
-                assert json.loads(request.content)['include_saved'] is True
+                assert request.url.path in ('/api/v1/discovery/catalog', '/api/v1/discovery/datasets/search')
                 seen.append(owner)
-                result = fixture('catalog')
-                result['saved'] = {'items': [saved(owner).model_dump(mode='json', by_alias=True, exclude_unset=True)]}
+                item = saved(owner).model_dump(mode='json', by_alias=True, exclude_unset=True)
+                if request.url.path.endswith('/datasets/search'):
+                    result = fixture('search')
+                    result['saved'] = {'query': item['name'], 'items': [item], 'total_matches': 1}
+                else:
+                    assert json.loads(request.content)['include_saved'] is True
+                    result = fixture('catalog')
+                    result['saved'] = {'items': [item]}
                 return httpx.Response(200, json=result)
 
             def graph(request):
@@ -385,9 +377,9 @@ def test_customer_table_or_json_snapshot_fits_the_owner_scoped_catalog_in_sdk_an
                     assert item.descriptor.shape.json_schema_text == canonical_json['descriptor']['shape']['json_schema_text']
                 assert owner not in expected.overview
                 async with Client(create_server(tools)) as mcp:
-                    actual = await mcp.call_tool('epoch_dataset_catalog', {})
+                    actual = await mcp.call_tool('epoch_search_dataset', {'requests': [], 'saved_query': item.name})
                     assert not actual.is_error
-                    assert actual.structured_content == expected.model_dump(mode='json', by_alias=True, exclude_unset=True)
+                    assert actual.structured_content['result']['saved']['items'] == expected.model_dump(mode='json', by_alias=True, exclude_unset=True)['saved']['items']
         assert seen == ['alice', 'alice', 'bob', 'bob']
     asyncio.run(scenario())
 
@@ -410,8 +402,8 @@ def test_metadata_page_bounds_reject_before_native_transport_and_match_mcp_schem
             async with Client(create_server(tools)) as mcp:
                 listed = await mcp.list_tools()
                 read = next(tool for tool in listed.tools if tool.name == 'epoch_read')
-                assert read.input_schema['properties']['limit']['minimum'] == 1
-                assert read.input_schema['properties']['limit']['maximum'] == 10
+                assert 'limit' not in read.input_schema['properties']
+                assert 'cursor' not in read.input_schema['properties']
                 result = await mcp.call_tool('epoch_read', {
                     'kind': 'dataset_search', 'identifier': 'owned-result', 'limit': limit,
                 })
@@ -506,13 +498,13 @@ def test_native_discovery_failure_reaches_sdk_and_mcp_without_retry_or_replaceme
                 body = body.model_dump(mode='json', by_alias=True, exclude_unset=True)
             assert body == failure
             assert len(calls) == 1
+            if route == 'read':
+                return  # Explicit metadata paging remains an SDK/application API.
             async with Client(create_server(tools)) as mcp:
                 if route == 'search':
                     result = await mcp.call_tool('epoch_search_dataset', {'requests': [QUERY]})
                 elif route == 'catalog':
-                    result = await mcp.call_tool('epoch_dataset_catalog', {
-                        'include_saved': True, 'saved_cursor': 'native-cursor',
-                    })
+                    result = await mcp.call_tool('epoch_read', {'kind': 'guide'})
                 elif route == 'read':
                     result = await mcp.call_tool('epoch_read', {
                         'kind': 'dataset_search', 'identifier': 'owned-result',
@@ -525,5 +517,68 @@ def test_native_discovery_failure_reaches_sdk_and_mcp_without_retry_or_replaceme
                 assert result.is_error
                 assert result.structured_content == {'http_status': status, 'backend_error': failure}
                 assert failure['message'] in result.content[0].text
+            assert len(calls) == 2
+    asyncio.run(scenario())
+
+
+def test_mcp_guide_bootstraps_exact_backend_briefing_without_private_inventory():
+    async def scenario():
+        calls = []
+        native_catalog = fixture('catalog')
+        native_catalog['overview'] = 'Current Backend briefing: annual/quarterly; First/Last/NthFromLast.'
+        def backend(request):
+            calls.append(request)
+            assert request.url.path == '/api/v1/discovery/catalog'
+            assert json.loads(request.content)['include_saved'] is False
+            return httpx.Response(200, json=native_catalog)
+        def graph(request):
+            assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
+            return httpx.Response(200, json=CATALOG)
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+            httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            tools = AgentToolsClient(LangGraphClient(graph_http), AsyncStratifyX(
+                base_url='https://backend.invalid', token='fixture', httpx_client=native_http), graph_http)
+            async with Client(create_server(tools)) as mcp:
+                result = await mcp.call_tool('epoch_read', {'kind': 'guide'})
+                assert not result.is_error
+                text = '\n'.join(part.text for part in result.content if part.type == 'text')
+                assert native_catalog['overview'] in text
+                assert 'browse candidate pages' not in text
+                assert 'saved_query' in text
+            assert len(calls) == 1
+    asyncio.run(scenario())
+
+
+def test_private_dataset_search_returns_native_descriptors_in_one_sdk_and_mcp_call():
+    async def scenario():
+        saved = json.loads(files('stratifyx').joinpath('contract_examples/user_files.json').read_text())['saved_json']
+        native = fixture('search')
+        native['records'] = []
+        native['records_complete'] = True
+        native['saved'] = {'query': saved['name'], 'items': [saved], 'total_matches': 1}
+        calls = []
+        def backend(request):
+            calls.append(request)
+            assert request.url.path.endswith('/datasets/search')
+            body = json.loads(request.content)
+            assert body['requests'] == [] and body['saved_query'] == saved['name']
+            return httpx.Response(200, json=native)
+        def graph(request):
+            return httpx.Response(200, json=CATALOG)
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+            httpx.AsyncClient(base_url='https://graph.invalid', transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            tools = AgentToolsClient(LangGraphClient(graph_http), AsyncStratifyX(
+                base_url='https://backend.invalid', token='fixture', httpx_client=native_http), graph_http)
+            result = await tools.search_dataset([], saved_query=saved['name'])
+            assert result.result.saved.items[0].dataset_ref == saved['dataset_ref']
+            assert result.result.saved.items[0].source_ref == saved.get('source_ref')
+            async with Client(create_server(tools)) as mcp:
+                response = await mcp.call_tool('epoch_search_dataset', {'requests': [], 'saved_query': saved['name']})
+                assert not response.is_error
+                assert response.structured_content['result']['saved']['items'][0] == saved
             assert len(calls) == 2
     asyncio.run(scenario())

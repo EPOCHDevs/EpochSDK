@@ -22,10 +22,9 @@ from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import (
     CreateSdkExecutionRequest,
-    DatasetCatalogRequest,
+    DatasetCatalogResponse,
     DatasetSearchQuery,
     DatasetSearchRequest,
-    DiscoveryStoredQueryRequest,
     ExecutionPresentationPin,
     ScreenAssetsRequest,
     SdkExecutionRecord,
@@ -44,10 +43,6 @@ _SPECIALIST_NAMES = {name: public for name, public in MCP_TOOL_NAMES.items() if 
 # Reuse the native request fields, including strictness and source-owned bounds.
 # Plain int/bool annotations would coerce values before SDK validation sees them.
 _CandidateLimit = Annotated[int | None, DatasetSearchRequest.model_fields["candidate_limit"]]
-_SavedLimit = Annotated[int, DatasetCatalogRequest.model_fields["saved_limit"]]
-_IncludeDetails = Annotated[bool, DatasetCatalogRequest.model_fields["include_details"]]
-_IncludeSaved = Annotated[bool, DatasetCatalogRequest.model_fields["include_saved"]]
-_MetadataPageLimit = Annotated[int, DiscoveryStoredQueryRequest.model_fields["limit"]]
 
 
 class _ExtensionExecutionRequest(CreateSdkExecutionRequest):
@@ -235,7 +230,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     server = MCPServer(
         "Epoch",
         instructions=(
-            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. Read epoch_dataset_catalog for datasets/options, epoch_search_dataset for identities, and epoch_screen_assets for whole cohorts. "
+            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes the current Backend dataset briefing/options. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
@@ -271,34 +266,20 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             )
         )
 
-    async def dataset_catalog(
-        source_ids: list[str] | None = None,
-        include_details: _IncludeDetails = False,
-        include_saved: _IncludeSaved = True,
-        saved_cursor: str | None = None,
-        saved_limit: _SavedLimit = DatasetCatalogRequest.model_fields["saved_limit"].default,
-    ) -> CallToolResult:
-        """Read Backend's dataset directory and shared source guidance, without an LLM.
-        Request details for all supported loader options, including available
-        vintage/revision selectors. Saved datasets are caller-owned. Metadata
-        describes source capabilities; it does not prove access or data coverage.
-        """
-        return await _call(client.dataset_catalog(
-            source_ids=[] if source_ids is None else source_ids, include_details=include_details,
-            include_saved=include_saved, saved_cursor=saved_cursor, saved_limit=saved_limit,
-        ))
-
     async def search_dataset(
         requests: list[DatasetSearchQuery], candidate_limit: _CandidateLimit = None,
+        saved_query: str | None = None,
     ) -> CallToolResult:
         """Find assets/series by name, concept or exact native address through Backend.
         No Discovery agent or generative LLM is invoked. Reuse exact returned
         result_ref/record_ref in build_study source_refs; never invent identifiers.
-        Result retains original search facts. If inline records were omitted,
-        page contains the first saved page; continue with epoch_read(kind=dataset_search).
+        The first response contains ranked candidates per requested subject/product,
+        with definitions and qualifications. Do not browse collected candidate
+        pages. saved_query finds caller-owned datasets by name, description or
+        exact returned dataset/source reference; use requests=[] for saved-only.
         This is ranked identity lookup; use epoch_screen_assets for a whole cohort.
         """
-        return await _call(client.search_dataset(requests, candidate_limit=candidate_limit))
+        return await _call(client.search_dataset(requests, candidate_limit=candidate_limit, saved_query=saved_query))
 
     async def screen_assets(request: ScreenAssetsRequest) -> CallToolResult:
         """Create or reuse a complete saved asset universe through Backend, without an LLM.
@@ -383,13 +364,11 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     async def read(
         kind: Literal[
             "workspace", "study", "execution", "tool", "dashboard", "dashboard_metadata", "guide",
-            "dataset_search", "response", "presentation"
+            "response", "presentation"
         ],
         identifier: str | None = None,
         handle: AgentToolHandle | None = None,
         category: str = "ALL",
-        cursor: str | None = None,
-        limit: _MetadataPageLimit = 10,
         version: Annotated[int, Field(ge=1, strict=True)] | None = None,
         table: str | None = None,
         offset: Annotated[int, Field(ge=0, strict=True)] = 0,
@@ -400,7 +379,6 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         Workspace returns study/execution registries; study returns the native
         definition; execution returns status. Tool reads require a handle and
         include the original saved artifact when available.
-        Dataset-search pages contain 1..10 records and retain native cursors.
         Response reads accept a pinned version; table selects one paged named
         table using offset/page_size. Page size never caps the full result.
         Presentation reads require the exact publication/catalog/edit pin from
@@ -408,7 +386,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """
         if kind == "presentation":
             if (presentation is None or identifier is not None or handle is not None
-                    or cursor is not None or limit != 10 or version is not None
+                    or version is not None
                     or table is not None or offset != 0 or page_size != 1000):
                 return _failure("Presentation reads require only their exact pin and optional category")
             return await _call(client.extension_presentation(
@@ -424,23 +402,21 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             if identifier is not None or handle is not None:
                 return _failure("Guide reads do not take an identifier or handle")
             guide = files("epoch_sdk").joinpath("data/agent-tools-guide.md").read_text()
-            return CallToolResult(content=[TextContent(type="text", text=guide)])
+            catalog = await _call(client.dataset_catalog(include_saved=False))
+            if catalog.is_error:
+                return catalog
+            briefing = DatasetCatalogResponse.model_validate(catalog.structured_content).overview
+            return CallToolResult(content=[TextContent(type="text", text=guide + "\n\n<data>\n" + briefing + "\n</data>")])
         if kind == "tool" and handle is not None and identifier is None:
             return await _call(client.status(handle, include_artifact=True))
         if identifier is None or handle is not None:
             return _failure("Supply identifier, or a tool handle for kind=tool")
         if kind == "response":
-            if cursor is not None or limit != 10:
-                return _failure("Cursor and limit apply only to dataset_search reads")
             if table is not None:
                 return await _call(client.response_table(identifier, table, version=version, offset=offset, page_size=page_size))
             if offset != 0 or page_size != 1000:
                 return _failure("Response paging requires a table name")
             return await _call(client.response(identifier, version=version))
-        if kind == "dataset_search":
-            return await _call(client.read_dataset_search(identifier, cursor=cursor, limit=limit))
-        if cursor is not None or limit != 10:
-            return _failure("Cursor and limit apply only to dataset_search reads")
         if kind == "workspace":
             return await _call(client.workspace(identifier))
         if kind == "study":
@@ -466,7 +442,6 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         )
 
     for name, function in (
-        ("epoch_dataset_catalog", dataset_catalog),
         ("epoch_search_dataset", search_dataset),
         ("epoch_screen_assets", screen_assets),
         ("epoch_execute", execute),
