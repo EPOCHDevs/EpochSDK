@@ -1,0 +1,1184 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Independent frozen source scopes and declared raw endpoint columns; metadata visibility does not certify historical event coverage or observations.",
+  "cases": [
+    {
+      "id": "corporate-dividends-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-dividends-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Dividends",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "dividends"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Dividends",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-dividends-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-dividends-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Dividends",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "dividends"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Dividends",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-dividends_calendar-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-dividends_calendar-native",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "dividends_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DividendsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "dividends_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "dividends_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "DividendsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-dividends_calendar-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-dividends_calendar-field",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "dividends_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DividendsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "dividends_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "dividends_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "DividendsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-earnings-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-earnings-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Earnings",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Earnings",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-earnings-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-earnings-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Earnings",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "earnings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Earnings",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-earnings_calendar-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-earnings_calendar-native",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "earnings_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EarningsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "earnings_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "earnings_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EarningsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-earnings_calendar-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-earnings_calendar-field",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "earnings_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EarningsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "earnings_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "earnings_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EarningsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-etf_holdings-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-etf_holdings-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "SPY",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EtfHoldings"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "etf_holdings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "SPY",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EtfHoldings"
+        }
+      }
+    },
+    {
+      "id": "corporate-etf_holdings-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-etf_holdings-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "SPY",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EtfHoldings",
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "etf_holdings"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "SPY",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EtfHoldings",
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-etf_info-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-etf_info-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "SPY",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EtfInformation"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "etf_info"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "SPY",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EtfInformation"
+        }
+      }
+    },
+    {
+      "id": "corporate-etf_info-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-etf_info-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "SPY",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "EtfInformation",
+                "fields": [
+                  "row_index"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "etf_info"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "SPY",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "EtfInformation",
+          "fields": [
+            "row_index"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-historical_employee_count-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-historical_employee_count-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "HistoricalEmployeeCount",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "historical_employee_count"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "HistoricalEmployeeCount",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-historical_employee_count-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-historical_employee_count-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "HistoricalEmployeeCount",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "historical_employee_count"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "HistoricalEmployeeCount",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-historical_market_cap-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-historical_market_cap-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "HistoricalMarketCap",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "historical_market_cap"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "HistoricalMarketCap",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-historical_market_cap-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-historical_market_cap-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "HistoricalMarketCap",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "historical_market_cap"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "HistoricalMarketCap",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-ipo_calendar-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-ipo_calendar-native",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "ipo_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ipos",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ipo_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "ipo_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ipos",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-ipo_calendar-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-ipo_calendar-field",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "ipo_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ipos",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ipo_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "ipo_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Ipos",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-ipo_prospectus-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-ipo_prospectus-native",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "ipo_prospectus"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IpoProspectus",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ipo_prospectus"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "ipo_prospectus"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IpoProspectus",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-ipo_prospectus-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-ipo_prospectus-field",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "ipo_prospectus"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "IpoProspectus",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "ipo_prospectus"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "ipo_prospectus"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "IpoProspectus",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-splits-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-splits-native",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Splits",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "splits"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Splits",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-splits-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-splits-field",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Splits",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "splits"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "Splits",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    },
+    {
+      "id": "corporate-splits_calendar-native",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-splits_calendar-native",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "splits_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "SplitsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "splits_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "splits_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "SplitsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "corporate-splits_calendar-field",
+      "group": "corporate_actions",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "corporate-splits_calendar-field",
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "global_source",
+                  "source_id": "splits_calendar"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "SplitsCalendar",
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                },
+                "fields": [
+                  "symbol"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "splits_calendar"
+        ],
+        "identity": {
+          "kind": "global_source",
+          "source_id": "splits_calendar"
+        },
+        "availability": "unknown",
+        "requested_dataset": {
+          "category": "SplitsCalendar",
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          },
+          "fields": [
+            "symbol"
+          ]
+        }
+      }
+    }
+  ]
+}

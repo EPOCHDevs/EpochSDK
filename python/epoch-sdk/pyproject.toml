@@ -40,6 +40,7 @@ epoch_sdk = ["py.typed", "data/*.json", "data/*.md"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = ["live_discovery: opt-in real Backend and registered MCP acceptance"]
 
 [tool.ruff]
 target-version = "py312"

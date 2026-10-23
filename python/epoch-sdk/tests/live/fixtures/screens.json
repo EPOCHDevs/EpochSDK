@@ -1,0 +1,532 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Independently labeled native MSFT/AAPL listing facts and exact identities; boolean set algebra has explicit expected membership. Historical NASDAQ100 preserves native qualifications, not an external completeness certification. Explicit IDs are a source leaf; predicates are composed with all_of, never mixed in the ID leaf. The native screen resolver applies its declared bar-serveable venue gate: ICE CB is excluded, GBLX ES remains. This is not a substitute Brent instrument or a promise of wider screening support.",
+  "cases": [
+    {
+      "id": "screen-explicit-roster",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "ids": [
+            "AAPL-Stocks",
+            "MSFT-Stocks"
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": true
+    },
+    {
+      "id": "screen-reverse-roster",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "ids": [
+            "MSFT-Stocks",
+            "AAPL-Stocks"
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-all-intersection",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "MSFT-Stocks",
+                "META-Stocks"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-any-union",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "MSFT-Stocks"
+              ]
+            }
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-not-member",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            }
+          ],
+          "any_of": [],
+          "not": {
+            "all_of": [],
+            "any_of": [],
+            "ids": [
+              "MSFT-Stocks"
+            ]
+          }
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-country",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "country": [
+                "US"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-exchange",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "exchange": [
+                "NASDAQ"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-sector",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "sector": [
+                "Technology"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-security-type",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "security_type": [
+                "CommonStock"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-ipo-after",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "ipo_after": "1985-01-01"
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-ipo-before",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "ipo_before": "1981-01-01"
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-asset-class",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "asset_class": [
+                "Stocks"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-futures-venue-gate",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "ids": [
+            "CB-Futures",
+            "ES-Futures"
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "ES-Futures"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-fx",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "ids": [
+            "EURUSD-FX",
+            "USDJPY-FX"
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "EURUSD-FX",
+        "USDJPY-FX"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-crypto",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "ids": [
+            "BTCUSD-Crypto",
+            "ETHUSD-Crypto"
+          ]
+        }
+      },
+      "expected_asset_ids": [
+        "BTCUSD-Crypto",
+        "ETHUSD-Crypto"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-us-listing",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "country": [
+                "US"
+              ],
+              "exchange": [
+                "NASDAQ"
+              ],
+              "security_type": [
+                "CommonStock"
+              ]
+            }
+          ],
+          "any_of": []
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-current-index",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [
+            {
+              "all_of": [],
+              "any_of": [],
+              "ids": [
+                "AAPL-Stocks",
+                "MSFT-Stocks"
+              ]
+            },
+            {
+              "all_of": [],
+              "any_of": [],
+              "index": [
+                "NASDAQ100"
+              ]
+            }
+          ],
+          "any_of": [],
+          "index_membership_mode": "CurrentSnapshot"
+        }
+      },
+      "expected_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "check_saved_reuse": false
+    },
+    {
+      "id": "screen-historical-index",
+      "group": "screens",
+      "operation": "screen",
+      "request": {
+        "kind": "screen",
+        "screen": {
+          "all_of": [],
+          "any_of": [],
+          "index": [
+            "NASDAQ100"
+          ],
+          "index_membership_mode": "PointInTime"
+        },
+        "membership_window": {
+          "from": "2026-01-01",
+          "to": "2026-06-30"
+        }
+      },
+      "required_asset_ids": [
+        "AAPL-Stocks",
+        "MSFT-Stocks"
+      ],
+      "minimum_members": 100,
+      "point_in_time": true,
+      "check_saved_reuse": true
+    }
+  ]
+}

@@ -1,0 +1,635 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Native semantic rejection contracts and independently reviewed instrument negative/quarantine receipts. Unknown is preserved; it never licenses another ticker, vendor or root.",
+  "cases": [
+    {
+      "id": "boundary-nth-missing",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "NthFromLast"
+                }
+              }
+            ],
+            "request_id": "boundary-nth-missing"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-nth-zero",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "NthFromLast",
+                  "nth": 0
+                }
+              }
+            ],
+            "request_id": "boundary-nth-zero"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-nth-negative",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "NthFromLast",
+                  "nth": -1
+                }
+              }
+            ],
+            "request_id": "boundary-nth-negative"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-first-with-nth",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "First",
+                  "nth": 1
+                }
+              }
+            ],
+            "request_id": "boundary-first-with-nth"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-last-with-nth",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "revision": "Last",
+                  "nth": 1
+                }
+              }
+            ],
+            "request_id": "boundary-last-with-nth"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-nth-without-revision",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "nth": 1
+                }
+              }
+            ],
+            "request_id": "boundary-nth-without-revision"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-full-tape-with-nth",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true,
+                  "nth": 1
+                }
+              }
+            ],
+            "request_id": "boundary-full-tape-with-nth"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "nth"
+      }
+    },
+    {
+      "id": "boundary-invalid-date",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage"
+                },
+                "requested_window": {
+                  "from": "2026-02-30",
+                  "to": "2026-03-01"
+                }
+              }
+            ],
+            "request_id": "boundary-invalid-date"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "window"
+      }
+    },
+    {
+      "id": "boundary-backwards-window",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage"
+                },
+                "requested_window": {
+                  "from": "2026-03-02",
+                  "to": "2026-03-01"
+                }
+              }
+            ],
+            "request_id": "boundary-backwards-window"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "window"
+      }
+    },
+    {
+      "id": "boundary-name-miss",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "zzzzqqqqnonexistentcatalogentity",
+                "asset_type": "Stocks"
+              }
+            ],
+            "request_id": "boundary-name-miss"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-symbol-miss",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "symbol",
+                "symbol": "zzzzqqqqnonexistentcatalogentity",
+                "asset_type": "Stocks"
+              }
+            ],
+            "request_id": "boundary-symbol-miss"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-exact-miss",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "not-a-registered-instrument",
+                "asset_type": "Stocks"
+              }
+            ],
+            "request_id": "boundary-exact-miss"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-contradictory-class",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "symbol",
+                "symbol": "MSFT",
+                "asset_type": "Futures"
+              }
+            ],
+            "request_id": "boundary-contradictory-class"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-contradictory-exchange",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "symbol",
+                "symbol": "MSFT",
+                "asset_type": "Stocks",
+                "exchange": "NYSE"
+              }
+            ],
+            "request_id": "boundary-contradictory-exchange"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-dated-no-root-substitute",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset_name",
+                "name": "Micro E-mini S&P500 2035",
+                "asset_type": "Futures"
+              }
+            ],
+            "request_id": "boundary-dated-no-root-substitute"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "id": "boundary-issuer-quarantine",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "PARA",
+                "asset_type": "Stocks"
+              }
+            ],
+            "request_id": "boundary-issuer-quarantine"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 503,
+        "message_contains": "ASSET_ISSUER_IDENTITY_CONFLICT"
+      }
+    },
+    {
+      "id": "boundary-financialgrowth-unsupported-ttm",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "FinancialGrowth",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months"
+                }
+              }
+            ],
+            "request_id": "boundary-financialgrowth-unsupported-ttm"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unavailable"
+      }
+    },
+    {
+      "id": "boundary-financialratios-unsupported-ttm",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "Ratios",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "trailing_twelve_months"
+                }
+              }
+            ],
+            "request_id": "boundary-financialratios-unsupported-ttm"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "unavailable"
+      }
+    },
+    {
+      "id": "boundary-unknown-field",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "CashFlowStatements",
+                "selectors": {
+                  "kind": "financial",
+                  "period": "annual"
+                },
+                "fields": [
+                  "not_a_registered_field"
+                ]
+              }
+            ],
+            "request_id": "boundary-unknown-field"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "selected field"
+      }
+    },
+    {
+      "id": "boundary-vintage-index-is-not-value-column",
+      "group": "boundaries",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "subjects": [
+              {
+                "kind": "source",
+                "address": {
+                  "kind": "series",
+                  "vendor": "macrobond",
+                  "series_id": "usnaac0381"
+                }
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MacrobondVintageData",
+                "selectors": {
+                  "kind": "vintage",
+                  "full_tape": true
+                },
+                "fields": [
+                  "vintage_date"
+                ]
+              }
+            ],
+            "request_id": "boundary-vintage-index-is-not-value-column"
+          }
+        ]
+      },
+      "expected": {
+        "kind": "http_error",
+        "status": 400,
+        "message_contains": "selected field"
+      }
+    }
+  ]
+}
