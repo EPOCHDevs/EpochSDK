@@ -46,7 +46,7 @@ def research_case(name: str, title: str, checks: str) -> str:
         ),
         cell(
             "markdown",
-            "## 1. Connect\n\nThis prepares the ordinary SDK client. It does not start work. Use `epoch-sdk[notebook]` 0.1.0a23 or later and native SDK 3.3.0rc18 or later.",
+            "## 1. Connect\n\nThis prepares the ordinary SDK client. It does not start work. Use `epoch-sdk[notebook]` 0.1.0a25 or later and native SDK 3.3.0rc19 or later.",
         ),
         cell(
             "code",

@@ -22,7 +22,10 @@ from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import (
     CreateSdkExecutionRequest,
+    DatasetCatalogRequest,
     DatasetSearchQuery,
+    DatasetSearchRequest,
+    DiscoveryStoredQueryRequest,
     ExecutionPresentationPin,
     ScreenAssetsRequest,
     SdkExecutionRecord,
@@ -37,6 +40,14 @@ from .supervisor import Answers
 # Old handles remain readable through AgentToolsClient. New MCP discovery is
 # native Backend lookup; the legacy Discovery LLM is never advertised/invoked.
 _SPECIALIST_NAMES = {name: public for name, public in MCP_TOOL_NAMES.items() if name != "discovery"}
+
+# Reuse the native request fields, including strictness and source-owned bounds.
+# Plain int/bool annotations would coerce values before SDK validation sees them.
+_CandidateLimit = Annotated[int | None, DatasetSearchRequest.model_fields["candidate_limit"]]
+_SavedLimit = Annotated[int, DatasetCatalogRequest.model_fields["saved_limit"]]
+_IncludeDetails = Annotated[bool, DatasetCatalogRequest.model_fields["include_details"]]
+_IncludeSaved = Annotated[bool, DatasetCatalogRequest.model_fields["include_saved"]]
+_MetadataPageLimit = Annotated[int, DiscoveryStoredQueryRequest.model_fields["limit"]]
 
 
 class _ExtensionExecutionRequest(CreateSdkExecutionRequest):
@@ -262,10 +273,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
 
     async def dataset_catalog(
         source_ids: list[str] | None = None,
-        include_details: bool = False,
-        include_saved: bool = True,
+        include_details: _IncludeDetails = False,
+        include_saved: _IncludeSaved = True,
         saved_cursor: str | None = None,
-        saved_limit: int = 100,
+        saved_limit: _SavedLimit = DatasetCatalogRequest.model_fields["saved_limit"].default,
     ) -> CallToolResult:
         """Read Backend's dataset directory and shared source guidance, without an LLM.
         Request details for all supported loader options, including available
@@ -273,12 +284,12 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         describes source capabilities; it does not prove access or data coverage.
         """
         return await _call(client.dataset_catalog(
-            source_ids=source_ids or [], include_details=include_details,
+            source_ids=[] if source_ids is None else source_ids, include_details=include_details,
             include_saved=include_saved, saved_cursor=saved_cursor, saved_limit=saved_limit,
         ))
 
     async def search_dataset(
-        requests: list[DatasetSearchQuery], candidate_limit: int | None = None,
+        requests: list[DatasetSearchQuery], candidate_limit: _CandidateLimit = None,
     ) -> CallToolResult:
         """Find assets/series by name, concept or exact native address through Backend.
         No Discovery agent or generative LLM is invoked. Reuse exact returned
@@ -378,7 +389,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         handle: AgentToolHandle | None = None,
         category: str = "ALL",
         cursor: str | None = None,
-        limit: Annotated[int, Field(ge=1, le=10, strict=True)] = 10,
+        limit: _MetadataPageLimit = 10,
         version: Annotated[int, Field(ge=1, strict=True)] | None = None,
         table: str | None = None,
         offset: Annotated[int, Field(ge=0, strict=True)] = 0,

@@ -18,9 +18,13 @@ from epoch_sdk.workflow_mcp import create_server
 
 
 @asynccontextmanager
-async def clients(*, wrong_identity: bool = False, denied: bool = False):
+async def clients(*, wrong_identity: bool = False, denied: bool = False, qualified: bool = False):
     calls: list[httpx.Request] = []
     record = example()
+    if qualified:
+        record["response_plan"] = {"plan_id": "rpl_" + "a" * 64, "version": 1}
+        record["content"]["qualifications"] = [{"name": "coverage", "description": "Observed source coverage",
+            "value": {"observed": 7, "expected": 8, "zero": 0, "available": False, "unknown": None}}]
     if wrong_identity:
         record["response_id"] = "another-answer"
 
@@ -98,6 +102,21 @@ def test_sdk_publishes_and_mcp_reads_the_same_typed_response_without_an_agent_ru
             read = await mcp.call_tool("epoch_read", {"response_id": example()["response_id"]})
             assert not read.is_error
             assert read.structured_content == published.to_wire()
+
+    asyncio.run(scenario())
+
+
+def test_generated_client_and_mcp_reads_preserve_all_qualification_facts() -> None:
+    async def scenario() -> None:
+        async with clients(qualified=True) as (sdk, calls), Client(create_server(sdk)) as mcp:
+            saved = await sdk.response(example()["response_id"], version=1)
+            assert saved.content.qualifications[0].value == {
+                "observed": 7, "expected": 8, "zero": 0, "available": False, "unknown": None,
+            }
+            read = await mcp.call_tool("epoch_read", {"response_id": saved.response_id, "version": 1})
+            assert not read.is_error
+            assert read.structured_content == saved.to_wire()
+            assert all(call.method == "GET" for call in calls)
 
     asyncio.run(scenario())
 

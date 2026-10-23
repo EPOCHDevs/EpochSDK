@@ -55,6 +55,13 @@ normal conversation when requirements must change. Use `epoch_resume` only
 when an actual pending native interrupt was returned; never choose a
 recommendation automatically.
 
+When presenting a saved answer, preserve its `content.qualifications` alongside
+the requested output parts, including when you page a table or summarize it.
+These are measured source/coverage facts bound to that answer's execution and
+plan; an internal audit or an execution link does not replace their disclosure.
+Unknown observed coverage is not a confirmed loading failure. Do not remove a
+qualification to make a partial population look complete.
+
 Explicit authoring and auditing use their specialist LLMs; only a declared
 `llm_call` invokes the extension's bounded text model. A deterministic extension
 without that declaration uses no model. Native search may use Backend’s

@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from epoch_sdk import EpochError
 from epoch_sdk.responses import ResponseTablePage, SavedResearchResponse
@@ -20,6 +21,43 @@ def test_one_saved_response_contains_all_requested_parts_and_annotations() -> No
     response = SavedResearchResponse.model_validate(example())
     assert response.to_wire() == example()
     assert [item.name for item in response.content.outputs] == ["screen", "summary", "explanation"]
+
+
+def test_computed_qualifications_survive_saved_reads_outside_accepted_output_parts():
+    value = example()
+    declarations = copy.deepcopy(value["content"]["declarations"])
+    outputs = copy.deepcopy(value["content"]["outputs"])
+    value["response_plan"] = {"plan_id": "rpl_" + "a" * 64, "version": 1}
+    value["content"]["qualifications"] = [{"name": "statement_coverage",
+        "description": "Annual statement coverage of the selected cohort",
+        "value": {"observed": 7, "expected": 8, "missing": ["unobserved_source"], "basis": None}}]
+    saved = SavedResearchResponse.model_validate(value)
+    assert saved.to_wire() == value
+    assert saved.to_wire()["content"]["declarations"] == declarations
+    assert saved.to_wire()["content"]["outputs"] == outputs
+
+
+@pytest.mark.parametrize("change", ["duplicate", "too_many", "oversize", "nonfinite"])
+def test_qualification_payload_bounds_and_finite_values_are_checked(change):
+    value = example()
+    value["response_plan"] = {"plan_id": "rpl_" + "a" * 64, "version": 1}
+    qualification = {"name": "coverage", "description": "Observed coverage", "value": {"observed": 1}}
+    value["content"]["qualifications"] = [qualification]
+    SavedResearchResponse.model_validate(value)
+    if change == "duplicate": value["content"]["qualifications"].append(copy.deepcopy(qualification))
+    elif change == "too_many": value["content"]["qualifications"] = [{**qualification, "name": "q" + str(i)} for i in range(17)]
+    elif change == "oversize": qualification["value"] = {"message": "x" * 65536}
+    else: qualification["value"] = {"nested": [float("inf")]}
+    expected = {"duplicate": "names must be unique", "too_many": "at most 16",
+                "oversize": "exceed 64 KiB", "nonfinite": "finite"}[change]
+    with pytest.raises(ValidationError, match=expected): SavedResearchResponse.model_validate(value)
+
+
+def test_qualifications_cannot_claim_computed_provenance_without_a_plan():
+    value = example()
+    value["content"]["qualifications"] = [{"name": "coverage", "description": "Observed coverage", "value": {"observed": 7}}]
+    with pytest.raises(ValidationError, match="source-backed response plan"):
+        SavedResearchResponse.model_validate(value)
 
 
 @pytest.mark.parametrize("change", ["json-type", "table-value", "column-meaning", "missing-part"])

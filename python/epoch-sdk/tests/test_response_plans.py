@@ -71,6 +71,14 @@ def test_fixed_strategy_plan_preserves_the_real_request_and_round_trips():
     ]
 
 
+def test_plan_contract_reuses_canonical_native_extension_provenance():
+    from tools.sync_response_plan_contract import schemas
+
+    schema = schemas()["response-plan.schema.json"]
+    assert "ExecutionExtensionProvenance" not in schema["$defs"]
+    assert "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance" in json.dumps(schema)
+
+
 def test_computed_only_plan_contains_no_model_or_prompt_step():
     value = aapl_plan()
     value["outputs"].pop()
@@ -108,6 +116,35 @@ def test_schema_constants_are_not_arbitrary_text_inputs():
     value["outputs"][2]["inputs"]["invented_fact"] = {"kind": "schema_constant"}
     with pytest.raises(ValidationError, match="no output JSON Schema constant"):
         ResponsePlanDefinition.model_validate(value)
+
+
+def test_qualification_facts_reuse_bindings_without_changing_outputs():
+    value = aapl_plan()
+    value["qualifications"] = [{"name": "coverage", "description": "Observed source coverage",
+        "value": {"kind": "object", "fields": {
+            "observed": {"kind": "column_array", "query": "strategy", "field": {"field_id": "count"}},
+            "period_end": {"kind": "parameter", "pointer": "/period/end"},
+        }}}]
+    plan = ResponsePlanDefinition.model_validate(value)
+    assert plan.to_wire()["outputs"] == value["outputs"]
+    assert plan.to_wire()["declarations"] == value["declarations"]
+    assert len(plan.qualifications) == 1
+    assert "model_policy" not in json.dumps(plan.qualifications[0].to_wire())
+
+
+@pytest.mark.parametrize("change", ["missing_query", "schema_constant", "duplicate", "too_many"])
+def test_qualification_bindings_are_required_and_cannot_invent_schema_constants(change):
+    value = aapl_plan()
+    qualification = {"name": "coverage", "description": "Observed coverage", "value": {
+        "kind": "object", "fields": {"observed": {
+            "kind": "cell", "query": "strategy", "field": {"field_id": "count"},
+        }}}}
+    value["qualifications"] = [qualification]
+    if change == "missing_query": qualification["value"]["fields"]["observed"]["query"] = "unrecorded"
+    elif change == "schema_constant": qualification["value"]["fields"]["observed"] = {"kind": "schema_constant"}
+    elif change == "duplicate": value["qualifications"].append(copy.deepcopy(qualification))
+    else: value["qualifications"] = [{**qualification, "name": "q" + str(i)} for i in range(17)]
+    with pytest.raises(ValidationError): ResponsePlanDefinition.model_validate(value)
 
 
 def published_plan() -> dict:

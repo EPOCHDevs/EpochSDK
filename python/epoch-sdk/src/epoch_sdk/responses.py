@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Annotated, Literal, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, JsonValue, field_validator, model_validator
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import ExecutionExtensionProvenance
@@ -40,15 +40,39 @@ class ResponsePlanReference(Contract):
     version: Annotated[int, Field(ge=1)]
 
 
+class ResponseQualification(Contract):
+    """Computed answer qualifications, independent of accepted output parts."""
+
+    name: OutputName
+    description: Annotated[NonBlank, Field(max_length=1024)]
+    value: JsonValue
+
+    @field_validator("value")
+    @classmethod
+    def finite_facts(cls, value: JsonValue) -> JsonValue:
+        return JsonValueOutput.finite_json(value)
+
+
 class ResearchResponseContent(Contract):
     """Answer values or native table references; a preview is never a full table."""
 
     declarations: Annotated[list[OutputRequest], Field(min_length=1)]
     outputs: Annotated[list[OutputValue], Field(min_length=1)]
+    qualifications: Annotated[list[ResponseQualification], Field(max_length=16)] = Field(
+        default_factory=lambda: list[ResponseQualification](),
+        description="Required computed qualifications; these are not additional answer parts.",
+    )
 
     @model_validator(mode="after")
     def actual_values(self) -> Self:
         validate_outputs(self.declarations, self.outputs)
+        if len({item.name for item in self.qualifications}) != len(self.qualifications):
+            raise ValueError("Qualification names must be unique")
+        if len(json.dumps(
+            [item.to_wire() for item in self.qualifications],
+            ensure_ascii=False, allow_nan=False, separators=(",", ":"),
+        ).encode()) > 64 * 1024:
+            raise ValueError("Computed qualifications exceed 64 KiB")
         return self
 
 
@@ -88,6 +112,8 @@ class SavedResearchResponse(ResponseReference):
 
     @model_validator(mode="after")
     def table_sources(self) -> Self:
+        if self.content.qualifications and self.response_plan is None:
+            raise ValueError("Computed qualifications require their source-backed response plan")
         for value in self.content.outputs:
             if (
                 isinstance(value, TableValue)

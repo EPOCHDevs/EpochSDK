@@ -104,6 +104,15 @@
           "minItems": 1,
           "title": "Outputs",
           "type": "array"
+        },
+        "qualifications": {
+          "description": "Required computed qualifications; these are not additional answer parts.",
+          "items": {
+            "$ref": "#/$defs/ResponseQualification"
+          },
+          "maxItems": 16,
+          "title": "Qualifications",
+          "type": "array"
         }
       },
       "required": [
@@ -132,6 +141,35 @@
         "version"
       ],
       "title": "ResponsePlanReference",
+      "type": "object"
+    },
+    "ResponseQualification": {
+      "additionalProperties": false,
+      "description": "Computed answer qualifications, independent of accepted output parts.",
+      "properties": {
+        "description": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "value"
+      ],
+      "title": "ResponseQualification",
       "type": "object"
     },
     "TableOrder": {

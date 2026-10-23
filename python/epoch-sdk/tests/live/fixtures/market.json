@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "expectation_basis": "Native registry and existing Barchart contract fixture: distinct primary/reference constructors and raw futures contract relation; requested range support stays qualified, never inferred from row timestamps.",
+  "cases": [
+    {
+      "id": "market-msft-dailybars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-msft-dailybars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DailyBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "DailyBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "market-msft-minutebars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-msft-minutebars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "MSFT",
+                "asset_type": "Stocks"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MinuteBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "MSFT",
+          "asset_type": "Stocks"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "MinuteBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "market-eurusd-dailybars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-eurusd-dailybars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "EURUSD",
+                "asset_type": "FX"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DailyBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "EURUSD",
+          "asset_type": "FX"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "DailyBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "market-usdjpy-minutebars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-usdjpy-minutebars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "USDJPY",
+                "asset_type": "FX"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "MinuteBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "USDJPY",
+          "asset_type": "FX"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "MinuteBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "market-btcusd-dailybars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-btcusd-dailybars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "BTCUSD",
+                "asset_type": "Crypto"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DailyBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "BTCUSD",
+          "asset_type": "Crypto"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "DailyBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    },
+    {
+      "id": "market-cb-dailybars",
+      "group": "market",
+      "operation": "search",
+      "request": {
+        "requests": [
+          {
+            "request_id": "market-cb-dailybars",
+            "subjects": [
+              {
+                "kind": "asset",
+                "ticker": "CB",
+                "asset_type": "Futures"
+              }
+            ],
+            "datasets": [
+              {
+                "category": "DailyBars",
+                "fields": [
+                  "c"
+                ],
+                "requested_window": {
+                  "from": "2024-01-01",
+                  "to": "2024-12-31"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "kind": "bindings",
+        "source_ids": [
+          "reference_assets",
+          "study_assets",
+          "futures_contracts"
+        ],
+        "identity": {
+          "kind": "asset",
+          "ticker": "CB",
+          "asset_type": "Futures"
+        },
+        "availability": [
+          "unknown",
+          "available"
+        ],
+        "requested_dataset": {
+          "category": "DailyBars",
+          "fields": [
+            "c"
+          ],
+          "requested_window": {
+            "from": "2024-01-01",
+            "to": "2024-12-31"
+          }
+        }
+      }
+    }
+  ]
+}

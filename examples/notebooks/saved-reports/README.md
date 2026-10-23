@@ -2,8 +2,8 @@
 
 Share this whole folder: each notebook has a short question, a local case file and
 the same small helpers. No credentials, financial values or private execution IDs
-are committed. Use `epoch-sdk[notebook]` **0.1.0a23+** with normal native SDK
-**3.3.0rc18+**, a running Backend and EpochAI.
+are committed. Use `epoch-sdk[notebook]` **0.1.0a25+** with normal native SDK
+**3.3.0rc19+**, a running Backend and EpochAI.
 
 Prepare `EPOCH_TOKEN` (or the existing notebook login helper), `EPOCH_BACKEND_URL`
 and `EPOCH_GRAPH_URL`. These are Epoch access settings; vendor/model credentials
