@@ -33,7 +33,14 @@ reconnects after a kernel/process restart. The explicit workflow MCP consumes th
 
 Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
 
-The default MCP exposes native dataset catalog/search, separate asset screening, source inspection, study building, execution, auditing, find/read/status and explicit resume. Codex or Claude chooses the sequence and answers directly. Native data lookup makes no generative model call. Exact retained source references can be reused across studies. Specialist LLMs run only for explicitly selected authoring/auditing or a program's declared `llm_call`. No Epoch supervisor or publication is required.
+The default MCP exposes 12 composable tools, including two specialist interfaces:
+`epoch_inspect_source` and `epoch_build_study`. Codex or Claude chooses the
+sequence and answers directly. Native data lookup and source inspection make no
+generative model call; exact retained source references can be reused across
+studies. Only explicitly selected study authoring or a program's declared
+`llm_call` invokes a model. The retired audit specialist and model-facing
+response-inspection/publication/dashboard-editor chain are not available.
+No Epoch supervisor or publication is required by the default MCP.
 
 For supported completed results, application/notebook and MCP clients share the
 same native extension methods:
@@ -64,17 +71,33 @@ The calling coding agent can author the program itself. Tables, JSON and native
 reporters calculate directly in Backend. An explicit `llm_call` returns text
 that `response_text`, Markdown or `executive_summary` can consume independently
 or together, sharing one bounded cached generation. There is no supervisor, vendor query
-or original-study rerun in this path. A response table does not force a matching
-dashboard table, and dashboard-only work creates no artificial answer. An
-unsupported source/type remains an explicit capability error. The existing
-audit/source/qualitative paths are retained until their parity work is accepted.
+or original-study rerun when using explicit `input_tables`. A response table does
+not force a matching dashboard table, and dashboard-only work creates no
+artificial answer. An unsupported source/type remains an explicit capability
+error.
 
-The current release requires the normal native `3.3.0rc17` package, including
-Backend-owned research-to-extension links. Controlled
-transport captures are tested separately from real service/notebook/MCP/Portal
-acceptance; the ENG-2128 milestone record owns readiness.
+For new SDK research, run the original study when needed, then author a native
+saved-input report over its exact completed execution. Backend publishes that
+report's declared sinks; the supervisor does not publish again. An accepted
+single-text SDK request with no computation can instead complete from its
+ordinary final reply automatically. This does not replace missing computed
+outputs or a failed native publication.
 
-See [the public interface](../../docs/public-client-interface.md) for the fourteen tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
+`ResearchCompleted.reusable_study` retains a native `report_template` for an
+original-plus-report result. `execute`/`execute_saved` with that reference run a
+new original and its frozen report once, without a supervisor. The original job
+and report child have distinct IDs; response/presentation pins belong to the
+report. Native MCP replay uses `epoch_execute_extension` with `report_template`
+instead of `input_tables`. Period changes require captured permission; costs
+and declared original parameters remain captured. Historical response-plan
+read/replay remains an explicit compatibility path, not new authoring policy.
+
+The current package requires the normal generated native `>=3.3.0rc24,<4`
+package, including Backend-owned research-to-extension links and report replay.
+Controlled transport checks and real service/notebook/MCP/ClientPortal acceptance
+are distinct evidence; historical milestone records do not prove a newer build.
+
+See [the public interface](../../docs/public-client-interface.md) for the 12 tools, service boundaries and upgrade instructions. The old workflow MCP is retained only as `python -m epoch_sdk.workflow_mcp`.
 
 ## Use the actual core contract
 
