@@ -3761,6 +3761,9 @@
       "Native_CreateSdkExecutionRequest": {
         "additionalProperties": false,
         "properties": {
+          "allow_period_override": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "base_presentation": {
             "$ref": "#/components/schemas/Native_ExecutionPresentationPin"
           },
@@ -3788,6 +3791,13 @@
           },
           "parameters": {
             "$ref": "#/components/schemas/Native_SdkContract_RunParameters"
+          },
+          "report_template": {
+            "$ref": "#/components/schemas/Native_ExecutionReportReference"
+          },
+          "research_request_id": {
+            "description": "Optional existing accepted research request. Backend confirms the owner/runtime link before starting this saved-input execution; omit for standalone extensions.",
+            "type": "string"
           },
           "response_plan": {
             "$ref": "#/components/schemas/Native_SdkContract_ResponsePlanReference"
@@ -4906,6 +4916,20 @@
         "title": "epoch_stratifyx::server::ExecutionPresentationPin",
         "type": "object",
         "x-native-schema-name": "ExecutionPresentationPin"
+      },
+      "Native_ExecutionReportReference": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionReportReference",
+        "type": "object",
+        "x-native-schema-name": "ExecutionReportReference"
       },
       "Native_ExecutiveSummaryOrigin": {
         "enum": [
@@ -6223,6 +6247,15 @@
             "minItems": 1,
             "title": "Outputs",
             "type": "array"
+          },
+          "qualifications": {
+            "description": "Required computed qualifications; these are not additional answer parts.",
+            "items": {
+              "$ref": "#/components/schemas/Native_SdkContract_ResponseQualification"
+            },
+            "maxItems": 16,
+            "title": "Qualifications",
+            "type": "array"
           }
         },
         "required": [
@@ -6254,6 +6287,36 @@
         "title": "ResponsePlanReference",
         "type": "object",
         "x-native-schema-name": "SdkContract_ResponsePlanReference"
+      },
+      "Native_SdkContract_ResponseQualification": {
+        "additionalProperties": false,
+        "description": "Computed answer qualifications, independent of accepted output parts.",
+        "properties": {
+          "description": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Native_SdkContract_JsonValue"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "value"
+        ],
+        "title": "ResponseQualification",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_ResponseQualification"
       },
       "Native_SdkContract_RunParameters": {
         "additionalProperties": false,
@@ -6704,6 +6767,12 @@
           "phase": {
             "$ref": "#/components/schemas/Native_SdkRequestPhase"
           },
+          "report_request": {
+            "$ref": "#/components/schemas/Native_CreateSdkExecutionRequest"
+          },
+          "report_request_id": {
+            "type": "string"
+          },
           "request": {
             "$ref": "#/components/schemas/Native_CreateSdkExecutionRequest"
           },
@@ -6764,6 +6833,10 @@
           "launch": {
             "$ref": "#/components/schemas/Native_SdkResearchLaunch"
           },
+          "native_execution_request_id": {
+            "description": "Immutable owner-scoped native execution-operation request ID. Research completion adopts its original confirmed answer; this is not the execution job ID or graph run ID.",
+            "type": "string"
+          },
           "operation_id": {
             "type": "string"
           },
@@ -6789,6 +6862,9 @@
           },
           "runtime": {
             "$ref": "#/components/schemas/Native_SdkRequestRuntime"
+          },
+          "source_execution_id": {
+            "type": "string"
           },
           "updated_at_ms": {
             "maximum": 9223372036854776000,
@@ -7747,6 +7823,10 @@
             "type": "integer"
           },
           "graph_run_id": {
+            "type": "string"
+          },
+          "native_execution_request_id": {
+            "description": "Immutable owner-scoped native execution-operation request ID. Research completion adopts its original confirmed answer; this is not the execution job ID or graph run ID.",
             "type": "string"
           },
           "output_manifest": {
@@ -11664,7 +11744,7 @@
             }
           }
         ],
-        "summary": "Inspect selected saved input tables and flat compiler enum references without running the source study",
+        "summary": "Inspect saved input tables and flat compiler enum references without running the source; an empty tables array discovers all supported native tables",
         "tags": [
           "StudiesExecutions"
         ]
@@ -14128,6 +14208,7 @@
       "Native_ExecutionParameterSpec",
       "Native_ExecutionParameterValue",
       "Native_ExecutionPresentationPin",
+      "Native_ExecutionReportReference",
       "Native_ExecutiveSummaryOrigin",
       "Native_ExhibitAvailability",
       "Native_FuturesTickRule",
@@ -14177,6 +14258,7 @@
       "Native_SdkContract_Question",
       "Native_SdkContract_ResearchResponseContent",
       "Native_SdkContract_ResponsePlanReference",
+      "Native_SdkContract_ResponseQualification",
       "Native_SdkContract_RunParameters",
       "Native_SdkContract_RunRequest",
       "Native_SdkContract_SavedOutputManifest",
@@ -14240,7 +14322,7 @@
       "Native_uint32_t",
       "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema"
     ],
-    "sha256": "c90631f91df32de2300723c59bed4c1f6b4965443de904c26752b8c7334611b2",
+    "sha256": "7031b7ae7f82bc1b6b4df75d092fe5be7d2b15e7c64e6b7c486a9b66c9cf346d",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",

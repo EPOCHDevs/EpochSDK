@@ -14,8 +14,14 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 import httpx
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, Run, RunCreateMetadata, StreamMode
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
-from stratifyx import AsyncStratifyX, DatePeriodConfig, ExecutionOptions
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
+from stratifyx import (
+    AsyncStratifyX,
+    DatePeriodConfig,
+    ExecutionOptions,
+    ExecutionReportReference,
+    SdkExecutionRecord,
+)
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
@@ -119,6 +125,15 @@ class SavedStudy(Closed):
     source_execution_id: str
     thread_id: str | None = None
     response_plan: ResponsePlanReference | None = None
+    report_template: ExecutionReportReference | None = None
+
+    @model_validator(mode="after")
+    def one_output_program(self) -> SavedStudy:
+        if self.report_template is not None and (
+            self.response_plan is not None or self.report_template.model_extra
+        ):
+            raise ValueError("Choose one exact native report or historical response plan")
+        return self
 
 
 class ChosenExecution(Closed):
@@ -131,6 +146,9 @@ class ChosenExecution(Closed):
     operation_id: str | None = None
     request_id: str | None = None
     response: SavedResearchResponse | None = None
+    # The original engine job remains execution; this is its separate native
+    # report, including exact dashboard/answer publication pins.
+    report: SdkExecutionRecord | None = None
 
 
 class PublishedAnswer(Closed):
@@ -171,12 +189,20 @@ class _Outcome(BaseModel):
     execution_id: str | None = None
 
 
+class _MessageToolCall(BaseModel):
+    """Consumer projection; the registered tool owns its unused argument shape."""
+    model_config = ConfigDict(extra="ignore", strict=True)
+    id: str
+    name: str
+
+
 class _Message(BaseModel):
     model_config = ConfigDict(extra="ignore", strict=True)
     type: str | None = None
     role: str | None = None
     # Model providers own rich/multimodal content; only text is displayed here.
     content: JsonValue = ""
+    tool_calls: list[_MessageToolCall] = Field(default_factory=list[_MessageToolCall])
 
 
 class _State(BaseModel):
@@ -230,7 +256,11 @@ class _State(BaseModel):
 
     def reply(self) -> str:
         for message in reversed(self.messages):
+            if message.type in {"human", "user"} or message.role == "user":
+                return ""
             if message.type != "ai" and message.role != "assistant":
+                continue
+            if message.tool_calls:
                 continue
             if isinstance(message.content, str):
                 return message.content
@@ -791,9 +821,11 @@ class SupervisorClient:
             handle=handle,
             reason=failed[-1].detail
             if failed
-            else "The supervisor finished without publishing an answer for this query.",
-            publication_failed=not bool(failed),
+            else "Conversation completed without an engine execution." if state.reply().strip()
+            else "The supervisor finished without delivering an answer for this query.",
+            publication_failed=not bool(failed) and not bool(state.reply().strip()),
             execution_id=failed[-1].execution_id if failed else None,
+            reply=state.reply() if not failed else "",
         )
 
     async def execute_saved(
@@ -803,7 +835,7 @@ class SupervisorClient:
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
     ) -> ChosenExecution:
-        if reference.response_plan is not None:
+        if reference.response_plan is not None or reference.report_template is not None:
             raise ValueError(
                 "Use EpochClient.execute_saved for a prepared response plan so its "
                 "outputs are replayed and published with the new execution."

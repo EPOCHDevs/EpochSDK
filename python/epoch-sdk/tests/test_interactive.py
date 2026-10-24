@@ -195,7 +195,7 @@ def test_wrapped_tool_validation_error_does_not_dump_call_arguments_in_human_vie
         props={"tool_name": "publish_response", "status": "error", "error_message": error},
     )
     before = message.model_dump_json()
-    assert ui_text(message) == "Publish answer · failed — The step needs a format correction."
+    assert ui_text(message) == "Publish response · failed — The step needs a format correction."
     assert message.model_dump_json() == before
     assert (
         message.props["error_message"] == error
@@ -213,12 +213,12 @@ def test_long_activity_error_is_bounded_and_short_business_reason_is_preserved()
             "error_message": "Execution was cancelled.",
         },
     )
-    assert ui_text(message) == "Review results · failed — Execution was cancelled."
+    assert ui_text(message) == "Audit run · failed — Execution was cancelled."
     long_message = message.model_copy(
         update={"props": {**message.props, "error_message": "Detailed failure. " * 1000}}
     )
     rendered = ui_text(long_message)
-    assert len(rendered) <= len("Review results · failed — ") + 240 and rendered.endswith("…")
+    assert len(rendered) <= len("Audit run · failed — ") + 240 and rendered.endswith("…")
     assert long_message.props["error_message"] == "Detailed failure. " * 1000
 
 

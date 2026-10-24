@@ -12,7 +12,6 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 | `epoch_extension_inputs` | Read exact selected retained tables, types and frozen source. | None |
 | `epoch_save_extension` | Compile/save caller-authored EpochScript over one saved execution. | None |
 | `epoch_execute_extension` | Execute or reconnect to that saved program by operation ID. | Only explicitly declared cached `llm_call` |
-| `epoch_audit_run` | Ask targeted questions of completed execution IDs, including comparisons. | Existing audit specialist |
 | `epoch_find` | List owned tools workspaces or saved study IDs. | None |
 | `epoch_read` | Read owned work, exact saved answer/table pages or pinned presentations. | None |
 | `epoch_status` | Observe a tool handle, native execution ID or extension operation ID. | None |
@@ -47,9 +46,24 @@ It reads bounded table previews and starts no research or model call. The
 [saved-result walkthroughs](../examples/notebooks/saved-reports/README.md) also
 read all table pages and demonstrate direct prepared-report execution.
 
-The default MCP advertises 14 tools. Diagnostic and comparison tools remain
-available until the separately tracked parity/retirement gate; this addition
-does not claim that they have been replaced in every result family.
+The default MCP advertises 12 tools. The audit specialist and model-facing
+source-inspection/publication/dashboard-edit chain are retired. Historical
+handles remain readable; retired specialists cannot be invoked or resumed.
+
+## Replay an original study and its report
+
+`EpochClient` retains `SavedStudy.report_template` when a first research answer
+comes from a native report over its original study. Executing that saved reference
+runs the original definition once and its frozen report once, without a supervisor.
+The returned source execution and child report remain separate; exact answer and
+presentation pins belong to the report. Period changes require the report's
+explicit captured opt-in. Original settings and declared parameters remain captured.
+
+MCP uses the existing `epoch_execute_extension` request with `report_template`
+for this prepared replay. Choose either `report_template` or `input_tables`.
+The latter refines an existing result and never reruns its source. Reading status
+or reconnecting by the same operation ID starts no work. Historical response plans,
+answers and direct native human edit/Reset/share controls remain available.
 
 ## Reuse discovery
 
@@ -58,7 +72,7 @@ does not claim that they have been replaced in every result family.
 3. Pass exact record/result references or the `universe_ref`, plus the selected dataset/options, as `source_refs` to `epoch_build_study`. It retains and validates them internally. A historical universe needs the requested study period inside its captured membership window. Metadata does not certify populated observations or account access.
 4. Keep the build handle and poll `epoch_status`. Its saved outcome returns retained `source_refs` for later builds, including after the original working search expires. Reuse the workspace and select a new study slot for a different study. Registry compatibility still applies.
 5. Execute a saved study ID with `epoch_execute`, then observe its native execution ID with `epoch_status(kind="execution")`.
-6. Read already available dashboard values directly. New calculations over one supported completed result use the native extension lifecycle above. Retain `epoch_audit_run` for explicit diagnostic/comparison cases with exact supported execution bindings. The caller answers the user; publication is not a completion requirement.
+6. Read already available dashboard values directly. New calculations over one supported completed result use the native extension lifecycle above. Use supplied thread facts for discussion; new measurements require supported native execution-input relations. Unsupported result families and cross-source joins remain explicit limits. The caller answers the user; publication is not a completion requirement.
 
 A workspace is an ordinary owner-scoped LangGraph thread using the `epoch-tools` graph. That graph has only admission and tool-execution nodes: no supervisor model, planner, next-action model or publication loop. Original typed specialist state and native checkpoints stay in EpochAI. Do not submit internal state, bearer tokens, approval receipts or `ToolRuntime` as tool arguments.
 
@@ -66,7 +80,7 @@ Specialist operations return a native background run handle. Reading status, rec
 
 ## Native ownership
 
-Dataset catalog/search/screening, metadata paging, execution, study reads and dashboard reads use the generated StratifyX client directly. They do not route through EpochAI. Execution reads and audit bindings verify the owned per-execution snapshot before trusting an execution ID. A response plan is neither required nor replayed by this MCP’s `epoch_execute`.
+Dataset catalog/search/screening, metadata paging, execution, study reads and dashboard reads use the generated StratifyX client directly. They do not route through EpochAI. Native operations enforce ownership and exact per-execution source identities. A response plan is neither required nor replayed by this MCP’s `epoch_execute`.
 
 Specialist tool schemas come from authenticated `GET /api/v1/agent-tools` on EpochAI. Parameter schemas are generated from the actual tool owners, retaining their recursive definitions, constraints and tags. MCP adds `task` and optional `workspace_id` to those specialist calls. Native data methods share `DatasetClient` with the workflow SDK; they do not invoke the tools graph or a Discovery agent. Schema loading is a read-only service request, not a model call.
 
@@ -91,7 +105,7 @@ handles remain readable through the compatibility client.
 
 ## Notebook and workflow SDK
 
-`EpochClient.run`, `execute`, `resume`, `status` and `read` keep their existing research/published-answer workflow. Notebook and terminal rendering are unchanged. Saved response plans still replay through that explicit workflow interface.
+`EpochClient.run`, `execute`, `resume`, `status` and `read` keep their existing research/published-answer workflow. Ordinary contextual replies need no computation. Computed responses use native report outputs. Saved response plans still replay through that explicit workflow interface; new work does not author another plan language.
 
 The old five-tool MCP remains an explicit compatibility module, `python -m epoch_sdk.workflow_mcp`. It is not the default MCP installation. See the [historical alpha13 contract](alpha13-workflow-interface.md) for those operation IDs and pinned-response semantics. The default `epoch-mcp` command uses the composable tools above; reconnect the MCP host after upgrading.
 

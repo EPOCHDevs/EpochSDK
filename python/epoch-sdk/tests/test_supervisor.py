@@ -396,7 +396,8 @@ def test_no_new_execution_never_returns_an_old_success() -> None:
         ) as (client, _, backend_calls):
             result = await client.run("A new task", thread_id=THREAD)
             assert isinstance(result, NoExecution)
-            assert result.publication_failed
+            assert not result.publication_failed
+            assert result.reply == "Data is unavailable." and result.execution_id is None
             assert backend_calls == []
 
     asyncio.run(scenario())
@@ -650,4 +651,26 @@ def test_later_diagnostic_execution_does_not_replace_the_explicit_primary():
             assert result.response.primary_execution_id == "main"
             assert calls == []
 
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("content", ["The retained source uses annual statements.", [{"type": "text", "text": "The retained source uses annual statements."}]])
+def test_normal_contextual_reply_does_not_require_an_execution_or_publication(content):
+    async def scenario():
+        async with clients([{"messages": [{"type": "human", "content": "Which source?"}, {"type": "ai", "content": content}]}]) as (client, _, backend_calls):
+            result = await client.run("Which source?")
+            assert isinstance(result, NoExecution)
+            assert not result.publication_failed
+            assert result.reply == "The retained source uses annual statements."
+            assert not backend_calls
+    asyncio.run(scenario())
+
+
+def test_previous_turn_and_tool_call_prose_are_not_a_current_contextual_answer():
+    async def scenario():
+        async with clients([{"messages": [{"type": "ai", "content": "Old answer"}, {"type": "human", "content": "New question"},
+                {"type": "ai", "content": "Calling a tool", "tool_calls": [{"id": "call", "name": "build_study", "args": {}}]}]}]) as (client, _, backend_calls):
+            result = await client.run("New question")
+            assert isinstance(result, NoExecution) and result.publication_failed
+            assert not result.reply and not backend_calls
     asyncio.run(scenario())

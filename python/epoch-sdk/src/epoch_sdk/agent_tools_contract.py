@@ -12,11 +12,10 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
 AgentToolName = Literal["discovery", "inspect_source", "build_study", "audit_run"]
-MCP_TOOL_NAMES: dict[AgentToolName, str] = {
-    "discovery": "epoch_discover",
+ActiveAgentToolName = Literal["inspect_source", "build_study"]
+MCP_TOOL_NAMES: dict[ActiveAgentToolName, str] = {
     "inspect_source": "epoch_inspect_source",
     "build_study": "epoch_build_study",
-    "audit_run": "epoch_audit_run",
 }
 TOOLS_ASSISTANT_ID = "epoch-tools"
 MAX_TOOL_ARGUMENT_BYTES = 128 * 1024
@@ -34,16 +33,20 @@ class AgentToolDefinition(ToolContract):
 
 
 class AgentToolsCatalog(ToolContract):
-    version: Literal[1, 2] = 1
+    version: Literal[1, 2, 3] = 3
     assistant_id: Literal["epoch-tools"] = TOOLS_ASSISTANT_ID
     tools: list[AgentToolDefinition]
 
     @model_validator(mode="after")
     def complete_roster(self) -> AgentToolsCatalog:
         names = [tool.name for tool in self.tools]
-        expected = set(MCP_TOOL_NAMES)
-        if self.version == 2:
-            expected.remove("discovery")
+        # Old catalogues/handles remain readable; new invocation is bounded by
+        # the active map above, so historical audit entries cannot execute.
+        expected: set[AgentToolName] = set(MCP_TOOL_NAMES)
+        if self.version in {1, 2}:
+            expected.add("audit_run")
+            if self.version == 1:
+                expected.add("discovery")
         if len(names) != len(expected) or set(names) != expected:
             raise ValueError("The Epoch tools catalogue must contain each supported tool once")
         return self

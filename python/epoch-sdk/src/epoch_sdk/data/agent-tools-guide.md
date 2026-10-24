@@ -33,11 +33,10 @@ directly from the evidence you read.
    not rewrite fixed dates or fiscal labels in a script; inspect the saved
    study before using another window.
 7. Read dashboard metadata/values directly with `epoch_read` when they answer
-   the question. New supported single-source calculations use the native
-   extension path below, even for ordinary short questions. Retain
-   `epoch_audit_run` for explicit diagnostics and comparisons with exact supported
-   execution bindings. Multiple IDs permit an explicit comparison, not an implicit
-   join of unrelated grids or publication-only inputs.
+   the question. Existing context answers source/assumption questions directly.
+   Further supported calculations use the native extension path below, including
+   ordinary short questions. Keep source identities explicit; unsupported inputs
+   are a limitation rather than an implicit join or hidden analyst fallback.
 
 For new calculations or requested outputs over one supported completed execution,
 `epoch_extension_inputs` reads the
@@ -75,9 +74,18 @@ plan; an internal audit or an execution link does not replace their disclosure.
 Unknown observed coverage is not a confirmed loading failure. Do not remove a
 qualification to make a partial population look complete.
 
-Explicit authoring and auditing use their specialist LLMs; only a declared
+Explicit authoring uses its specialist LLM; only a declared
 `llm_call` invokes the extension's bounded text model. A deterministic extension
 without that declaration uses no model. Native search may use Backend’s
 non-generative relevance ranker. Source inspection, ordinary `epoch_execute`,
 catalogue/status/find/read operations make no LLM call. Model/vendor credentials
 remain on their services.
+
+Prepared original-plus-report replay uses the same `epoch_execute_extension`
+request contract with `report_template={request_id: <confirmed report request>}`
+and no `input_tables`. Keep the original study/source IDs, a new execution period
+and a stable operation_id. Backend starts that study once and then the saved report
+over its persisted result, without a supervisor. The template freezes costs and
+original param() bindings; a new period needs its existing author opt-in. Poll the
+same operation with epoch_status. Parent and child report IDs remain distinct;
+read the confirmed child output pins rather than treating the source job as its answer.

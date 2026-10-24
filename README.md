@@ -64,22 +64,40 @@ including saved-answer reads and readable-ID reconnect.
 Package registry publication is separate; this is public source, not a released
 PyPI package.
 
-The saved research response API serves SDK and platform workflows. Use
-`SupervisorClient.publish_response(request_id, content, thread_id=thread_id, primary_execution_id=execution_id, expected_version=0)`
-after analysis, then `response(response_id, version=...)` to read the same
-Backend-owned answer. A response contains named table, JSON and text parts and
-their declarations; updates create another revision of that answer. Another query may reuse the
-same execution while retaining a different answer.
-Newly assembled tables reference native saved data. Use `response_table` or
-`iter_response_table` to read all rows in bounded pages. The explicit workflow
-MCP reads saved answers and tables through `epoch_read`; the default composable
-MCP lets its caller answer directly without publication. See [table access](docs/response-tables.md) for the wire
-contract, retrieval ordering and compatibility with older inline answers.
-This publication path starts no agent or engine job. The current package uses
-generated StratifyX 3.3.0rc17 APIs, including readable-operation admission and
-research links to native extension operations. The
-existing supervisor publication tool is integrated in EpochAI. Supplied-data
-research and saved-response checks have passed through SDK and workflow MCP.
+Computed research answers use native report outputs. Run the original study
+first when needed, then build a saved-input report over its exact completed
+execution. Native SQL/transforms compute tables and JSON; an optional bounded
+cached `llm_call` produces text for declared response or dashboard sinks. Backend
+saves the report's outputs, and the confirmed receipt ends the turn without a
+second publication or assistant answer. Response-only work needs no dashboard.
+An accepted single-text SDK request that needs no computation can complete from
+the ordinary final reply automatically; ordinary platform discussion persists
+in its conversation.
+
+`SavedStudy.report_template` retains prepared original-plus-report replay.
+Executing it runs a new original and its frozen report without a supervisor;
+source and report jobs remain separate. Refining a completed result instead uses
+explicit `input_tables` and never reruns that source. Historical response plans
+remain readable/replayable through the explicit workflow compatibility path.
+
+Saved answers contain named table, JSON and text parts with exact declarations
+and immutable revisions. Another query may reuse the same execution while
+retaining a different answer. Use `response_table` or `iter_response_table` to
+read every row in bounded pages; [table access](docs/response-tables.md) describes
+ordering, limits and older inline answers. The default composable MCP advertises
+12 tools, including the two specialist interfaces `epoch_inspect_source` and
+`epoch_build_study`; the caller can answer directly without publication. Source
+inspection is a native read; only explicitly selected authoring or a declared
+`llm_call` invokes a model. The former model-facing `audit_run`, `inspect_response_sources`,
+`publish_response` and `edit_dashboard` tools are retired.
+
+The low-level native publication API remains available for direct integrations:
+`SupervisorClient.publish_response(request_id, content, thread_id=thread_id,
+primary_execution_id=execution_id, expected_version=0)` followed by
+`response(response_id, version=...)`. It starts no agent or engine job, but is not
+a model-facing publication tool or the normal research finalization path. The
+current package requires generated StratifyX `>=3.3.0rc24,<4`; generated-client
+production and distribution remain with Backend.
 
 ## Development checks
 

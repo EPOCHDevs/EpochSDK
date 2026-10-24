@@ -1,4 +1,20 @@
-# Saved response plans
+# Historical response-plan compatibility
+
+This document preserves the earlier plan API, mapping rules and acceptance
+history for existing saved plans and answers. Native plan read/replay and direct
+application APIs remain available; these are not the current model-facing
+authoring instructions. The former audit/publication tools described below are
+retired and must not be restored or invoked for new research.
+
+For new work, use the [native research flow](research-flow.md): execute the
+original when needed, author a saved-input EpochScript report with native
+SQL/transforms and declared response/dashboard sinks, then publish through that
+report's execution. Optional bounded cached `llm_call` produces text. Retain
+`SavedStudy.report_template` for native original-plus-report replay; no second
+plan language or supervisor publication step is needed. See the
+[current SDK/MCP interface](public-client-interface.md).
+
+## Retained plan contract and historical evidence
 
 Plans can include `qualifications` independently of their accepted answer parts.
 Each qualification has a unique name, a short description of its basis, and a
@@ -19,12 +35,12 @@ answer part or change a frozen table schema/description. Computed qualifications
 require a source-backed response plan; direct publication cannot claim that
 certification. Historical plans and answers that omit the field remain unchanged.
 
-Research establishes a study and a verified response plan. Deployment executes
-that saved sequence without a supervisor. Account returns, fills and costs exist
+The earlier research flow established a study and a verified response plan.
+Compatibility replay executes that saved sequence without a supervisor. Account returns, fills and costs exist
 after execution, so a requested performance table can come from post-run queries;
 it does not have to be a pre-run study relation or a dashboard exhibit.
 
-This design is approved in [ENG-2086](https://linear.app/epoch-inc/issue/ENG-2086).
+The earlier design was approved in [ENG-2086](https://linear.app/epoch-inc/issue/ENG-2086).
 Backend owns successful-query receipts, immutable complete result storage,
 versioned plan admission/verification, deterministic output mapping and prepared
 execution. EpochAI owns research reasoning and the bounded interpretation call
@@ -39,7 +55,7 @@ model step. The AAPL strategy's actual notebook research and original-period
 replay also passed independent source, account, next-open fill, dividend and cost
 review. These checks do not establish every case or a later-period deployment.
 
-The [current acceptance ledger](interactive-acceptance-2026-10-19.md) records
+The [October 19 acceptance ledger](interactive-acceptance-2026-10-19.md) records
 all eight live case flows, exact candidates, independent calculations and trace
 coverage. Fresh named-notebook MSFT research and its separate deployment passed,
 as did the corrected screener and its exact saved-evidence JSON follow-up.
@@ -59,11 +75,14 @@ a captured roster. A fixed plan rejects an unsupported period before admission.
 Alpha10/11 distinguish that Native rejection from a real accepted-input conflict;
 they do not resubmit, change the operation ID or relax the frozen plan.
 
-## Establish and publish during research
+## Historical research construction (retired model workflow)
 
-1. The existing supervisor discovers inputs, builds the saved study, handles
-   explicit clarification and executes it. Keep the existing stateful thread.
-2. `audit_run` asks focused natural-language questions about the actual saved
+The following sequence describes how historical plans were established. It is
+retained to interpret those artifacts, not as an executable current tool guide.
+
+1. The earlier supervisor discovered inputs, built the saved study, handled
+   explicit clarification and executed it in its stateful thread.
+2. The retired `audit_run` asked focused natural-language questions about the actual saved
    execution. Its analyst may author SQL during research. Capture complete
    successful SQL, source execution, schema and query receipt at the native
    execution boundary. The current 600-character `sql_used` excerpt is an audit
@@ -79,15 +98,15 @@ they do not resubmit, change the operation ID or relax the frozen plan.
    and failed attempts separately as research history. A follow-up can create a
    different response plan over the same immutable study.
 
-## Contract
+## Compatibility API contract
 
 `response_plans.py` defines closed wire shapes. Object/row mapping keys are the
 user's requested JSON properties; they are intentional extension points inside
 closed mapping variants.
 
 - A query is a native successful-query receipt (`recorded_sql`) or an exact
-  relation/field/order projection (`relation`). The model-facing draft accepts
-  neither arbitrary SQL nor row arrays.
+  relation/field/order projection (`relation`). The historical model-facing
+  draft accepted neither arbitrary SQL nor row arrays.
 - A table concatenates complete query projections in explicit order. Columns
   retain accepted order, descriptions, units, nullability and types. No join or
   alignment is inferred from equal field names across sealed grids.
@@ -107,7 +126,7 @@ closed mapping variants.
   opt-in only when the study and computations support it; replay does not make
   a fixed historical study into a generic parameterized workflow.
 
-## Execute the deployed plan
+## Replay an existing deployed plan
 
 The existing prepared-execution admission owns the readable operation ID and
 new execution ID. A plan reference accompanies the saved-study reference.
@@ -136,7 +155,7 @@ accepted inputs. Keep engine status separate from response-generation status;
 if a later response step fails, already-executed source data stays available.
 This feature does not add worker recovery, automatic retries or retention rules.
 
-## Ownership and acceptance
+## Compatibility ownership and historical acceptance
 
 Backend owns query receipts, plan persistence, execution admission, post-run
 query/mapping evaluation and saved answers. EpochAI owns research reasoning and
@@ -145,7 +164,7 @@ receive Epoch identity and service URLs, never vendor or model credentials.
 Generate changed native SDKs through the maintained Backend packaging workflow;
 do not edit generated StratifyX models or revive discarded protos.
 
-Acceptance requires the five real US equity cases and two output-only variants,
+The earlier plan milestone required the five real US equity cases and two output-only variants,
 the actual notebook research cell, complete paged reads, independent source and
 financial reconciliation, fill timing/cost inspection and trace/checkpoint
 review. For deployment additionally replay the original verified plan, execute

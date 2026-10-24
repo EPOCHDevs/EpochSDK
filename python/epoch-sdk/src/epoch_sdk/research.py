@@ -12,6 +12,7 @@ import httpx
 from stratifyx import (
     DatePeriodConfig,
     ExecutionOptions,
+    ExecutionReportReference,
     SdkContractErrorResponse,
     SdkContractResponsePlanReference,
     SdkContractRunParameters,
@@ -59,6 +60,12 @@ if TYPE_CHECKING:
 class _TaskOverrides(TypedDict, total=False):
     parameters: RunParameters
     auto_ingest: bool
+
+
+class _PreparedOutputOptions(TypedDict, total=False):
+    thread_id: str
+    response_plan: SdkContractResponsePlanReference
+    report_template: ExecutionReportReference
 
 
 class ResearchAccepted(Contract):
@@ -397,7 +404,7 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             if not isinstance(research, ResearchCompleted) or research.reusable_study is None:
                 raise ValueError("The research operation has no completed prepared study")
             reference = research.reusable_study
-        if operation_id is None and reference.response_plan is None:
+        if operation_id is None and reference.response_plan is None and reference.report_template is None:
             return await self.supervisor.execute_saved(
                 reference, period=period, execution=execution
             )
@@ -411,46 +418,18 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             )
             try:
                 native_parameters = SdkContractRunParameters.model_validate(parameters.to_wire())
+                options: _PreparedOutputOptions = {}
+                if reference.thread_id is not None:
+                    options["thread_id"] = reference.thread_id
                 if reference.response_plan is not None:
-                    plan = SdkContractResponsePlanReference.model_validate(
-                        reference.response_plan.to_wire()
-                    )
-                    if reference.thread_id is None:
-                        record = await self.backend.sdk_requests.create_sdk_execution_request(
-                            operation_id=operation_id,
-                            study_id=reference.study_id,
-                            source_execution_id=reference.source_execution_id,
-                            parameters=native_parameters,
-                            response_plan=plan,
-                            request_options={"max_retries": 0},
-                        )
-                    else:
-                        record = await self.backend.sdk_requests.create_sdk_execution_request(
-                            operation_id=operation_id,
-                            study_id=reference.study_id,
-                            source_execution_id=reference.source_execution_id,
-                            parameters=native_parameters,
-                            response_plan=plan,
-                            thread_id=reference.thread_id,
-                            request_options={"max_retries": 0},
-                        )
-                elif reference.thread_id is None:
-                    record = await self.backend.sdk_requests.create_sdk_execution_request(
-                        operation_id=operation_id,
-                        study_id=reference.study_id,
-                        source_execution_id=reference.source_execution_id,
-                        parameters=native_parameters,
-                        request_options={"max_retries": 0},
-                    )
-                else:
-                    record = await self.backend.sdk_requests.create_sdk_execution_request(
-                        operation_id=operation_id,
-                        study_id=reference.study_id,
-                        source_execution_id=reference.source_execution_id,
-                        parameters=native_parameters,
-                        thread_id=reference.thread_id,
-                        request_options={"max_retries": 0},
-                    )
+                    options["response_plan"] = SdkContractResponsePlanReference.model_validate(reference.response_plan.to_wire())
+                if reference.report_template is not None:
+                    options["report_template"] = reference.report_template
+                record = await self.backend.sdk_requests.create_sdk_execution_request(
+                    operation_id=operation_id, study_id=reference.study_id,
+                    source_execution_id=reference.source_execution_id, parameters=native_parameters,
+                    **options, request_options={"max_retries": 0},
+                )
             except ApiError as error:
                 if error.status_code == 409:
                     raise await self._execution_admission_conflict(operation_id, error) from error
@@ -511,7 +490,7 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             raise
         if job.id != record.execution_id or job.definition_id != record.request.study_id:
             raise ValueError("The native execution differs from its accepted operation")
-        if record.request.response_plan is not None and (
+        if (record.request.response_plan is not None or record.request.report_template is not None) and (
             record.response_phase is None or record.response_phase.value != "outputs_recorded"
         ):
             return accepted
@@ -549,6 +528,45 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 update={"response_plan": response.response_plan}
             )
             result = result.model_copy(update={"response": response, "reusable_study": study})
+        elif record.request.report_template is not None:
+            if record.report_request_id is None or record.report_request is None:
+                raise ValueError("The completed source has no exact frozen report operation")
+            child = await self.backend.sdk_requests.get_sdk_execution_request(
+                record.report_request_id, request_options={"max_retries": 0}
+            )
+            if (job.status.value != "completed" or child.request_id != record.report_request_id
+                    or child.execution_id == record.execution_id
+                    or child.request != record.report_request or child.request.input_tables is None
+                    or child.request.report_template is not None or child.request.response_plan is not None
+                    or child.request.research_request_id is not None
+                    or child.request.source_execution_id != record.execution_id
+                    or child.error is not None or child.extension_outputs is None
+                    or child.response_phase is None or child.response_phase.value != "outputs_recorded"
+                    or child.extension_outputs.provenance.source_execution_id != record.execution_id
+                    or child.extension_outputs.provenance.execution_id != child.execution_id
+                    or child.extension_outputs.provenance.study_id != child.request.study_id
+                    or child.extension_outputs.provenance.base_presentation != child.request.base_presentation
+                    or any(child.extension_outputs.provenance.execution_parameter_bindings.get(name) != value
+                           for name, value in (child.request.execution_parameter_bindings or {}).items())
+                    or child.extension_outputs.response_id != child.response_id
+                    or child.extension_outputs.response_version != child.response_version
+                    or (child.response_id is None) != (child.response_version is None)
+                    or child.response_version not in {None, 1}
+                    or child.response_id != record.response_id or child.response_version != record.response_version):
+                raise ValueError("The report outcome differs from the admitted original and frozen report")
+            response = None
+            if record.response_id is not None:
+                if record.response_version is None:
+                    raise ValueError("The report answer has no pinned revision")
+                response = await self.response(record.response_id, version=record.response_version)
+                if (response.request_id != child.request_id or response.primary_execution_id != child.execution_id
+                        or response.study_id != child.request.study_id or response.thread_id != (child.request.thread_id or child.execution_id)
+                        or response.extension != child.extension_outputs.provenance or response.response_plan is not None
+                        or response.response_id != child.extension_outputs.response_id
+                        or response.version != child.extension_outputs.response_version):
+                    raise ValueError("The published report answer differs from its exact native output pins")
+            study = result.reusable_study.model_copy(update={"report_template": record.request.report_template})
+            result = result.model_copy(update={"response": response, "reusable_study": study, "report": child})
         return result
 
     async def execution(self, execution_id: str) -> JobListItem:
@@ -838,6 +856,7 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 ),
                 execution_id=record.current_execution_id,
             )
+        native: SdkExecutionRecord | None = None
         if record.native_execution_request_id is not None:
             native = await self.backend.sdk_requests.get_sdk_execution_request(
                 record.native_execution_request_id, request_options={"max_retries": 0}
@@ -864,6 +883,30 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             ):
                 raise ValueError("The research answer differs from its original native operation")
         reusable = None
+        if native is not None and record.source_execution_id is not None:
+            if native.request.source_execution_id != record.source_execution_id:
+                raise ValueError("The saved report differs from the retained original execution")
+            original = None
+            snapshot = None
+            try:
+                original = await self.supervisor.execution(record.source_execution_id)
+                snapshot = await self.backend.studies_executions.get_the_per_execution_study_snapshot_as_run_source_assets_screen(
+                    record.source_execution_id, request_options={"max_retries": 0}
+                )
+            except ApiError as error:
+                if error.status_code != 404:
+                    raise
+            if (original is not None and snapshot is not None and (
+                    original.id != record.source_execution_id or snapshot.execution_id != original.id
+                    or snapshot.definition_id != original.definition_id or original.status.value != "completed")):
+                raise ValueError("The retained original differs from its owned completed study snapshot")
+            if (original is not None and snapshot is not None
+                    and original.execution_type in {"research", "backtest"} and original.parent_execution_id is None
+                    and original.visibility in {None, "primary"} and snapshot.execution_input is None
+                    and snapshot.study.authoring_origin.value == "agent"):
+                reusable = SavedStudy(study_id=original.definition_id, source_execution_id=original.id,
+                    thread_id=record.runtime.thread_id,
+                    report_template=ExecutionReportReference(request_id=native.request_id))
         if (
             record.native_execution_request_id is None
             and response.extension is None
