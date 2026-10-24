@@ -31,7 +31,7 @@ from epoch_sdk.supervisor import ChosenExecution, NeedsInput
 from IPython.display import HTML, JSON, display
 from notebook_identity import identity_token
 from pydantic import JsonValue
-from stratifyx import DatePeriodConfig
+from stratifyx import DatePeriodConfig, SdkExecutionRecord
 
 CASES = Path(__file__).resolve().parent / "cases"
 __all__ = [
@@ -301,8 +301,9 @@ async def execute(
 
     Repeating the call attaches to the same native operation. Only that operation
     is polled; timeout/cell cancellation does not cancel or restart server work.
-    Without a response plan this returns native engine status. A verified plan
-    also supplies its newly published answer under the returned .response.
+    Without an output program this returns native engine status. A saved native
+    report or historical response plan also supplies its new answer under .response;
+    a native child report remains available separately under .report.
     """
     completed = _completed(review, result)
     parameters, operation_id = _execution_inputs(review, period)
@@ -354,51 +355,68 @@ async def dashboard(
     """
     if isinstance(result, NeedsInput):
         raise RuntimeError("Answer the pending question before opening a dashboard.")  # noqa: TRY004
-    if isinstance(result, ResearchCompleted):
-        execution_id, study_id = (
-            result.response.primary_execution_id,
-            result.response.study_id,
-        )
+    report: SdkExecutionRecord | None = None
+    if isinstance(result, ChosenExecution):
+        report = result.report
+    elif result.response.extension is not None:
+        accepted = await epoch.backend.sdk_requests.get_sdk_request(result.request_id)
+        if accepted.native_execution_request_id is None:
+            raise ValueError("The saved report has no exact native operation link.")
+        report = await epoch.backend.sdk_requests.get_sdk_execution_request(accepted.native_execution_request_id)
+        if report.execution_id != result.response.primary_execution_id or report.extension_outputs is None or report.extension_outputs.provenance != result.response.extension:
+            raise ValueError("The saved dashboard differs from the exact report outcome.")
+    if report is not None:
+        if report.extension_outputs is None or not report.extension_outputs.dashboards:
+            print("Response only · no dashboard content.")
+            return None
+        path = "/execution-extensions/" + quote(report.request.operation_id, safe="")
     else:
-        execution_id, study_id = result.execution.id, result.execution.definition_id
-    if execution_id is None or study_id is None:
-        print("This answer has no execution dashboard.")
-        return None
-    # Keep the ownership boundary even on older execution-read routes.
-    await epoch.backend.studies_definitions.get_a_study_definition_by_id(
-        study_id, request_options={"max_retries": 0}
-    )
-    job = await epoch.execution(execution_id)
-    if job.id != execution_id or job.definition_id != study_id:
-        raise ValueError("The dashboard execution differs from the saved answer.")
-    metadata = await epoch.backend.studies_performance.get_performance_metadata(
-        execution_id, request_options={"max_retries": 0}
-    )
-    populated = any(
-        marker.row_count > 0
-        for markers in (metadata.event_markers_metadata or {}).values()
-        for marker in markers or []
-    )
-    # Response-only studies have no categories. Discover the actual categories
-    # first, as EpochAI does; never guess ALL/GLOBAL or translate a 404 to empty.
-    for category in sorted(metadata.tearsheet_metadata):
-        schema = await epoch.backend.studies_dashboard.get_dashboard_schema_chart_specs_table_specs_card_values(
-            execution_id, category=category, request_options={"max_retries": 0}
+        if isinstance(result, ResearchCompleted):
+            execution_id, study_id = (
+                result.response.primary_execution_id,
+                result.response.study_id,
+            )
+        else:
+            execution_id, study_id = result.execution.id, result.execution.definition_id
+        if execution_id is None or study_id is None:
+            print("This answer has no execution dashboard.")
+            return None
+        # Keep the ownership boundary even on older execution-read routes.
+        await epoch.backend.studies_definitions.get_a_study_definition_by_id(
+            study_id, request_options={"max_retries": 0}
         )
-        populated |= bool(schema.charts or schema.tables or schema.snapshot_cards)
-        for content in (schema.content, schema.context):
-            if content is not None:
-                populated |= bool(
-                    content.graphs
-                    or content.markdown
-                    or content.studies
-                    or content.shared_parts
-                )
-        if populated:
-            break
-    if not populated:
-        print("Response only · no dashboard content.")
-        return None
+        job = await epoch.execution(execution_id)
+        if job.id != execution_id or job.definition_id != study_id:
+            raise ValueError("The dashboard execution differs from the saved answer.")
+        metadata = await epoch.backend.studies_performance.get_performance_metadata(
+            execution_id, request_options={"max_retries": 0}
+        )
+        populated = any(
+            marker.row_count > 0
+            for markers in (metadata.event_markers_metadata or {}).values()
+            for marker in markers or []
+        )
+        # Response-only studies have no categories. Discover the actual categories
+        # first, as EpochAI does; never guess ALL/GLOBAL or translate a 404 to empty.
+        for category in sorted(metadata.tearsheet_metadata):
+            schema = await epoch.backend.studies_dashboard.get_dashboard_schema_chart_specs_table_specs_card_values(
+                execution_id, category=category, request_options={"max_retries": 0}
+            )
+            populated |= bool(schema.charts or schema.tables or schema.snapshot_cards)
+            for content in (schema.content, schema.context):
+                if content is not None:
+                    populated |= bool(
+                        content.graphs
+                        or content.markdown
+                        or content.studies
+                        or content.shared_parts
+                    )
+            if populated:
+                break
+        if not populated:
+            print("Response only · no dashboard content.")
+            return None
+        path = "/dashboard/" + quote(execution_id, safe="")
     origin = portal_url or os.environ.get("EPOCH_PORTAL_URL")
     if not origin:
         print("Dashboard content is available. Set EPOCH_PORTAL_URL to show its link.")
@@ -416,7 +434,7 @@ async def dashboard(
         raise ValueError(
             "Use your Portal HTTP(S) origin, without credentials or a path."
         )
-    url = origin.rstrip("/") + "/dashboard/" + quote(execution_id, safe="")
+    url = origin.rstrip("/") + path
     display(
         HTML(
             '<a href="'

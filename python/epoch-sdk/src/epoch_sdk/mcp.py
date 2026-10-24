@@ -38,7 +38,7 @@ from .supervisor import Answers
 
 # Old handles remain readable through AgentToolsClient. New MCP discovery is
 # native Backend lookup; the legacy Discovery LLM is never advertised/invoked.
-_SPECIALIST_NAMES = {name: public for name, public in MCP_TOOL_NAMES.items() if name != "discovery"}
+_SPECIALIST_NAMES = dict(MCP_TOOL_NAMES)
 
 # Reuse the native request fields, including strictness and source-owned bounds.
 # Plain int/bool annotations would coerce values before SDK validation sees them.
@@ -234,7 +234,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
-            "Execution and reads use Backend directly. Specialist LLMs run only for explicitly selected study authoring/auditing or a program's declared llm_call."
+            "Execution and reads use Backend directly. Specialist LLMs run only for explicitly selected study authoring or a program's declared llm_call."
             " For a supported completed result, use epoch_extension_inputs, epoch_save_extension and epoch_execute_extension to author/reuse an execution-input program. "
             "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit llm_call declaration may use the cached text model. "
             "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
@@ -252,7 +252,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """Execute a saved study through Backend, without a supervisor or publication.
         Returns the native execution ID/status. Observe with epoch_status using
         kind=execution. Use a native extension for new supported single-source
-        calculations; retain epoch_audit_run for explicit diagnostics/comparisons. Optional
+        calculations. Existing context answers source questions directly. Optional
         execution_id is Backend's caller-selected ID. Never retry an uncertain
         submission blindly: retain and read its accepted ID.
         """

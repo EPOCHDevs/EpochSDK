@@ -295,3 +295,18 @@ def test_dashboard_link_requires_owned_exact_source_and_actual_content(monkeypat
     client.execution.return_value.definition_id = "another-study"
     with pytest.raises(ValueError, match="differs"):
         asyncio.run(demos.dashboard(client, result, portal_url="https://portal.example"))
+
+
+def test_native_replay_dashboard_links_the_report_operation_and_preserves_edit_zero(monkeypatch):
+    from stratifyx import SdkExecutionRecord
+    from test_native_report_replay import replay
+    parent, child, _ = replay()
+    result = chosen().model_copy(update={'report': SdkExecutionRecord.model_validate(child)})
+    displays = []
+    monkeypatch.setattr(demos, 'display', displays.append)
+    # No source-job dashboard API is supplied: this view belongs to the report.
+    client = SimpleNamespace()
+    url = asyncio.run(demos.dashboard(client, result, portal_url='https://portal.example'))
+    assert url == 'https://portal.example/execution-extensions/' + child['request']['operation_id']
+    assert result.report.extension_outputs.dashboards[0].presentation.edit_version == 0
+    assert len(displays) == 1

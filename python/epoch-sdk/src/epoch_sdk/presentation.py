@@ -52,9 +52,6 @@ def _label(name: str) -> str:
         "discovery": "Discover data",
         "build_study": "Build study",
         "run_study": "Run study",
-        "inspect_response_sources": "Inspect saved results",
-        "audit_run": "Review results",
-        "publish_response": "Publish answer",
     }
     return labels.get(name, name.replace("_", " ").capitalize())
 

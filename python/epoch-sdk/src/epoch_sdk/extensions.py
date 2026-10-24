@@ -2,7 +2,8 @@
 
 Backend owns compilation, authorization, immutable inputs, idempotent operations
 and publication. These methods never launch an EpochAI graph, interpret prose,
-choose a model, copy table values or rerun the original study.
+choose a model or copy table values. Direct input programs reuse a completed
+study; report_template replay runs its original study and saved report natively.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from stratifyx.types import (
     ExecutionInputSelection,
     ExecutionParameterValue,
     ExecutionPresentationPin,
+    ExecutionReportReference,
     IdResponse,
     SdkExecutionRecord,
     StudyType,
@@ -41,6 +43,8 @@ class _ExecutionOptions(TypedDict, total=False):
     execution_parameter_bindings: dict[str, ExecutionParameterValue]
     base_presentation: ExecutionPresentationPin
     research_request_id: str
+    allow_period_override: bool
+    report_template: ExecutionReportReference
 
 
 class ExecutionExtensionClient:
@@ -100,11 +104,13 @@ class ExecutionExtensionClient:
         conflict. Numerical completion and declared output completion are distinct.
         An explicit llm_call may use the bounded cached text step; deterministic
         table/JSON/dashboard programs make no model call. No supervisor is used.
+        report_template replays the original study then its verified report;
+        direct input_tables mode reuses completed results without a source rerun.
         When research_request_id is supplied, Backend confirms that accepted
         research attempt's link before starting work; standalone callers omit it.
         """
-        if request.input_tables is None:
-            raise ValueError("An execution extension requires explicit input_tables.")
+        if (request.input_tables is None) == (request.report_template is None):
+            raise ValueError("Choose explicit input_tables or one verified report_template.")
         if request.response_plan is not None:
             raise ValueError("An extension declares outputs in EpochScript, without response_plan.")
         # Fern permits response extensions; the native request's outer shape
@@ -120,12 +126,25 @@ class ExecutionExtensionClient:
             options["base_presentation"] = request.base_presentation
         if request.research_request_id is not None:
             options["research_request_id"] = request.research_request_id
+        if request.allow_period_override is not None:
+            options["allow_period_override"] = request.allow_period_override
+        if request.report_template is not None:
+            options["report_template"] = request.report_template
+        if request.input_tables is not None:
+            return await self.backend.sdk_requests.create_sdk_execution_request(
+                operation_id=request.operation_id,
+                study_id=request.study_id,
+                source_execution_id=request.source_execution_id,
+                parameters=request.parameters,
+                input_tables=request.input_tables,
+                **options,
+                request_options={"max_retries": 0},
+            )
         return await self.backend.sdk_requests.create_sdk_execution_request(
             operation_id=request.operation_id,
             study_id=request.study_id,
             source_execution_id=request.source_execution_id,
             parameters=request.parameters,
-            input_tables=request.input_tables,
             **options,
             request_options={"max_retries": 0},
         )
@@ -140,7 +159,7 @@ class ExecutionExtensionClient:
         record = await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
             operation_id, request_options={"max_retries": 0}
         )
-        if record.request.operation_id != operation_id or record.request.input_tables is None:
+        if record.request.operation_id != operation_id or (record.request.input_tables is None and record.request.report_template is None):
             raise ValueError("The native operation is not the requested execution extension.")
         return record
 

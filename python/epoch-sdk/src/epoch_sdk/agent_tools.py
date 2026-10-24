@@ -21,6 +21,7 @@ from stratifyx.types import DashboardSchema, JobListItem, StudyDefinition, TearS
 from .agent_tools_contract import (
     MAX_TOOL_ARGUMENT_BYTES,
     TOOLS_ASSISTANT_ID,
+    ActiveAgentToolName,
     AgentToolHandle,
     AgentToolName,
     AgentToolsCatalog,
@@ -179,7 +180,7 @@ class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
 
     async def invoke(
         self,
-        tool: AgentToolName,
+        tool: ActiveAgentToolName,
         arguments: dict[str, JsonValue],
         *,
         task: str,
@@ -187,6 +188,9 @@ class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
     ) -> AgentToolOperation:
         if not task.strip():
             raise ValueError("The external task must not be blank")
+        from .agent_tools_contract import MCP_TOOL_NAMES
+        if tool not in MCP_TOOL_NAMES:
+            raise ValueError("This specialist tool is retired; use the native data and execution interfaces.")
         definition = next((row for row in (await self.catalog()).tools if row.name == tool), None)
         if definition is None:
             raise ValueError("Unknown Epoch specialist tool")
@@ -288,6 +292,9 @@ class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
     async def resume(
         self, handle: AgentToolHandle, responses: dict[str, Answers]
     ) -> AgentToolOperation:
+        from .agent_tools_contract import MCP_TOOL_NAMES
+        if handle.tool not in MCP_TOOL_NAMES:
+            raise ValueError("Historical retired specialist handles are read-only.")
         waiting = await self.status(handle)
         if waiting.status != "needs_input":
             raise ValueError("This tool operation is not waiting for input")

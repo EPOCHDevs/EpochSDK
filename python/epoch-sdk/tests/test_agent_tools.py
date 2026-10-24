@@ -21,6 +21,7 @@ from epoch_sdk.mcp import create_server
 CATALOG = json.loads(
     (Path(__file__).resolve().parents[3] / "contracts/agent-tools-native.json").read_text()
 )["catalog"]
+LEGACY_CATALOG = json.loads((Path(__file__).parent / "fixtures/agent_tools_catalog_v1.json").read_text())["catalog"]
 WORKSPACE = "11111111-1111-4111-8111-111111111111"
 RUN = "22222222-2222-4222-8222-222222222222"
 STUDY = {
@@ -182,7 +183,6 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
                 "epoch_screen_assets",
                 "epoch_inspect_source",
                 "epoch_build_study",
-                "epoch_audit_run",
                 "epoch_execute",
                 "epoch_extension_inputs",
                 "epoch_save_extension",
@@ -193,13 +193,9 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
                 "epoch_find",
             }
             for source in CATALOG["tools"]:
-                if source["name"] == "discovery":
-                    continue
                 mapping = {
-                    "discovery": "epoch_discover",
                     "inspect_source": "epoch_inspect_source",
                     "build_study": "epoch_build_study",
-                    "audit_run": "epoch_audit_run",
                 }
                 schema = tools[mapping[source["name"]]].input_schema
                 Draft202012Validator.check_schema(schema)
@@ -220,7 +216,7 @@ def test_default_mcp_never_invokes_the_legacy_discovery_llm_and_accepts_catalog_
         def graph(self, request):
             if request.url.path == '/api/v1/agent-tools':
                 self.graph_calls.append(request)
-                catalog = copy.deepcopy(CATALOG)
+                catalog = copy.deepcopy(LEGACY_CATALOG)
                 catalog['version'] = 2
                 catalog['tools'] = [tool for tool in catalog['tools'] if tool['name'] != 'discovery']
                 return httpx.Response(200, json=catalog)
@@ -242,9 +238,9 @@ def test_default_mcp_cannot_resume_an_existing_interrupted_legacy_discovery():
     async def scenario():
         service = Service()
         async with service.client() as client:
-            accepted = await client.invoke('discovery', ARGS, task='Existing legacy work')
+            accepted = await client.invoke('build_study', BUILD_ARGS, task='Existing legacy work')
             service.native_status = 'interrupted'
-            handle = accepted.handle.model_dump(mode='json')
+            handle = accepted.handle.model_copy(update={'tool': 'discovery'}).model_dump(mode='json')
             service.graph_calls.clear()
             async with Client(create_server(client)) as mcp:
                 result = await mcp.call_tool('epoch_resume', {'handle': handle, 'responses': {}})
@@ -319,7 +315,7 @@ def test_forged_operation_handle_and_unowned_execution_are_not_accepted():
     async def scenario():
         service = Service()
         async with service.client() as client:
-            submitted = await client.invoke("discovery", ARGS, task="Find metadata")
+            submitted = await client.invoke("build_study", BUILD_ARGS, task="Build the review")
             forged = submitted.handle.model_copy(update={"tool_call_id": "different"})
             with pytest.raises(ValueError, match="handle differs"):
                 await client.status(forged)
@@ -335,7 +331,7 @@ def test_completed_operations_do_not_resume_and_find_is_read_only():
     async def scenario():
         service = Service()
         async with service.client() as client:
-            accepted = await client.invoke("discovery", ARGS, task="Find metadata")
+            accepted = await client.invoke("build_study", BUILD_ARGS, task="Build the review")
             service.native_status = "success"
             with pytest.raises(ValueError, match="not waiting"):
                 await client.resume(accepted.handle, {})
@@ -377,7 +373,7 @@ def test_stale_interrupted_handle_cannot_read_or_answer_a_newer_workspace_questi
     async def scenario():
         service = ReusedService()
         async with service.client() as client:
-            accepted = await client.invoke("discovery", ARGS, task="Find metadata")
+            accepted = await client.invoke("build_study", BUILD_ARGS, task="Build the review")
             service.native_status = "interrupted"
             current = await client.status(accepted.handle)
             assert current.status == "needs_input" and len(current.interrupts) == 1
@@ -498,4 +494,20 @@ def test_mcp_catalog_listing_reports_required_service_failure_without_partial_to
                 assert client._catalog is None
             finally:
                 await client.aclose()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("name", ["discovery", "audit_run"])
+def test_retired_specialists_cannot_be_invoked_or_resumed_even_from_historical_catalogues(name):
+    async def scenario():
+        from epoch_sdk.agent_tools_contract import AgentToolHandle
+        service = Service()
+        async with service.client() as client:
+            with pytest.raises(ValueError, match="retired|supported|active|read-only"):
+                await client.invoke(name, {}, task="Do not dispatch")
+            assert not service.graph_calls and not service.backend_calls
+            handle = AgentToolHandle(workspace_id=WORKSPACE, run_id=RUN, tool_call_id="historic", tool=name)
+            with pytest.raises(ValueError, match="retired|supported|active|read-only"):
+                await client.resume(handle, {})
+            assert not service.graph_calls and not service.backend_calls
     asyncio.run(scenario())

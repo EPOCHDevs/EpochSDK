@@ -1,5 +1,19 @@
 {
   "$defs": {
+    "ExecutionReportReference": {
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id"
+      ],
+      "title": "ExecutionReportReference",
+      "type": "object"
+    },
     "GraphInterrupt": {
       "additionalProperties": false,
       "properties": {
@@ -212,6 +226,17 @@
     "SavedStudy": {
       "additionalProperties": false,
       "properties": {
+        "report_template": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExecutionReportReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "response_plan": {
           "anyOf": [
             {

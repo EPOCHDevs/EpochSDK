@@ -12,7 +12,8 @@ def main():
     catalogue = json.loads((ROOT / "contracts/agent-tools-native.json").read_text())["catalog"]
     Draft202012Validator.check_schema(schema)
     Draft202012Validator(schema).validate(catalogue)
-    expected = {"discovery", "inspect_source", "build_study", "audit_run"}
+    expected = {"inspect_source", "build_study"}
+    assert catalogue["version"] == 3
     assert {tool["name"] for tool in catalogue["tools"]} == expected
     for tool in catalogue["tools"]:
         Draft202012Validator.check_schema(tool["parameters"])
@@ -23,7 +24,7 @@ def main():
     check.validate(handle)
     assert not check.is_valid({**handle, "authorization": "not-a-wire-field"})
     assert not check.is_valid({**handle, "tool": "epoch-ai"})
-    print("Agent tools contract valid: 4 original schemas, closed transport and no injected fields")
+    print("Agent tools contract valid: 2 active original schemas, closed transport and no injected fields")
 
 
 if __name__ == "__main__":

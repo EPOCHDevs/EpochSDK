@@ -12,6 +12,7 @@ from stratifyx import AsyncStratifyX
 from test_execution_extensions import ANSWER, RECORD
 
 from epoch_sdk.contracts import RunRequest
+from epoch_sdk.errors import EpochError
 from epoch_sdk.research import EpochClient, ResearchCompleted, ResearchError
 from epoch_sdk.supervisor import InProgress, PublishedAnswer, SupervisorClient, WorkflowHandle
 
@@ -296,4 +297,52 @@ def test_concurrent_native_link_after_runtime_cas_conflict_never_starts_a_graph(
             assert len(patches) == 1
             start.assert_not_called()
 
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("missing", [None, "job", "snapshot", "denied", "wrong-identity"])
+def test_first_study_report_retains_original_replay_and_survives_missing_optional_source(missing):
+    async def scenario():
+        research, native, answer = records()
+        research["source_execution_id"] = native["request"]["source_execution_id"]
+        original_id = research["source_execution_id"]
+        calls = []
+        def backend(request):
+            calls.append(request)
+            path = request.url.path
+            assert request.method == "GET"
+            if path == f"/api/v1/integration/requests/{RESEARCH_ID}":
+                return httpx.Response(200, json=research)
+            if path == f"/api/v1/integration/execution-requests/{native['request_id']}":
+                return httpx.Response(200, json=native)
+            if path == f"/api/v1/research/responses/{answer['response_id']}":
+                return httpx.Response(200, json=answer)
+            kind = "snapshot" if path.endswith("/study") else "job"
+            assert path in {f"/api/v1/studies/executions/{original_id}", f"/api/v1/studies/executions/{original_id}/study"}
+            if kind == missing:
+                return httpx.Response(404, json={"error": "DataNotFound", "message": "Removed original metadata", "timestamp": "2026-10-23T00:00:00Z"})
+            if kind == "job" and missing == "denied":
+                return httpx.Response(403, json={"error": "Forbidden", "message": "Not owned", "timestamp": "2026-10-23T00:00:00Z"})
+            if kind == "job":
+                return httpx.Response(200, json={"id": original_id, "definition_id": "original-study", "created_at": 1, "execution_type": "research", "status": "completed"})
+            return httpx.Response(200, json={"execution_id": "wrong" if missing == "wrong-identity" else original_id, "definition_id": "original-study", "captured_at": 1,
+                "study": {"name": "Original", "description": "Transport control", "source": "retained_fixture()", "data": {"assets": []}, "authoring_origin": "agent"}})
+        def graph(request):
+            raise AssertionError("Saved research read must not run a supervisor")
+        async with httpx.AsyncClient(transport=httpx.MockTransport(backend)) as http, httpx.AsyncClient(base_url="https://graph.invalid", transport=httpx.MockTransport(graph)) as graph_http:
+            client = EpochClient(SupervisorClient(LangGraphClient(graph_http), AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=http)))
+            if missing in {"denied", "wrong-identity"}:
+                with pytest.raises(EpochError):
+                    await client.research_status(RESEARCH_ID)
+                return
+            result = await client.research_status(RESEARCH_ID)
+            assert isinstance(result, ResearchCompleted) and result.response.to_wire() == answer
+            if missing:
+                assert result.reusable_study is None
+            else:
+                assert result.reusable_study.source_execution_id == original_id
+                assert result.reusable_study.study_id == "original-study"
+                assert result.reusable_study.report_template.request_id == native["request_id"]
+                assert result.reusable_study.response_plan is None
+            assert all(request.method == "GET" for request in calls)
     asyncio.run(scenario())
