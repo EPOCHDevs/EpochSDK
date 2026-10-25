@@ -252,7 +252,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     server = MCPServer(
         "Epoch",
         instructions=(
-            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes the current Backend dataset briefing/options. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
+            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes version-matched Backend dataset, compute, execution and cost guidance. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
