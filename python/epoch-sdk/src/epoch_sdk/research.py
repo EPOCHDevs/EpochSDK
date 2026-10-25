@@ -543,6 +543,7 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                     or child.error is not None or child.extension_outputs is None
                     or child.response_phase is None or child.response_phase.value != "outputs_recorded"
                     or child.extension_outputs.provenance.source_execution_id != record.execution_id
+                    or child.extension_outputs.provenance.additional_sources != child.request.additional_sources
                     or child.extension_outputs.provenance.execution_id != child.execution_id
                     or child.extension_outputs.provenance.study_id != child.request.study_id
                     or child.extension_outputs.provenance.base_presentation != child.request.base_presentation
@@ -879,6 +880,7 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 or native.extension_outputs.response_id != response.response_id
                 or native.extension_outputs.response_version != response.version
                 or native.extension_outputs.provenance != response.extension
+                or native.extension_outputs.provenance.additional_sources != native.request.additional_sources
                 or response.response_plan is not None
             ):
                 raise ValueError("The research answer differs from its original native operation")

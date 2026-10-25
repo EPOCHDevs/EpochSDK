@@ -5,6 +5,7 @@ import copy
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -16,7 +17,7 @@ from stratifyx.core.api_error import ApiError
 from test_supervisor import INTERRUPT
 
 from epoch_sdk.agent_tools import AgentToolsClient
-from epoch_sdk.mcp import create_server
+from epoch_sdk.mcp import _compose_native_guide, create_server
 
 CATALOG = json.loads(
     (Path(__file__).resolve().parents[3] / "contracts/agent-tools-native.json").read_text()
@@ -37,6 +38,27 @@ ARGS = {
 }
 BUILD_ARGS = {"studies": [{"operation": "create", "slot_id": "aapl_review", "name": "AAPL Review",
     "form": "research", "authoring_brief": "Use the selected source.", "data_refs": [], "decision_refs": []}]}
+
+
+def test_native_mcp_guide_uses_one_backend_version_and_only_mounted_operations():
+    catalog = SimpleNamespace(loader_registry_version="reference-v1", overview="Native datasets")
+    reference = SimpleNamespace(version="reference-v1", planner_guidance={
+        "compute": "Computed methods", "run_study": "Native execution",
+        "run_monte_carlo": "Monte Carlo", "tune_study": "Tuning",
+        "cost_models": "Native fees",
+    })
+    guide = _compose_native_guide("Workflow", catalog, reference)
+    assert "<data>\nNative datasets\n</data>" in guide
+    assert "<compute>\nComputed methods\n</compute>" in guide
+    assert "<epoch_execute>\nNative execution\n</epoch_execute>" in guide
+    assert "<execution_cost_models>\nNative fees" in guide
+    assert "Monte Carlo" not in guide and "Tuning" not in guide
+    with pytest.raises(ValueError, match="versions differ"):
+        _compose_native_guide("Workflow", catalog, SimpleNamespace(
+            version="reference-v2", planner_guidance=reference.planner_guidance))
+    with pytest.raises(ValueError, match="incomplete"):
+        _compose_native_guide("Workflow", catalog, SimpleNamespace(
+            version="reference-v1", planner_guidance={"compute": "Computed methods"}))
 
 
 class Service:
@@ -207,6 +229,36 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
             assert all(t.input_schema["additionalProperties"] is False for t in tools.values())
             assert not service.backend_calls
             assert [r.url.path for r in service.graph_calls] == ["/api/v1/agent-tools"]
+
+    asyncio.run(scenario())
+
+
+def test_mcp_data_descriptions_retain_source_qualifications_without_new_inputs():
+    async def scenario():
+        service = Service()
+        async with service.client() as client, Client(create_server(client)) as mcp:
+            tools = {tool.name: tool for tool in (await mcp.list_tools()).tools}
+            search = tools["epoch_search_dataset"]
+            screen = tools["epoch_screen_assets"]
+            search_description = " ".join(search.description.split())
+            screen_description = " ".join(screen.description.split())
+            assert "asset class with each identity" in search_description
+            assert "bounds and their provenance describe the root" in search_description
+            assert "not one dated contract or every continuous construction" in search_description
+            assert "Root-coverage lookup does not require a continuous-construction choice" in search_description
+            assert "Listing location and company domicile are different filters" in screen_description
+            assert "roster freshness does not establish historical identity, lineage or effective-date completeness" in screen_description
+            assert set(search.input_schema["properties"]) == {
+                "requests", "candidate_limit", "saved_query",
+            }
+            assert search.input_schema["required"] == ["requests"]
+            assert set(screen.input_schema["properties"]) == {"request"}
+            assert screen.input_schema["required"] == ["request"]
+            for tool in (search, screen):
+                Draft202012Validator.check_schema(tool.input_schema)
+                assert tool.input_schema["additionalProperties"] is False
+            assert not service.backend_calls
+            assert [request.url.path for request in service.graph_calls] == ["/api/v1/agent-tools"]
 
     asyncio.run(scenario())
 

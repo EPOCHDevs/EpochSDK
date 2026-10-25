@@ -4,9 +4,9 @@ Response fixtures were captured from EpochBackend's native [dataset_clients]
 test. Paging variants below are explicitly synthetic metadata transport cases.
 """
 import asyncio
+import json
 from copy import deepcopy
 from importlib.resources import files
-import json
 from pathlib import Path
 
 import httpx
@@ -124,7 +124,7 @@ def test_sdk_and_mcp_reject_coercion_before_native_transport(route, arguments):
 @pytest.mark.parametrize('saved_limit', [1, 100])
 def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limit, saved_limit):
     async def scenario():
-        from stratifyx.types import DatasetCatalogRequest, DatasetSearchRequest
+        from stratifyx.types import DatasetSearchRequest
         calls = []
         query = {
             'request_id': 'macro',
@@ -181,7 +181,7 @@ class MetadataService:
         self.inline = inline
         self.calls = []
         self.search = fixture('search')
-        self.rows = [dict(self.search['records'][0], record_ref=f'fixture-record-{i}') for i in range(15)]
+        self.rows = [dict(self.search['records'][0], record_ref=f'discovery-record:v1:{i:064x}') for i in range(15)]
         if not inline:
             self.search['records'] = self.rows[:10]
             self.search['records_complete'] = False
@@ -416,22 +416,23 @@ def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
     async def scenario():
         from epoch_sdk.datasets import DatasetClient
         search = fixture('search')
+        result_ref = search['receipt']['result_ref']
         seen = []
         def read(request):
             body = json.loads(request.content)
             assert body['limit'] == limit
             assert body['cursor'] == 'native-cursor'
-            assert body['result_refs'] == ['owned-result']
+            assert body['result_refs'] == [result_ref]
             seen.append(request)
             return httpx.Response(200, json={
-                'columns': [], 'rows': [], 'records': [], 'result_refs': ['owned-result'],
+                'columns': [], 'rows': [], 'records': [], 'result_refs': [result_ref],
                 'original_receipts': [search['receipt']], 'receipts': [search['receipt']],
                 'returned': 0, 'total_matching': 0, 'total_stored': 0, 'has_more': False,
             })
         async with httpx.AsyncClient(transport=httpx.MockTransport(read)) as http:
             client = DatasetClient()
             client.backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
-            await client.read_dataset_search('owned-result', cursor='native-cursor', limit=limit)
+            await client.read_dataset_search(result_ref, cursor='native-cursor', limit=limit)
             assert len(seen) == 1
     asyncio.run(scenario())
 
@@ -522,15 +523,39 @@ def test_native_discovery_failure_reaches_sdk_and_mcp_without_retry_or_replaceme
 
 
 def test_mcp_guide_bootstraps_exact_backend_briefing_without_private_inventory():
+    from stratifyx.types import ReferenceLibraryResponse
+    if "planner_guidance" not in ReferenceLibraryResponse.model_fields:
+        pytest.skip("Installed native SDK predates the versioned Backend planner guide")
+
     async def scenario():
         calls = []
         native_catalog = fixture('catalog')
         native_catalog['overview'] = 'Current Backend briefing: annual/quarterly; First/Last/NthFromLast.'
+        native_catalog['loader_registry_version'] = 'fixture-reference-v1'
+        reference = {
+            'version': 'fixture-reference-v1',
+            'sections': [],
+            'data_sources': {
+                'schema_version': 2, 'sources': [],
+                'context': {'reference_version': 'fixture-reference-v1',
+                            'assetless_categories': [], 'category_endpoints': {},
+                            'data_categories': [], 'endpoints': {}, 'selector_enums': {}},
+            },
+            'planner_guidance': {
+                'compute': 'Native method directory',
+                'run_study': 'Native execution semantics',
+                'run_monte_carlo': 'Native Monte Carlo semantics',
+                'tune_study': 'Native tuning semantics',
+                'cost_models': 'Native cost models',
+            },
+        }
         def backend(request):
             calls.append(request)
-            assert request.url.path == '/api/v1/discovery/catalog'
-            assert json.loads(request.content)['include_saved'] is False
-            return httpx.Response(200, json=native_catalog)
+            if request.url.path == '/api/v1/discovery/catalog':
+                assert json.loads(request.content)['include_saved'] is False
+                return httpx.Response(200, json=native_catalog)
+            assert request.url.path == '/api/v1/agents/reference-library'
+            return httpx.Response(200, json=reference)
         def graph(request):
             assert request.method == 'GET' and request.url.path == '/api/v1/agent-tools'
             return httpx.Response(200, json=CATALOG)
@@ -545,9 +570,12 @@ def test_mcp_guide_bootstraps_exact_backend_briefing_without_private_inventory()
                 assert not result.is_error
                 text = '\n'.join(part.text for part in result.content if part.type == 'text')
                 assert native_catalog['overview'] in text
+                assert 'Native method directory' in text
+                assert 'Native cost models' in text
+                assert 'Native Monte Carlo semantics' not in text
                 assert 'browse candidate pages' not in text
                 assert 'saved_query' in text
-            assert len(calls) == 1
+            assert len(calls) == 2
     asyncio.run(scenario())
 
 

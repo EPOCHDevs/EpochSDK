@@ -26,6 +26,8 @@ from stratifyx.types import (
     DatasetSearchQuery,
     DatasetSearchRequest,
     ExecutionPresentationPin,
+    NamedExecutionInputSelection,
+    ReferenceLibraryResponse,
     ScreenAssetsRequest,
     SdkExecutionRecord,
 )
@@ -61,6 +63,28 @@ def _value(value: BaseModel) -> CallToolResult:
 
 def _failure(message: str) -> CallToolResult:
     return CallToolResult(is_error=True, content=[TextContent(type="text", text=message)])
+
+
+def _compose_native_guide(
+    workflow: str, catalog: DatasetCatalogResponse, library: ReferenceLibraryResponse
+) -> str:
+    """Present only coherent Backend guidance for tools this MCP mounts."""
+    if catalog.loader_registry_version != library.version:
+        raise ValueError("Backend dataset catalogue and planner reference versions differ")
+    planning = library.planner_guidance
+
+    def guide(name: str) -> str:
+        content = planning.get(name) if planning is not None else None
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("Backend planner guidance is unavailable or incomplete")
+        return content
+
+    sections = [workflow, "<data>\n" + catalog.overview + "\n</data>"]
+    sections.append("<compute>\n" + guide("compute") + "\n</compute>")
+    sections.append("<epoch_execute>\n" + guide("run_study") + "\n</epoch_execute>")
+    sections.append("<execution_cost_models>\n" + guide("cost_models") +
+                    "\n</execution_cost_models>")
+    return "\n\n".join(sections)
 
 
 async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
@@ -230,7 +254,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     server = MCPServer(
         "Epoch",
         instructions=(
-            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes the current Backend dataset briefing/options. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
+            "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes version-matched Backend dataset, compute, execution and cost guidance. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
             "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
@@ -278,6 +302,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         pages. saved_query finds caller-owned datasets by name, description or
         exact returned dataset/source reference; use requests=[] for saved-only.
         This is ranked identity lookup; use epoch_screen_assets for a whole cohort.
+        Preserve the returned asset class with each identity. Futures-root history
+        bounds and their provenance describe the root, not one dated contract or
+        every continuous construction. Root-coverage lookup does not require a
+        continuous-construction choice.
         """
         return await _call(client.search_dataset(requests, candidate_limit=candidate_limit, saved_query=saved_query))
 
@@ -287,6 +315,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         No relevance limit is applied. Keep qualifications/integrity visible;
         pass universe_ref plus the desired dataset to build_study source_refs.
         A missing universe_ref means no usable complete universe was established.
+        Listing location and company domicile are different filters. Current
+        roster freshness does not establish historical identity, lineage or
+        effective-date completeness.
         """
         return await _call(client.screen_assets(request))
 
@@ -312,7 +343,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             return await _call(client.extension_status(operation_id))
         return _failure("Supply only the handle, execution_id or operation_id required by kind")
 
-    async def extension_inputs(execution_id: str, tables: list[str]) -> CallToolResult:
+    async def extension_inputs(
+        execution_id: str, tables: list[str],
+        additional_sources: list[NamedExecutionInputSelection] | None = None,
+    ) -> CallToolResult:
         """Read selected retained tables' exact types, flat enum refs and frozen code.
         Backend owner-checks the completed source and rejects unsupported inputs.
         Pass tables=[] to discover native table names, then select an explicit
@@ -320,11 +354,13 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         It reads metadata, without sample rows, vendor discovery or a model call. Reuse the
         source for multiple programs; do not embed its execution ID in EpochScript.
         """
-        return await _call(client.extension_inputs(execution_id, tables=tables))
+        return await _call(client.extension_inputs(execution_id, tables=tables,
+            additional_sources=additional_sources))
 
     async def save_extension(
         thread_id: str, source_execution_id: str, tables: list[str], source: str,
         name: str, description: str, parent_definition_id: str | None = None,
+        additional_sources: list[NamedExecutionInputSelection] | None = None,
     ) -> CallToolResult:
         """Compile and save supplied EpochScript over an explicit execution_input.
         Use the returned catalog's flat ExecutionTable/field enum refs. Declare
@@ -336,12 +372,15 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         return await _call(client.save_extension(
             thread_id,source_execution_id=source_execution_id,tables=tables,source=source,
             name=name,description=description,parent_definition_id=parent_definition_id,
+            additional_sources=additional_sources,
         ))
 
     async def execute_extension(request: _ExtensionExecutionRequest) -> CallToolResult:
         """Start or attach one saved-execution extension through Backend.
         study_id is the saved extension, source_execution_id is the original owned
-        result, input_tables selects its data and parameters may be empty. Reuse
+        result, input_tables selects its data and parameters may be empty. Supply
+        additional_sources to select named completed runs for one comparison.
+        Every source is retained in the output provenance. Reuse
         operation_id for identical accepted inputs; changed inputs conflict. It
         never reruns the original study or launches a supervisor. Only explicitly
         declared llm_call may call the bounded cached text model. Read epoch_status
@@ -405,8 +444,19 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             catalog = await _call(client.dataset_catalog(include_saved=False))
             if catalog.is_error:
                 return catalog
-            briefing = DatasetCatalogResponse.model_validate(catalog.structured_content).overview
-            return CallToolResult(content=[TextContent(type="text", text=guide + "\n\n<data>\n" + briefing + "\n</data>")])
+            dataset_catalog = DatasetCatalogResponse.model_validate(catalog.structured_content)
+            reference = await _call(client.backend.agents.get_the_agent_reference_library())
+            if reference.is_error:
+                return reference
+            try:
+                library = ReferenceLibraryResponse.model_validate(reference.structured_content)
+            except ValidationError as error:
+                return _failure("Backend planner reference is invalid: " + str(error))
+            try:
+                briefing = _compose_native_guide(guide, dataset_catalog, library)
+            except ValueError as error:
+                return _failure(str(error))
+            return CallToolResult(content=[TextContent(type="text", text=briefing)])
         if kind == "tool" and handle is not None and identifier is None:
             return await _call(client.status(handle, include_artifact=True))
         if identifier is None or handle is not None:
