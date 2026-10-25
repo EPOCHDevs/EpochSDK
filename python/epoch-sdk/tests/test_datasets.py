@@ -181,7 +181,7 @@ class MetadataService:
         self.inline = inline
         self.calls = []
         self.search = fixture('search')
-        self.rows = [dict(self.search['records'][0], record_ref=f'fixture-record-{i}') for i in range(15)]
+        self.rows = [dict(self.search['records'][0], record_ref=f'discovery-record:v1:{i:064x}') for i in range(15)]
         if not inline:
             self.search['records'] = self.rows[:10]
             self.search['records_complete'] = False
@@ -416,22 +416,23 @@ def test_metadata_page_minimum_and_maximum_reach_native_unchanged(limit):
     async def scenario():
         from epoch_sdk.datasets import DatasetClient
         search = fixture('search')
+        result_ref = search['receipt']['result_ref']
         seen = []
         def read(request):
             body = json.loads(request.content)
             assert body['limit'] == limit
             assert body['cursor'] == 'native-cursor'
-            assert body['result_refs'] == ['owned-result']
+            assert body['result_refs'] == [result_ref]
             seen.append(request)
             return httpx.Response(200, json={
-                'columns': [], 'rows': [], 'records': [], 'result_refs': ['owned-result'],
+                'columns': [], 'rows': [], 'records': [], 'result_refs': [result_ref],
                 'original_receipts': [search['receipt']], 'receipts': [search['receipt']],
                 'returned': 0, 'total_matching': 0, 'total_stored': 0, 'has_more': False,
             })
         async with httpx.AsyncClient(transport=httpx.MockTransport(read)) as http:
             client = DatasetClient()
             client.backend = AsyncStratifyX(base_url='https://backend.invalid', token='fixture', httpx_client=http)
-            await client.read_dataset_search('owned-result', cursor='native-cursor', limit=limit)
+            await client.read_dataset_search(result_ref, cursor='native-cursor', limit=limit)
             assert len(seen) == 1
     asyncio.run(scenario())
 
