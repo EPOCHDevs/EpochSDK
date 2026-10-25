@@ -26,6 +26,7 @@ from stratifyx.types import (
     DatasetSearchQuery,
     DatasetSearchRequest,
     ExecutionPresentationPin,
+    ReferenceLibraryResponse,
     ScreenAssetsRequest,
     SdkExecutionRecord,
 )
@@ -61,6 +62,27 @@ def _value(value: BaseModel) -> CallToolResult:
 
 def _failure(message: str) -> CallToolResult:
     return CallToolResult(is_error=True, content=[TextContent(type="text", text=message)])
+
+
+def _compose_native_guide(
+    workflow: str, catalog: DatasetCatalogResponse, library: ReferenceLibraryResponse
+) -> str:
+    """Present only coherent Backend guidance for tools this MCP mounts."""
+    if catalog.loader_registry_version != library.version:
+        raise ValueError("Backend dataset catalogue and planner reference versions differ")
+    planning = getattr(library, "planner_guidance", None)
+    required = ("compute", "run_study", "cost_models")
+    if not isinstance(planning, dict) or any(
+        not isinstance(planning.get(name), str) or not planning[name].strip()
+        for name in required
+    ):
+        raise ValueError("Backend planner guidance is unavailable or incomplete")
+    sections = [workflow, "<data>\n" + catalog.overview + "\n</data>"]
+    sections.append("<compute>\n" + planning["compute"] + "\n</compute>")
+    sections.append("<epoch_execute>\n" + planning["run_study"] + "\n</epoch_execute>")
+    sections.append("<execution_cost_models>\n" + planning["cost_models"] +
+                    "\n</execution_cost_models>")
+    return "\n\n".join(sections)
 
 
 async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
@@ -405,8 +427,19 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             catalog = await _call(client.dataset_catalog(include_saved=False))
             if catalog.is_error:
                 return catalog
-            briefing = DatasetCatalogResponse.model_validate(catalog.structured_content).overview
-            return CallToolResult(content=[TextContent(type="text", text=guide + "\n\n<data>\n" + briefing + "\n</data>")])
+            dataset_catalog = DatasetCatalogResponse.model_validate(catalog.structured_content)
+            reference = await _call(client.backend.agents.get_the_agent_reference_library())
+            if reference.is_error:
+                return reference
+            try:
+                library = ReferenceLibraryResponse.model_validate(reference.structured_content)
+            except ValidationError as error:
+                return _failure("Backend planner reference is invalid: " + str(error))
+            try:
+                briefing = _compose_native_guide(guide, dataset_catalog, library)
+            except ValueError as error:
+                return _failure(str(error))
+            return CallToolResult(content=[TextContent(type="text", text=briefing)])
         if kind == "tool" and handle is not None and identifier is None:
             return await _call(client.status(handle, include_artifact=True))
         if identifier is None or handle is not None:

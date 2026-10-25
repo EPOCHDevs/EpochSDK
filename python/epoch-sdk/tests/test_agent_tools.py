@@ -5,6 +5,7 @@ import copy
 import json
 from contextlib import asynccontextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -16,7 +17,7 @@ from stratifyx.core.api_error import ApiError
 from test_supervisor import INTERRUPT
 
 from epoch_sdk.agent_tools import AgentToolsClient
-from epoch_sdk.mcp import create_server
+from epoch_sdk.mcp import _compose_native_guide, create_server
 
 CATALOG = json.loads(
     (Path(__file__).resolve().parents[3] / "contracts/agent-tools-native.json").read_text()
@@ -37,6 +38,27 @@ ARGS = {
 }
 BUILD_ARGS = {"studies": [{"operation": "create", "slot_id": "aapl_review", "name": "AAPL Review",
     "form": "research", "authoring_brief": "Use the selected source.", "data_refs": [], "decision_refs": []}]}
+
+
+def test_native_mcp_guide_uses_one_backend_version_and_only_mounted_operations():
+    catalog = SimpleNamespace(loader_registry_version="reference-v1", overview="Native datasets")
+    reference = SimpleNamespace(version="reference-v1", planner_guidance={
+        "compute": "Computed methods", "run_study": "Native execution",
+        "run_monte_carlo": "Monte Carlo", "tune_study": "Tuning",
+        "cost_models": "Native fees",
+    })
+    guide = _compose_native_guide("Workflow", catalog, reference)
+    assert "<data>\nNative datasets\n</data>" in guide
+    assert "<compute>\nComputed methods\n</compute>" in guide
+    assert "<epoch_execute>\nNative execution\n</epoch_execute>" in guide
+    assert "<execution_cost_models>\nNative fees" in guide
+    assert "Monte Carlo" not in guide and "Tuning" not in guide
+    with pytest.raises(ValueError, match="versions differ"):
+        _compose_native_guide("Workflow", catalog, SimpleNamespace(
+            version="reference-v2", planner_guidance=reference.planner_guidance))
+    with pytest.raises(ValueError, match="incomplete"):
+        _compose_native_guide("Workflow", catalog, SimpleNamespace(
+            version="reference-v1", planner_guidance={"compute": "Computed methods"}))
 
 
 class Service:
