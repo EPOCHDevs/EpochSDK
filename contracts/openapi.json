@@ -1311,6 +1311,399 @@
         "type": "object",
         "x-native-schema-name": "AgentStudyDefinitionCreateRequest"
       },
+      "Native_AlgoParams": {
+        "discriminator": {
+          "mapping": {
+            "bayes": "#/components/schemas/Native_AlgoParams_bayes",
+            "cmaes": "#/components/schemas/Native_AlgoParams_cmaes",
+            "de": "#/components/schemas/Native_AlgoParams_de",
+            "pso": "#/components/schemas/Native_AlgoParams_pso",
+            "pso_gen": "#/components/schemas/Native_AlgoParams_pso_gen",
+            "sade": "#/components/schemas/Native_AlgoParams_sade",
+            "sga": "#/components/schemas/Native_AlgoParams_sga",
+            "simulated_annealing": "#/components/schemas/Native_AlgoParams_simulated_annealing",
+            "xnes": "#/components/schemas/Native_AlgoParams_xnes"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_cmaes"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_xnes"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_de"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_sade"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_pso"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_pso_gen"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_sga"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_simulated_annealing"
+          },
+          {
+            "$ref": "#/components/schemas/Native_AlgoParams_bayes"
+          }
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "AlgoParams"
+      },
+      "Native_AlgoParams_bayes": {
+        "additionalProperties": false,
+        "properties": {
+          "init_samples": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "kappa": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "bayes"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "bayes",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_bayes"
+      },
+      "Native_AlgoParams_cmaes": {
+        "additionalProperties": false,
+        "properties": {
+          "c1": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "cc": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "cmu": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "cs": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "ftol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "sigma0": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "cmaes"
+          },
+          "xtol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "cmaes",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_cmaes"
+      },
+      "Native_AlgoParams_de": {
+        "additionalProperties": false,
+        "properties": {
+          "CR": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "F": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "ftol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "de"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "xtol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "de",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_de"
+      },
+      "Native_AlgoParams_pso": {
+        "additionalProperties": false,
+        "properties": {
+          "eta1": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "eta2": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "max_vel": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "neighb_param": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "neighb_type": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "omega": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "pso"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "pso",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_pso"
+      },
+      "Native_AlgoParams_pso_gen": {
+        "additionalProperties": false,
+        "properties": {
+          "eta1": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "eta2": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "max_vel": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "neighb_param": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "neighb_type": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "omega": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "pso_gen"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "pso_gen",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_pso_gen"
+      },
+      "Native_AlgoParams_sade": {
+        "additionalProperties": false,
+        "properties": {
+          "ftol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "sade"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "variant_adptv": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "xtol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "sade",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_sade"
+      },
+      "Native_AlgoParams_sga": {
+        "additionalProperties": false,
+        "properties": {
+          "cr": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "eta_c": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "m": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "param_m": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "param_s": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "type": {
+            "const": "sga"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "sga",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_sga"
+      },
+      "Native_AlgoParams_simulated_annealing": {
+        "additionalProperties": false,
+        "properties": {
+          "Tf": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "Ts": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "bin_size": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "n_T_adj": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "n_range_adj": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "start_range": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "simulated_annealing"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "simulated_annealing",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_simulated_annealing"
+      },
+      "Native_AlgoParams_xnes": {
+        "additionalProperties": false,
+        "properties": {
+          "eta_b": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "eta_mu": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "eta_sigma": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "ftol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "sigma0": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "const": "xnes"
+          },
+          "xtol": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "xnes",
+        "type": "object",
+        "x-native-schema-name": "AlgoParams_xnes"
+      },
       "Native_ArrowCoordinateBindingSchema": {
         "additionalProperties": false,
         "properties": {
@@ -3761,6 +4154,15 @@
       "Native_CreateSdkExecutionRequest": {
         "additionalProperties": false,
         "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "allow_period_override": {
             "$ref": "#/components/schemas/Native_optional_bool"
           },
@@ -4215,6 +4617,15 @@
       "Native_DescribeExecutionInputsRequest": {
         "additionalProperties": false,
         "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "tables": {
             "items": {
               "type": "string"
@@ -4422,6 +4833,35 @@
         "type": "object",
         "x-native-schema-name": "ExecutionCommentaryPin"
       },
+      "Native_ExecutionCostConfigSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction"
+            },
+            "type": "object"
+          },
+          "default_model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Native_TemplatedGenericFunction"
+          },
+          "symbol_overrides": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_TemplatedGenericFunction"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "asset_class_overrides",
+          "symbol_overrides"
+        ],
+        "type": "object",
+        "x-native-schema-name": "ExecutionCostConfigSchema"
+      },
       "Native_ExecutionCostConfig_CommissionType": {
         "additionalProperties": false,
         "properties": {
@@ -4548,6 +4988,15 @@
       "Native_ExecutionExtensionProvenance": {
         "additionalProperties": false,
         "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "base_presentation": {
             "$ref": "#/components/schemas/Native_ExecutionPresentationPin"
           },
@@ -4612,6 +5061,15 @@
       "Native_ExecutionInputCatalogResponse": {
         "additionalProperties": false,
         "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ExecutionInputSourceView"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "source": {
             "$ref": "#/components/schemas/Native_ExecutionInputSourceView"
           },
@@ -4667,6 +5125,15 @@
       "Native_ExecutionInputSelection": {
         "additionalProperties": false,
         "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "source_execution_id": {
             "type": "string"
           },
@@ -4688,6 +5155,9 @@
       "Native_ExecutionInputSourceView": {
         "additionalProperties": false,
         "properties": {
+          "alias": {
+            "type": "string"
+          },
           "compile_diagnostics": {
             "items": {
               "$ref": "#/components/schemas/Native_CompileDiagnosticRecord"
@@ -4718,11 +5188,44 @@
           "family": {
             "type": "string"
           },
+          "monte_carlo_options": {
+            "$ref": "#/components/schemas/Native_MonteCarloOption"
+          },
+          "parent_execution_id": {
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/Native_DatePeriodConfig"
+          },
+          "search_config": {
+            "$ref": "#/components/schemas/Native_epoch_tune__SearchConfig"
+          },
+          "search_slots": {
+            "items": {
+              "$ref": "#/components/schemas/Native_epoch_tune__SlotSpec"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "source": {
             "type": "string"
           },
           "study_id": {
             "type": "string"
+          },
+          "trading": {
+            "$ref": "#/components/schemas/Native_TradingConfig"
+          },
+          "trial_overrides": {
+            "items": {
+              "$ref": "#/components/schemas/Native_epoch_tune__SlotAssignment"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
         "required": [
@@ -4738,6 +5241,9 @@
       "Native_ExecutionInputTableView": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "field_enum": {
             "type": "string"
           },
@@ -4754,6 +5260,9 @@
             "maximum": 18446744073709552000,
             "minimum": 0,
             "type": "integer"
+          },
+          "source_alias": {
+            "type": "string"
           },
           "table": {
             "type": "string"
@@ -5251,6 +5760,152 @@
         "nullable": true,
         "type": "number",
         "x-native-schema-name": "MetricValue"
+      },
+      "Native_MonteCarloOption": {
+        "additionalProperties": false,
+        "properties": {
+          "analyze_extended": {
+            "type": "boolean"
+          },
+          "analyze_max_drawdown": {
+            "type": "boolean"
+          },
+          "analyze_returns": {
+            "type": "boolean"
+          },
+          "analyze_sharpe": {
+            "type": "boolean"
+          },
+          "analyze_sortino": {
+            "type": "boolean"
+          },
+          "block_mean_length": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "cone_days_forward": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "cone_percentiles": {
+            "items": {
+              "maximum": 1.7976931348623157e+308,
+              "minimum": -1.7976931348623157e+308,
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "confidence_level": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "enable_bayesian": {
+            "type": "boolean"
+          },
+          "enable_block_bootstrap": {
+            "type": "boolean"
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "generate_cone": {
+            "type": "boolean"
+          },
+          "mcmc_burnin": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "mcmc_samples": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "n_bootstrap": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "random_seed": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "ruin_barrier_pct": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/Native_MonteCarloOption__Runtime"
+          },
+          "thread_id": {
+            "type": "string"
+          },
+          "trade_degrade_pct": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "trade_sim_enabled": {
+            "type": "boolean"
+          },
+          "trade_sim_mode": {
+            "type": "string"
+          },
+          "trade_sim_simulations": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "trade_skip_probability": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "title": "epoch_folio::MonteCarloOption",
+        "type": "object",
+        "x-native-schema-name": "MonteCarloOption"
+      },
+      "Native_MonteCarloOption__Runtime": {
+        "additionalProperties": false,
+        "properties": {
+          "dispatch": {
+            "type": "string"
+          }
+        },
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "MonteCarloOption__Runtime"
+      },
+      "Native_NamedExecutionInputSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "alias",
+          "source_execution_id",
+          "tables"
+        ],
+        "title": "epoch_stratifyx::NamedExecutionInputSelection",
+        "type": "object",
+        "x-native-schema-name": "NamedExecutionInputSelection"
       },
       "Native_PieDataPointSpec": {
         "additionalProperties": false,
@@ -7738,6 +8393,27 @@
         "type": "object",
         "x-native-schema-name": "TableSchema"
       },
+      "Native_TemplatedGenericFunction": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_raw_json"
+            },
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "args"
+        ],
+        "title": "epoch_stratifyx::openapi::TemplatedGenericFunction",
+        "type": "object",
+        "x-native-schema-name": "TemplatedGenericFunction"
+      },
       "Native_TemplatedGenericFunction_CommissionType": {
         "additionalProperties": false,
         "properties": {
@@ -7781,6 +8457,38 @@
           "null"
         ],
         "x-native-schema-name": "TemplatedGenericFunction_SlippageType"
+      },
+      "Native_TradingConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "cash": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "commission": {
+            "$ref": "#/components/schemas/Native_ExecutionCostConfigSchema"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "futures_tick_snapshot": {
+            "$ref": "#/components/schemas/Native_FuturesTickSnapshot"
+          },
+          "slippage": {
+            "$ref": "#/components/schemas/Native_ExecutionCostConfigSchema"
+          }
+        },
+        "required": [
+          "cash",
+          "currency",
+          "slippage",
+          "commission",
+          "futures_tick_snapshot"
+        ],
+        "title": "epoch_stratifyx::openapi::TradingConfigSchema",
+        "type": "object",
+        "x-native-schema-name": "TradingConfig"
       },
       "Native_TreemapLevelSpec": {
         "additionalProperties": false,
@@ -8384,6 +9092,213 @@
         "type": "object",
         "x-native-schema-name": "epoch_tearsheet__XRangeChartDef"
       },
+      "Native_epoch_tune__Algorithm": {
+        "enum": [
+          "grid",
+          "random",
+          "cmaes",
+          "xnes",
+          "de",
+          "sade",
+          "pso",
+          "pso_gen",
+          "sga",
+          "simulated_annealing",
+          "bayes"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__Algorithm"
+      },
+      "Native_epoch_tune__Budget": {
+        "additionalProperties": false,
+        "properties": {
+          "max_concurrency": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "max_trials": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "max_wall_secs": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "stop_after_no_improvement": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "stop_at_objective": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__Budget"
+      },
+      "Native_epoch_tune__Direction": {
+        "enum": [
+          "max",
+          "min"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__Direction"
+      },
+      "Native_epoch_tune__Objective": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "$ref": "#/components/schemas/Native_epoch_tune__Direction"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__Objective"
+      },
+      "Native_epoch_tune__SamplingMode": {
+        "enum": [
+          "uniform",
+          "lhs"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__SamplingMode"
+      },
+      "Native_epoch_tune__Scale": {
+        "enum": [
+          "linear",
+          "log"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__Scale"
+      },
+      "Native_epoch_tune__SchedulerConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "min_budget": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "reduction_factor": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Native_epoch_tune__SchedulerType"
+          }
+        },
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "epoch_tune__SchedulerConfig"
+      },
+      "Native_epoch_tune__SchedulerType": {
+        "enum": [
+          "fifo",
+          "asha",
+          "hyperband",
+          "median_stopping"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__SchedulerType"
+      },
+      "Native_epoch_tune__SearchConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "algo_params": {
+            "$ref": "#/components/schemas/Native_AlgoParams"
+          },
+          "algorithm": {
+            "$ref": "#/components/schemas/Native_epoch_tune__Algorithm"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Native_epoch_tune__Budget"
+          },
+          "objective": {
+            "$ref": "#/components/schemas/Native_epoch_tune__Objective"
+          },
+          "population_size": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "sampling": {
+            "$ref": "#/components/schemas/Native_epoch_tune__SamplingMode"
+          },
+          "scheduler": {
+            "$ref": "#/components/schemas/Native_epoch_tune__SchedulerConfig"
+          },
+          "seed": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/Native_epoch_tune__ValidationSplit"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__SearchConfig"
+      },
+      "Native_epoch_tune__SlotAssignment": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Native_variant_bool_int64_t_double_string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__SlotAssignment"
+      },
+      "Native_epoch_tune__SlotKind": {
+        "enum": [
+          "value"
+        ],
+        "type": "string",
+        "x-native-schema-name": "epoch_tune__SlotKind"
+      },
+      "Native_epoch_tune__SlotSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Native_epoch_tune__SlotKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "space": {
+            "$ref": "#/components/schemas/Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
+          }
+        },
+        "required": [
+          "label",
+          "name"
+        ],
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__SlotSpec"
+      },
+      "Native_epoch_tune__ValidationSplit": {
+        "additionalProperties": false,
+        "properties": {
+          "holdout_pct": {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "type": "number"
+          }
+        },
+        "type": "object",
+        "x-native-schema-name": "epoch_tune__ValidationSplit"
+      },
       "Native_float": {
         "maximum": 3.4028234663852886e+38,
         "minimum": -3.4028234663852886e+38,
@@ -8758,6 +9673,95 @@
         ],
         "type": "object",
         "x-native-schema-name": "variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema"
+      },
+      "Native_variant_bool_int64_t_double_string": {
+        "oneOf": [
+          {
+            "title": "bool",
+            "type": "boolean"
+          },
+          {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "title": "int64_t",
+            "type": "integer"
+          },
+          {
+            "maximum": 1.7976931348623157e+308,
+            "minimum": -1.7976931348623157e+308,
+            "title": "double",
+            "type": "number"
+          },
+          {
+            "title": "std::string",
+            "type": "string"
+          }
+        ],
+        "type": [
+          "number",
+          "string",
+          "boolean"
+        ],
+        "x-native-schema-name": "variant_bool_int64_t_double_string"
+      },
+      "Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "integer": {
+                "type": "boolean"
+              },
+              "max": {
+                "maximum": 1.7976931348623157e+308,
+                "minimum": -1.7976931348623157e+308,
+                "type": "number"
+              },
+              "min": {
+                "maximum": 1.7976931348623157e+308,
+                "minimum": -1.7976931348623157e+308,
+                "type": "number"
+              },
+              "scale": {
+                "$ref": "#/components/schemas/Native_epoch_tune__Scale"
+              },
+              "step": {
+                "maximum": 1.7976931348623157e+308,
+                "minimum": -1.7976931348623157e+308,
+                "type": "number"
+              },
+              "type": {
+                "const": "range"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "range",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "choices": {
+                "items": {
+                  "$ref": "#/components/schemas/Native_variant_bool_int64_t_double_string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "choice"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "choice",
+            "type": "object"
+          }
+        ],
+        "type": "object",
+        "x-native-schema-name": "variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
       },
       "OutputName": {
         "description": "Unique caller-selected name. Names are case-sensitive.",
@@ -14106,6 +15110,16 @@
     ],
     "schemas": [
       "Native_AgentStudyDefinitionCreateRequest",
+      "Native_AlgoParams",
+      "Native_AlgoParams_bayes",
+      "Native_AlgoParams_cmaes",
+      "Native_AlgoParams_de",
+      "Native_AlgoParams_pso",
+      "Native_AlgoParams_pso_gen",
+      "Native_AlgoParams_sade",
+      "Native_AlgoParams_sga",
+      "Native_AlgoParams_simulated_annealing",
+      "Native_AlgoParams_xnes",
       "Native_ArrowCoordinateBindingSchema",
       "Native_AssetCategory",
       "Native_AssetClass",
@@ -14192,6 +15206,7 @@
       "Native_ErrorResponse",
       "Native_Exchange",
       "Native_ExecutionCommentaryPin",
+      "Native_ExecutionCostConfigSchema",
       "Native_ExecutionCostConfig_CommissionType",
       "Native_ExecutionCostConfig_SlippageType",
       "Native_ExecutionExtensionDashboard",
@@ -14224,6 +15239,9 @@
       "Native_MarkerSymbol",
       "Native_MetaDataOptionDefinition",
       "Native_MetricValue",
+      "Native_MonteCarloOption",
+      "Native_MonteCarloOption__Runtime",
+      "Native_NamedExecutionInputSelection",
       "Native_PieDataPointSpec",
       "Native_PieSeriesSpec",
       "Native_PreparedCommentaryStep",
@@ -14295,8 +15313,10 @@
       "Native_TableFlavor",
       "Native_TableInfoDisplay",
       "Native_TableSchema",
+      "Native_TemplatedGenericFunction",
       "Native_TemplatedGenericFunction_CommissionType",
       "Native_TemplatedGenericFunction_SlippageType",
+      "Native_TradingConfig",
       "Native_TreemapLevelSpec",
       "Native_UpdateSdkRequest",
       "Native_ValueNotation",
@@ -14315,14 +15335,29 @@
       "Native_epoch_tearsheet__ScatterChartDef",
       "Native_epoch_tearsheet__TreemapChartDef",
       "Native_epoch_tearsheet__XRangeChartDef",
+      "Native_epoch_tune__Algorithm",
+      "Native_epoch_tune__Budget",
+      "Native_epoch_tune__Direction",
+      "Native_epoch_tune__Objective",
+      "Native_epoch_tune__SamplingMode",
+      "Native_epoch_tune__Scale",
+      "Native_epoch_tune__SchedulerConfig",
+      "Native_epoch_tune__SchedulerType",
+      "Native_epoch_tune__SearchConfig",
+      "Native_epoch_tune__SlotAssignment",
+      "Native_epoch_tune__SlotKind",
+      "Native_epoch_tune__SlotSpec",
+      "Native_epoch_tune__ValidationSplit",
       "Native_float",
       "Native_optional_bool",
       "Native_raw_json",
       "Native_shared_ptr_AssetScreen",
       "Native_uint32_t",
-      "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema"
+      "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema",
+      "Native_variant_bool_int64_t_double_string",
+      "Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
     ],
-    "sha256": "7031b7ae7f82bc1b6b4df75d092fe5be7d2b15e7c64e6b7c486a9b66c9cf346d",
+    "sha256": "2c75018c212285c563905d7db6b189ef81c1da2c62e9eef85a1bfbbbeb415f21",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",

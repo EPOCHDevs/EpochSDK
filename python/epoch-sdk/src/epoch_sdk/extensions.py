@@ -22,6 +22,7 @@ from stratifyx.types import (
     ExecutionPresentationPin,
     ExecutionReportReference,
     IdResponse,
+    NamedExecutionInputSelection,
     SdkExecutionRecord,
     StudyType,
 )
@@ -45,13 +46,15 @@ class _ExecutionOptions(TypedDict, total=False):
     research_request_id: str
     allow_period_override: bool
     report_template: ExecutionReportReference
+    additional_sources: list[NamedExecutionInputSelection]
 
 
 class ExecutionExtensionClient:
     backend: AsyncStratifyX
 
     async def extension_inputs(
-        self, execution_id: str, *, tables: Sequence[str]
+        self, execution_id: str, *, tables: Sequence[str],
+        additional_sources: Sequence[NamedExecutionInputSelection] | None = None,
     ) -> ExecutionInputCatalogResponse:
         """Read exact owned schemas, flat enum references and frozen source.
 
@@ -59,6 +62,11 @@ class ExecutionExtensionClient:
         explicit subset for save/execute. This inspection saves no selection and
         starts no work. Backend rejects unsupported or oversized catalogues.
         """
+        if additional_sources is not None:
+            return await self.backend.studies_executions.describe_execution_inputs(
+                execution_id, tables=tables, additional_sources=list(additional_sources),
+                request_options={"max_retries": 0},
+            )
         return await self.backend.studies_executions.describe_execution_inputs(
             execution_id, tables=tables, request_options={"max_retries": 0}
         )
@@ -73,6 +81,7 @@ class ExecutionExtensionClient:
         name: str,
         description: str,
         parent_definition_id: str | None = None,
+        additional_sources: Sequence[NamedExecutionInputSelection] | None = None,
     ) -> IdResponse:
         """Compile and save supplied EpochScript as an immutable definition.
 
@@ -83,6 +92,9 @@ class ExecutionExtensionClient:
         options: _DefinitionOptions = {}
         if parent_definition_id is not None:
             options["parent_definition_id"] = parent_definition_id
+        selected = ExecutionInputSelection(source_execution_id=source_execution_id, tables=list(tables))
+        if additional_sources is not None:
+            selected = selected.model_copy(update={"additional_sources": list(additional_sources)})
         return await self.backend.agents.create_agent_study_definition(
             thread_id,
             name=name,
@@ -90,9 +102,7 @@ class ExecutionExtensionClient:
             source=source,
             study_type=StudyType.RESEARCH,
             data=DataOption(assets=[]),
-            execution_input=ExecutionInputSelection(
-                source_execution_id=source_execution_id, tables=list(tables)
-            ),
+            execution_input=selected,
             **options,
             request_options={"max_retries": 0},
         )
@@ -130,6 +140,8 @@ class ExecutionExtensionClient:
             options["allow_period_override"] = request.allow_period_override
         if request.report_template is not None:
             options["report_template"] = request.report_template
+        if request.additional_sources is not None:
+            options["additional_sources"] = request.additional_sources
         if request.input_tables is not None:
             return await self.backend.sdk_requests.create_sdk_execution_request(
                 operation_id=request.operation_id,

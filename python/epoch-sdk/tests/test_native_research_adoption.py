@@ -132,7 +132,7 @@ def test_research_reconnect_uses_only_backend_pins_and_never_the_latest_graph_tu
 
 
 @pytest.mark.parametrize(
-    "change", ["answer-id", "version", "provenance", "thread", "missing-outputs", "native-pin"]
+    "change", ["answer-id", "version", "provenance", "thread", "missing-outputs", "native-pin", "additional-source"]
 )
 def test_adoption_does_not_relax_exact_native_answer_validation(change):
     async def scenario():
@@ -149,6 +149,14 @@ def test_adoption_does_not_relax_exact_native_answer_validation(change):
             native.pop("extension_outputs")
         if change == "native-pin":
             native["response_version"] = 2
+        if change == "additional-source":
+            sources = [{"alias": "candidate", "source_execution_id": "candidate-source", "tables": ["orders"]}]
+            native["request"]["additional_sources"] = sources
+            forged = [
+                {**sources[0], "source_execution_id": "another-source"}
+            ]
+            native["extension_outputs"]["provenance"]["additional_sources"] = forged
+            answer["extension"]["additional_sources"] = forged
 
         def backend(request):
             assert request.method == "GET"

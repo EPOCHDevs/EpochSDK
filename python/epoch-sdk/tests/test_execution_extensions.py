@@ -14,7 +14,7 @@ import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX
-from stratifyx.types import CreateSdkExecutionRequest
+from stratifyx.types import CreateSdkExecutionRequest, NamedExecutionInputSelection
 from test_agent_tools import CATALOG
 
 from epoch_sdk.agent_tools import AgentToolsClient
@@ -196,3 +196,77 @@ def test_native_contract_refs_and_discriminator_targets_resolve_to_the_same_owne
                 visit(value)
     for name in contract["x-epoch-native-operations"]["schemas"]:
         visit(schemas[name])
+
+
+@pytest.mark.parametrize("interface", ["sdk", "mcp"])
+def test_named_sources_cross_the_existing_catalog_save_and_execute_interfaces(interface):
+    """Controlled transport checks; the native worker owns numeric parity."""
+    async def scenario():
+        extra = {"alias": "candidate", "source_execution_id": "candidate-source", "tables": ["orders"]}
+        request_wire = {**REQUEST, "additional_sources": [extra]}
+        record_wire = copy.deepcopy(RECORD)
+        record_wire["request"] = request_wire
+        record_wire["extension_outputs"]["provenance"]["additional_sources"] = [extra]
+        catalogue_wire = copy.deepcopy(CATALOGUE)
+        catalogue_wire["additional_sources"] = [{"alias": "candidate", "execution_id": "candidate-source",
+            "study_id": "candidate-study", "family": "backtest", "source": "candidate_fixture()"}]
+        candidate = copy.deepcopy(CATALOGUE["tables"][0])
+        candidate.update(source_alias="candidate", reference="ExecutionSourceCandidateTable.Orders",
+            field_enum="ExecutionSourceCandidateTableOrders")
+        candidate["fields"][0]["reference"] = "ExecutionSourceCandidateTableOrders.Quantity"
+        catalogue_wire["tables"].append(candidate)
+        calls = []
+        graph_calls = []
+
+        def graph(request):
+            graph_calls.append(request)
+            assert request.method == "GET" and request.url.path == "/api/v1/agent-tools"
+            return httpx.Response(200, json=CATALOG)
+
+        def backend(request):
+            body = json.loads(request.content)
+            calls.append((request.url.path, body))
+            if request.url.path.endswith("/inputs"):
+                assert body == {"tables": ["orders"], "additional_sources": [extra]}
+                return httpx.Response(200, json=catalogue_wire)
+            if request.url.path.endswith("/studies/definitions"):
+                assert body["execution_input"] == {"source_execution_id": "original",
+                    "tables": ["orders"], "additional_sources": [extra]}
+                return httpx.Response(201, json={"id": "extension-study", "message": "Saved"})
+            assert request.url.path == "/api/v1/integration/execution-requests"
+            assert body == request_wire
+            return httpx.Response(200, json=record_wire)
+
+        async with (
+            httpx.AsyncClient(transport=httpx.MockTransport(backend)) as native_http,
+            httpx.AsyncClient(base_url="https://graph.invalid",
+                transport=httpx.MockTransport(graph)) as graph_http,
+        ):
+            client = AgentToolsClient(LangGraphClient(graph_http),
+                AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http), graph_http)
+            if interface == "sdk":
+                sources = [NamedExecutionInputSelection.model_validate(extra)]
+                metadata = await client.extension_inputs("original", tables=["orders"], additional_sources=sources)
+                assert metadata.additional_sources is not None
+                assert metadata.additional_sources[0].execution_id == "candidate-source"
+                await client.save_extension("native-scope", source_execution_id="original", tables=["orders"],
+                    additional_sources=sources, source=SOURCE, name="Comparison", description="Saved comparison")
+                result = await client.execute_extension(CreateSdkExecutionRequest.model_validate(request_wire))
+                assert result.extension_outputs is not None
+                assert result.extension_outputs.provenance.additional_sources == sources
+            else:
+                async with Client(create_server(client)) as mcp:
+                    result = await mcp.call_tool("epoch_extension_inputs", {"execution_id": "original",
+                        "tables": ["orders"], "additional_sources": [extra]})
+                    assert not result.is_error
+                    assert result.structured_content["additional_sources"][0]["execution_id"] == "candidate-source"
+                    saved = await mcp.call_tool("epoch_save_extension", {"thread_id": "native-scope",
+                        "source_execution_id": "original", "tables": ["orders"], "additional_sources": [extra],
+                        "source": SOURCE, "name": "Comparison", "description": "Saved comparison"})
+                    assert not saved.is_error
+                    executed = await mcp.call_tool("epoch_execute_extension", {"request": request_wire})
+                    assert not executed.is_error
+                    assert executed.structured_content["extension_outputs"]["provenance"]["additional_sources"] == [extra]
+            assert len(calls) == 3
+            assert len(graph_calls) == (1 if interface == "mcp" else 0)
+    asyncio.run(scenario())

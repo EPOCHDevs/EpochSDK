@@ -26,6 +26,7 @@ from stratifyx.types import (
     DatasetSearchQuery,
     DatasetSearchRequest,
     ExecutionPresentationPin,
+    NamedExecutionInputSelection,
     ReferenceLibraryResponse,
     ScreenAssetsRequest,
     SdkExecutionRecord,
@@ -70,17 +71,18 @@ def _compose_native_guide(
     """Present only coherent Backend guidance for tools this MCP mounts."""
     if catalog.loader_registry_version != library.version:
         raise ValueError("Backend dataset catalogue and planner reference versions differ")
-    planning = getattr(library, "planner_guidance", None)
-    required = ("compute", "run_study", "cost_models")
-    if not isinstance(planning, dict) or any(
-        not isinstance(planning.get(name), str) or not planning[name].strip()
-        for name in required
-    ):
-        raise ValueError("Backend planner guidance is unavailable or incomplete")
+    planning = library.planner_guidance
+
+    def guide(name: str) -> str:
+        content = planning.get(name) if planning is not None else None
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("Backend planner guidance is unavailable or incomplete")
+        return content
+
     sections = [workflow, "<data>\n" + catalog.overview + "\n</data>"]
-    sections.append("<compute>\n" + planning["compute"] + "\n</compute>")
-    sections.append("<epoch_execute>\n" + planning["run_study"] + "\n</epoch_execute>")
-    sections.append("<execution_cost_models>\n" + planning["cost_models"] +
+    sections.append("<compute>\n" + guide("compute") + "\n</compute>")
+    sections.append("<epoch_execute>\n" + guide("run_study") + "\n</epoch_execute>")
+    sections.append("<execution_cost_models>\n" + guide("cost_models") +
                     "\n</execution_cost_models>")
     return "\n\n".join(sections)
 
@@ -341,7 +343,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             return await _call(client.extension_status(operation_id))
         return _failure("Supply only the handle, execution_id or operation_id required by kind")
 
-    async def extension_inputs(execution_id: str, tables: list[str]) -> CallToolResult:
+    async def extension_inputs(
+        execution_id: str, tables: list[str],
+        additional_sources: list[NamedExecutionInputSelection] | None = None,
+    ) -> CallToolResult:
         """Read selected retained tables' exact types, flat enum refs and frozen code.
         Backend owner-checks the completed source and rejects unsupported inputs.
         Pass tables=[] to discover native table names, then select an explicit
@@ -349,11 +354,13 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         It reads metadata, without sample rows, vendor discovery or a model call. Reuse the
         source for multiple programs; do not embed its execution ID in EpochScript.
         """
-        return await _call(client.extension_inputs(execution_id, tables=tables))
+        return await _call(client.extension_inputs(execution_id, tables=tables,
+            additional_sources=additional_sources))
 
     async def save_extension(
         thread_id: str, source_execution_id: str, tables: list[str], source: str,
         name: str, description: str, parent_definition_id: str | None = None,
+        additional_sources: list[NamedExecutionInputSelection] | None = None,
     ) -> CallToolResult:
         """Compile and save supplied EpochScript over an explicit execution_input.
         Use the returned catalog's flat ExecutionTable/field enum refs. Declare
@@ -365,12 +372,15 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         return await _call(client.save_extension(
             thread_id,source_execution_id=source_execution_id,tables=tables,source=source,
             name=name,description=description,parent_definition_id=parent_definition_id,
+            additional_sources=additional_sources,
         ))
 
     async def execute_extension(request: _ExtensionExecutionRequest) -> CallToolResult:
         """Start or attach one saved-execution extension through Backend.
         study_id is the saved extension, source_execution_id is the original owned
-        result, input_tables selects its data and parameters may be empty. Reuse
+        result, input_tables selects its data and parameters may be empty. Supply
+        additional_sources to select named completed runs for one comparison.
+        Every source is retained in the output provenance. Reuse
         operation_id for identical accepted inputs; changed inputs conflict. It
         never reruns the original study or launches a supervisor. Only explicitly
         declared llm_call may call the bounded cached text model. Read epoch_status
