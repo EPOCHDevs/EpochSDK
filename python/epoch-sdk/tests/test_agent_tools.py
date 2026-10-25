@@ -233,6 +233,36 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
     asyncio.run(scenario())
 
 
+def test_mcp_data_descriptions_retain_source_qualifications_without_new_inputs():
+    async def scenario():
+        service = Service()
+        async with service.client() as client, Client(create_server(client)) as mcp:
+            tools = {tool.name: tool for tool in (await mcp.list_tools()).tools}
+            search = tools["epoch_search_dataset"]
+            screen = tools["epoch_screen_assets"]
+            search_description = " ".join(search.description.split())
+            screen_description = " ".join(screen.description.split())
+            assert "asset class with each identity" in search_description
+            assert "bounds and their provenance describe the root" in search_description
+            assert "not one dated contract or every continuous construction" in search_description
+            assert "Root-coverage lookup does not require a continuous-construction choice" in search_description
+            assert "Listing location and company domicile are different filters" in screen_description
+            assert "roster freshness does not establish historical identity, lineage or effective-date completeness" in screen_description
+            assert set(search.input_schema["properties"]) == {
+                "requests", "candidate_limit", "saved_query",
+            }
+            assert search.input_schema["required"] == ["requests"]
+            assert set(screen.input_schema["properties"]) == {"request"}
+            assert screen.input_schema["required"] == ["request"]
+            for tool in (search, screen):
+                Draft202012Validator.check_schema(tool.input_schema)
+                assert tool.input_schema["additionalProperties"] is False
+            assert not service.backend_calls
+            assert [request.url.path for request in service.graph_calls] == ["/api/v1/agent-tools"]
+
+    asyncio.run(scenario())
+
+
 def test_default_mcp_never_invokes_the_legacy_discovery_llm_and_accepts_catalog_v2():
     class VersionTwo(Service):
         def graph(self, request):

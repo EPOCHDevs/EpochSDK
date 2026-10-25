@@ -300,6 +300,10 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         pages. saved_query finds caller-owned datasets by name, description or
         exact returned dataset/source reference; use requests=[] for saved-only.
         This is ranked identity lookup; use epoch_screen_assets for a whole cohort.
+        Preserve the returned asset class with each identity. Futures-root history
+        bounds and their provenance describe the root, not one dated contract or
+        every continuous construction. Root-coverage lookup does not require a
+        continuous-construction choice.
         """
         return await _call(client.search_dataset(requests, candidate_limit=candidate_limit, saved_query=saved_query))
 
@@ -309,6 +313,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         No relevance limit is applied. Keep qualifications/integrity visible;
         pass universe_ref plus the desired dataset to build_study source_refs.
         A missing universe_ref means no usable complete universe was established.
+        Listing location and company domicile are different filters. Current
+        roster freshness does not establish historical identity, lineage or
+        effective-date completeness.
         """
         return await _call(client.screen_assets(request))
 
