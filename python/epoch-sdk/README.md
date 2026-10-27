@@ -76,12 +76,21 @@ not force a matching dashboard table, and dashboard-only work creates no
 artificial answer. An unsupported source/type remains an explicit capability
 error.
 
-For new SDK research, run the original study when needed, then author a native
-saved-input report over its exact completed execution. Backend publishes that
-report's declared sinks; the supervisor does not publish again. An accepted
+New SDK research can author its calculations, requested text and native output
+sinks in one ordinary study. Backend completes those outputs after calculation;
+the supervisor does not publish again. An explicit saved-input report is used
+for later work over an earlier completed execution, including numerical analysis
+of finalized trading results. An accepted
 single-text SDK request with no computation can instead complete from its
 ordinary final reply automatically. This does not replace missing computed
 outputs or a failed native publication.
+
+An ordinary `ResearchCompleted.reusable_study` retains its actual completed
+source identity. `execute`/`execute_saved` reuse the saved definition with the
+requested period, captured actual simulation settings and declared parameter
+bindings. An explicit execution override retains ordinary override semantics.
+Required output completion and answer pins are observed through the same native
+operation. No report template or extra permission flag is invented.
 
 `ResearchCompleted.reusable_study` retains a native `report_template` for an
 original-plus-report result. `execute`/`execute_saved` with that reference run a
@@ -92,7 +101,7 @@ instead of `input_tables`. Period changes require captured permission; costs
 and declared original parameters remain captured. Historical response-plan
 read/replay remains an explicit compatibility path, not new authoring policy.
 
-The current package requires the normal generated native `>=3.3.0rc24,<4`
+The current package requires the normal generated native `>=3.3.0rc41,<4`
 package, including Backend-owned research-to-extension links and report replay.
 Controlled transport checks and real service/notebook/MCP/ClientPortal acceptance
 are distinct evidence; historical milestone records do not prove a newer build.
