@@ -107,3 +107,19 @@ processes. Its metadata-only specialist catalogue is an explicit fixture; it
 does not implement resource or study operations. The generated evidence records
 versions and exact references and does not claim deployed Cognito/S3 or live
 EpochAI verification.
+
+For real-service acceptance, use
+`python/epoch-sdk/tests/live/space_real_services_acceptance.py`. Its `create`
+phase requires an empty, disposable Backend storage namespace, a private normal
+Cognito login file and the live EpochAI URL. It checks the actual catalogue,
+native data flow and a small fitted model. Restart the candidate with fresh
+local scratch storage and run `verify` to prove durable resource and execution
+reuse through a fresh MCP process. Run `foreign` with a second real Cognito
+subject to complete cross-owner acceptance; a single-account run does not prove
+that check.
+
+Run `cleanup` in a `finally` path, then delete the disposable storage namespace.
+The runner records exact references and removes API-deletable test resources.
+Immutable models and retained object versions require disposal of the test
+namespace as well. Keep evidence and cleanup receipts separately from tokens.
+The live-test README contains the phase commands.
