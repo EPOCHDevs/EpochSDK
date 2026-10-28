@@ -46,12 +46,16 @@ def test_native_mcp_guide_uses_one_backend_version_and_only_mounted_operations()
         "compute": "Computed methods", "run_study": "Native execution",
         "run_monte_carlo": "Monte Carlo", "tune_study": "Tuning",
         "cost_models": "Native fees",
+        "native_reports": "Backend native reports and grouped interpretation",
     })
     guide = _compose_native_guide("Workflow", catalog, reference)
     assert "<data>\nNative datasets\n</data>" in guide
     assert "<compute>\nComputed methods\n</compute>" in guide
     assert "<epoch_execute>\nNative execution\n</epoch_execute>" in guide
     assert "<execution_cost_models>\nNative fees" in guide
+    assert "<native_reports>\nBackend native reports and grouped interpretation\n</native_reports>" in guide
+    reference.planner_guidance["native_reports"] = "Updated Backend native catalogue"
+    assert "Updated Backend native catalogue" in _compose_native_guide("Workflow", catalog, reference)
     assert "Monte Carlo" not in guide and "Tuning" not in guide
     with pytest.raises(ValueError, match="versions differ"):
         _compose_native_guide("Workflow", catalog, SimpleNamespace(
