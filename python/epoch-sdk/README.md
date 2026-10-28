@@ -203,3 +203,40 @@ APIs. The older attempt-route check is relevant only to that draft API and is
 not a prerequisite for the native communication adapter. The checker reports
 availability; it does not start missing services. Additional recovery and
 retention work is separate.
+# PostgreSQL source connections
+
+The epoch-source-connections dependency is a small typed client package owned
+by EpochBackend. Configure EpochClient.connect with the Python gateway URL that
+serves /api/v1/sources and proxies the native APIs. Source methods use the same
+authenticated HTTP lifetime as the existing client.
+
+    from epoch_sources.models import PrepareSnapshot, ReviewSnapshot, StartSync, StreamRef
+
+    connections = await client.list_source_connections()
+    connection = await client.source_connection(connections.items[0].connection_ref)
+    sync = await client.start_source_sync(connection.connection_ref, StartSync(request_id="refresh-001"))
+    status = await client.source_sync(connection.connection_ref, sync.sync_ref)
+    # Poll deliberately. Prepare only after state == "succeeded".
+    prepared = await client.prepare_source_snapshot(connection.connection_ref, sync.sync_ref,
+        PrepareSnapshot(request_id="inspect-001", stream=StreamRef(namespace="research", name="prices"),
+                        name="Captured prices"))
+    reviewed = await client.review_source_snapshot(prepared.snapshot.snapshot_ref,
+        ReviewSnapshot.model_validate({"decision": {"action": "save",
+            "draft_ref": prepared.snapshot.draft_ref, "name": "Captured prices"}}))
+
+Starting a sync explicitly reads PostgreSQL. Never replay an unconfirmed request.
+Preparation reads the successful S3 generation once and retains an immutable
+Epoch file. Repeating preparation can use that file after later full refreshes.
+Calendar-date study mappings require explicit time meaning, timezone, date
+interpretation and information availability in the native DatasetTableSchema.
+An ordinary knowledge dataset has no automatic study source.
+
+MCP exposes connection reads, discovery, selection, sync start/status/cancel,
+snapshot preparation/review and deletion. Credentials enter through the UI or
+typed SDK only. The same connection/snapshot references reopen in a fresh MCP
+process. Another owner's references return not_found.
+
+The source package and native SDK preview wheels must accompany an unpublished
+SDK candidate; none of these preview artifacts is published by acceptance tests.
+The retained local demonstration and real-service receipts live outside the
+repository, including credentials and the resource cleanup ledger.

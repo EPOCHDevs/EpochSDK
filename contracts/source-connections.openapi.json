@@ -1,0 +1,3838 @@
+{
+  "components": {
+    "schemas": {
+      "AssetClass": {
+        "enum": [
+          "Stocks",
+          "FX",
+          "Crypto",
+          "Futures"
+        ],
+        "title": "AssetClass",
+        "type": "string"
+      },
+      "ConnectionList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceConnection"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ConnectionList",
+        "type": "object"
+      },
+      "CreateConnection": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Name",
+            "type": "string"
+          },
+          "postgres": {
+            "$ref": "#/components/schemas/PostgresCredentials"
+          },
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "name",
+          "postgres"
+        ],
+        "title": "CreateConnection",
+        "type": "object"
+      },
+      "DataFoundation": {
+        "enum": [
+          "Daily",
+          "Minute",
+          "Nanosecond",
+          "Null"
+        ],
+        "title": "DataFoundation",
+        "type": "string"
+      },
+      "DataSourceCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "availability_axis": {
+            "$ref": "#/components/schemas/SourceAvailabilityAxis"
+          },
+          "future_rows": {
+            "$ref": "#/components/schemas/SourceFutureCapability"
+          },
+          "predecessor": {
+            "$ref": "#/components/schemas/SourcePredecessorCapability"
+          },
+          "range": {
+            "$ref": "#/components/schemas/SourceRangeCapability"
+          }
+        },
+        "required": [
+          "availability_axis",
+          "future_rows",
+          "predecessor",
+          "range"
+        ],
+        "title": "DataSourceCapabilities",
+        "type": "object"
+      },
+      "DataSourceColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "dtype": {
+            "title": "Dtype",
+            "type": "string"
+          },
+          "is_index": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Index"
+          },
+          "is_index_alternative": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Index Alternative"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic"
+          },
+          "synthetic": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Synthetic"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AssumeTimezone": "#/components/schemas/DataSourceValueTransform_AssumeTimezone",
+                      "FloorDay": "#/components/schemas/DataSourceValueTransform_FloorDay",
+                      "ParseDateTime": "#/components/schemas/DataSourceValueTransform_ParseDateTime"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataSourceValueTransform_AssumeTimezone"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataSourceValueTransform_FloorDay"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataSourceValueTransform_ParseDateTime"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transforms"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "dtype",
+          "name",
+          "nullable"
+        ],
+        "title": "DataSourceColumn",
+        "type": "object"
+      },
+      "DataSourceFrameMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetClass"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_type": {
+            "title": "Data Type",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "entity_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Entity Columns",
+            "type": "array"
+          },
+          "foundation": {
+            "$ref": "#/components/schemas/DataFoundation"
+          },
+          "source_capabilities": {
+            "$ref": "#/components/schemas/DataSourceCapabilities"
+          }
+        },
+        "required": [
+          "data_type",
+          "description",
+          "entity_columns",
+          "foundation",
+          "source_capabilities"
+        ],
+        "title": "DataSourceFrameMetadata",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_AddContextColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "col_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Col Name"
+          },
+          "kind": {
+            "const": "AddContextColumn",
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Path"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_AddContextColumn",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_CombineDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "date_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Col"
+          },
+          "kind": {
+            "const": "CombineDateTime",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Col"
+          },
+          "time_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Col"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_CombineDateTime",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_PromoteIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "PromoteIndex",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_PromoteIndex",
+        "type": "object"
+      },
+      "DataSourceSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AddContextColumn": "#/components/schemas/DataSourcePostReadTransform_AddContextColumn",
+                      "CombineDateTime": "#/components/schemas/DataSourcePostReadTransform_CombineDateTime",
+                      "PromoteIndex": "#/components/schemas/DataSourcePostReadTransform_PromoteIndex"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/DataSourcePostReadTransform_AddContextColumn"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataSourcePostReadTransform_CombineDateTime"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DataSourcePostReadTransform_PromoteIndex"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transforms"
+          }
+        },
+        "required": [
+          "columns"
+        ],
+        "title": "DataSourceSchema",
+        "type": "object"
+      },
+      "DataSourceValueTransform_AssumeTimezone": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "AssumeTimezone",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tz": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tz"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_AssumeTimezone",
+        "type": "object"
+      },
+      "DataSourceValueTransform_FloorDay": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "FloorDay",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_FloorDay",
+        "type": "object"
+      },
+      "DataSourceValueTransform_ParseDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "kind": {
+            "const": "ParseDateTime",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_ParseDateTime",
+        "type": "object"
+      },
+      "DatasetCoverage": {
+        "additionalProperties": true,
+        "properties": {
+          "first_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Timestamp"
+          },
+          "last_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Timestamp"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_count"
+        ],
+        "title": "DatasetCoverage",
+        "type": "object"
+      },
+      "DatasetDescriptor": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Ref"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "preparation": {
+            "$ref": "#/components/schemas/DatasetPreparation"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          },
+          "shape": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/components/schemas/DatasetShape_Json",
+                "table": "#/components/schemas/DatasetShape_Table"
+              },
+              "propertyName": "format"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DatasetShape_Json"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetShape_Table"
+              }
+            ],
+            "title": "Shape"
+          },
+          "sources": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/components/schemas/DatasetProvenanceSource_Dataset",
+                  "file": "#/components/schemas/DatasetProvenanceSource_File",
+                  "study_result": "#/components/schemas/DatasetProvenanceSource_StudyResult",
+                  "web": "#/components/schemas/DatasetProvenanceSource_Web"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DatasetProvenanceSource_Dataset"
+                },
+                {
+                  "$ref": "#/components/schemas/DatasetProvenanceSource_File"
+                },
+                {
+                  "$ref": "#/components/schemas/DatasetProvenanceSource_StudyResult"
+                },
+                {
+                  "$ref": "#/components/schemas/DatasetProvenanceSource_Web"
+                }
+              ]
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "limitations",
+          "preparation",
+          "schema_sha256",
+          "shape",
+          "sources"
+        ],
+        "title": "DatasetDescriptor",
+        "type": "object"
+      },
+      "DatasetEnrichmentMode": {
+        "enum": [
+          "automatic",
+          "user_defined"
+        ],
+        "title": "DatasetEnrichmentMode",
+        "type": "string"
+      },
+      "DatasetOrigin": {
+        "enum": [
+          "upload",
+          "document",
+          "web",
+          "derived"
+        ],
+        "title": "DatasetOrigin",
+        "type": "string"
+      },
+      "DatasetPreparation": {
+        "additionalProperties": true,
+        "properties": {
+          "enrichment": {
+            "$ref": "#/components/schemas/DatasetEnrichmentMode"
+          },
+          "implementation_version": {
+            "title": "Implementation Version",
+            "type": "string"
+          },
+          "import_options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StructuredImportOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataSourceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/DatasetOrigin"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "provider_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Version"
+          },
+          "purpose": {
+            "$ref": "#/components/schemas/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/components/schemas/DatasetSchemaChoice_Agent",
+                "imported": "#/components/schemas/DatasetSchemaChoice_Imported",
+                "provided": "#/components/schemas/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "implementation_version",
+          "instruction",
+          "origin",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparation",
+        "type": "object"
+      },
+      "DatasetPreviewContent_Json": {
+        "additionalProperties": true,
+        "properties": {
+          "format": {
+            "const": "json",
+            "default": "json",
+            "title": "Format",
+            "type": "string"
+          },
+          "json_pointer": {
+            "title": "Json Pointer",
+            "type": "string"
+          },
+          "json_text": {
+            "title": "Json Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json_pointer",
+          "json_text"
+        ],
+        "title": "DatasetPreviewContent_Json",
+        "type": "object"
+      },
+      "DatasetPreviewContent_Table": {
+        "additionalProperties": true,
+        "properties": {
+          "field_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Field Ids",
+            "type": "array"
+          },
+          "format": {
+            "const": "table",
+            "default": "table",
+            "title": "Format",
+            "type": "string"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "requires_download": {
+            "title": "Requires Download",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total_rows": {
+            "title": "Total Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "field_ids",
+          "offset",
+          "requires_download",
+          "rows",
+          "total_rows"
+        ],
+        "title": "DatasetPreviewContent_Table",
+        "type": "object"
+      },
+      "DatasetPreviewPage": {
+        "additionalProperties": true,
+        "properties": {
+          "content": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/components/schemas/DatasetPreviewContent_Json",
+                "table": "#/components/schemas/DatasetPreviewContent_Table"
+              },
+              "propertyName": "format"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DatasetPreviewContent_Json"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetPreviewContent_Table"
+              }
+            ],
+            "title": "Content"
+          },
+          "target": {
+            "discriminator": {
+              "mapping": {
+                "draft": "#/components/schemas/DatasetPreviewTarget_Draft",
+                "saved": "#/components/schemas/DatasetPreviewTarget_Saved"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DatasetPreviewTarget_Draft"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetPreviewTarget_Saved"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "content",
+          "target"
+        ],
+        "title": "DatasetPreviewPage",
+        "type": "object"
+      },
+      "DatasetPreviewTarget_Draft": {
+        "additionalProperties": true,
+        "properties": {
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "draft",
+            "default": "draft",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft_ref"
+        ],
+        "title": "DatasetPreviewTarget_Draft",
+        "type": "object"
+      },
+      "DatasetPreviewTarget_Saved": {
+        "additionalProperties": true,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "saved",
+            "default": "saved",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_ref"
+        ],
+        "title": "DatasetPreviewTarget_Saved",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Dataset": {
+        "additionalProperties": true,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "default": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_ref"
+        ],
+        "title": "DatasetProvenanceSource_Dataset",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_File": {
+        "additionalProperties": true,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "default": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_ref"
+        ],
+        "title": "DatasetProvenanceSource_File",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_StudyResult": {
+        "additionalProperties": true,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "default": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetProvenanceSource_StudyResult",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Web": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Ref"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "kind": {
+            "const": "web",
+            "default": "web",
+            "title": "Kind",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "fetched_at",
+          "url"
+        ],
+        "title": "DatasetProvenanceSource_Web",
+        "type": "object"
+      },
+      "DatasetPurpose": {
+        "enum": [
+          "knowledge",
+          "study_source"
+        ],
+        "title": "DatasetPurpose",
+        "type": "string"
+      },
+      "DatasetReviewDecision_Reject": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "reject",
+            "title": "Action",
+            "type": "string"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "draft_ref"
+        ],
+        "title": "DatasetReviewDecision_Reject",
+        "type": "object"
+      },
+      "DatasetReviewDecision_Save": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "save",
+            "title": "Action",
+            "type": "string"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "draft_ref",
+          "name"
+        ],
+        "title": "DatasetReviewDecision_Save",
+        "type": "object"
+      },
+      "DatasetReviewOutcome_Rejected": {
+        "additionalProperties": false,
+        "properties": {
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "const": "rejected",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "draft_ref",
+          "name"
+        ],
+        "title": "DatasetReviewOutcome_Rejected",
+        "type": "object"
+      },
+      "DatasetReviewOutcome_SaveFailed": {
+        "additionalProperties": false,
+        "properties": {
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "const": "save_failed",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "draft_ref",
+          "error",
+          "name"
+        ],
+        "title": "DatasetReviewOutcome_SaveFailed",
+        "type": "object"
+      },
+      "DatasetReviewOutcome_Saved": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset": {
+            "$ref": "#/components/schemas/SavedDataset"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "status": {
+            "const": "saved",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "dataset",
+          "draft_ref"
+        ],
+        "title": "DatasetReviewOutcome_Saved",
+        "type": "object"
+      },
+      "DatasetReviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "rejected": "#/components/schemas/DatasetReviewOutcome_Rejected",
+                  "save_failed": "#/components/schemas/DatasetReviewOutcome_SaveFailed",
+                  "saved": "#/components/schemas/DatasetReviewOutcome_Saved"
+                },
+                "propertyName": "status"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DatasetReviewOutcome_Rejected"
+                },
+                {
+                  "$ref": "#/components/schemas/DatasetReviewOutcome_SaveFailed"
+                },
+                {
+                  "$ref": "#/components/schemas/DatasetReviewOutcome_Saved"
+                }
+              ]
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "DatasetReviewResponse",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Agent": {
+        "additionalProperties": true,
+        "properties": {
+          "mode": {
+            "const": "agent",
+            "default": "agent",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "DatasetSchemaChoice_Agent",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Imported": {
+        "additionalProperties": true,
+        "properties": {
+          "mode": {
+            "const": "imported",
+            "default": "imported",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "DatasetSchemaChoice_Imported",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Provided": {
+        "additionalProperties": true,
+        "properties": {
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          },
+          "mode": {
+            "const": "provided",
+            "default": "provided",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json_schema_text"
+        ],
+        "title": "DatasetSchemaChoice_Provided",
+        "type": "object"
+      },
+      "DatasetShape_Json": {
+        "additionalProperties": true,
+        "properties": {
+          "format": {
+            "const": "json",
+            "default": "json",
+            "title": "Format",
+            "type": "string"
+          },
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json_schema_text"
+        ],
+        "title": "DatasetShape_Json",
+        "type": "object"
+      },
+      "DatasetShape_Table": {
+        "additionalProperties": true,
+        "properties": {
+          "coverage": {
+            "$ref": "#/components/schemas/DatasetCoverage"
+          },
+          "format": {
+            "const": "table",
+            "default": "table",
+            "title": "Format",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/DatasetTableSchema"
+          }
+        },
+        "required": [
+          "coverage",
+          "schema"
+        ],
+        "title": "DatasetShape_Table",
+        "type": "object"
+      },
+      "DatasetTableSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Field"
+          },
+          "dataframe_metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataSourceFrameMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frame_schema": {
+            "$ref": "#/components/schemas/DataSourceSchema"
+          },
+          "key_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Key Fields",
+            "type": "array"
+          },
+          "time_axis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetTimeAxis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "frame_schema",
+          "key_fields"
+        ],
+        "title": "DatasetTableSchema",
+        "type": "object"
+      },
+      "DatasetTimeAxis": {
+        "additionalProperties": false,
+        "properties": {
+          "assumed": {
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "date_only_convention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Only Convention"
+          },
+          "meaning": {
+            "$ref": "#/components/schemas/DatasetTimeMeaning"
+          },
+          "source_precision": {
+            "$ref": "#/components/schemas/DatasetTimePrecision"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assumed",
+          "meaning",
+          "source_precision",
+          "source_timezone"
+        ],
+        "title": "DatasetTimeAxis",
+        "type": "object"
+      },
+      "DatasetTimeMeaning": {
+        "enum": [
+          "observation",
+          "event",
+          "publication",
+          "user_snapshot"
+        ],
+        "title": "DatasetTimeMeaning",
+        "type": "string"
+      },
+      "DatasetTimePrecision": {
+        "enum": [
+          "date",
+          "second",
+          "millisecond",
+          "microsecond",
+          "nanosecond"
+        ],
+        "title": "DatasetTimePrecision",
+        "type": "string"
+      },
+      "DraftDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/components/schemas/DatasetDescriptor"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "descriptor",
+          "draft_ref",
+          "expires_at",
+          "name"
+        ],
+        "title": "DraftDataset",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "PostgresAddress": {
+        "additionalProperties": false,
+        "properties": {
+          "database": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Database",
+            "type": "string"
+          },
+          "host": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^/@\\\\?#\\s]+$",
+            "title": "Host",
+            "type": "string"
+          },
+          "port": {
+            "default": 5432,
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "schemas": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Schemas",
+            "type": "array"
+          },
+          "ssl_mode": {
+            "default": "require",
+            "enum": [
+              "disable",
+              "require"
+            ],
+            "title": "Ssl Mode",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "database",
+          "username",
+          "schemas"
+        ],
+        "title": "PostgresAddress",
+        "type": "object"
+      },
+      "PostgresCredentials": {
+        "additionalProperties": false,
+        "properties": {
+          "database": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Database",
+            "type": "string"
+          },
+          "host": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^/@\\\\?#\\s]+$",
+            "title": "Host",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "port": {
+            "default": 5432,
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "schemas": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Schemas",
+            "type": "array"
+          },
+          "ssl_mode": {
+            "default": "require",
+            "enum": [
+              "disable",
+              "require"
+            ],
+            "title": "Ssl Mode",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "database",
+          "username",
+          "schemas",
+          "password"
+        ],
+        "title": "PostgresCredentials",
+        "type": "object"
+      },
+      "PrepareSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetTableSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Name",
+            "type": "string"
+          },
+          "purpose": {
+            "$ref": "#/components/schemas/DatasetPurpose",
+            "default": "knowledge"
+          },
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamRef"
+          }
+        },
+        "required": [
+          "request_id",
+          "stream",
+          "name"
+        ],
+        "title": "PrepareSnapshot",
+        "type": "object"
+      },
+      "PreparedSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "prepared": {
+            "$ref": "#/components/schemas/StructuredImportResult"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/SourceSnapshot"
+          }
+        },
+        "required": [
+          "snapshot",
+          "prepared"
+        ],
+        "title": "PreparedSnapshot",
+        "type": "object"
+      },
+      "ReviewSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "discriminator": {
+              "mapping": {
+                "reject": "#/components/schemas/DatasetReviewDecision_Reject",
+                "save": "#/components/schemas/DatasetReviewDecision_Save"
+              },
+              "propertyName": "action"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DatasetReviewDecision_Reject"
+              },
+              {
+                "$ref": "#/components/schemas/DatasetReviewDecision_Save"
+              }
+            ],
+            "title": "Decision"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "ReviewSnapshot",
+        "type": "object"
+      },
+      "ReviewedSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "review": {
+            "$ref": "#/components/schemas/DatasetReviewResponse"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/SourceSnapshot"
+          }
+        },
+        "required": [
+          "snapshot",
+          "review"
+        ],
+        "title": "ReviewedSnapshot",
+        "type": "object"
+      },
+      "SavedDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/components/schemas/DatasetDescriptor"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref"
+          }
+        },
+        "required": [
+          "archived",
+          "dataset_ref",
+          "descriptor",
+          "name",
+          "saved_at"
+        ],
+        "title": "SavedDataset",
+        "type": "object"
+      },
+      "SelectStreams": {
+        "additionalProperties": false,
+        "properties": {
+          "streams": {
+            "items": {
+              "$ref": "#/components/schemas/StreamRef"
+            },
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Streams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "streams"
+        ],
+        "title": "SelectStreams",
+        "type": "object"
+      },
+      "SnapshotObject": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "etag": {
+            "title": "Etag",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "string"
+          },
+          "object_key_sha256": {
+            "title": "Object Key Sha256",
+            "type": "string"
+          },
+          "rows": {
+            "minimum": 0.0,
+            "title": "Rows",
+            "type": "integer"
+          },
+          "version_id": {
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_key_sha256",
+          "version_id",
+          "etag",
+          "content_sha256",
+          "generation",
+          "rows"
+        ],
+        "title": "SnapshotObject",
+        "type": "object"
+      },
+      "SourceAvailabilityAxis": {
+        "enum": [
+          "None",
+          "ObservationIndex",
+          "KnownAtIndex",
+          "CurrentSnapshot"
+        ],
+        "title": "SourceAvailabilityAxis",
+        "type": "string"
+      },
+      "SourceConnection": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_ref": {
+            "title": "Connection Ref",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "latest_sync": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceSync"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+            "title": "Name",
+            "type": "string"
+          },
+          "postgres": {
+            "$ref": "#/components/schemas/PostgresAddress"
+          },
+          "selected_streams": {
+            "items": {
+              "$ref": "#/components/schemas/StreamRef"
+            },
+            "title": "Selected Streams",
+            "type": "array"
+          },
+          "source_type": {
+            "const": "postgres",
+            "default": "postgres",
+            "title": "Source Type",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "setting_up",
+              "ready",
+              "setup_failed",
+              "deleting"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connection_ref",
+          "name",
+          "state",
+          "postgres",
+          "created_at"
+        ],
+        "title": "SourceConnection",
+        "type": "object"
+      },
+      "SourceError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "invalid",
+              "unauthorized",
+              "not_found",
+              "conflict",
+              "quota",
+              "unavailable"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "SourceError",
+        "type": "object"
+      },
+      "SourceFutureCapability": {
+        "enum": [
+          "PastOrPresentOnly",
+          "ProviderKnownFutureRows"
+        ],
+        "title": "SourceFutureCapability",
+        "type": "string"
+      },
+      "SourcePredecessorCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourcePredecessorCapability",
+        "type": "string"
+      },
+      "SourceRangeCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourceRangeCapability",
+        "type": "string"
+      },
+      "SourceSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_ref": {
+            "title": "Connection Ref",
+            "type": "string"
+          },
+          "dataset_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Ref"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "objects": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotObject"
+            },
+            "title": "Objects",
+            "type": "array"
+          },
+          "snapshot_ref": {
+            "title": "Snapshot Ref",
+            "type": "string"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamRef"
+          },
+          "sync_completed_at": {
+            "title": "Sync Completed At",
+            "type": "string"
+          },
+          "sync_ref": {
+            "title": "Sync Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_ref",
+          "connection_ref",
+          "sync_ref",
+          "stream",
+          "sync_completed_at",
+          "manifest_sha256",
+          "objects",
+          "file_ref",
+          "draft_ref"
+        ],
+        "title": "SourceSnapshot",
+        "type": "object"
+      },
+      "SourceStream": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "full_refresh_supported": {
+            "title": "Full Refresh Supported",
+            "type": "boolean"
+          },
+          "stream": {
+            "$ref": "#/components/schemas/StreamRef"
+          }
+        },
+        "required": [
+          "stream",
+          "fields",
+          "full_refresh_supported"
+        ],
+        "title": "SourceStream",
+        "type": "object"
+      },
+      "SourceSync": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "connection_ref": {
+            "title": "Connection Ref",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "rows_synced": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows Synced"
+          },
+          "state": {
+            "enum": [
+              "submitting",
+              "submission_unknown",
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "sync_ref": {
+            "title": "Sync Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sync_ref",
+          "connection_ref",
+          "state",
+          "created_at",
+          "observed_at"
+        ],
+        "title": "SourceSync",
+        "type": "object"
+      },
+      "StartSync": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "StartSync",
+        "type": "object"
+      },
+      "StreamList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceStream"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "StreamList",
+        "type": "object"
+      },
+      "StreamRef": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace": {
+            "maxLength": 63,
+            "minLength": 1,
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "namespace"
+        ],
+        "title": "StreamRef",
+        "type": "object"
+      },
+      "StructuredImportOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "delimiter": {
+            "title": "Delimiter",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "header": {
+            "title": "Header",
+            "type": "boolean"
+          },
+          "json_pointer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Pointer"
+          },
+          "null_values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Null Values",
+            "type": "array"
+          },
+          "sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sheet"
+          }
+        },
+        "required": [
+          "columns",
+          "delimiter",
+          "format",
+          "header",
+          "null_values"
+        ],
+        "title": "StructuredImportOptions",
+        "type": "object"
+      },
+      "StructuredImportResult": {
+        "additionalProperties": false,
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/DraftDataset"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/DatasetPreviewPage"
+          }
+        },
+        "required": [
+          "draft",
+          "preview"
+        ],
+        "title": "StructuredImportResult",
+        "type": "object"
+      },
+      "SyncList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceSync"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SyncList",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Epoch Source Connections",
+    "version": "0.1.0a1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/sources/connections": {
+      "get": {
+        "operationId": "list_source_connections",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Connections",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/postgres": {
+      "post": {
+        "operationId": "create_postgres_connection",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConnection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Create Connection",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}": {
+      "delete": {
+        "operationId": "delete_source_connection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Delete Connection",
+        "tags": [
+          "SourceConnections"
+        ]
+      },
+      "get": {
+        "operationId": "get_source_connection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Connection",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}/streams": {
+      "get": {
+        "operationId": "discover_source_streams",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Discover Streams",
+        "tags": [
+          "SourceConnections"
+        ]
+      },
+      "put": {
+        "operationId": "select_source_streams",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectStreams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceConnection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Select Streams",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}/syncs": {
+      "get": {
+        "operationId": "list_source_syncs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "List Syncs",
+        "tags": [
+          "SourceConnections"
+        ]
+      },
+      "post": {
+        "operationId": "start_source_sync",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSync"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceSync"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Start Sync",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}/syncs/{sync_ref}": {
+      "get": {
+        "operationId": "get_source_sync",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sync_ref",
+            "required": true,
+            "schema": {
+              "title": "Sync Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceSync"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Sync",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}/syncs/{sync_ref}/cancel": {
+      "post": {
+        "operationId": "cancel_source_sync",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sync_ref",
+            "required": true,
+            "schema": {
+              "title": "Sync Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceSync"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Cancel Sync",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/connections/{connection_ref}/syncs/{sync_ref}/snapshots": {
+      "post": {
+        "operationId": "prepare_source_snapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_ref",
+            "required": true,
+            "schema": {
+              "title": "Connection Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sync_ref",
+            "required": true,
+            "schema": {
+              "title": "Sync Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareSnapshot"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparedSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Prepare Snapshot",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/snapshots/{snapshot_ref}": {
+      "get": {
+        "operationId": "get_source_snapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_ref",
+            "required": true,
+            "schema": {
+              "title": "Snapshot Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Snapshot",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    },
+    "/api/v1/sources/snapshots/{snapshot_ref}/review": {
+      "post": {
+        "operationId": "review_source_snapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_ref",
+            "required": true,
+            "schema": {
+              "title": "Snapshot Ref",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSnapshot"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewedSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Review Snapshot",
+        "tags": [
+          "SourceConnections"
+        ]
+      }
+    }
+  }
+}

@@ -14,6 +14,14 @@ from typing import Annotated, Literal, cast
 from urllib.parse import quote
 
 import httpx
+from epoch_sources.models import (
+    PrepareSnapshot,
+    ReviewSnapshot,
+    SelectStreams,
+    SourceAPIError,
+    SourceSync,
+    StartSync,
+)
 from jsonschema.exceptions import SchemaError
 from jsonschema.exceptions import ValidationError as SchemaValidationError
 from mcp.server import MCPServer
@@ -61,7 +69,9 @@ class _ExtensionExecutionRequest(CreateSdkExecutionRequest):
 
 def _value(value: BaseModel) -> CallToolResult:
     return CallToolResult(
-        is_error=isinstance(value, SdkExecutionRecord) and value.error is not None,
+        is_error=(isinstance(value, SdkExecutionRecord) and value.error is not None) or (
+            isinstance(value, SourceSync) and value.state in ("failed", "submission_unknown")
+        ),
         content=[TextContent(type="text", text=value.model_dump_json(by_alias=True, exclude_unset=True))],
         structured_content=value.model_dump(mode="json", by_alias=True, exclude_unset=True),
     )
@@ -107,6 +117,13 @@ async def _call(operation: Awaitable[BaseModel | CallToolResult]) -> CallToolRes
             is_error=True,
             content=[TextContent(type="text", text=error.error.message)],
             structured_content={"error": error.error.to_wire(), "execution_id": error.execution_id},
+        )
+    except SourceAPIError as error:
+        return CallToolResult(
+            is_error=True,
+            content=[TextContent(type="text", text=error.error.message)],
+            structured_content={"http_status": error.status,
+                                "source_error": error.error.model_dump(mode="json")},
         )
     except ApiError as error:
         try:
@@ -273,7 +290,11 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             " Files and Space persist independently of conversations. Use epoch_upload_file, epoch_prepare_dataset and epoch_review_datasets for imports. "
             "Use returned dataset_ref/source_ref exactly; knowledge datasets do not automatically become study sources. "
             "epoch_dataset_content returns a resource link to the complete prepared Arrow IPC file; read that resource when preview requires_download is true. "
-            "Space folder and placement operations preserve existing resource references."
+            "Space folder and placement operations preserve existing resource references. "
+            "Source connections use the Epoch Python gateway. Credentials are supplied through the source UI or typed SDK, never an MCP tool. "
+            "Discover and explicitly select tables, then explicitly start a full-refresh sync. Poll its returned sync_ref; do not resubmit an unconfirmed job. "
+            "Prepare only a confirmed completed capture, inspect the native draft, and explicitly review it. Preparation never starts a sync. "
+            "Use the accepted source_ref for studies; a later refresh creates a new captured version and cannot change an accepted dataset."
         ),
         middleware=[checked_dispatch],
     )
@@ -324,6 +345,62 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         valid time mapping; knowledge data remains a useful saved dataset without source_ref.
         """
         return await _call(client.prepare_dataset(request))
+
+    async def list_source_connections() -> CallToolResult:
+        """List this owner's persistent PostgreSQL connections without starting a sync."""
+        return await _call(client.list_source_connections())
+
+    async def source_connection(connection_ref: str) -> CallToolResult:
+        """Reopen one exact saved connection and its last-observed sync state."""
+        return await _call(client.source_connection(connection_ref))
+
+    async def source_streams(connection_ref: str) -> CallToolResult:
+        """Discover readable tables and compatible full-refresh modes through Airbyte."""
+        return await _call(client.source_streams(connection_ref))
+
+    async def select_source_streams(connection_ref: str, request: SelectStreams) -> CallToolResult:
+        """Save explicit table selection; this does not start replication."""
+        return await _call(client.select_source_streams(connection_ref, request))
+
+    async def start_source_sync(connection_ref: str, request: StartSync) -> CallToolResult:
+        """Start one explicit full refresh. Retain request_id; never guess or replay unknown work."""
+        return await _call(client.start_source_sync(connection_ref, request))
+
+    async def source_sync(connection_ref: str, sync_ref: str) -> CallToolResult:
+        """Read current status for the saved provider job; successful status precedes preparation."""
+        return await _call(client.source_sync(connection_ref, sync_ref))
+
+    async def list_source_syncs(connection_ref: str, cursor: str | None = None,
+                                limit: Annotated[int, Field(ge=1, le=100)] = 100) -> CallToolResult:
+        """Read retained connection sync history; no new refresh is submitted."""
+        return await _call(client.list_source_syncs(connection_ref, cursor=cursor, limit=limit))
+
+    async def cancel_source_sync(connection_ref: str, sync_ref: str) -> CallToolResult:
+        """Explicitly cancel this connection's confirmed provider job."""
+        return await _call(client.cancel_source_sync(connection_ref, sync_ref))
+
+    async def prepare_source_snapshot(connection_ref: str, sync_ref: str,
+                                       request: PrepareSnapshot) -> CallToolResult:
+        """Verify/capture a completed table and prepare a native draft, without starting a sync.
+        Study sources require the native reviewed time mapping; acceptance is a separate operation.
+        """
+        return await _call(client.prepare_source_snapshot(connection_ref, sync_ref, request))
+
+    async def source_snapshot(snapshot_ref: str) -> CallToolResult:
+        """Read the exact retained snapshot lineage and accepted native dataset/source references."""
+        return await _call(client.source_snapshot(snapshot_ref))
+
+    async def review_source_snapshot(snapshot_ref: str, request: ReviewSnapshot) -> CallToolResult:
+        """Explicitly accept/name or reject this snapshot's exact native draft."""
+        return await _call(client.review_source_snapshot(snapshot_ref, request))
+
+    async def delete_source_connection(connection_ref: str) -> CallToolResult:
+        """Delete an inactive connection's provider resources and landing files; retain datasets."""
+        async def remove() -> CallToolResult:
+            await client.delete_source_connection(connection_ref)
+            return CallToolResult(content=[TextContent(type="text", text="Source connection deleted.")],
+                                  structured_content={"connection_ref": connection_ref})
+        return await _call(remove())
 
     async def review_datasets(request: DatasetReviewRequest) -> CallToolResult:
         """Accept/name or reject each exact prepared draft; repeats do not publish duplicates."""
@@ -646,6 +723,18 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         )
 
     for name, function in (
+        ("epoch_list_source_connections", list_source_connections),
+        ("epoch_source_connection", source_connection),
+        ("epoch_discover_source_streams", source_streams),
+        ("epoch_select_source_streams", select_source_streams),
+        ("epoch_start_source_sync", start_source_sync),
+        ("epoch_source_sync", source_sync),
+        ("epoch_list_source_syncs", list_source_syncs),
+        ("epoch_cancel_source_sync", cancel_source_sync),
+        ("epoch_prepare_source_snapshot", prepare_source_snapshot),
+        ("epoch_source_snapshot", source_snapshot),
+        ("epoch_review_source_snapshot", review_source_snapshot),
+        ("epoch_delete_source_connection", delete_source_connection),
         ("epoch_upload_file", upload_file),
         ("epoch_list_files", list_files),
         ("epoch_inspect_file", inspect_file),

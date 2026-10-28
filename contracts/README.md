@@ -73,3 +73,15 @@ pinning answers. The source execution, derived output execution, publication,
 catalogue revision and presentation edit version are distinct identities.
 Presentation edit zero is valid. Existing answers without extension attribution
 retain their legacy read contract.
+# Source connections
+
+source-connections.openapi.json is the generated contract from Backend's
+services/source-connections/openapi.json. Backend owns the typed
+epoch-source-connections package and its FastAPI service. The Python SDK and MCP
+consume those closed request/response models instead of mirroring provider
+configuration or native dataset types. Regenerate the contract at its Backend
+owner, then copy its exact output here.
+
+These endpoints are served by the Python gateway at /api/v1/sources. Native
+Files, dataset review, immutable data and study execution keep their existing
+Backend ownership and authentication.
