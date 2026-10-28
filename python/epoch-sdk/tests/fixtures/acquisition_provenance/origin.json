@@ -1,0 +1,12 @@
+{
+  "producer": "EpochBackend C++ research_response_test and real native research worker",
+  "backend_commit": "61cfa9134b47ffb0b05f02d5d0ad64589f36c2a5",
+  "evidence_kind": "Controlled native service/worker fixtures, not live provider or HTTP acceptance",
+  "artifacts": {
+    "input-catalog.request.json": "69da0c6fc5c33bf7ca92660709cf30e3eb1fac73fd3ca82d00ef7c638f3c050b",
+    "input-catalog.response.json": "af606f955db106ffb5d7d1d61de55756754813ec442a5d6aa28821d3f28783ca",
+    "provenance-page.json": "e87eb010bd78e84373ba9d503c3e4d2d2d56f0247c5cef4f10056d7b5e1d3311",
+    "response-v1.json": "28cb06e20e15c804e55f8ddac0dbc5df835260729aa83c099dbbb5fec3d22ec8",
+    "response-v2.json": "ef63e6c1072b30d58040cb86c3eca5c9d407e835b7695f350985e3f81a659cf2"
+  }
+}

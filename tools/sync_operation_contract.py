@@ -39,11 +39,12 @@ def project(source: Path, contract: dict) -> dict:
     paths = {
         path: rewrite(operations)
         for path, operations in native["paths"].items()
-        if path.startswith("/api/v1/integration/requests")
-        or path.startswith("/api/v1/integration/execution-requests")
+        if path.startswith(("/api/v1/integration/requests", "/api/v1/integration/execution-requests"))
         or path == "/api/v1/studies/executions/{executionId}/inputs"
+        or path == "/api/v1/studies/executions/{executionId}/acquisition-provenance"
         or path == "/api/v1/agents/threads/{threadId}/studies/definitions"
         or path == "/api/v1/research/responses/{responseId}"
+        or path == "/api/v1/research/responses/{responseId}/acquisition-provenance"
         or path == "/api/v1/studies/executions/{executionId}/response-tables"
         or path == "/api/v1/contexts/publications/{publicationId}/presentation"
     }

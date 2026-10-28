@@ -14,6 +14,7 @@ def project(model=SavedResearchResponse):
     schema = model.model_json_schema()
     native = {
         "ExecutionExtensionProvenance": "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance",
+        "AcquisitionProvenanceReference": "openapi.json#/components/schemas/Native_AcquisitionProvenanceReference",
     }
     shared = {
         "Column",

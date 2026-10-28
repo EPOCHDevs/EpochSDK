@@ -13,6 +13,7 @@ from typing import TypedDict
 
 from stratifyx import AsyncStratifyX
 from stratifyx.types import (
+    AcquisitionProvenancePage,
     CreateSdkExecutionRequest,
     DashboardEditView,
     DataOption,
@@ -30,7 +31,9 @@ from stratifyx.types import (
 from .responses import (
     ResponseTablePage,
     SavedResearchResponse,
+    read_execution_acquisition_provenance,
     read_response,
+    read_response_acquisition_provenance,
     read_response_table_page,
 )
 
@@ -180,6 +183,23 @@ class ExecutionExtensionClient:
     ) -> SavedResearchResponse:
         """Read a saved answer with its source attribution, without a graph call."""
         return await read_response(self.backend, response_id, version=version)
+
+    async def response_provenance(
+        self, response_id: str, *, version: int | None = None,
+        offset: int = 0, page_size: int = 50,
+    ) -> AcquisitionProvenancePage:
+        """Page the immutable source receipts retained with an answer."""
+        return await read_response_acquisition_provenance(
+            self.backend, response_id, version=version, offset=offset, page_size=page_size)
+
+    async def execution_provenance(
+        self, execution_id: str, *, expected_sha256: str | None = None,
+        offset: int = 0, page_size: int = 50,
+    ) -> AcquisitionProvenancePage:
+        """Page owned execution receipts; catalogue digests can pin the snapshot."""
+        return await read_execution_acquisition_provenance(
+            self.backend, execution_id, expected_sha256=expected_sha256,
+            offset=offset, page_size=page_size)
 
     async def extension_presentation(
         self,
