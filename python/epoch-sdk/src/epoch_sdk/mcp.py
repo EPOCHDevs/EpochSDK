@@ -88,6 +88,7 @@ def _compose_native_guide(
     sections = [workflow, "<data>\n" + catalog.overview + "\n</data>"]
     sections.append("<compute>\n" + guide("compute") + "\n</compute>")
     sections.append("<epoch_execute>\n" + guide("run_study") + "\n</epoch_execute>")
+    sections.append("<native_reports>\n" + guide("native_reports") + "\n</native_reports>")
     sections.append("<execution_cost_models>\n" + guide("cost_models") +
                     "\n</execution_cost_models>")
     return "\n\n".join(sections)
