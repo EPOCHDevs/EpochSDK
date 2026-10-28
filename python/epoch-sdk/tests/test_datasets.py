@@ -552,6 +552,7 @@ def test_mcp_guide_bootstraps_exact_backend_briefing_without_private_inventory()
                 'run_monte_carlo': 'Native Monte Carlo semantics',
                 'tune_study': 'Native tuning semantics',
                 'cost_models': 'Native cost models',
+                'native_reports': 'Native grouped reports',
             },
         }
         def backend(request):
@@ -577,6 +578,7 @@ def test_mcp_guide_bootstraps_exact_backend_briefing_without_private_inventory()
                 assert native_catalog['overview'] in text
                 assert 'Native method directory' in text
                 assert 'Native cost models' in text
+                assert 'Native grouped reports' in text
                 assert 'Native Monte Carlo semantics' not in text
                 assert 'browse candidate pages' not in text
                 assert 'saved_query' in text
