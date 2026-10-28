@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import inspect
 import os
 from collections.abc import Awaitable
 from copy import deepcopy
 from importlib.resources import files
 from typing import Annotated, Literal, cast
+from urllib.parse import quote
 
 import httpx
 from jsonschema.exceptions import SchemaError
@@ -16,13 +19,14 @@ from jsonschema.exceptions import ValidationError as SchemaValidationError
 from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
 from mcp.shared.exceptions import MCPError
-from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
+from mcp.types import CallToolResult, ListToolsResult, ResourceLink, TextContent, Tool
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError
 from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import (
     CreateSdkExecutionRequest,
     DatasetCatalogResponse,
+    DatasetReviewRequest,
     DatasetSearchQuery,
     DatasetSearchRequest,
     ExecutionPresentationPin,
@@ -30,6 +34,8 @@ from stratifyx.types import (
     ReferenceLibraryResponse,
     ScreenAssetsRequest,
     SdkExecutionRecord,
+    SpaceResourceRef,
+    StructuredImportRequest,
 )
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
@@ -88,9 +94,10 @@ def _compose_native_guide(
     return "\n\n".join(sections)
 
 
-async def _call(operation: Awaitable[BaseModel]) -> CallToolResult:
+async def _call(operation: Awaitable[BaseModel | CallToolResult]) -> CallToolResult:
     try:
-        return _value(await operation)
+        value = await operation
+        return value if isinstance(value, CallToolResult) else _value(value)
     except SchemaValidationError as error:
         return _failure("Invalid tool input: " + error.message)
     except (ValueError, ValidationError) as error:
@@ -263,9 +270,139 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             " For a supported completed result, use epoch_extension_inputs, epoch_save_extension and epoch_execute_extension to author/reuse an execution-input program. "
             "Its deterministic tables/JSON and native reporters need no inner LLM; only an explicit llm_call declaration may use the cached text model. "
             "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
+            " Files and Space persist independently of conversations. Use epoch_upload_file, epoch_prepare_dataset and epoch_review_datasets for imports. "
+            "Use returned dataset_ref/source_ref exactly; knowledge datasets do not automatically become study sources. "
+            "epoch_dataset_content returns a resource link to the complete prepared Arrow IPC file; read that resource when preview requires_download is true. "
+            "Space folder and placement operations preserve existing resource references."
         ),
         middleware=[checked_dispatch],
     )
+
+    @server.resource(
+        "epoch://prepared-datasets/{dataset_ref}", name="prepared_dataset",
+        description="Complete owner-authorized prepared Arrow IPC file, for an exact draft or saved dataset.",
+        mime_type="application/vnd.apache.arrow.file",
+    )
+    async def prepared_dataset(dataset_ref: str) -> bytes:
+        try:
+            return await client.download_dataset(dataset_ref)
+        except ApiError as error:
+            try:
+                native = NativeErrorResponse.model_validate(error.body, strict=True)
+                message = native.message
+            except ValidationError:
+                message = "Prepared dataset is unavailable; verify its reference and ownership."
+            raise MCPError(-32001, f"Backend returned HTTP {error.status_code}: {message}") from None
+        except httpx.HTTPError:
+            raise MCPError(-32001, "The prepared dataset service could not be reached.") from None
+
+    async def upload_file(name: str, media_type: str, content_base64: str) -> CallToolResult:
+        """Upload exact base64-encoded file bytes in verified native chunks.
+        Backend owns content identity and safe replay. Files persist across chats.
+        This transfers a file; preparation and explicit draft review are separate operations.
+        """
+        try:
+            content = base64.b64decode(content_base64, validate=True)
+        except (binascii.Error, ValueError):
+            return _failure("content_base64 must be valid base64 file bytes")
+        return await _call(client.upload_file(content, name=name, media_type=media_type))
+
+    async def list_files(
+        query: str | None = None, cursor: str | None = None,
+        limit: Annotated[int, Field(strict=True, ge=1, le=1000)] = 100,
+    ) -> CallToolResult:
+        """Discover this owner's saved original files across conversations."""
+        return await _call(client.list_files(query=query, cursor=cursor, limit=limit))
+
+    async def inspect_file(file_ref: str, format: str) -> CallToolResult:
+        """Inspect a structured file's sheets/record selections before preparing it."""
+        return await _call(client.inspect_file(file_ref, format=format))
+
+    async def prepare_dataset(request: StructuredImportRequest) -> CallToolResult:
+        """Prepare an inspectable draft from an uploaded file, using deterministic readers.
+        Retain request_id when retrying. Use purpose=study_source only with an explicit
+        valid time mapping; knowledge data remains a useful saved dataset without source_ref.
+        """
+        return await _call(client.prepare_dataset(request))
+
+    async def review_datasets(request: DatasetReviewRequest) -> CallToolResult:
+        """Accept/name or reject each exact prepared draft; repeats do not publish duplicates."""
+        return await _call(client.review_datasets(request))
+
+    async def list_datasets(
+        query: str | None = None, cursor: str | None = None,
+        limit: Annotated[int, Field(strict=True, ge=1, le=100)] = 100,
+    ) -> CallToolResult:
+        """Find this owner's accepted datasets and exact eligible source references."""
+        return await _call(client.list_datasets(query=query, cursor=cursor, limit=limit))
+
+    async def preview_dataset(
+        dataset_ref: str, offset: Annotated[int, Field(strict=True, ge=0)] = 0,
+        limit: Annotated[int, Field(strict=True, ge=1, le=100)] = 100,
+    ) -> CallToolResult:
+        """Inspect an immutable draft/saved table. Follow next_cursor as an offset.
+        If requires_download is true, read epoch_dataset_content's resource instead;
+        no row values have been truncated and no zero-progress cursor is supplied.
+        """
+        return await _call(client.preview_dataset(dataset_ref, offset=offset, limit=limit))
+
+    async def dataset_content(dataset_ref: str) -> CallToolResult:
+        """Get a resource link for complete prepared data, beyond preview limits.
+        Read the returned resource to fetch the owner-authorized Arrow IPC file.
+        A link alone does not read the data or grant access to another owner.
+        """
+        return CallToolResult(content=[ResourceLink(
+            name=dataset_ref + ".arrow",
+            uri="epoch://prepared-datasets/" + quote(dataset_ref, safe=""),
+            mime_type="application/vnd.apache.arrow.file",
+        )])
+
+    async def browse_space(
+        folder_ref: str | None = None,
+        recursive: Annotated[bool, Field(strict=True)] = False,
+        query: str | None = None, cursor: str | None = None,
+        limit: Annotated[int, Field(strict=True, ge=1, le=100)] = 100,
+    ) -> CallToolResult:
+        """Browse/search folders and explicitly placed resources in a selected hierarchy.
+        Omit folder_ref for root. Null resource names mean obsolete/unavailable references.
+        """
+        return await _call(client.browse_space(
+            folder_ref=folder_ref, recursive=recursive, query=query, cursor=cursor, limit=limit,
+        ))
+
+    async def create_folder(name: str, parent_folder_ref: str | None = None) -> CallToolResult:
+        """Create a nested folder. Equal retries reuse the same sibling identity."""
+        return await _call(client.create_folder(name, parent_folder_ref=parent_folder_ref))
+
+    async def update_folder(
+        folder_ref: str, name: str, parent_folder_ref: str | None = None,
+    ) -> CallToolResult:
+        """Rename/move a folder without changing its reference or descendants.
+        Supply its current parent to rename in place; null parent moves it to root.
+        """
+        return await _call(client.update_folder(
+            folder_ref, name=name, parent_folder_ref=parent_folder_ref,
+        ))
+
+    async def delete_folder(folder_ref: str) -> CallToolResult:
+        """Delete an empty folder. Move/unplace contents first; resources remain saved."""
+        async def remove() -> CallToolResult:
+            await client.delete_folder(folder_ref)
+            return CallToolResult(content=[TextContent(type="text", text="Empty folder deleted.")],
+                                  structured_content={"folder_ref": folder_ref})
+        return await _call(remove())
+
+    async def place_resource(
+        resource: SpaceResourceRef, folder_ref: str | None = None, name: str | None = None,
+    ) -> CallToolResult:
+        """Place/move an existing authorized file, dataset, model or study.
+        Optional name is its Space display name. Resource/source references remain exact.
+        """
+        return await _call(client.place_resource(resource, folder_ref=folder_ref, name=name))
+
+    async def unplace_resource(resource: SpaceResourceRef) -> CallToolResult:
+        """Remove organization metadata only, including obsolete references."""
+        return await _call(client.unplace_resource(resource))
 
     async def execute(
         study_id: str,
@@ -509,6 +646,20 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         )
 
     for name, function in (
+        ("epoch_upload_file", upload_file),
+        ("epoch_list_files", list_files),
+        ("epoch_inspect_file", inspect_file),
+        ("epoch_prepare_dataset", prepare_dataset),
+        ("epoch_review_datasets", review_datasets),
+        ("epoch_list_datasets", list_datasets),
+        ("epoch_preview_dataset", preview_dataset),
+        ("epoch_dataset_content", dataset_content),
+        ("epoch_space_browse", browse_space),
+        ("epoch_space_create_folder", create_folder),
+        ("epoch_space_update_folder", update_folder),
+        ("epoch_space_delete_folder", delete_folder),
+        ("epoch_space_place_resource", place_resource),
+        ("epoch_space_unplace_resource", unplace_resource),
         ("epoch_search_dataset", search_dataset),
         ("epoch_screen_assets", screen_assets),
         ("epoch_execute", execute),

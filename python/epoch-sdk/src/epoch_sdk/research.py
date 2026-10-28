@@ -38,6 +38,7 @@ from .contracts import (
     TextOutputRequest,
 )
 from .datasets import DatasetClient
+from .files import FileClient
 from .errors import EpochError
 from .extensions import ExecutionExtensionClient
 from .responses import ResponseTablePage, SavedResearchResponse
@@ -159,7 +160,7 @@ async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
         raise ResearchError(failure) from error
 
 
-class EpochClient(DatasetClient, ExecutionExtensionClient):
+class EpochClient(DatasetClient, FileClient, ExecutionExtensionClient):
     """Research explicitly; prepared study execution remains a separate action.
 
     Backend owns accepted requests and response revisions. LangGraph owns the
