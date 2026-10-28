@@ -12,6 +12,7 @@ import httpx
 from stratifyx import (
     DatePeriodConfig,
     ExecutionOptions,
+    ExecutionParameterValue,
     ExecutionReportReference,
     SdkContractErrorResponse,
     SdkContractResponsePlanReference,
@@ -66,6 +67,7 @@ class _PreparedOutputOptions(TypedDict, total=False):
     thread_id: str
     response_plan: SdkContractResponsePlanReference
     report_template: ExecutionReportReference
+    execution_parameter_bindings: dict[str, ExecutionParameterValue]
 
 
 class ResearchAccepted(Contract):
@@ -317,12 +319,14 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
         Waiting only reads the accepted operation. Cancelling this local observer
         does not cancel Backend work. execute_saved remains the admission-only API.
         """
-        operation_id = operation_id if operation_id is not None else "execute-" + uuid4().hex
-        if not operation_id.strip() or operation_id != operation_id.strip():
+        if operation_id is not None and (not operation_id.strip() or operation_id != operation_id.strip()):
             raise ValueError("Provide an exact nonblank operation_id")
         current = await self.execute_saved(
             reference, period=period, execution=execution, operation_id=operation_id
         )
+        operation_id = current.operation_id
+        if operation_id is None:
+            raise ValueError("Prepared execution has no accepted native operation identity")
         while True:
             if isinstance(current, ChosenExecution):
                 state = current.execution.status.value
@@ -404,13 +408,32 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             if not isinstance(research, ResearchCompleted) or research.reusable_study is None:
                 raise ValueError("The research operation has no completed prepared study")
             reference = research.reusable_study
-        if operation_id is None and reference.response_plan is None and reference.report_template is None:
-            return await self.supervisor.execute_saved(
-                reference, period=period, execution=execution
-            )
+        explicit_operation = operation_id is not None
         if operation_id is None:
             operation_id = "execute-" + uuid4().hex
         async with _boundary(None):
+            bindings = None
+            if reference.response_plan is None and reference.report_template is None:
+                accepted = None
+                if explicit_operation:
+                    try:
+                        accepted = await self.backend.sdk_requests.get_sdk_execution_request_by_handle(
+                            operation_id, request_options={"max_retries": 0}
+                        )
+                        if accepted.request.operation_id != operation_id:
+                            raise ValueError("The native handle returned another execution operation")
+                    except ApiError as error:
+                        if error.status_code != 404:
+                            raise
+                if accepted is None:
+                    captured, bindings = await self._ordinary_replay_source(reference)
+                else:
+                    # Native Create owns exact request comparison. Reconnecting
+                    # uses its frozen settings without reopening an old source.
+                    captured = accepted.request.parameters.execution
+                    bindings = accepted.request.execution_parameter_bindings
+                if execution is None:
+                    execution = captured
             parameters = (
                 RunParameters(period=period)
                 if execution is None
@@ -425,6 +448,8 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                     options["response_plan"] = SdkContractResponsePlanReference.model_validate(reference.response_plan.to_wire())
                 if reference.report_template is not None:
                     options["report_template"] = reference.report_template
+                if bindings is not None:
+                    options["execution_parameter_bindings"] = bindings
                 record = await self.backend.sdk_requests.create_sdk_execution_request(
                     operation_id=operation_id, study_id=reference.study_id,
                     source_execution_id=reference.source_execution_id, parameters=native_parameters,
@@ -435,6 +460,58 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                     raise await self._execution_admission_conflict(operation_id, error) from error
                 raise
             return await self._execution_operation(record)
+
+    async def _ordinary_replay_source(
+        self, reference: SavedStudy,
+    ) -> tuple[ExecutionOptions | None, dict[str, ExecutionParameterValue] | None]:
+        """Read the actual owned configuration; the caller supplies only the new period/override."""
+        job = await self.supervisor.execution(reference.source_execution_id)
+        snapshot = await self.backend.studies_executions.get_the_per_execution_study_snapshot_as_run_source_assets_screen(
+            reference.source_execution_id, request_options={"max_retries": 0}
+        )
+        if (job.id != reference.source_execution_id or job.definition_id != reference.study_id
+                or snapshot.execution_id != job.id or snapshot.definition_id != job.definition_id
+                or job.execution_type not in {"research", "backtest"}
+                or job.parent_execution_id is not None or job.visibility not in {None, "primary"}
+                or snapshot.execution_input is not None or snapshot.study.authoring_origin.value != "agent"):
+            raise ValueError("The prepared study differs from its owned ordinary execution snapshot")
+        captured = (ExecutionOptions.model_validate(job.trading.model_dump(mode="json", exclude_none=True))
+                    if job.trading is not None else None)
+        return captured, snapshot.execution_parameter_bindings
+
+    async def _ordinary_answer(
+        self, record: SdkExecutionRecord, answer: SavedResearchResponse | None = None,
+    ) -> SavedResearchResponse | None:
+        """Verify a single ordinary calculation's exact native publication and optional answer."""
+        outputs = record.extension_outputs
+        if (record.request.input_tables is not None or record.request.response_plan is not None
+                or record.request.report_template is not None or record.error is not None
+                or record.execution_status is None or record.execution_status.value != "Completed"
+                or record.response_phase is None or record.response_phase.value != "outputs_recorded"
+                or outputs is None):
+            raise ValueError("The ordinary study has no confirmed required-output publication")
+        provenance = outputs.provenance
+        if (provenance.execution_id != record.execution_id or provenance.study_id != record.request.study_id
+                or provenance.source_execution_id != (record.request.source_execution_id or "")
+                or provenance.additional_sources != record.request.additional_sources
+                or any(provenance.execution_parameter_bindings.get(name) != value
+                       for name, value in (record.request.execution_parameter_bindings or {}).items())
+                or outputs.response_id != record.response_id or outputs.response_version != record.response_version
+                or (record.response_id is None) != (record.response_version is None)):
+            raise ValueError("The ordinary publication differs from its exact execution/output pins")
+        if record.response_id is None:
+            if answer is not None:
+                raise ValueError("The ordinary publication has no declared answer pin")
+            return None
+        if answer is None:
+            answer = await self.response(record.response_id, version=record.response_version)
+        if (answer.request_id != record.request_id or answer.response_id != record.response_id
+                or answer.version != record.response_version or answer.primary_execution_id != record.execution_id
+                or answer.study_id != record.request.study_id or answer.extension != provenance
+                or answer.response_plan is not None
+                or answer.thread_id != (record.request.thread_id or record.execution_id)):
+            raise ValueError("The ordinary answer differs from its exact native publication")
+        return answer
 
     async def _execution_admission_conflict(self, operation_id: str, error: ApiError) -> EpochError:
         # Native checks an existing operation before evaluating a new plan.
@@ -477,6 +554,14 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                 record.error.model_dump_json(by_alias=True, exclude_unset=True)
             )
             raise EpochError(failure.error, execution_id=record.execution_id)
+        if record.execution_status is not None and record.execution_status.value in {"Failed", "Cancelled"}:
+            raise EpochError(DomainError(code="EXECUTION_FAILED",
+                message=f"Prepared numerical execution {record.execution_status.value.lower()}.",
+                retryable=False), execution_id=record.execution_id)
+        if record.response_phase is not None and record.response_phase.value == "failed":
+            raise EpochError(DomainError(code="OUTPUT_VALIDATION_FAILED",
+                message="The required study outputs failed without a confirmed answer.",
+                retryable=False), execution_id=record.execution_id)
         accepted = ExecutionAccepted(
             request_id=record.request_id,
             operation_id=record.request.operation_id,
@@ -490,7 +575,8 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             raise
         if job.id != record.execution_id or job.definition_id != record.request.study_id:
             raise ValueError("The native execution differs from its accepted operation")
-        if (record.request.response_plan is not None or record.request.report_template is not None) and (
+        if (record.request.response_plan is not None or record.request.report_template is not None
+                or record.response_phase is not None) and (
             record.response_phase is None or record.response_phase.value != "outputs_recorded"
         ):
             return accepted
@@ -568,6 +654,8 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
                     raise ValueError("The published report answer differs from its exact native output pins")
             study = result.reusable_study.model_copy(update={"report_template": record.request.report_template})
             result = result.model_copy(update={"response": response, "reusable_study": study, "report": child})
+        elif record.response_phase is not None:
+            result = result.model_copy(update={"response": await self._ordinary_answer(record)})
         return result
 
     async def execution(self, execution_id: str) -> JobListItem:
@@ -864,7 +952,6 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             )
             if (
                 native.request_id != record.native_execution_request_id
-                or native.request.input_tables is None
                 or (
                     native.request.research_request_id is not None
                     and native.request.research_request_id != record.request_id
@@ -885,7 +972,14 @@ class EpochClient(DatasetClient, ExecutionExtensionClient):
             ):
                 raise ValueError("The research answer differs from its original native operation")
         reusable = None
-        if native is not None and record.source_execution_id is not None:
+        if native is not None and native.request.input_tables is None:
+            if (record.source_execution_id is not None or native.request.source_execution_id
+                    or native.request.research_request_id != record.request_id):
+                raise ValueError("The ordinary research answer has unexpected saved-input lineage")
+            await self._ordinary_answer(native, response)
+            reusable = SavedStudy(study_id=native.request.study_id,
+                source_execution_id=native.execution_id, thread_id=record.runtime.thread_id)
+        elif native is not None and record.source_execution_id is not None:
             if native.request.source_execution_id != record.source_execution_id:
                 raise ValueError("The saved report differs from the retained original execution")
             original = None

@@ -26,6 +26,8 @@ from epoch_sdk.supervisor import SupervisorClient
 
 FIXTURES = Path(__file__).parent / 'fixtures/dataset_search'
 QUERY = {"request_id": "company", "subjects": [{"kind": "asset_name", "name": "Apple"}]}
+# The generated rc41 contract emits its native empty dataset-selection default.
+QUERY_WIRE = {**QUERY, "datasets": []}
 
 
 def malformed_inputs():
@@ -165,7 +167,10 @@ def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limi
                 ]:
                     assert not (await mcp.call_tool(name, args)).is_error
             assert calls[0] == calls[3]
-            assert calls[0][1]['requests'] == [query]
+            query_wire = deepcopy(query)
+            query_wire['subjects'][0]['geographies'] = []
+            query_wire['datasets'][0]['fields'] = []
+            assert calls[0][1]['requests'] == [query_wire]
             assert calls[1][1]['saved_limit'] == saved_limit
             assert calls[2][1]['saved_limit'] == 100
             assert calls[2][1]['include_saved'] is True
@@ -197,13 +202,13 @@ class MetadataService:
             return httpx.Response(200, json=fixture('catalog'))
         if request.url.path == '/api/v1/discovery/datasets/search':
             assert request.headers['X-Epoch-Dataset-Selection'] == 'v1'
-            assert body['requests'][0] == QUERY
+            assert body['requests'][0] == QUERY_WIRE
             return httpx.Response(200, json=self.search)
         if request.url.path == '/api/v1/discovery/assets/screen':
             assert body == {'kind': 'saved', 'universe_ref': 'owned-cohort'}
             return httpx.Response(200, json=fixture('screen'))
         if request.url.path == '/api/v1/discovery/query-stored':
-            assert body['operation'] == {'kind': 'read'}
+            assert body['operation'] == {'kind': 'read', 'fields': [], 'record_refs': []}
             assert body['result_refs'] == [self.search['receipt']['result_ref']]
             assert body['limit'] == 10
             after = body.get('cursor')
@@ -463,7 +468,7 @@ def test_native_discovery_failure_reaches_sdk_and_mcp_without_retry_or_replaceme
             assert request.method == 'POST' and request.url.path == expected[route]
             body = json.loads(request.content)
             if route == 'search':
-                assert body['requests'] == [QUERY]
+                assert body['requests'] == [QUERY_WIRE]
             elif route == 'read':
                 assert body['result_refs'] == ['owned-result']
                 assert body['cursor'] == 'native-cursor'

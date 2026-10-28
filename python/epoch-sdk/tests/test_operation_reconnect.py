@@ -134,7 +134,16 @@ class Service:
                 return httpx.Response(409, json={"message": "Changed execution"})
             return httpx.Response(200, json=self.execution_record)
         if path.startswith("/api/v1/integration/execution-requests/"):
+            if self.execution_record is None:
+                return httpx.Response(404, json={"error": "DataNotFound", "message": "No operation",
+                    "timestamp": "2026-10-27T00:00:00Z"})
             return httpx.Response(200, json=self.execution_record)
+        if path == "/api/v1/studies/executions/new":
+            return httpx.Response(200, json=job("new"))
+        if path == "/api/v1/studies/executions/new/study":
+            return httpx.Response(200, json={"execution_id": "new", "definition_id": "study-one",
+                "captured_at": 1, "study": {"name": "Original", "description": "Owned source",
+                    "source": "retained_fixture()", "data": {"assets": []}, "authoring_origin": "agent"}})
         if path == "/api/v1/studies/executions/repeat-one":
             return httpx.Response(200, json=job("repeat-one"))
         raise AssertionError((request.method, path))
