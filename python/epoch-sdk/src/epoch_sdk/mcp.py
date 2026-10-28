@@ -404,7 +404,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     async def read(
         kind: Literal[
             "workspace", "study", "execution", "tool", "dashboard", "dashboard_metadata", "guide",
-            "response", "presentation"
+            "response", "presentation", "response_provenance", "execution_provenance"
         ],
         identifier: str | None = None,
         handle: AgentToolHandle | None = None,
@@ -414,6 +414,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         offset: Annotated[int, Field(ge=0, strict=True)] = 0,
         page_size: Annotated[int, Field(ge=1, le=10000, strict=True)] = 1000,
         presentation: ExecutionPresentationPin | None = None,
+        expected_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None,
     ) -> CallToolResult:
         """Read owned saved work without a model call or publication.
         Workspace returns study/execution registries; study returns the native
@@ -421,9 +422,14 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         include the original saved artifact when available.
         Response reads accept a pinned version; table selects one paged named
         table using offset/page_size. Page size never caps the full result.
+        Provenance kinds page retained source receipts using identifier and
+        offset/page_size (at most 1000); response_provenance accepts a revision.
+        Execution provenance accepts the catalogue's expected_sha256 to pin its receipts.
         Presentation reads require the exact publication/catalog/edit pin from
         extension_outputs; edit zero is a real version, not a latest lookup.
         """
+        if expected_sha256 is not None and kind != "execution_provenance":
+            return _failure("An acquisition digest applies only to execution provenance")
         if kind == "presentation":
             if (presentation is None or identifier is not None or handle is not None
                     or version is not None
@@ -434,6 +440,16 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             ))
         if presentation is not None:
             return _failure("Presentation pins apply only to presentation reads")
+        if kind in {"response_provenance", "execution_provenance"}:
+            if identifier is None or handle is not None or table is not None or category != "ALL":
+                return _failure("Provenance reads require an identifier and optional paging")
+            if kind == "execution_provenance" and version is not None:
+                return _failure("Answer revisions apply only to response provenance")
+            if kind == "response_provenance":
+                return await _call(client.response_provenance(identifier, version=version, offset=offset, page_size=page_size))
+            return await _call(client.execution_provenance(
+                identifier, expected_sha256=expected_sha256, offset=offset, page_size=page_size,
+            ))
         if kind != "response" and (
             version is not None or table is not None or offset != 0 or page_size != 1000
         ):

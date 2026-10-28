@@ -8,7 +8,11 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, JsonValue, field_validator, model_validator
 from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
-from stratifyx.types import ExecutionExtensionProvenance
+from stratifyx.types import (
+    AcquisitionProvenancePage,
+    AcquisitionProvenanceReference,
+    ExecutionExtensionProvenance,
+)
 
 from .contracts import (
     Column,
@@ -89,6 +93,9 @@ class ResponseReference(Contract):
     # Preserve the exact native attribution instead of duplicating its DTO or
     # confusing the original input execution with this derived answer's run.
     extension: ExecutionExtensionProvenance | None = None
+    # Native facts frozen when the answer was first saved. The full evidence
+    # is paged independently so receipts do not consume the answer's budget.
+    acquisition_provenance: AcquisitionProvenanceReference | None = None
 
     @model_validator(mode="after")
     def paired_source(self) -> Self:
@@ -133,6 +140,59 @@ class SavedResearchResponse(ResponseReference):
                 if key not in {"published_at_ms", "content"}
             }
         )
+
+
+def _provenance_paging(offset: int, page_size: int) -> None:
+    if type(offset) is not int or not 0 <= offset <= 9007199254740991:
+        raise ValueError("Provide a nonnegative safe record offset")
+    if type(page_size) is not int or not 1 <= page_size <= 1000:
+        raise ValueError("A provenance page contains between 1 and 1000 records")
+
+
+def _checked_provenance_page(
+    page: AcquisitionProvenancePage, offset: int, page_size: int,
+) -> AcquisitionProvenancePage:
+    end = offset + len(page.records)
+    total = page.reference.record_count
+    if (page.offset != offset or len(page.records) > min(page_size, max(0, total - offset))
+        or (not page.records and offset < total)
+        or page.next_offset != (end if end < total else None)):
+        raise ValueError("Backend acquisition paging differs from the returned records")
+    return page
+
+
+async def read_response_acquisition_provenance(
+    backend: AsyncStratifyX, response_id: str, *, version: int | None = None,
+    offset: int = 0, page_size: int = 50,
+) -> AcquisitionProvenancePage:
+    """Read the answer's frozen receipt attachment, without its original jobs."""
+    _provenance_paging(offset, page_size)
+    try:
+        page = await backend.research_responses.get_research_response_acquisition_provenance(
+            response_id, version=version, offset=offset, page_size=page_size,
+            request_options={"max_retries": 0},
+        )
+    except ApiError as error:
+        raise _native_error(error, None) from error
+    return _checked_provenance_page(page, offset, page_size)
+
+
+async def read_execution_acquisition_provenance(
+    backend: AsyncStratifyX, execution_id: str, *, expected_sha256: str | None = None,
+    offset: int = 0, page_size: int = 50,
+) -> AcquisitionProvenancePage:
+    """Read a receipt page from the same optional digest as an input catalogue."""
+    _provenance_paging(offset, page_size)
+    try:
+        page = await backend.studies_executions.get_execution_acquisition_provenance(
+            execution_id, expected_sha256=expected_sha256, offset=offset, page_size=page_size,
+            request_options={"max_retries": 0},
+        )
+    except ApiError as error:
+        raise _native_error(error, execution_id) from error
+    if expected_sha256 is not None and page.reference.sha256 != expected_sha256:
+        raise ValueError("Backend returned a different acquisition provenance snapshot")
+    return _checked_provenance_page(page, offset, page_size)
 
 
 class ResponseTableSource(Contract):

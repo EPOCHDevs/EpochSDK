@@ -369,6 +369,9 @@
   "additionalProperties": false,
   "description": "A Backend-owned answer revision. One query can have many named parts.",
   "properties": {
+    "acquisition_provenance": {
+      "$ref": "openapi.json#/components/schemas/Native_AcquisitionProvenanceReference"
+    },
     "content": {
       "$ref": "#/$defs/ResearchResponseContent"
     },

@@ -626,5 +626,85 @@
     "response": {
       "$description": "Finite binary Arrow IPC page; counts and offset are supplied by the native response headers."
     }
+  },
+  "getExecutionAcquisitionProvenance": {
+    "response": {
+      "reference": {
+        "sha256": "1425bd61e14d93ae6813618d565025ac51fadce2f8183dca312a8ee58c8e4830",
+        "record_count": 2
+      },
+      "offset": 0,
+      "records": [
+        {
+          "execution_id": "execution-one",
+          "status": "recorded",
+          "source": {
+            "schema_version": 4,
+            "source": "",
+            "provider_endpoint": "FMP.IncomeStatement",
+            "category": "",
+            "request_fingerprint": "",
+            "coordinate_fingerprint": "",
+            "provenance": "",
+            "timeframe": "",
+            "coordinate": "",
+            "relational_grid_contract": "",
+            "physical_request_shared": false,
+            "rows": 0,
+            "acquisitions": [
+              {
+                "provider_endpoint": "FMP.IncomeStatement",
+                "origin": "cache_hit",
+                "payload_id": "immutable-payload",
+                "acquired_at": "2026-10-27T09:00:00Z",
+                "read_completed_at": "2026-10-28T10:00:00Z",
+                "served_stale": false
+              }
+            ]
+          }
+        }
+      ],
+      "next_offset": 1
+    }
+  },
+  "getResearchResponseAcquisitionProvenance": {
+    "response": {
+      "reference": {
+        "sha256": "1425bd61e14d93ae6813618d565025ac51fadce2f8183dca312a8ee58c8e4830",
+        "record_count": 2
+      },
+      "offset": 0,
+      "records": [
+        {
+          "execution_id": "execution-one",
+          "status": "recorded",
+          "source": {
+            "schema_version": 4,
+            "source": "",
+            "provider_endpoint": "FMP.IncomeStatement",
+            "category": "",
+            "request_fingerprint": "",
+            "coordinate_fingerprint": "",
+            "provenance": "",
+            "timeframe": "",
+            "coordinate": "",
+            "relational_grid_contract": "",
+            "physical_request_shared": false,
+            "rows": 0,
+            "acquisitions": [
+              {
+                "provider_endpoint": "FMP.IncomeStatement",
+                "origin": "cache_hit",
+                "payload_id": "immutable-payload",
+                "acquired_at": "2026-10-27T09:00:00Z",
+                "read_completed_at": "2026-10-28T10:00:00Z",
+                "served_stale": false
+              }
+            ]
+          }
+        }
+      ],
+      "next_offset": 1
+    }
   }
 }

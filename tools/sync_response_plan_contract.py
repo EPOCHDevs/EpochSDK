@@ -66,6 +66,9 @@ def schemas():
     core["ExecutionExtensionProvenance"] = (
         "openapi.json#/components/schemas/Native_ExecutionExtensionProvenance"
     )
+    core["AcquisitionProvenanceReference"] = (
+        "openapi.json#/components/schemas/Native_AcquisitionProvenanceReference"
+    )
     result = {}
     for filename, model in MODELS:
         result[filename] = project(model, core)

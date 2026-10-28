@@ -13,7 +13,7 @@ The default MCP lets Codex or Claude replace Epoch’s supervisor. The caller ch
 | `epoch_save_extension` | Compile/save caller-authored EpochScript over one saved execution. | None |
 | `epoch_execute_extension` | Execute or reconnect to that saved program by operation ID. | Only explicitly declared cached `llm_call` |
 | `epoch_find` | List owned tools workspaces or saved study IDs. | None |
-| `epoch_read` | Read owned work, exact saved answer/table pages or pinned presentations. | None |
+| `epoch_read` | Read owned work, saved answer/table or provenance pages, or pinned presentations. | None |
 | `epoch_status` | Observe a tool handle, native execution ID or extension operation ID. | None |
 | `epoch_resume` | Explicitly answer a specialist interrupt, when one exists. | Only the selected specialist continues |
 
@@ -33,6 +33,24 @@ consumers. Those destinations share its one bounded cached generation. Read the 
 the derived `execution_id` differs from the source, and presentation edit zero
 is an exact saved version. Keep earlier answer/view pins when choosing a newer
 report. A page size bounds one read, never the complete table.
+
+Acquisition evidence uses the same clients and existing `epoch_read` tool:
+
+```python
+page = await client.execution_provenance(
+    inputs.source.execution_id,
+    expected_sha256=inputs.source.acquisition_provenance.sha256,
+)
+page = await client.response_provenance(answer.response_id, version=answer.version)
+```
+
+MCP uses `kind="execution_provenance"` with `identifier` and the catalogue's
+`expected_sha256`, or `kind="response_provenance"` with `identifier` and `version`.
+Both page by `offset`/`page_size` (at most 1000); follow `next_offset` until absent.
+Answer revisions retain their original provenance snapshot. Captured source
+receipts preserve genuine acquisition/cache clocks where supported; unsupported
+paths and legacy evidence remain explicitly unknown. These reads do not fetch
+vendor data or run a model. Legacy answers without a saved reference return 404.
 
 Check `error` and `response_phase` before treating an extension as ready. Confirmed
 `extension_outputs` identify recorded publications. Admission `phase` may still

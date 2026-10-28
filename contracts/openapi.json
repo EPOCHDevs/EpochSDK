@@ -1275,6 +1275,88 @@
           "null"
         ]
       },
+      "Native_AcquisitionEvidenceStatus": {
+        "enum": [
+          "recorded",
+          "not_recorded",
+          "no_sources"
+        ],
+        "type": "string",
+        "x-native-schema-name": "AcquisitionEvidenceStatus"
+      },
+      "Native_AcquisitionProvenancePage": {
+        "additionalProperties": false,
+        "properties": {
+          "next_offset": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "offset": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/Native_AcquisitionProvenanceRecord"
+            },
+            "type": "array"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/Native_AcquisitionProvenanceReference"
+          }
+        },
+        "required": [
+          "reference",
+          "offset",
+          "records"
+        ],
+        "title": "epoch_stratifyx::AcquisitionProvenancePage",
+        "type": "object",
+        "x-native-schema-name": "AcquisitionProvenancePage"
+      },
+      "Native_AcquisitionProvenanceRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_id": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Native_SourceLoadReceipt"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Native_AcquisitionEvidenceStatus"
+          }
+        },
+        "required": [
+          "execution_id",
+          "status"
+        ],
+        "title": "epoch_stratifyx::AcquisitionProvenanceRecord",
+        "type": "object",
+        "x-native-schema-name": "AcquisitionProvenanceRecord"
+      },
+      "Native_AcquisitionProvenanceReference": {
+        "additionalProperties": false,
+        "properties": {
+          "record_count": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "record_count"
+        ],
+        "title": "epoch_stratifyx::AcquisitionProvenanceReference",
+        "type": "object",
+        "x-native-schema-name": "AcquisitionProvenanceReference"
+      },
       "Native_AgentStudyDefinitionCreateRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2151,6 +2233,15 @@
         "type": "object",
         "x-native-schema-name": "BandSchema"
       },
+      "Native_BarPresentation": {
+        "enum": [
+          "Bar",
+          "Waterfall",
+          "Pie"
+        ],
+        "type": "string",
+        "x-native-schema-name": "BarPresentation"
+      },
       "Native_BarSeriesSpec": {
         "additionalProperties": false,
         "properties": {
@@ -2674,6 +2765,13 @@
         "type": "object",
         "x-native-schema-name": "CommentaryModelSettings"
       },
+      "Native_CommentaryNextStepPresentation": {
+        "enum": [
+          "Card"
+        ],
+        "type": "string",
+        "x-native-schema-name": "CommentaryNextStepPresentation"
+      },
       "Native_CommentaryPolicy": {
         "additionalProperties": false,
         "properties": {
@@ -3155,6 +3253,15 @@
       "Native_ContextHeaderSchema": {
         "additionalProperties": false,
         "properties": {
+          "details": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ContextQualifierSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "observed_at": {
             "type": "string"
           },
@@ -3268,6 +3375,43 @@
           "null"
         ],
         "x-native-schema-name": "ContextInlineLocationSchema"
+      },
+      "Native_ContextInterpretationSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "cache_key": {
+            "type": "string"
+          },
+          "duration_ms": {
+            "maximum": 9223372036854776000,
+            "minimum": -9223372036854776000,
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "input_sha256": {
+            "type": "string"
+          },
+          "markdown_id": {
+            "type": "string"
+          },
+          "result_sha256": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Native_ContextStatus"
+          }
+        },
+        "required": [
+          "markdown_id",
+          "status"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "ContextInterpretationSchema"
       },
       "Native_ContextManifestSchema": {
         "additionalProperties": false,
@@ -3413,6 +3557,9 @@
           "id": {
             "type": "string"
           },
+          "interpretation": {
+            "$ref": "#/components/schemas/Native_ContextInterpretationSchema"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema"
@@ -3493,6 +3640,9 @@
       "Native_ContextStudySchema": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -4198,13 +4348,14 @@
             "$ref": "#/components/schemas/Native_ExecutionReportReference"
           },
           "research_request_id": {
-            "description": "Optional existing accepted research request. Backend confirms the owner/runtime link before starting this saved-input execution; omit for standalone extensions.",
+            "description": "Optional existing accepted research request. Backend confirms the owner/runtime link before starting this ordinary or saved-input execution; omit for standalone work.",
             "type": "string"
           },
           "response_plan": {
             "$ref": "#/components/schemas/Native_SdkContract_ResponsePlanReference"
           },
           "source_execution_id": {
+            "description": "Omit for an ordinary execution of the saved study. Saved-input mode requires the real completed source execution ID.",
             "type": "string"
           },
           "study_id": {
@@ -4217,7 +4368,6 @@
         "required": [
           "operation_id",
           "study_id",
-          "source_execution_id",
           "parameters"
         ],
         "title": "epoch_stratifyx::server::CreateSdkExecutionRequest",
@@ -4833,6 +4983,24 @@
         "type": "object",
         "x-native-schema-name": "ExecutionCommentaryPin"
       },
+      "Native_ExecutionCompletedText": {
+        "additionalProperties": false,
+        "properties": {
+          "producer_id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "value"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionCompletedText",
+        "type": "object",
+        "x-native-schema-name": "ExecutionCompletedText"
+      },
       "Native_ExecutionCostConfigSchema": {
         "additionalProperties": false,
         "properties": {
@@ -4959,6 +5127,12 @@
       "Native_ExecutionExtensionOutputs": {
         "additionalProperties": false,
         "properties": {
+          "dashboard_prose": {
+            "type": "string"
+          },
+          "dashboard_prose_truncated": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "dashboards": {
             "items": {
               "$ref": "#/components/schemas/Native_ExecutionExtensionDashboard"
@@ -4975,6 +5149,15 @@
             "maximum": 9223372036854776000,
             "minimum": -9223372036854776000,
             "type": "integer"
+          },
+          "text": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ExecutionCompletedText"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
         "required": [
@@ -5155,6 +5338,9 @@
       "Native_ExecutionInputSourceView": {
         "additionalProperties": false,
         "properties": {
+          "acquisition_provenance": {
+            "$ref": "#/components/schemas/Native_AcquisitionProvenanceReference"
+          },
           "alias": {
             "type": "string"
           },
@@ -5690,6 +5876,9 @@
           "color": {
             "$ref": "#/components/schemas/Native_Color"
           },
+          "connect_nulls": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "coordinate_member": {
             "$ref": "#/components/schemas/Native_CoordinateMemberRefSchema"
           },
@@ -6013,6 +6202,15 @@
           "instructions": {
             "type": "string"
           },
+          "max_output_bytes": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
+          "next_step_presentation": {
+            "$ref": "#/components/schemas/Native_CommentaryNextStepPresentation"
+          },
           "policy": {
             "$ref": "#/components/schemas/Native_CommentaryPolicy"
           },
@@ -6206,6 +6404,9 @@
       "Native_ResearchResponseRecord": {
         "additionalProperties": false,
         "properties": {
+          "acquisition_provenance": {
+            "$ref": "#/components/schemas/Native_AcquisitionProvenanceReference"
+          },
           "content": {
             "$ref": "#/components/schemas/Native_SdkContract_ResearchResponseContent"
           },
@@ -7416,8 +7617,14 @@
           "execution_id": {
             "type": "string"
           },
+          "execution_status": {
+            "$ref": "#/components/schemas/Native_SdkExecutionStatus"
+          },
           "extension_outputs": {
             "$ref": "#/components/schemas/Native_ExecutionExtensionOutputs"
+          },
+          "output_cancelled": {
+            "$ref": "#/components/schemas/Native_optional_bool"
           },
           "phase": {
             "$ref": "#/components/schemas/Native_SdkRequestPhase"
@@ -7456,6 +7663,17 @@
         "title": "epoch_stratifyx::server::SdkExecutionRecord",
         "type": "object",
         "x-native-schema-name": "SdkExecutionRecord"
+      },
+      "Native_SdkExecutionStatus": {
+        "enum": [
+          "NotStarted",
+          "Running",
+          "Completed",
+          "Failed",
+          "Cancelled"
+        ],
+        "type": "string",
+        "x-native-schema-name": "SdkExecutionStatus"
       },
       "Native_SdkRequestPhase": {
         "enum": [
@@ -7898,6 +8116,87 @@
         ],
         "x-native-schema-name": "SnapshotSparklineSchema"
       },
+      "Native_SourceLoadReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "acquisitions": {
+            "items": {
+              "$ref": "#/components/schemas/Native_dataloader__SourceAcquisitionReceipt"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "coordinate": {
+            "type": "string"
+          },
+          "coordinate_fingerprint": {
+            "type": "string"
+          },
+          "observed_end": {
+            "type": "string"
+          },
+          "observed_start": {
+            "type": "string"
+          },
+          "physical_request_end": {
+            "type": "string"
+          },
+          "physical_request_shared": {
+            "type": "boolean"
+          },
+          "physical_request_start": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "string"
+          },
+          "provider_endpoint": {
+            "type": "string"
+          },
+          "relational_grid_contract": {
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "type": "string"
+          },
+          "rows": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "schema_version": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "source": {
+            "type": "string"
+          },
+          "timeframe": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source",
+          "provider_endpoint",
+          "category",
+          "request_fingerprint",
+          "coordinate_fingerprint",
+          "provenance",
+          "timeframe",
+          "coordinate",
+          "relational_grid_contract",
+          "physical_request_shared",
+          "rows"
+        ],
+        "title": "epoch_stratifyx::SourceLoadReceipt",
+        "type": "object",
+        "x-native-schema-name": "SourceLoadReceipt"
+      },
       "Native_StackType": {
         "enum": [
           "NoStack",
@@ -8215,6 +8514,9 @@
       "Native_TableColumnSchema": {
         "additionalProperties": false,
         "properties": {
+          "color_by_sign": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "coordinate_member": {
             "$ref": "#/components/schemas/Native_CoordinateMemberRefSchema"
           },
@@ -8245,7 +8547,13 @@
           "notation": {
             "$ref": "#/components/schemas/Native_ValueNotation"
           },
+          "sign_display": {
+            "$ref": "#/components/schemas/Native_CardSignDisplay"
+          },
           "suffix": {
+            "type": "string"
+          },
+          "suffix_column_id": {
             "type": "string"
           },
           "type": {
@@ -8587,6 +8895,54 @@
         ],
         "x-native-schema-name": "array_double_2"
       },
+      "Native_dataloader__SourceAcquisitionOrigin": {
+        "enum": [
+          "uncached",
+          "cache_hit",
+          "cache_fill",
+          "stale_cache"
+        ],
+        "type": "string",
+        "x-native-schema-name": "dataloader__SourceAcquisitionOrigin"
+      },
+      "Native_dataloader__SourceAcquisitionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "acquired_at": {
+            "type": "string"
+          },
+          "cache_key_sha256": {
+            "type": "string"
+          },
+          "cache_version": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/Native_dataloader__SourceAcquisitionOrigin"
+          },
+          "payload_id": {
+            "type": "string"
+          },
+          "provider_endpoint": {
+            "type": "string"
+          },
+          "read_completed_at": {
+            "type": "string"
+          },
+          "served_stale": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "provider_endpoint",
+          "origin",
+          "served_stale"
+        ],
+        "type": "object",
+        "x-native-schema-name": "dataloader__SourceAcquisitionReceipt"
+      },
       "Native_epoch_tearsheet__AreaRangeChartDef": {
         "additionalProperties": false,
         "properties": {
@@ -8626,6 +8982,9 @@
           },
           "kind": {
             "const": "Bar"
+          },
+          "presentation": {
+            "$ref": "#/components/schemas/Native_BarPresentation"
           },
           "series": {
             "default": [],
@@ -12645,6 +13004,288 @@
         ]
       }
     },
+    "/api/v1/research/responses/{responseId}/acquisition-provenance": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract.",
+        "operationId": "getResearchResponseAcquisitionProvenance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "responseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional immutable answer revision",
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Zero-based record offset",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "From 1 to 1000 records, bounded to 4 MiB; default 50",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "nativeExtension": {
+                    "value": {
+                      "next_offset": 1,
+                      "offset": 0,
+                      "records": [
+                        {
+                          "execution_id": "execution-one",
+                          "source": {
+                            "acquisitions": [
+                              {
+                                "acquired_at": "2026-10-27T09:00:00Z",
+                                "origin": "cache_hit",
+                                "payload_id": "immutable-payload",
+                                "provider_endpoint": "FMP.IncomeStatement",
+                                "read_completed_at": "2026-10-28T10:00:00Z",
+                                "served_stale": false
+                              }
+                            ],
+                            "category": "",
+                            "coordinate": "",
+                            "coordinate_fingerprint": "",
+                            "physical_request_shared": false,
+                            "provenance": "",
+                            "provider_endpoint": "FMP.IncomeStatement",
+                            "relational_grid_contract": "",
+                            "request_fingerprint": "",
+                            "rows": 0,
+                            "schema_version": 4,
+                            "source": "",
+                            "timeframe": ""
+                          },
+                          "status": "recorded"
+                        }
+                      ],
+                      "reference": {
+                        "record_count": 2,
+                        "sha256": "1425bd61e14d93ae6813618d565025ac51fadce2f8183dca312a8ee58c8e4830"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_AcquisitionProvenancePage"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Read a bounded page of acquisition facts frozen with the saved answer",
+        "tags": [
+          "ResearchResponses"
+        ]
+      }
+    },
+    "/api/v1/studies/executions/{executionId}/acquisition-provenance": {
+      "get": {
+        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract.",
+        "operationId": "getExecutionAcquisitionProvenance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "executionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Zero-based record offset",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "From 1 to 1000 records, bounded to 4 MiB; default 50",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Optional snapshot digest returned by the input catalogue or earlier page",
+            "in": "query",
+            "name": "expected_sha256",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "nativeExtension": {
+                    "value": {
+                      "next_offset": 1,
+                      "offset": 0,
+                      "records": [
+                        {
+                          "execution_id": "execution-one",
+                          "source": {
+                            "acquisitions": [
+                              {
+                                "acquired_at": "2026-10-27T09:00:00Z",
+                                "origin": "cache_hit",
+                                "payload_id": "immutable-payload",
+                                "provider_endpoint": "FMP.IncomeStatement",
+                                "read_completed_at": "2026-10-28T10:00:00Z",
+                                "served_stale": false
+                              }
+                            ],
+                            "category": "",
+                            "coordinate": "",
+                            "coordinate_fingerprint": "",
+                            "physical_request_shared": false,
+                            "provenance": "",
+                            "provider_endpoint": "FMP.IncomeStatement",
+                            "relational_grid_contract": "",
+                            "request_fingerprint": "",
+                            "rows": 0,
+                            "schema_version": 4,
+                            "source": "",
+                            "timeframe": ""
+                          },
+                          "status": "recorded"
+                        }
+                      ],
+                      "reference": {
+                        "record_count": 2,
+                        "sha256": "1425bd61e14d93ae6813618d565025ac51fadce2f8183dca312a8ee58c8e4830"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Native_AcquisitionProvenancePage"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Read bounded acquisition facts from the owned immutable execution",
+        "tags": [
+          "StudiesExecutions"
+        ]
+      }
+    },
     "/api/v1/studies/executions/{executionId}/inputs": {
       "post": {
         "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract.",
@@ -15105,10 +15746,16 @@
       "/api/v1/integration/requests/by-handle/{operationId}",
       "/api/v1/integration/requests/{requestId}",
       "/api/v1/research/responses/{responseId}",
+      "/api/v1/research/responses/{responseId}/acquisition-provenance",
+      "/api/v1/studies/executions/{executionId}/acquisition-provenance",
       "/api/v1/studies/executions/{executionId}/inputs",
       "/api/v1/studies/executions/{executionId}/response-tables"
     ],
     "schemas": [
+      "Native_AcquisitionEvidenceStatus",
+      "Native_AcquisitionProvenancePage",
+      "Native_AcquisitionProvenanceRecord",
+      "Native_AcquisitionProvenanceReference",
       "Native_AgentStudyDefinitionCreateRequest",
       "Native_AlgoParams",
       "Native_AlgoParams_bayes",
@@ -15128,6 +15775,7 @@
       "Native_AxisSchema",
       "Native_AxisSide",
       "Native_BandSchema",
+      "Native_BarPresentation",
       "Native_BarSeriesSpec",
       "Native_BoxPlotDataPointSpec",
       "Native_BoxPlotOutlierSpec",
@@ -15142,6 +15790,7 @@
       "Native_Color",
       "Native_ColorStopSchema",
       "Native_CommentaryModelSettings",
+      "Native_CommentaryNextStepPresentation",
       "Native_CommentaryPolicy",
       "Native_CommentarySource",
       "Native_CommissionType",
@@ -15167,6 +15816,7 @@
       "Native_ContextHitSchema",
       "Native_ContextHitTargetSchema",
       "Native_ContextInlineLocationSchema",
+      "Native_ContextInterpretationSchema",
       "Native_ContextManifestSchema",
       "Native_ContextMarkdownAnchorSchema",
       "Native_ContextMarkdownSchema",
@@ -15206,6 +15856,7 @@
       "Native_ErrorResponse",
       "Native_Exchange",
       "Native_ExecutionCommentaryPin",
+      "Native_ExecutionCompletedText",
       "Native_ExecutionCostConfigSchema",
       "Native_ExecutionCostConfig_CommissionType",
       "Native_ExecutionCostConfig_SlippageType",
@@ -15287,6 +15938,7 @@
       "Native_SdkContract_TextOutputRequest",
       "Native_SdkContract_TextValue",
       "Native_SdkExecutionRecord",
+      "Native_SdkExecutionStatus",
       "Native_SdkRequestPhase",
       "Native_SdkRequestRecord",
       "Native_SdkRequestRuntime",
@@ -15302,6 +15954,7 @@
       "Native_SnapshotMetricSchema",
       "Native_SnapshotSparklinePoint",
       "Native_SnapshotSparklineSchema",
+      "Native_SourceLoadReceipt",
       "Native_StackType",
       "Native_StepType",
       "Native_StockIndustry",
@@ -15321,6 +15974,8 @@
       "Native_UpdateSdkRequest",
       "Native_ValueNotation",
       "Native_array_double_2",
+      "Native_dataloader__SourceAcquisitionOrigin",
+      "Native_dataloader__SourceAcquisitionReceipt",
       "Native_epoch_tearsheet__AreaRangeChartDef",
       "Native_epoch_tearsheet__BarChartDef",
       "Native_epoch_tearsheet__BoxPlotChartDef",
@@ -15357,7 +16012,7 @@
       "Native_variant_bool_int64_t_double_string",
       "Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
     ],
-    "sha256": "2c75018c212285c563905d7db6b189ef81c1da2c62e9eef85a1bfbbbeb415f21",
+    "sha256": "c31c7bf5c652501ea361779dc6f9226004d130fb0b48b5d9af5c2d2f8e26f2c8",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
