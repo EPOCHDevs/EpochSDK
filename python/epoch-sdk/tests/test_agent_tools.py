@@ -201,6 +201,20 @@ def test_default_catalogue_is_composable_and_preserves_native_nested_schemas():
         async with service.client() as client, Client(create_server(client)) as mcp:
             tools = {tool.name: tool for tool in (await mcp.list_tools()).tools}
             assert set(tools) == {
+                "epoch_upload_file",
+                "epoch_list_files",
+                "epoch_inspect_file",
+                "epoch_prepare_dataset",
+                "epoch_review_datasets",
+                "epoch_list_datasets",
+                "epoch_preview_dataset",
+                "epoch_dataset_content",
+                "epoch_space_browse",
+                "epoch_space_create_folder",
+                "epoch_space_update_folder",
+                "epoch_space_delete_folder",
+                "epoch_space_place_resource",
+                "epoch_space_unplace_resource",
                 "epoch_search_dataset",
                 "epoch_screen_assets",
                 "epoch_inspect_source",
