@@ -11,7 +11,7 @@ from collections.abc import Awaitable
 from copy import deepcopy
 from importlib.resources import files
 from typing import Annotated, Literal, cast
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 import httpx
 from jsonschema.exceptions import SchemaError
@@ -285,7 +285,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     )
     async def prepared_dataset(dataset_ref: str) -> bytes:
         try:
-            return await client.download_dataset(unquote(dataset_ref))
+            return await client.download_dataset(dataset_ref)
         except ApiError as error:
             try:
                 native = NativeErrorResponse.model_validate(error.body, strict=True)

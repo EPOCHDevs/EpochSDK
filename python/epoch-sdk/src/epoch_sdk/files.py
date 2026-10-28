@@ -47,7 +47,7 @@ class FileClient:
         An uncertain call may be repeated with the same bytes: Backend owns the
         content identity, upload generation and idempotent completion.
         """
-        if not isinstance(content, bytes):
+        if type(content) is not bytes:
             raise TypeError("File content must be bytes")
         session = await self.backend.user_files.init_file_upload(
             name=name,
@@ -180,7 +180,10 @@ class FileClient:
     async def update_folder(
         self, folder_ref: str, *, name: str, parent_folder_ref: str | None = None,
     ) -> SpaceFolder:
-        """Rename/move a folder, preserving its identity and all descendants."""
+        """Rename/move a folder, preserving its identity and all descendants.
+
+        None parent moves to root; pass the existing parent to rename in place.
+        """
         request = SpaceFolderRequest(name=name, parent_folder_ref=parent_folder_ref)
         return await self.backend.space.update_space_folder(
             folder_ref, name=request.name, parent_folder_ref=request.parent_folder_ref,
@@ -194,7 +197,10 @@ class FileClient:
     async def place_resource(
         self, resource: SpaceResourceRef, *, folder_ref: str | None = None, name: str | None = None,
     ) -> SpaceResourceItem:
-        """Place/move a saved resource, optionally setting its Space display name."""
+        """Place/move a saved resource, optionally setting its Space display name.
+
+        Omitting name preserves any existing display name across the move.
+        """
         request = SpacePlacementRequest(
             resource=_RESOURCE.validate_python(resource), folder_ref=folder_ref, name=name,
         )

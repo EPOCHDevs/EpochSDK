@@ -33,7 +33,9 @@ from stratifyx import DataOption, DatePeriodConfig
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import (
     DatasetReviewRequest,
+    DatasetReviewResponse,
     DatasetTableSchema,
+    DataSourceColumn,
     JobListItem,
     SavedDataset,
     SpaceFolder,
@@ -114,10 +116,10 @@ class CatalogueServer:
         self.thread.join()
 
 
-def native_options() -> StructuredImportOptions:
+def native_options(columns: list[DataSourceColumn] | None = None) -> StructuredImportOptions:
     return StructuredImportOptions(
         format="csv", sheet=None, json_pointer=None, delimiter=",", header=True,
-        null_values=[""], columns=[],
+        null_values=[""], columns=columns or [],
     )
 
 
@@ -129,7 +131,7 @@ def arrow_file(content: bytes) -> pa.Table:
     return pa.ipc.open_file(pa.BufferReader(content)).read_all()
 
 
-def saved(review) -> SavedDataset:
+def saved(review: DatasetReviewResponse) -> SavedDataset:
     item = review.results[0]
     assert item.status == "saved", "Review did not publish a dataset"
     return item.dataset
@@ -147,12 +149,14 @@ async def completed(client: AgentToolsClient, identifier: str) -> JobListItem:
 
 
 async def chart_values(client: AgentToolsClient, execution_id: str) -> None:
-    dashboard = await client.dashboard(execution_id, category="Space")
+    # "ALL" is the native assetless report scope. Chart.category is a display
+    # section label and must not replace that physical data scope.
+    dashboard = await client.dashboard(execution_id, category="ALL")
     assert dashboard.charts
     chart = dashboard.charts[0]
     data = bytearray()
     async with client.backend.studies_dashboard.with_raw_response.get_chart_table_data_as_arrow_ipc(
-        execution_id, chart.data_id, category=chart.category, request_options={"max_retries": 0},
+        execution_id, chart.data_id, category="ALL", request_options={"max_retries": 0},
     ) as response:
         async for chunk in response.data:
             data.extend(chunk)
@@ -277,14 +281,16 @@ async def scenario(receipt: Receipt, graph_url: str, backend: Path) -> Evidence:
             large_file = UserFileDescriptor.model_validate(file_call.structured_content)
             knowledge_request = StructuredImportRequest(
                 file_ref=large_file.file_ref, request_id=str(uuid4()), name="Complete knowledge data",
-                options=native_options(), metadata=None, purpose="knowledge",
+                options=native_options([
+                    DataSourceColumn(name="id", dtype="uint64", nullable=False, is_index=False, transforms=[]),
+                    DataSourceColumn(name="text", dtype="utf8", nullable=False, is_index=False, transforms=[]),
+                ]), metadata=None, purpose="knowledge",
             )
-            prepared_call = await call(mcp, "epoch_prepare_dataset", {"request": knowledge_request.model_dump(mode="json", by_alias=True)})
+            prepared_call = await call(mcp, "epoch_prepare_dataset", {"request": knowledge_request.model_dump(mode="json", by_alias=True, exclude_unset=True)})
             knowledge_draft = StructuredImportResult.model_validate(prepared_call.structured_content)
             assert knowledge_draft.preview.content.requires_download
             decisions = {"decisions": [{"action": "save", "draft_ref": knowledge_draft.draft.draft_ref, "name": "Complete knowledge data"}]}
             accepted_call = await call(mcp, "epoch_review_datasets", {"request": decisions})
-            from stratifyx.types import DatasetReviewResponse
             knowledge = saved(DatasetReviewResponse.model_validate(accepted_call.structured_content))
             assert knowledge.source_ref is None
             repeated = await call(mcp, "epoch_review_datasets", {"request": decisions})
@@ -295,7 +301,7 @@ async def scenario(receipt: Receipt, graph_url: str, backend: Path) -> Evidence:
             checks.append("MCP imports, reviews and fully reads a row beyond preview limits without integer/text loss")
             checks.append("knowledge data receives no study source; repeated acceptance creates no duplicate dataset")
             rejected_request = knowledge_request.model_copy(update={"request_id": str(uuid4())})
-            reject_call = await call(mcp, "epoch_prepare_dataset", {"request": rejected_request.model_dump(mode="json", by_alias=True)})
+            reject_call = await call(mcp, "epoch_prepare_dataset", {"request": rejected_request.model_dump(mode="json", by_alias=True, exclude_unset=True)})
             rejected = StructuredImportResult.model_validate(reject_call.structured_content)
             await call(mcp, "epoch_review_datasets", {"request": {"decisions": [{"action": "reject", "draft_ref": rejected.draft.draft_ref}]}})
             try:
@@ -314,8 +320,10 @@ async def scenario(receipt: Receipt, graph_url: str, backend: Path) -> Evidence:
             assert mcp_job.id == execution_id
             await completed(native, execution_id)
             await chart_values(native, execution_id)
-            again = await call(fresh, "epoch_execute", args)
-            assert JobListItem.model_validate(again.structured_content).id == execution_id
+            again = await fresh.call_tool("epoch_execute", args)
+            assert again.is_error and again.structured_content["http_status"] == 409
+            observed = await call(fresh, "epoch_status", {"kind": "execution", "execution_id": execution_id})
+            assert JobListItem.model_validate(observed.structured_content).id == execution_id
             checks.append("fresh stdio MCP rediscovers exact saved refs, reads full data and executes the saved study after folder moves")
         for kind, ref in [("file", uploaded.file_ref), ("dataset", accepted.dataset_ref), ("model", receipt.model_ref), ("study", study.id)]:
             try:
@@ -332,8 +340,8 @@ async def scenario(receipt: Receipt, graph_url: str, backend: Path) -> Evidence:
         return Evidence(
             native_sdk_version=importlib.metadata.version("stratifyx"),
             epoch_sdk_version=importlib.metadata.version("epoch-sdk"),
-            backend_git_sha=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=backend, text=True).strip(),
-            sdk_git_sha=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SDK_ROOT, text=True).strip(),
+            backend_git_sha=(await asyncio.to_thread(subprocess.check_output, ["git", "rev-parse", "HEAD"], cwd=backend, text=True)).strip(),
+            sdk_git_sha=(await asyncio.to_thread(subprocess.check_output, ["git", "rev-parse", "HEAD"], cwd=SDK_ROOT, text=True)).strip(),
             study_dataset_ref=accepted.dataset_ref, knowledge_dataset_ref=knowledge.dataset_ref,
             source_ref=accepted.source_ref, study_id=study.id, model_ref=receipt.model_ref,
             sdk_execution_id=first.id, mcp_execution_id=execution_id,
