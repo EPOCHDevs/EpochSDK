@@ -1,0 +1,18 @@
+{
+  "name": "@epochdevs/epoch-sdk",
+  "version": "0.1.0-alpha.3",
+  "description": "Typed Epoch research workflows over the native StratifyX and LangGraph clients",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": { ".": { "types": "./index.d.ts", "import": "./index.js" } },
+  "files": ["*.js", "*.d.ts", "schemas.generated.json", "README.md"],
+  "scripts": { "test": "node --test test/*.test.mjs" },
+  "dependencies": { "ajv": "8.17.1", "ajv-formats": "3.0.1" },
+  "peerDependencies": {
+    "@epoch/stratifyx": ">=3.3.0-rc.44 <4",
+    "@langchain/langgraph-sdk": ">=1.12.1 <2"
+  },
+  "engines": { "node": ">=24" },
+  "repository": { "type": "git", "url": "https://github.com/EPOCHDevs/EpochSDK" }
+}
