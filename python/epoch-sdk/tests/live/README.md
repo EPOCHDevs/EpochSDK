@@ -103,3 +103,53 @@ correct source before authoring or executing anything.
 The frozen catalog inventory intentionally makes new sources/options/schema
 changes fail review until the corpus is updated. Do not regenerate labels from
 the response being tested merely to make a run green.
+
+## Real-service Space acceptance
+
+`space_real_services_acceptance.py` exercises installed candidate packages,
+normal Cognito validation, the live EpochAI specialist catalogue and actual
+Backend storage/execution. It creates synthetic files and datasets, an ordinary
+study and a small native fitted model. It checks complete values and nulls,
+oversized-row retrieval, review/retry behavior, folder organization and input
+retention. It calls the catalogue without starting an agent run.
+
+Use a new disposable Backend storage namespace with the normal S3/DynamoDB
+adapters. The runner rejects a populated library before writing. Keep its
+receipt directory private and supply existing login files containing
+`id_token`; tokens and passwords never belong in case data or evidence.
+
+```bash
+python python/epoch-sdk/tests/live/space_real_services_acceptance.py create \
+  --state /private/run/evidence.json \
+  --backend-url "$EPOCH_BACKEND_URL" --graph-url "$EPOCH_GRAPH_URL" \
+  --token-file "$EPOCH_TEST_LOGIN_FILE"
+
+# Restart only the candidate, preserving cloud storage and using a new empty
+# local project/staging directory, then read through another MCP process.
+python python/epoch-sdk/tests/live/space_real_services_acceptance.py verify \
+  --state /private/run/evidence.json --token-file "$EPOCH_TEST_LOGIN_FILE"
+
+python python/epoch-sdk/tests/live/space_real_services_acceptance.py foreign \
+  --state /private/run/evidence.json --token-file "$EPOCH_TEST_LOGIN_FILE" \
+  --other-token-file "$EPOCH_OTHER_TEST_LOGIN_FILE"
+```
+
+The foreign phase requires distinct real subjects and tests all four resource
+kinds and folder reads. Missing second-account evidence remains pending.
+The receipt records service revisions, package versions, catalogue digest,
+runner hash, resource references and checks.
+
+Always run cleanup in a `finally` path, including after a failed assertion:
+
+```bash
+python python/epoch-sdk/tests/live/space_real_services_acceptance.py cleanup \
+  --state /private/run/evidence.json --token-file "$EPOCH_TEST_LOGIN_FILE"
+```
+
+It unplaces resources, removes executions/studies, rejects remaining drafts and
+deletes datasets/files/folders, then verifies the API lists are empty.
+After stopping the candidate, remove the disposable cloud namespace and local
+runtime. The immutable model catalogue has no public deletion endpoint, and
+versioned S3 retains old bytes after API deletion; namespace cleanup must remove
+all object versions and delete markers as well as test buckets/tables. Verify
+their absence and retain the cleanup receipt.

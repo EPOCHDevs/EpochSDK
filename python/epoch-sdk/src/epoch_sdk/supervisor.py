@@ -12,6 +12,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import httpx
+from epoch_sources.client import AsyncSourcesClient
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, Run, RunCreateMetadata, StreamMode
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
@@ -349,11 +350,13 @@ class SupervisorClient:
         *,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
+        source_connections: AsyncSourcesClient | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
         self.assistant_id = assistant_id
         self.ui_url = ui_url
+        self.source_connections = source_connections
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -377,6 +380,7 @@ class SupervisorClient:
             AsyncStratifyX(base_url=backend_url, token=token, httpx_client=backend_http),
             assistant_id=assistant_id,
             ui_url=ui_url,
+            source_connections=AsyncSourcesClient(base_url=backend_url, token=token, http=backend_http),
         )
         client._owned_http = [graph_http, backend_http]
         return client

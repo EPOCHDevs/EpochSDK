@@ -11,6 +11,7 @@ from typing import Literal, Protocol, TypedDict, cast
 from uuid import uuid4
 
 import httpx
+from epoch_sources.client import AsyncSourcesClient
 from jsonschema import Draft202012Validator
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, Run, RunStatus, StreamMode
@@ -30,7 +31,9 @@ from .agent_tools_contract import (
 )
 from .datasets import DatasetClient
 from .extensions import ExecutionExtensionClient
+from .files import FileClient
 from .json_schema import validate_schema
+from .sources import SourceClient
 from .supervisor import (
     Answers,
     GraphInterrupt,
@@ -135,13 +138,15 @@ class _WorkspaceState(BaseModel):
         )
 
 
-class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
+class AgentToolsClient(DatasetClient, FileClient, SourceClient, ExecutionExtensionClient):
     def __init__(
-        self, graph: LangGraphClient, backend: AsyncStratifyX, graph_http: httpx.AsyncClient
+        self, graph: LangGraphClient, backend: AsyncStratifyX, graph_http: httpx.AsyncClient,
+        *, source_connections: AsyncSourcesClient | None = None,
     ):
         self.graph = graph
         self.backend = backend
         self.graph_http = graph_http
+        self.source_connections = source_connections
         self._catalog: AgentToolsCatalog | None = None
         self._owned_http: list[httpx.AsyncClient] = []
 
@@ -155,6 +160,7 @@ class AgentToolsClient(DatasetClient, ExecutionExtensionClient):
             LangGraphClient(graph_http),
             AsyncStratifyX(base_url=api_url(backend_url), token=token, httpx_client=backend_http),
             graph_http,
+            source_connections=AsyncSourcesClient(base_url=api_url(backend_url), token=token, http=backend_http),
         )
         client._owned_http = [graph_http, backend_http]
         return client
