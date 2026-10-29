@@ -46,7 +46,7 @@ with the default MCP; the explicit workflow MCP shares the research session core
 | --- | --- |
 | `contracts/` | Shared language-neutral API, native parameter snapshot and validation fixtures |
 | `python/epoch-sdk/` | Python client package, distributed as `epoch-sdk`, imported as `epoch_sdk` |
-| `typescript/` | TypeScript packages; the new integration wrapper will use the same shared contract |
+| `typescript/epoch-sdk/` | Preview typed workflow client for research, saved study execution and saved responses |
 | `tools/` | Shared contract checks and native parameter synchronization |
 | `docs/architecture.md` | Client/service boundaries and ordinary workflow |
 
