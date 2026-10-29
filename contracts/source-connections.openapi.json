@@ -1811,6 +1811,13 @@
               }
             ]
           },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
           "name": {
             "maxLength": 255,
             "minLength": 1,
@@ -1933,6 +1940,13 @@
           "file_ref": {
             "title": "File Ref",
             "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
           },
           "manifest_sha256": {
             "title": "Manifest Sha256",
@@ -2300,7 +2314,7 @@
   },
   "info": {
     "title": "Epoch Source Connections",
-    "version": "0.1.0a1"
+    "version": "0.1.0a2"
   },
   "openapi": "3.1.0",
   "paths": {
