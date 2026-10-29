@@ -112,6 +112,27 @@ test("does not lose special JSON property keys during native serialization", () 
   assert.equal({}.polluted, undefined)
 })
 
+test("JSON Schema validates unused local references and dialects while retaining annotation data", () => {
+  const withSchema = schema => ({ ...request(), outputs: [{ name: "data", type: "json", schema }] })
+  for (const schema of [
+    { $defs: { unused: { $ref: "https://example.test/schema" } }, type: "object" },
+    { $defs: { unused: { $ref: "#/$defs/missing" } }, type: "object" },
+    { $defs: { unused: { $dynamicRef: "#missing" } }, type: "object" },
+    { $defs: { unused: { $schema: "http://json-schema.org/draft-07/schema#" } }, type: "object" },
+    { $defs: { unused: { $ref: "#/description" } }, description: "Not a schema" },
+    { $defs: { unused: { $ref: "file:///private/schema.json" } } },
+    { type: "object", examples: [Infinity] },
+  ]) assert.throws(() => validateRequest(withSchema(schema)), e => e.code === "VALIDATION_ERROR")
+  for (const schema of [
+    false,
+    { $schema: "https://json-schema.org/draft/2020-12/schema", type: "object", properties: { "$ref": { type: "string" } }, examples: [{ "$ref": "https://example.test/data" }] },
+    { $defs: { node: { type: "object", properties: { child: { $ref: "#/$defs/node" } } } }, $ref: "#/$defs/node" },
+    { $id: "https://example.test/root", $defs: { value: { $anchor: "value", type: "number" }, unused: { $ref: "#value" } } },
+    { $id: "https://example.test/root", $defs: { child: { $id: "child", $defs: { value: { type: "number" } }, $ref: "#/$defs/value" } } },
+    { $defs: { "escaped/~key": { type: "string" }, unused: { $ref: "#/$defs/escaped~1~0key" } } },
+  ]) assert.deepEqual(validateRequest(withSchema(schema)), withSchema(schema))
+})
+
 test("validates saved output names, types, schemas, JSON values and response pins", async () => {
   const wire = JSON.parse(await readFile(new URL("../../../contracts/research-response.example.json", import.meta.url), "utf8"))
   const parsed = native.serialization.ResearchResponseRecord.parseOrThrow(wire)

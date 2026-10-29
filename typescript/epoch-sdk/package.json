@@ -1,6 +1,6 @@
 {
   "name": "@epochdevs/epoch-sdk",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Typed Epoch research workflows over the native StratifyX and LangGraph clients",
   "type": "module",
   "main": "index.js",

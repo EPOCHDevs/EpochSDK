@@ -4,6 +4,7 @@ import bundle from "./schemas.generated.json" with { type: "json" }
 import { SdkContractRunRequest } from "@epoch/stratifyx/serialization/types/SdkContractRunRequest.js"
 import { ResearchResponseRecord } from "@epoch/stratifyx/serialization/types/ResearchResponseRecord.js"
 import { SdkContractRunParameters } from "@epoch/stratifyx/serialization/types/SdkContractRunParameters.js"
+import { compileJsonSchema } from "./json-schema.js"
 
 export class EpochError extends Error {
   constructor(code, message, details = {}) {
@@ -71,7 +72,7 @@ export function validateRequest(request) {
     if (output.type === "table") invariant(new Set(output.schema.map(c => c.name)).size === output.schema.length,
       `Table ${output.name}: column names must be unique.`, "VALIDATION_ERROR")
     if (output.type === "json") {
-      try { validator().compile(output.schema) }
+      try { compileJsonSchema(output.schema, validator()) }
       catch (error) { throw new EpochError("VALIDATION_ERROR", `JSON output ${output.name}: ${error.message}`) }
     }
   }
@@ -103,7 +104,7 @@ export function validateResponse(response) {
     if (output.type === "text") invariant(output.format === (declaration.format ?? "plain"),
       `Text format changed for ${output.name}.`, "OUTPUT_VALIDATION_FAILED")
     if (output.type === "json") {
-      const check = validator().compile(declaration.schema)
+      const check = compileJsonSchema(declaration.schema, validator())
       invariant(check(output.value), `JSON output ${output.name} does not match its schema.`, "OUTPUT_VALIDATION_FAILED")
     }
     if (output.type === "table") {
