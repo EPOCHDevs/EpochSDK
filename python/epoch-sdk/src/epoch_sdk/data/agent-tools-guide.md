@@ -19,17 +19,21 @@ directly from the evidence you read.
    errors, and report a clear lookup gap rather than exploring candidate pools.
    Use `saved_query` for caller-owned datasets by name, descriptive metadata or
    exact returned references; only an issued source_ref is study-ready. Pass
-   the saved descriptor/source_ref in build context for custom_data; native
-   selections use result_ref/record_ref in source_refs. Use
-   `epoch_screen_assets` for complete cohorts. Keep exact result_ref/record_ref
-   or universe_ref, and choose dataset/options in build_study source_refs. Reuse
-   retained source_refs across studies with their time basis and qualifications.
+   the saved descriptor/source_ref, field types and clock in the briefing for
+   custom_data. For native sources, carry selected identities, loaders/options
+   and material qualifications into the briefing; search references identify
+   metadata, not loader inputs. Group known tickers sharing an asset type or
+   categories sharing fields, selectors and a window. Use separate groups for
+   different settings. Use `epoch_screen_assets` for complete cohorts and carry
+   the selected membership definition and qualifications into the briefing.
 4. Use `epoch_inspect_source` only when actual observations are needed. Supply
    the exact returned inspection addresses/handles and an explicit window.
 5. `epoch_build_study` uses the existing study author. Fill its source-owned
-   command schema, cite selected refs and choose distinct slots for distinct
-   studies. Specialists do not see the calling agent's whole conversation:
-   include the relevant task, approved definitions and parameters. Never invent
+   command schema and choose distinct slots for distinct studies. Supply one
+   settled briefing with the objective, scope, selected inputs, methods and
+   requested views. Useful sections include loaders/options, source qualifications,
+   methods/exhibits and supplied evidence; omit irrelevant sections. Specialists
+   do not see the calling agent's whole conversation. Never invent
    internal decision receipts; convey external user choices in the current task.
 6. `epoch_execute` calls Backend directly using a saved study ID and period.
    This is native execution, not saved-answer-plan replay. A changed period does

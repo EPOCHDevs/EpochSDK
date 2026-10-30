@@ -80,7 +80,9 @@ class DatasetClient:
     ) -> DatasetSearchResult:
         """Find native asset/series identities, optionally with a constructor.
 
-        Copy exact returned record_ref/result_ref into build_study source_refs.
+        Carry selected native identities, loader options and material source
+        qualifications into the build_study briefing. References identify saved
+        metadata; they are not native loader inputs.
         Backend delivers relevant candidates per requested subject and product.
         saved_query finds caller-owned datasets by descriptive metadata or exact
         returned references. Search does not create an asset cohort; use
@@ -116,7 +118,8 @@ class DatasetClient:
     async def screen_assets(self, request: ScreenAssetsRequest) -> AssetUniverseResponse:
         """Create/reuse a complete cohort, preserving its membership time basis.
 
-        Use the returned universe_ref with a chosen dataset in build_study.
+        Carry the selected membership definition and qualifications into the
+        build_study briefing; keep universe_ref to reread the saved selection.
         Acquisition/integrity gaps remain visible and cannot form a usable
         universe. Screening never applies relevance top-k.
         """

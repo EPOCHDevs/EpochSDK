@@ -280,7 +280,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         "Epoch",
         instructions=(
             "Read epoch_read(kind=guide) for workflow guidance. You are the supervisor. The guide includes version-matched Backend dataset, compute, execution and cost guidance. Use epoch_search_dataset for identities or caller-owned saved datasets, and epoch_screen_assets for whole cohorts. "
-            "These data tools call Backend directly without a Discovery agent or generative LLM. Reuse exact source_refs across study builds. "
+            "These data tools call Backend directly without a Discovery agent or generative LLM. Carry selected native identities, loader options and source qualifications into a self-contained study brief. "
             "Do not launch epoch-ai or publish merely to finish; explain results directly. "
             "Specialist operations return handles; poll epoch_status rather than resubmitting. "
             "Execution and reads use Backend directly. Specialist LLMs run only for explicitly selected study authoring or a program's declared llm_call."
@@ -510,8 +510,11 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         saved_query: str | None = None,
     ) -> CallToolResult:
         """Find assets/series by name, concept or exact native address through Backend.
-        No Discovery agent or generative LLM is invoked. Reuse exact returned
-        result_ref/record_ref in build_study source_refs; never invent identifiers.
+        No Discovery agent or generative LLM is invoked. Carry selected native
+        identities, loader options and source qualifications into the build_study
+        briefing. Search references identify metadata, not native loader inputs.
+        Group tickers sharing an asset_type, or categories sharing fields,
+        selectors and a window; use separate groups for different settings.
         The first response contains ranked candidates per requested subject/product,
         with definitions and qualifications. Do not browse collected candidate
         pages. saved_query finds caller-owned datasets by name, description or
@@ -528,7 +531,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """Create or reuse a complete saved asset universe through Backend, without an LLM.
         Use explicit membership mode and a window for historical membership.
         No relevance limit is applied. Keep qualifications/integrity visible;
-        pass universe_ref plus the desired dataset to build_study source_refs.
+        carry the selected membership definition and qualifications into the
+        build_study briefing. Keep universe_ref for rereading the saved selection.
         A missing universe_ref means no usable complete universe was established.
         Listing location and company domicile are different filters. Current
         roster freshness does not establish historical identity, lineage or
