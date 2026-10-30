@@ -289,6 +289,12 @@ def test_mcp_data_descriptions_retain_source_qualifications_without_new_inputs()
             for tool in (search, screen):
                 Draft202012Validator.check_schema(tool.input_schema)
                 assert tool.input_schema["additionalProperties"] is False
+            Draft202012Validator(search.input_schema).validate({"requests": [{
+                "request_id": "shared_financial_settings",
+                "subjects": [{"kind": "asset", "asset_type": "Stocks", "tickers": ["FAST", "MSM"]}],
+                "datasets": [{"categories": ["IncomeStatements", "BalanceSheets"],
+                    "selectors": {"kind": "financial", "period": "annual", "index_by": "FilingDate"}}],
+            }]})
             assert not service.backend_calls
             assert [request.url.path for request in service.graph_calls] == ["/api/v1/agent-tools"]
 
