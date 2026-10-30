@@ -37,7 +37,7 @@ ARGS = {
     "history_scope": "metadata_only",
 }
 BUILD_ARGS = {"studies": [{"operation": "create", "slot_id": "aapl_review", "name": "AAPL Review",
-    "form": "research", "authoring_brief": "Use the selected source.", "data_refs": [], "decision_refs": []}]}
+    "form": "research", "authoring_brief": "Use the selected source."}]}
 
 
 def test_native_mcp_guide_uses_one_backend_version_and_only_mounted_operations():
@@ -272,6 +272,8 @@ def test_mcp_data_descriptions_retain_source_qualifications_without_new_inputs()
             screen = tools["epoch_screen_assets"]
             search_description = " ".join(search.description.split())
             screen_description = " ".join(screen.description.split())
+            assert "build_study source_refs" not in search_description + screen_description
+            assert "briefing" in search_description and "briefing" in screen_description
             assert "asset class with each identity" in search_description
             assert "bounds and their provenance describe the root" in search_description
             assert "not one dated contract or every continuous construction" in search_description

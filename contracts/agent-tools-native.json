@@ -1,6 +1,6 @@
 {
   "source": "EpochAI agent_src/agent_tools/catalog.py::tool_catalog",
-  "source_commit": "8d4bf6a7845f1651e5ae9819528e316e8192d6ae",
+  "source_commit": "85be51a81b893934bb650521bd2e027f1d744c1f",
   "catalog": {
     "version": 3,
     "assistant_id": "epoch-tools",
@@ -70,10 +70,12 @@
                   "title": "Market Options"
                 },
                 "record_ref": {
+                  "pattern": "^discovery-record:v1:[0-9a-f]{64}$",
                   "title": "Record Ref",
                   "type": "string"
                 },
                 "result_ref": {
+                  "pattern": "^(discovery-result:v1:[0-9]{1,20}:[0-9a-f]{64}|discovery-handoff:v1:[0-9a-f]{64})$",
                   "title": "Result Ref",
                   "type": "string"
                 },
@@ -763,7 +765,8 @@
                 "macrobond",
                 "barchart",
                 "fmp",
-                "trading_economics"
+                "trading_economics",
+                "barchart_actions"
               ],
               "title": "ProbeVendor",
               "type": "string"
@@ -860,14 +863,47 @@
       },
       {
         "name": "build_study",
-        "description": "Build and save Epoch studies. New/changed definitions use study_author; operation must be exactly create, update, or clone (lowercase). For a saved-study clone use base.kind=saved_study and base.slot_id; a curated source uses base.kind=exemplar. Call only after choices/owned metadata handoff, without certifying every source fact. Each item has a caller-owned research or strategy form. For create, authoring_brief is the current self-contained objective, QA outcomes and enriched design. Update and saved-study clone carry only a self-contained change_directive. Choose the build route internally, without a reuse question. Binding selects exact prepared refs; never copy vendor/probe payloads. The author chooses source constructors and final DataOption from the brief and neutral legacy market bindings. Native source_refs instead pin the chosen dataset/schema, and an admitted universe owns the final cohort. Put authoring decision_refs in the command for audit; write their applicable values/defaults in the brief/delta. The author receives no QA ledger or original request. It does NOT interrupt. Terminal for this attempt; only the supervisor's typed recovery policy permits a retry. One studies array is a sequential batch; use it for dependent authoring operations. Independent lifecycle calls may run together on distinct outputs. RETURNS one closed BuildResult: aggregate status plus one discriminated outcome per command. Saved outcomes return the actionable logical slot_id, operation, name, form, optional final_note and mechanical validation evidence; Backend UUIDs stay in state. Preserve material validation qualifications; warnings alone do not authorize changing the requested methods. That saved slot_id is the exact logical study_slot_id consumed by run_study. The caller gives each distinct execution its own logical run_slot_id; neither tool exposes Backend UUIDs. Failed/infeasible outcomes report typed errors; author_infeasible concerns this supplied brief. Review who imposed the unmet requirement before asking. Use typed outcomes, not narration, for control flow.",
+        "description": "Build and save study definitions.\n\nUse when:\nCreate needs a self-contained brief; update changes calculations, data\nselection or outputs; clone makes a separately editable copy from a saved study\nor authorized exemplar. New observations alone need no rebuild.\n\nBehavior:\nBrief native IDs/loaders/options, source qualifications and defaults. Preserve\ncustom addresses/types/clocks; saved tables use execution_input. Never copy vendor\npayloads. The author owns implementation and presentation; describe results/methods.\nThe studies batch is sequential; preserve successful siblings. No interrupt.\n\nExtra backtest presentation needs an explicit request. API and explicit MCP outputs must\nmatch their accepted contract. Tables/JSON come from complete computed relations.\nStandard Backtest, Monte Carlo and tuning dashboards and their grouped\ninterpretation are completed by Backend; they need no authored replacement summary.\nFor a new research study, the author constructs calculations, requested text and\noutput sinks together under the native contracts. Later analysis or output revisions\nover a saved result use execution_input. Reuse its computed outputs; add needed\ncalculations. Inspect underlying inputs for a specific discrepancy or requested\naudit. Further numerical calculations over a backtest's fills, trades or account\nresults require its completed execution. The author retains that evidence and\nidentifies required later work in final_note.\nFor grouped return summaries, include counts,\nmedians and share-positive measures when needed to interpret averages.\n\nReturns:\nTyped per-item outcomes distinguish saved definitions, source_catalogue reads,\nfailures and infeasibility. tables=[] inspects exact saved-source table choices\nwithout authoring or saving. Only a saved outcome's slot_id feeds run_study.\nRead final_note and material validation qualifications before execution,\nincluding required post-run outputs. Resolve departures from approved requirements\nbefore running; ask only for a material user choice, not routine caveats.\n\nRecovery:\nCorrect only the failed item on the same study line, once, for typed input/binding\nrejection, unavailable optional exemplar, or demonstrably agent-imposed author\nconstraint. Re-resolve a named missing selected source once; the same recovery covers\nan omitted or mis-scoped source named by the closed result for an already-approved\nrequirement. Resolve only that need, exclude failed addresses, and retry the same\nstudy line once. A changed concept, proxy or shorter coverage needs a user decision.\nA second failed correction, uncertain write, or compiler/service/persistence fault\nis not an automatic resubmission.\nPreserve approved scope, method, costs and outputs; a changed requirement needs the\nuser's decision.",
         "parameters": {
           "$defs": {
+            "AdditionalRunExecutionInputSelection": {
+              "additionalProperties": false,
+              "description": "Another explicitly selected run in the same native report.",
+              "properties": {
+                "alias": {
+                  "description": "Unique lowercase identifier, at most 64 characters; primary is reserved.",
+                  "title": "Alias",
+                  "type": "string"
+                },
+                "run_slot_id": {
+                  "maxLength": 96,
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+                  "title": "Run Slot Id",
+                  "type": "string"
+                },
+                "tables": {
+                  "description": "Exact native table names for this source. An empty list requests its catalogue and returns selection guidance before authoring.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Tables",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "alias",
+                "run_slot_id",
+                "tables"
+              ],
+              "title": "AdditionalRunExecutionInputSelection",
+              "type": "object"
+            },
             "CloneStudyCommand": {
               "additionalProperties": false,
               "properties": {
                 "slot_id": {
-                  "description": "Stable logical study line.",
+                  "description": "Stable study line.",
                   "title": "Slot Id",
                   "type": "string"
                 },
@@ -890,46 +926,8 @@
                     }
                   ],
                   "default": null,
-                  "description": "Optional saved-description override.",
+                  "description": "Saved-description override.",
                   "title": "Description"
-                },
-                "decision_refs": {
-                  "description": "Authoring-only ask_user refs; exclude execution decisions. Put values/defaults in brief/delta; author sees no receipts. [] if none.",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Decision Refs",
-                  "type": "array"
-                },
-                "data_refs": {
-                  "description": "Exact observation:/fundamentals: refs: CREATE all, UPDATE/CLONE delta; curated CLONE [].",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Data Refs",
-                  "type": "array"
-                },
-                "source_refs": {
-                  "description": "Native source refs; historical universes need study_from/to.",
-                  "items": {
-                    "discriminator": {
-                      "mapping": {
-                        "record": "#/$defs/StudyDataSelection_Record",
-                        "universe": "#/$defs/StudyDataSelection_Universe"
-                      },
-                      "propertyName": "kind"
-                    },
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Record"
-                      },
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Universe"
-                      }
-                    ]
-                  },
-                  "title": "Source Refs",
-                  "type": "array"
                 },
                 "study_from": {
                   "anyOf": [
@@ -960,7 +958,7 @@
                 "execution_input": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/ExecutionInputSelection"
+                      "$ref": "#/$defs/StudyExecutionInputSelection"
                     },
                     {
                       "$ref": "#/$defs/RunExecutionInputSelection"
@@ -970,7 +968,7 @@
                     }
                   ],
                   "default": null,
-                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}.",
+                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}; additional_sources selects named runs for one comparison report.",
                   "title": "Execution Input"
                 },
                 "operation": {
@@ -1020,15 +1018,13 @@
                     }
                   ],
                   "default": null,
-                  "description": "Saved-study delta; omit for verbatim curated clones. Changed exemplar requirements use CREATE + exemplar_ids.",
+                  "description": "For a saved-study clone, state settled changes and new evidence while preserving other parent requirements. State removals/replacements explicitly. Omit for verbatim curated clones. Changed exemplar requirements use CREATE + exemplar_ids.",
                   "title": "Change Directive"
                 }
               },
               "required": [
                 "slot_id",
                 "form",
-                "decision_refs",
-                "data_refs",
                 "operation",
                 "base"
               ],
@@ -1039,7 +1035,7 @@
               "additionalProperties": false,
               "properties": {
                 "slot_id": {
-                  "description": "Stable logical study line.",
+                  "description": "Stable study line.",
                   "title": "Slot Id",
                   "type": "string"
                 },
@@ -1062,46 +1058,8 @@
                     }
                   ],
                   "default": null,
-                  "description": "Optional saved-description override.",
+                  "description": "Saved-description override.",
                   "title": "Description"
-                },
-                "decision_refs": {
-                  "description": "Authoring-only ask_user refs; exclude execution decisions. Put values/defaults in brief/delta; author sees no receipts. [] if none.",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Decision Refs",
-                  "type": "array"
-                },
-                "data_refs": {
-                  "description": "Exact observation:/fundamentals: refs: CREATE all, UPDATE/CLONE delta; curated CLONE [].",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Data Refs",
-                  "type": "array"
-                },
-                "source_refs": {
-                  "description": "Native source refs; historical universes need study_from/to.",
-                  "items": {
-                    "discriminator": {
-                      "mapping": {
-                        "record": "#/$defs/StudyDataSelection_Record",
-                        "universe": "#/$defs/StudyDataSelection_Universe"
-                      },
-                      "propertyName": "kind"
-                    },
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Record"
-                      },
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Universe"
-                      }
-                    ]
-                  },
-                  "title": "Source Refs",
-                  "type": "array"
                 },
                 "study_from": {
                   "anyOf": [
@@ -1132,7 +1090,7 @@
                 "execution_input": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/ExecutionInputSelection"
+                      "$ref": "#/$defs/StudyExecutionInputSelection"
                     },
                     {
                       "$ref": "#/$defs/RunExecutionInputSelection"
@@ -1142,7 +1100,7 @@
                     }
                   ],
                   "default": null,
-                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}.",
+                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}; additional_sources selects named runs for one comparison report.",
                   "title": "Execution Input"
                 },
                 "operation": {
@@ -1156,12 +1114,13 @@
                   "type": "string"
                 },
                 "authoring_brief": {
-                  "description": "Current self-contained objective, QA values/defaults and enriched design; no vendor payloads. Execution owns native backtest outputs.",
+                  "description": "Settled objective/scope, requested outputs, confirmed follow-ups. Sections: views, selected native IDs/loaders/options, custom addresses, source qualifications, methods/exhibits, supplied evidence. The author has no prior messages.",
                   "title": "Authoring Brief",
                   "type": "string"
                 },
                 "exemplar_ids": {
-                  "description": "Optional existing approved same-form examples; omit when none is already available. Never invent an example id or inherit its requirements. An example does not grant clone authority.",
+                  "default": [],
+                  "description": "Approved same-form examples already available; omit otherwise. Never invent IDs or inherit requirements. Examples grant no clone authority.",
                   "items": {
                     "type": "string"
                   },
@@ -1173,255 +1132,11 @@
               "required": [
                 "slot_id",
                 "form",
-                "decision_refs",
-                "data_refs",
                 "operation",
                 "name",
                 "authoring_brief"
               ],
               "title": "CreateStudyCommand",
-              "type": "object"
-            },
-            "DataCategory": {
-              "enum": [
-                "DailyBars",
-                "MinuteBars",
-                "OpenInterest",
-                "Dividends",
-                "Splits",
-                "Earnings",
-                "Events",
-                "BalanceSheets",
-                "CashFlowStatements",
-                "IncomeStatements",
-                "Ratios",
-                "KeyMetrics",
-                "EnterpriseValues",
-                "OwnerEarnings",
-                "BalanceSheetGrowth",
-                "IncomeStatementGrowth",
-                "CashFlowGrowth",
-                "FinancialGrowth",
-                "RevenueProductSegmentation",
-                "RevenueGeographicSegmentation",
-                "Ipos",
-                "MacrobondData",
-                "MacrobondVintageData",
-                "MacrobondRevisionInfo",
-                "MacrobondReleaseSchedule",
-                "TradingEconomicsHistorical",
-                "TradingEconomicsCalendar",
-                "TradingEconomicsMarkets",
-                "TradingEconomicsRatings",
-                "TradingEconomicsForecast",
-                "TradingEconomicsMarketForecast",
-                "ReferenceAgg",
-                "HistoricalMarketCap",
-                "IpoProspectus",
-                "EarningsCalendar",
-                "DividendsCalendar",
-                "SplitsCalendar",
-                "HistoricalEmployeeCount",
-                "EtfInformation",
-                "EtfHoldings",
-                "AssetCatalog"
-              ],
-              "title": "DataCategory",
-              "type": "string"
-            },
-            "DiscoveryDatasetRequest": {
-              "additionalProperties": false,
-              "properties": {
-                "category": {
-                  "$ref": "#/$defs/DataCategory"
-                },
-                "fields": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "title": "Fields"
-                },
-                "requested_window": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/DiscoveryRequestedWindow"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "selectors": {
-                  "anyOf": [
-                    {
-                      "discriminator": {
-                        "mapping": {
-                          "financial": "#/$defs/DiscoverySelectors_Financial",
-                          "vintage": "#/$defs/DiscoverySelectors_Vintage"
-                        },
-                        "propertyName": "kind"
-                      },
-                      "oneOf": [
-                        {
-                          "$ref": "#/$defs/DiscoverySelectors_Financial"
-                        },
-                        {
-                          "$ref": "#/$defs/DiscoverySelectors_Vintage"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "title": "Selectors"
-                }
-              },
-              "required": [
-                "category"
-              ],
-              "title": "DiscoveryDatasetRequest",
-              "type": "object"
-            },
-            "DiscoveryRequestedWindow": {
-              "additionalProperties": false,
-              "properties": {
-                "from": {
-                  "title": "From",
-                  "type": "string"
-                },
-                "to": {
-                  "title": "To",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "from",
-                "to"
-              ],
-              "title": "DiscoveryRequestedWindow",
-              "type": "object"
-            },
-            "DiscoverySelectors_Financial": {
-              "additionalProperties": false,
-              "properties": {
-                "kind": {
-                  "const": "financial",
-                  "title": "Kind",
-                  "type": "string"
-                },
-                "index_by": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/FundamentalsIndexBy"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "period": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/FinancialsTimeframe"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "title": "DiscoverySelectors_Financial",
-              "type": "object"
-            },
-            "DiscoverySelectors_Vintage": {
-              "additionalProperties": false,
-              "properties": {
-                "kind": {
-                  "const": "vintage",
-                  "title": "Kind",
-                  "type": "string"
-                },
-                "full_tape": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "title": "Full Tape"
-                },
-                "nth": {
-                  "anyOf": [
-                    {
-                      "maximum": 2147483647,
-                      "minimum": -2147483648,
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "title": "Nth"
-                },
-                "revision": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/VintageRevision"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "title": "DiscoverySelectors_Vintage",
-              "type": "object"
-            },
-            "ExecutionInputSelection": {
-              "additionalProperties": true,
-              "properties": {
-                "source_execution_id": {
-                  "title": "Source Execution Id",
-                  "type": "string"
-                },
-                "tables": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Tables",
-                  "type": "array"
-                }
-              },
-              "required": [
-                "source_execution_id",
-                "tables"
-              ],
-              "title": "ExecutionInputSelection",
               "type": "object"
             },
             "ExemplarCloneBase": {
@@ -1451,24 +1166,6 @@
               "title": "ExemplarCloneBase",
               "type": "object"
             },
-            "FinancialsTimeframe": {
-              "enum": [
-                "quarterly",
-                "annual",
-                "trailing_twelve_months"
-              ],
-              "title": "FinancialsTimeframe",
-              "type": "string"
-            },
-            "FundamentalsIndexBy": {
-              "enum": [
-                "FilingDate",
-                "AcceptanceDate",
-                "ObservationDate"
-              ],
-              "title": "FundamentalsIndexBy",
-              "type": "string"
-            },
             "RunExecutionInputSelection": {
               "additionalProperties": false,
               "properties": {
@@ -1480,12 +1177,28 @@
                   "type": "string"
                 },
                 "tables": {
+                  "description": "Exact native table names. An empty list reads available tables and returns selection guidance without authoring, saving or executing a study.",
                   "items": {
                     "type": "string"
                   },
                   "minItems": 0,
                   "title": "Tables",
                   "type": "array"
+                },
+                "additional_sources": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "$ref": "#/$defs/AdditionalRunExecutionInputSelection"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Additional Sources"
                 }
               },
               "required": [
@@ -1517,105 +1230,77 @@
               "title": "SavedStudyCloneBase",
               "type": "object"
             },
-            "StudyDataSelection_Record": {
+            "StudyExecutionInputSelection": {
               "additionalProperties": false,
+              "description": "Study inputs already reject native extras; publish that exact closure.",
               "properties": {
-                "kind": {
-                  "const": "record",
-                  "title": "Kind",
-                  "type": "string"
-                },
-                "dataset": {
+                "additional_sources": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/DiscoveryDatasetRequest"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null
-                },
-                "record_ref": {
-                  "title": "Record Ref",
-                  "type": "string"
-                },
-                "result_ref": {
-                  "title": "Result Ref",
-                  "type": "string"
-                },
-                "selection_id": {
-                  "title": "Selection Id",
-                  "type": "string"
-                },
-                "source_id": {
-                  "anyOf": [
-                    {
-                      "type": "string"
+                      "items": {
+                        "$ref": "#/$defs/StudyNamedExecutionInputSelection"
+                      },
+                      "type": "array"
                     },
                     {
                       "type": "null"
                     }
                   ],
                   "default": null,
-                  "title": "Source Id"
+                  "title": "Additional Sources"
+                },
+                "source_execution_id": {
+                  "title": "Source Execution Id",
+                  "type": "string"
+                },
+                "tables": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Tables",
+                  "type": "array"
                 }
               },
               "required": [
-                "kind",
-                "record_ref",
-                "result_ref",
-                "selection_id"
+                "source_execution_id",
+                "tables"
               ],
-              "title": "StudyDataSelection_Record",
+              "title": "StudyExecutionInputSelection",
               "type": "object"
             },
-            "StudyDataSelection_Universe": {
+            "StudyNamedExecutionInputSelection": {
               "additionalProperties": false,
+              "description": "Closed study argument using the native source fields and validators.",
               "properties": {
-                "kind": {
-                  "const": "universe",
-                  "title": "Kind",
+                "alias": {
+                  "title": "Alias",
                   "type": "string"
                 },
-                "dataset": {
-                  "$ref": "#/$defs/DiscoveryDatasetRequest"
-                },
-                "selection_id": {
-                  "title": "Selection Id",
+                "source_execution_id": {
+                  "title": "Source Execution Id",
                   "type": "string"
                 },
-                "source_id": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "default": null,
-                  "title": "Source Id"
-                },
-                "universe_ref": {
-                  "title": "Universe Ref",
-                  "type": "string"
+                "tables": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Tables",
+                  "type": "array"
                 }
               },
               "required": [
-                "kind",
-                "dataset",
-                "selection_id",
-                "universe_ref"
+                "alias",
+                "source_execution_id",
+                "tables"
               ],
-              "title": "StudyDataSelection_Universe",
+              "title": "StudyNamedExecutionInputSelection",
               "type": "object"
             },
             "UpdateStudyCommand": {
               "additionalProperties": false,
               "properties": {
                 "slot_id": {
-                  "description": "Stable logical study line.",
+                  "description": "Stable study line.",
                   "title": "Slot Id",
                   "type": "string"
                 },
@@ -1638,46 +1323,8 @@
                     }
                   ],
                   "default": null,
-                  "description": "Optional saved-description override.",
+                  "description": "Saved-description override.",
                   "title": "Description"
-                },
-                "decision_refs": {
-                  "description": "Authoring-only ask_user refs; exclude execution decisions. Put values/defaults in brief/delta; author sees no receipts. [] if none.",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Decision Refs",
-                  "type": "array"
-                },
-                "data_refs": {
-                  "description": "Exact observation:/fundamentals: refs: CREATE all, UPDATE/CLONE delta; curated CLONE [].",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Data Refs",
-                  "type": "array"
-                },
-                "source_refs": {
-                  "description": "Native source refs; historical universes need study_from/to.",
-                  "items": {
-                    "discriminator": {
-                      "mapping": {
-                        "record": "#/$defs/StudyDataSelection_Record",
-                        "universe": "#/$defs/StudyDataSelection_Universe"
-                      },
-                      "propertyName": "kind"
-                    },
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Record"
-                      },
-                      {
-                        "$ref": "#/$defs/StudyDataSelection_Universe"
-                      }
-                    ]
-                  },
-                  "title": "Source Refs",
-                  "type": "array"
                 },
                 "study_from": {
                   "anyOf": [
@@ -1708,7 +1355,7 @@
                 "execution_input": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/ExecutionInputSelection"
+                      "$ref": "#/$defs/StudyExecutionInputSelection"
                     },
                     {
                       "$ref": "#/$defs/RunExecutionInputSelection"
@@ -1718,7 +1365,7 @@
                     }
                   ],
                   "default": null,
-                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}.",
+                  "description": "Research: {run_slot_id,tables} or {source_execution_id,tables}; additional_sources selects named runs for one comparison report.",
                   "title": "Execution Input"
                 },
                 "operation": {
@@ -1727,7 +1374,7 @@
                   "type": "string"
                 },
                 "change_directive": {
-                  "description": "Self-contained settled delta including QA outcomes. Parent supplies unchanged code; state removals/replacements explicitly.",
+                  "description": "Self-contained settled changes, relevant new evidence and output requirements. Parent supplies unchanged code and requirements. State removals/replacements explicitly; do not repeat the full brief or refer to conversation history.",
                   "title": "Change Directive",
                   "type": "string"
                 },
@@ -1748,28 +1395,17 @@
               "required": [
                 "slot_id",
                 "form",
-                "decision_refs",
-                "data_refs",
                 "operation",
                 "change_directive"
               ],
               "title": "UpdateStudyCommand",
               "type": "object"
-            },
-            "VintageRevision": {
-              "enum": [
-                "Last",
-                "First",
-                "NthFromLast"
-              ],
-              "title": "VintageRevision",
-              "type": "string"
             }
           },
-          "description": "Build and save Epoch studies. New/changed definitions use study_author; operation must be exactly create, update, or clone (lowercase). For a saved-study clone use base.kind=saved_study and base.slot_id; a curated source uses base.kind=exemplar. Call only after choices/owned metadata handoff, without certifying every source fact. Each item has a caller-owned research or strategy form. For create, authoring_brief is the current self-contained objective, QA outcomes and enriched design. Update and saved-study clone carry only a self-contained change_directive. Choose the build route internally, without a reuse question. Binding selects exact prepared refs; never copy vendor/probe payloads. The author chooses source constructors and final DataOption from the brief and neutral legacy market bindings. Native source_refs instead pin the chosen dataset/schema, and an admitted universe owns the final cohort. Put authoring decision_refs in the command for audit; write their applicable values/defaults in the brief/delta. The author receives no QA ledger or original request. It does NOT interrupt. Terminal for this attempt; only the supervisor's typed recovery policy permits a retry. One studies array is a sequential batch; use it for dependent authoring operations. Independent lifecycle calls may run together on distinct outputs. RETURNS one closed BuildResult: aggregate status plus one discriminated outcome per command. Saved outcomes return the actionable logical slot_id, operation, name, form, optional final_note and mechanical validation evidence; Backend UUIDs stay in state. Preserve material validation qualifications; warnings alone do not authorize changing the requested methods. That saved slot_id is the exact logical study_slot_id consumed by run_study. The caller gives each distinct execution its own logical run_slot_id; neither tool exposes Backend UUIDs. Failed/infeasible outcomes report typed errors; author_infeasible concerns this supplied brief. Review who imposed the unmet requirement before asking. Use typed outcomes, not narration, for control flow.",
+          "description": "Build and save study definitions.\n\nUse when:\nCreate needs a self-contained brief; update changes calculations, data\nselection or outputs; clone makes a separately editable copy from a saved study\nor authorized exemplar. New observations alone need no rebuild.\n\nBehavior:\nBrief native IDs/loaders/options, source qualifications and defaults. Preserve\ncustom addresses/types/clocks; saved tables use execution_input. Never copy vendor\npayloads. The author owns implementation and presentation; describe results/methods.\nThe studies batch is sequential; preserve successful siblings. No interrupt.\n\nExtra backtest presentation needs an explicit request. API and explicit MCP outputs must\nmatch their accepted contract. Tables/JSON come from complete computed relations.\nStandard Backtest, Monte Carlo and tuning dashboards and their grouped\ninterpretation are completed by Backend; they need no authored replacement summary.\nFor a new research study, the author constructs calculations, requested text and\noutput sinks together under the native contracts. Later analysis or output revisions\nover a saved result use execution_input. Reuse its computed outputs; add needed\ncalculations. Inspect underlying inputs for a specific discrepancy or requested\naudit. Further numerical calculations over a backtest's fills, trades or account\nresults require its completed execution. The author retains that evidence and\nidentifies required later work in final_note.\nFor grouped return summaries, include counts,\nmedians and share-positive measures when needed to interpret averages.\n\nReturns:\nTyped per-item outcomes distinguish saved definitions, source_catalogue reads,\nfailures and infeasibility. tables=[] inspects exact saved-source table choices\nwithout authoring or saving. Only a saved outcome's slot_id feeds run_study.\nRead final_note and material validation qualifications before execution,\nincluding required post-run outputs. Resolve departures from approved requirements\nbefore running; ask only for a material user choice, not routine caveats.\n\nRecovery:\nCorrect only the failed item on the same study line, once, for typed input/binding\nrejection, unavailable optional exemplar, or demonstrably agent-imposed author\nconstraint. Re-resolve a named missing selected source once; the same recovery covers\nan omitted or mis-scoped source named by the closed result for an already-approved\nrequirement. Resolve only that need, exclude failed addresses, and retry the same\nstudy line once. A changed concept, proxy or shorter coverage needs a user decision.\nA second failed correction, uncertain write, or compiler/service/persistence fault\nis not an automatic resubmission.\nPreserve approved scope, method, costs and outputs; a changed requirement needs the\nuser's decision.",
           "properties": {
             "studies": {
-              "description": "Batch of create/update/clone commands, each with one form and canonical slot.",
+              "description": "One sequential batch of create/update/clone commands, each with one form and canonical slot. A failed item does not erase successful siblings; read every typed per-item outcome.",
               "items": {
                 "discriminator": {
                   "mapping": {
