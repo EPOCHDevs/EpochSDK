@@ -977,7 +977,15 @@
             "title": "Result Sha256"
           },
           "source": {
-            "$ref": "#/components/schemas/EpochDocument_UserFileDescriptor"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_UserFileDescriptor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "state": {
             "$ref": "#/components/schemas/EpochDocument_DatasetBuildState"
@@ -986,6 +994,18 @@
             "format": "date-time",
             "title": "Updated At",
             "type": "string"
+          },
+          "web_read_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Web Read Ref"
           }
         },
         "required": [
@@ -997,7 +1017,6 @@
           "message",
           "preparation_ref",
           "request",
-          "source",
           "state",
           "updated_at"
         ],
@@ -1470,6 +1489,26 @@
         "title": "DatasetPreparationInput_Url",
         "type": "object"
       },
+      "EpochDocument_DatasetPreparationInput_WebRead": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read",
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "read_ref"
+        ],
+        "title": "DatasetPreparationInput_WebRead",
+        "type": "object"
+      },
       "EpochDocument_DatasetPreparationRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1511,7 +1550,8 @@
                   "file": "#/components/schemas/EpochDocument_DatasetPreparationInput_File",
                   "search": "#/components/schemas/EpochDocument_DatasetPreparationInput_Search",
                   "study_result": "#/components/schemas/EpochDocument_DatasetPreparationInput_StudyResult",
-                  "url": "#/components/schemas/EpochDocument_DatasetPreparationInput_Url"
+                  "url": "#/components/schemas/EpochDocument_DatasetPreparationInput_Url",
+                  "web_read": "#/components/schemas/EpochDocument_DatasetPreparationInput_WebRead"
                 },
                 "propertyName": "kind"
               },
@@ -1530,6 +1570,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/EpochDocument_DatasetPreparationInput_Url"
+                },
+                {
+                  "$ref": "#/components/schemas/EpochDocument_DatasetPreparationInput_WebRead"
                 }
               ]
             },
@@ -1716,6 +1759,19 @@
             "default": "web",
             "title": "Kind",
             "type": "string"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
           },
           "url": {
             "title": "Url",
@@ -2773,6 +2829,26 @@
         "title": "DatasetPreparationInput_Url",
         "type": "object"
       },
+      "EpochDocument_Request_DatasetPreparationInput_WebRead": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read",
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "read_ref"
+        ],
+        "title": "DatasetPreparationInput_WebRead",
+        "type": "object"
+      },
       "EpochDocument_Request_DatasetPreparationRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2814,7 +2890,8 @@
                   "file": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_File",
                   "search": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_Search",
                   "study_result": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_StudyResult",
-                  "url": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_Url"
+                  "url": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_Url",
+                  "web_read": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_WebRead"
                 },
                 "propertyName": "kind"
               },
@@ -2833,6 +2910,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_Url"
+                },
+                {
+                  "$ref": "#/components/schemas/EpochDocument_Request_DatasetPreparationInput_WebRead"
                 }
               ]
             },
@@ -3174,6 +3254,178 @@
         "title": "SuggestionRequest",
         "type": "object"
       },
+      "EpochDocument_Request_WebContentOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "max_age_hours": {
+            "anyOf": [
+              {
+                "maximum": 2147483647,
+                "minimum": -2147483648,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Age Hours"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
+          }
+        },
+        "title": "WebContentOptions",
+        "type": "object"
+      },
+      "EpochDocument_Request_WebResearchInputIncludeDomains": {
+        "additionalProperties": false,
+        "properties": {
+          "include_domains": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include Domains"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputIncludeDomainsKind"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "title": "WebResearchInputIncludeDomains",
+        "type": "object"
+      },
+      "EpochDocument_Request_WebResearchInputIncludeDomainsKind": {
+        "enum": [
+          "search"
+        ],
+        "title": "WebResearchInputIncludeDomainsKind",
+        "type": "string"
+      },
+      "EpochDocument_Request_WebResearchInputKind": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputKindKind"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Question"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "urls"
+        ],
+        "title": "WebResearchInputKind",
+        "type": "object"
+      },
+      "EpochDocument_Request_WebResearchInputKindKind": {
+        "enum": [
+          "pages"
+        ],
+        "title": "WebResearchInputKindKind",
+        "type": "string"
+      },
+      "EpochDocument_Request_WebResearchInputUrl": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputUrlKind"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "WebResearchInputUrl",
+        "type": "object"
+      },
+      "EpochDocument_Request_WebResearchInputUrlKind": {
+        "enum": [
+          "url"
+        ],
+        "title": "WebResearchInputUrlKind",
+        "type": "string"
+      },
+      "EpochDocument_Request_WebResearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/EpochDocument_Request_WebContentOptions"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputUrl"
+              },
+              {
+                "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputIncludeDomains"
+              },
+              {
+                "$ref": "#/components/schemas/EpochDocument_Request_WebResearchInputKind"
+              }
+            ],
+            "title": "Input"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content",
+          "input",
+          "request_id"
+        ],
+        "title": "WebResearchRequest",
+        "type": "object"
+      },
       "EpochDocument_SavedDataset": {
         "additionalProperties": true,
         "properties": {
@@ -3442,6 +3694,346 @@
           "archived"
         ],
         "title": "UserFileStatus",
+        "type": "string"
+      },
+      "EpochDocument_WebContentOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "max_age_hours": {
+            "anyOf": [
+              {
+                "maximum": 2147483647,
+                "minimum": -2147483648,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Age Hours"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
+          }
+        },
+        "title": "WebContentOptions",
+        "type": "object"
+      },
+      "EpochDocument_WebResearch": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/EpochDocument_WebResearchRequest"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/EpochDocument_WebSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/EpochDocument_DocumentReadState"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "created_at",
+          "limitations",
+          "message",
+          "read_ref",
+          "request",
+          "sources",
+          "state",
+          "updated_at"
+        ],
+        "title": "WebResearch",
+        "type": "object"
+      },
+      "EpochDocument_WebResearchInputIncludeDomains": {
+        "additionalProperties": false,
+        "properties": {
+          "include_domains": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include Domains"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_WebResearchInputIncludeDomainsKind"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "title": "WebResearchInputIncludeDomains",
+        "type": "object"
+      },
+      "EpochDocument_WebResearchInputIncludeDomainsKind": {
+        "enum": [
+          "search"
+        ],
+        "title": "WebResearchInputIncludeDomainsKind",
+        "type": "string"
+      },
+      "EpochDocument_WebResearchInputKind": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_WebResearchInputKindKind"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Question"
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Urls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "urls"
+        ],
+        "title": "WebResearchInputKind",
+        "type": "object"
+      },
+      "EpochDocument_WebResearchInputKindKind": {
+        "enum": [
+          "pages"
+        ],
+        "title": "WebResearchInputKindKind",
+        "type": "string"
+      },
+      "EpochDocument_WebResearchInputUrl": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/EpochDocument_WebResearchInputUrlKind"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "WebResearchInputUrl",
+        "type": "object"
+      },
+      "EpochDocument_WebResearchInputUrlKind": {
+        "enum": [
+          "url"
+        ],
+        "title": "WebResearchInputUrlKind",
+        "type": "string"
+      },
+      "EpochDocument_WebResearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/EpochDocument_WebContentOptions"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_WebResearchInputUrl"
+              },
+              {
+                "$ref": "#/components/schemas/EpochDocument_WebResearchInputIncludeDomains"
+              },
+              {
+                "$ref": "#/components/schemas/EpochDocument_WebResearchInputKind"
+              }
+            ],
+            "title": "Input"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content",
+          "input",
+          "request_id"
+        ],
+        "title": "WebResearchRequest",
+        "type": "object"
+      },
+      "EpochDocument_WebSource": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Content Sha256"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error Code"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Retrieved At"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/EpochDocument_WebSourceState"
+          },
+          "stored_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stored At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "limitations",
+          "source_ref",
+          "state",
+          "title",
+          "url"
+        ],
+        "title": "WebSource",
+        "type": "object"
+      },
+      "EpochDocument_WebSourceState": {
+        "enum": [
+          "found",
+          "read",
+          "unavailable"
+        ],
+        "title": "WebSourceState",
         "type": "string"
       },
       "Error": {
@@ -4612,12 +5204,14 @@
           "updated_at": {
             "format": "date-time",
             "type": "string"
+          },
+          "web_read_ref": {
+            "type": "string"
           }
         },
         "required": [
           "preparation_ref",
           "request",
-          "source",
           "state",
           "attempt",
           "message",
@@ -4680,11 +5274,13 @@
           },
           "updated_at": {
             "type": "string"
+          },
+          "web_read_ref": {
+            "type": "string"
           }
         },
         "required": [
           "preparation_ref",
-          "file_ref",
           "name",
           "state",
           "updated_at"
@@ -4925,6 +5521,15 @@
           },
           "source_sha256": {
             "type": "string"
+          },
+          "web_citations": {
+            "items": {
+              "$ref": "#/components/schemas/NativeResource_WebDatasetCitation"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
         "required": [
@@ -5004,7 +5609,8 @@
             "file": "#/components/schemas/NativeResource_DatasetPreparationInput_file",
             "search": "#/components/schemas/NativeResource_DatasetPreparationInput_search",
             "study_result": "#/components/schemas/NativeResource_DatasetPreparationInput_study_result",
-            "url": "#/components/schemas/NativeResource_DatasetPreparationInput_url"
+            "url": "#/components/schemas/NativeResource_DatasetPreparationInput_url",
+            "web_read": "#/components/schemas/NativeResource_DatasetPreparationInput_web_read"
           },
           "propertyName": "kind"
         },
@@ -5023,6 +5629,9 @@
           },
           {
             "$ref": "#/components/schemas/NativeResource_DatasetPreparationInput_study_result"
+          },
+          {
+            "$ref": "#/components/schemas/NativeResource_DatasetPreparationInput_web_read"
           }
         ],
         "type": "object"
@@ -5119,6 +5728,23 @@
           "kind"
         ],
         "title": "url",
+        "type": "object"
+      },
+      "NativeResource_DatasetPreparationInput_web_read": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read"
+          },
+          "read_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "read_ref",
+          "kind"
+        ],
+        "title": "web_read",
         "type": "object"
       },
       "NativeResource_DatasetPreparationRequest": {
@@ -5446,6 +6072,10 @@
           },
           "kind": {
             "const": "web"
+          },
+          "snapshot_as_of": {
+            "format": "date-time",
+            "type": "string"
           },
           "url": {
             "format": "uri",
@@ -6970,6 +7600,297 @@
         ],
         "title": "UserFileUploadSession",
         "type": "object"
+      },
+      "NativeResource_WebContentOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "max_age_hours": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "snapshot_as_of": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "title": "WebContentOptions",
+        "type": "object"
+      },
+      "NativeResource_WebDatasetCitation": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "type": "string"
+          },
+          "json_pointer": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          },
+          "source_ref": {
+            "type": "string"
+          },
+          "start_byte": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "json_pointer",
+          "source_ref",
+          "content_sha256",
+          "start_byte",
+          "quote"
+        ],
+        "title": "WebDatasetCitation",
+        "type": "object"
+      },
+      "NativeResource_WebResearch": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "read_ref": {
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/NativeResource_WebResearchRequest"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/NativeResource_WebSource"
+            },
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/NativeResource_DocumentReadState"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "read_ref",
+          "request",
+          "state",
+          "attempt",
+          "created_at",
+          "updated_at",
+          "message",
+          "sources",
+          "limitations"
+        ],
+        "title": "WebResearch",
+        "type": "object"
+      },
+      "NativeResource_WebResearchInput": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "url"
+              },
+              "url": {
+                "format": "uri",
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "kind"
+            ],
+            "title": "url",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "include_domains": {
+                "items": {
+                  "type": "string"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              },
+              "kind": {
+                "const": "search"
+              },
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query",
+              "kind"
+            ],
+            "title": "search",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "pages"
+              },
+              "question": {
+                "type": "string"
+              },
+              "urls": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "urls",
+              "kind"
+            ],
+            "title": "pages",
+            "type": "object"
+          }
+        ],
+        "title": "WebResearchInput",
+        "type": "object"
+      },
+      "NativeResource_WebResearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/NativeResource_WebContentOptions"
+          },
+          "input": {
+            "$ref": "#/components/schemas/NativeResource_WebResearchInput"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "input",
+          "content"
+        ],
+        "title": "WebResearchRequest",
+        "type": "object"
+      },
+      "NativeResource_WebSource": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "type": "string"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "snapshot_as_of": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "source_ref": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/NativeResource_WebSourceState"
+          },
+          "stored_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_ref",
+          "url",
+          "title",
+          "state",
+          "limitations"
+        ],
+        "title": "WebSource",
+        "type": "object"
+      },
+      "NativeResource_WebSourceContent": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "type": "boolean"
+          },
+          "offset": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "read_ref": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/NativeResource_WebSource"
+          },
+          "text": {
+            "type": "string"
+          },
+          "total_bytes": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "read_ref",
+          "source",
+          "text",
+          "offset",
+          "total_bytes",
+          "has_more"
+        ],
+        "title": "WebSourceContent",
+        "type": "object"
+      },
+      "NativeResource_WebSourceState": {
+        "enum": [
+          "found",
+          "read",
+          "unavailable"
+        ],
+        "type": "string"
       },
       "NativeResource_array_double_4": {
         "items": {
@@ -21671,6 +22592,760 @@
         ]
       }
     },
+    "/api/v1/files/web/reads": {
+      "post": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "begin_web_research",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeResource_WebResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_WebResearch"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Explicitly discover and read public web sources with a frozen content policy",
+        "tags": [
+          "UserFiles"
+        ]
+      }
+    },
+    "/api/v1/files/web/reads/{readRef}": {
+      "delete": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "delete_web_research",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "readRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Delete unreferenced web research and fence late publication",
+        "tags": [
+          "UserFiles"
+        ]
+      },
+      "get": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "get_web_research",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "readRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_WebResearch"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Reopen the actual web research state and source identities",
+        "tags": [
+          "UserFiles"
+        ]
+      }
+    },
+    "/api/v1/files/web/reads/{readRef}/actions": {
+      "post": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "act_on_web_research",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "readRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeResource_DatasetBuildActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_WebResearch"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Stop or explicitly retry a web read attempt",
+        "tags": [
+          "UserFiles"
+        ]
+      }
+    },
+    "/api/v1/files/web/reads/{readRef}/preparations": {
+      "get": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "current_web_dataset_preparation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "readRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_DatasetBuildList"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Reopen current unacknowledged preparation for retained web sources",
+        "tags": [
+          "UserFiles"
+        ]
+      }
+    },
+    "/api/v1/files/web/sources/{sourceRef}": {
+      "get": {
+        "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "read_web_source",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceRef",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UTF-8 byte offset",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Retained text byte budget up to 8388608",
+            "in": "query",
+            "name": "max_bytes",
+            "required": false,
+            "schema": {
+              "default": 65536,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_WebSourceContent"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Resource state or dependency conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Upload size, file count or storage quota exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeResource_ErrorResponse"
+                }
+              }
+            },
+            "description": "Private storage or request capacity unavailable"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "http://{host}:{port}",
+            "variables": {
+              "host": {
+                "default": "localhost",
+                "description": "StratifyX server host"
+              },
+              "port": {
+                "default": "9000",
+                "description": "StratifyX server port"
+              }
+            }
+          }
+        ],
+        "summary": "Read exact retained UTF-8 web evidence without re-fetching",
+        "tags": [
+          "UserFiles"
+        ]
+      }
+    },
     "/api/v1/files/{fileRef}": {
       "delete": {
         "description": "Existing EpochBackend API; use its configured service origin. No document processing starts through metadata/content/search reads.",
@@ -24904,6 +26579,84 @@
         ]
       }
     },
+    "/api/v1/web-preparations": {
+      "post": {
+        "description": "Existing EpochAI API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "epochai_begin_web_preparation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EpochDocument_Request_DatasetBuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpochDocument_DatasetBuild"
+                }
+              }
+            },
+            "description": "Existing owner-scoped document operation"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "description": "Configured EpochAI origin",
+            "url": "/"
+          }
+        ]
+      }
+    },
+    "/api/v1/web-research": {
+      "post": {
+        "description": "Existing EpochAI API; use its configured service origin. No document processing starts through metadata/content/search reads.",
+        "operationId": "epochai_begin_web_research",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EpochDocument_Request_WebResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpochDocument_WebResearch"
+                }
+              }
+            },
+            "description": "Existing owner-scoped document operation"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "description": "Configured EpochAI origin",
+            "url": "/"
+          }
+        ]
+      }
+    },
     "/v1/executions/{execution_id}": {
       "get": {
         "description": "Read authoritative Backend study/execution outcomes and native graph progress by stage, using the public mapping. Retained build history supports technical recovery but is not the only source for saved status/results. HTTP 200 may contain a terminal failed domain outcome; SDK wait raises its typed error. Public success requires requested-output validation. Lookup must remain meaningful after eligible graph history expires.",
@@ -27157,8 +28910,8 @@
     "transport_schema": "agent-tools.schema.json"
   },
   "x-epoch-document-operations": {
-    "backend_sha256": "aabbfc137f9c57385632f97fadf6984e38a2e2288d35b37dc1dc123bf8118b10",
-    "epochai_sha256": "5671d101a3b0760bc2c016ea80ca3190972b8abc45703ee64e9904728e9ed7b4",
+    "backend_sha256": "3e8e8ad80d5aeef3e3d9691b81c2251882992f400d5d688b09fbcbf9456b4190",
+    "epochai_sha256": "a5721a0120feea29e3a69cb2f36dbe8f433cc6913d012872caa59eba107e0034",
     "paths": [
       "/api/v1/document-captures",
       "/api/v1/document-preparations",
@@ -27190,6 +28943,11 @@
       "/api/v1/files/preparations/{preparationRef}",
       "/api/v1/files/preparations/{preparationRef}/actions",
       "/api/v1/files/uploads",
+      "/api/v1/files/web/reads",
+      "/api/v1/files/web/reads/{readRef}",
+      "/api/v1/files/web/reads/{readRef}/actions",
+      "/api/v1/files/web/reads/{readRef}/preparations",
+      "/api/v1/files/web/sources/{sourceRef}",
       "/api/v1/files/{fileRef}",
       "/api/v1/files/{fileRef}/archive",
       "/api/v1/files/{fileRef}/complete",
@@ -27198,7 +28956,9 @@
       "/api/v1/space/folders",
       "/api/v1/space/folders/{folderRef}",
       "/api/v1/space/resources",
-      "/api/v1/space/resources/unplace"
+      "/api/v1/space/resources/unplace",
+      "/api/v1/web-preparations",
+      "/api/v1/web-research"
     ],
     "schemas": [
       "EpochDocument_AssetClass",
@@ -27230,6 +28990,7 @@
       "EpochDocument_DatasetPreparationInput_Search",
       "EpochDocument_DatasetPreparationInput_StudyResult",
       "EpochDocument_DatasetPreparationInput_Url",
+      "EpochDocument_DatasetPreparationInput_WebRead",
       "EpochDocument_DatasetPreparationRequest",
       "EpochDocument_DatasetProcessingCoverage",
       "EpochDocument_DatasetProvenanceSource_Dataset",
@@ -27273,6 +29034,7 @@
       "EpochDocument_Request_DatasetPreparationInput_Search",
       "EpochDocument_Request_DatasetPreparationInput_StudyResult",
       "EpochDocument_Request_DatasetPreparationInput_Url",
+      "EpochDocument_Request_DatasetPreparationInput_WebRead",
       "EpochDocument_Request_DatasetPreparationRequest",
       "EpochDocument_Request_DatasetPurpose",
       "EpochDocument_Request_DatasetSchemaChoice_Agent",
@@ -27289,6 +29051,14 @@
       "EpochDocument_Request_SourcePredecessorCapability",
       "EpochDocument_Request_SourceRangeCapability",
       "EpochDocument_Request_SuggestionRequest",
+      "EpochDocument_Request_WebContentOptions",
+      "EpochDocument_Request_WebResearchInputIncludeDomains",
+      "EpochDocument_Request_WebResearchInputIncludeDomainsKind",
+      "EpochDocument_Request_WebResearchInputKind",
+      "EpochDocument_Request_WebResearchInputKindKind",
+      "EpochDocument_Request_WebResearchInputUrl",
+      "EpochDocument_Request_WebResearchInputUrlKind",
+      "EpochDocument_Request_WebResearchRequest",
       "EpochDocument_SavedDataset",
       "EpochDocument_SchemaSuggestions",
       "EpochDocument_SourceAvailabilityAxis",
@@ -27299,6 +29069,17 @@
       "EpochDocument_SuggestedField",
       "EpochDocument_UserFileDescriptor",
       "EpochDocument_UserFileStatus",
+      "EpochDocument_WebContentOptions",
+      "EpochDocument_WebResearch",
+      "EpochDocument_WebResearchInputIncludeDomains",
+      "EpochDocument_WebResearchInputIncludeDomainsKind",
+      "EpochDocument_WebResearchInputKind",
+      "EpochDocument_WebResearchInputKindKind",
+      "EpochDocument_WebResearchInputUrl",
+      "EpochDocument_WebResearchInputUrlKind",
+      "EpochDocument_WebResearchRequest",
+      "EpochDocument_WebSource",
+      "EpochDocument_WebSourceState",
       "NativeResource_AssetClass",
       "NativeResource_DataFoundation",
       "NativeResource_DataSourceCapabilities",
@@ -27338,6 +29119,7 @@
       "NativeResource_DatasetPreparationInput_search",
       "NativeResource_DatasetPreparationInput_study_result",
       "NativeResource_DatasetPreparationInput_url",
+      "NativeResource_DatasetPreparationInput_web_read",
       "NativeResource_DatasetPreparationRequest",
       "NativeResource_DatasetPreviewContent",
       "NativeResource_DatasetPreviewContent_json",
@@ -27421,6 +29203,14 @@
       "NativeResource_UserFileStatus",
       "NativeResource_UserFileUploadRequest",
       "NativeResource_UserFileUploadSession",
+      "NativeResource_WebContentOptions",
+      "NativeResource_WebDatasetCitation",
+      "NativeResource_WebResearch",
+      "NativeResource_WebResearchInput",
+      "NativeResource_WebResearchRequest",
+      "NativeResource_WebSource",
+      "NativeResource_WebSourceContent",
+      "NativeResource_WebSourceState",
       "NativeResource_array_double_4",
       "NativeResource_optional_bool",
       "NativeResource_uint32_t",

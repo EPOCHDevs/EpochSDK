@@ -33,7 +33,7 @@ reconnects after a kernel/process restart. The explicit workflow MCP consumes th
 
 Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
 
-The default MCP exposes 12 composable tools, including two specialist interfaces:
+The default MCP exposes composable tools, including two specialist interfaces:
 `epoch_inspect_source` and `epoch_build_study`. Codex or Claude chooses the
 sequence and answers directly. Native data lookup and source inspection make no
 generative model call; exact retained source references can be reused across
@@ -41,6 +41,50 @@ studies. Only explicitly selected study authoring or a program's declared
 `llm_call` invokes a model. The retired audit specialist and model-facing
 response-inspection/publication/dashboard-editor chain are not available.
 No Epoch supervisor or publication is required by the default MCP.
+
+## Public web sources and Build dataset
+
+The usual entry is a question. Exa discovers relevant URLs and reads their page
+content; callers do not need to know the URLs beforehand. Review the returned
+source list and retained text, then use the same preparation lifecycle as
+documents to choose fields and save a table or JSON.
+
+```python
+from stratifyx.types import WebResearchRequest
+
+research = await tools.start_web_research(WebResearchRequest.model_validate({
+    "request_id": "python-release-review-1",
+    "input": {"kind": "search", "query": "Python 3.13.0 official release date"},
+    "content": {},
+}))
+# Poll this exact reference until ready; no repeat search is needed.
+research = await tools.web_research(research.read_ref)
+for source in research.sources:
+    print(source.url, source.state)
+    if source.state == "read":
+        page = await tools.read_web_source(source.source_ref)
+```
+
+Search optionally accepts `include_domains` for hostname/path limits. When
+particular pages were supplied, input `kind="pages"` accepts `urls` and an
+optional `question`; it skips discovery. The single-URL input remains supported.
+`content.snapshot_as_of` requests a UTC historical cutoff, while discovery still
+uses current search ranking. Never combine it with `max_age_hours`. A missing
+historical page is unavailable, not evidence that its facts did not exist.
+
+`prepare_web_dataset` takes the generated `DatasetBuildRequest` with input
+`{"kind":"web_read","read_ref":research.read_ref}` and a reviewed schema.
+Use `document_preparation` and `act_document_preparation` for the shared
+status/partial-save/recovery lifecycle. Only an explicit Build creates reusable
+data; acquisition never replaces the schema editor or saves a dataset by itself.
+Saved evidence includes exact source references, SHA-256 digests, quotation text
+and UTF-8 byte offsets. `read_web_source` reopens retained bytes without another
+provider call.
+
+The equivalent MCP entry points are `epoch_start_web_research`,
+`epoch_web_research`, `epoch_read_web_source`, `epoch_act_web_research` and
+`epoch_prepare_web_dataset`. Explicit acquisition/extraction uses the configured
+EpochAI origin; all retained reads and saved outputs use native Backend ownership.
 
 For supported completed results, application/notebook and MCP clients share the
 same native extension methods:
