@@ -46,6 +46,7 @@ from stratifyx.types import (
     SdkExecutionRecord,
     SpaceResourceRef,
     StructuredImportRequest,
+    WebResearchRequest,
 )
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
@@ -455,6 +456,31 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             )])
         return await _call(resource())
 
+    async def start_web_research(request: WebResearchRequest) -> CallToolResult:
+        """Explicitly read public URL/query sources using Latest or Snapshot settings.
+        Retain the request identity and inspect actual source coverage before using facts.
+        """
+        return await _call(client.start_web_research(request))
+
+    async def web_research(read_ref: str) -> CallToolResult:
+        """Reopen retained web research. This does not perform an external fetch."""
+        return await _call(client.web_research(read_ref))
+
+    async def read_web_source(source_ref: str, offset: Annotated[int, Field(strict=True, ge=0)] = 0,
+                              max_bytes: Annotated[int, Field(strict=True, ge=1, le=8388608)] = 65536) -> CallToolResult:
+        """Read exact owner-scoped captured text. Offset/length are UTF-8 bytes; follow has_more."""
+        return await _call(client.read_web_source(source_ref, offset=offset, max_bytes=max_bytes))
+
+    async def act_web_research(read_ref: str, request: DatasetBuildActionRequest) -> CallToolResult:
+        """Explicitly stop or retry a web read. Unknown submissions must be reconciled first."""
+        return await _call(client.act_web_research(read_ref, request))
+
+    async def prepare_web_dataset(request: DatasetBuildRequest) -> CallToolResult:
+        """Build from a retained web read with the shared exact-schema/result lifecycle.
+        Reopen with epoch_document_preparation; save-only retry never re-fetches sources.
+        """
+        return await _call(client.prepare_web_dataset(request))
+
     async def capture_document_url(request: CaptureDocumentRequest) -> CallToolResult:
         """Explicitly capture a direct document URL into Uploads. Reuse request_id
         after an uncertain response. This fetches the URL; it never starts parsing.
@@ -820,6 +846,11 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         ("epoch_source_snapshot", source_snapshot),
         ("epoch_review_source_snapshot", review_source_snapshot),
         ("epoch_delete_source_connection", delete_source_connection),
+        ("epoch_start_web_research", start_web_research),
+        ("epoch_web_research", web_research),
+        ("epoch_read_web_source", read_web_source),
+        ("epoch_act_web_research", act_web_research),
+        ("epoch_prepare_web_dataset", prepare_web_dataset),
         ("epoch_start_document_read", start_document_read),
         ("epoch_capture_document_url", capture_document_url),
         ("epoch_document_capture", document_capture),

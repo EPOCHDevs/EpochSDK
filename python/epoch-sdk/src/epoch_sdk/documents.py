@@ -1,7 +1,7 @@
-"""Document workflow adapters; saved source reads stay native and owner scoped.
+"""Shared document/public-web adapters; retained reads stay native and owner scoped.
 
-Only start_document_read and prepare_document_dataset may initiate AWS work.
-Content/search/status/preview never start a model or a new extraction.
+Explicit start/prepare methods initiate provider work. Retained document search,
+content, status and preview never start a model or another web fetch.
 """
 from __future__ import annotations
 
@@ -23,6 +23,9 @@ from stratifyx.types import (
     DocumentReadList,
     DocumentSearchResponse,
     DocumentSourcePassage,
+    WebResearch,
+    WebResearchRequest,
+    WebSourceContent,
 )
 
 
@@ -60,6 +63,47 @@ class DocumentClient:
         if self.document_http is None:
             raise ValueError("Configure an EpochAI endpoint to initiate document processing")
         return self.document_http
+
+    async def start_web_research(self, request: WebResearchRequest) -> WebResearch:
+        """Discover/read from a public question, or read explicitly supplied URLs.
+        Preserve request_id for reconciliation after an uncertain acknowledgement.
+        """
+        _closed(request)
+        response = await self._document_http().post("/api/v1/web-research",
+            content=request.model_dump_json(by_alias=True, exclude_unset=True),
+            headers={"Content-Type": "application/json"}, timeout=30)
+        response.raise_for_status()
+        result = WebResearch.model_validate_json(response.content)
+        expected = "web-read:" + hashlib.sha256(request.request_id.encode()).hexdigest()
+        if result.read_ref != expected:
+            raise ValueError("Web research returned a different immutable identity")
+        return result
+
+    async def web_research(self, read_ref: str) -> WebResearch:
+        return await self.backend.user_files.get_web_research(read_ref, request_options={"max_retries": 0})
+
+    async def read_web_source(self, source_ref: str, *, offset: int = 0, max_bytes: int = 65536) -> WebSourceContent:
+        if type(offset) is not int or offset < 0 or type(max_bytes) is not int or not 1 <= max_bytes <= 8 * 1024 * 1024:
+            raise ValueError("Use a nonnegative byte offset and a budget up to 8 MiB")
+        return await self.backend.user_files.read_web_source(source_ref, offset=offset, max_bytes=max_bytes, request_options={"max_retries": 0})
+
+    async def act_web_research(self, read_ref: str, request: DatasetBuildActionRequest) -> WebResearch:
+        _closed(request)
+        return await self.backend.user_files.act_on_web_research(read_ref, action=request.action, attempt=request.attempt,
+            result_sha256=request.result_sha256, request_options={"max_retries": 0})
+
+    async def delete_web_research(self, read_ref: str) -> None:
+        await self.backend.user_files.delete_web_research(read_ref, request_options={"max_retries": 0})
+
+    async def prepare_web_dataset(self, request: DatasetBuildRequest) -> DatasetBuild:
+        _closed(request)
+        if len(request.preparation.inputs) != 1 or request.preparation.inputs[0].kind != "web_read":
+            raise ValueError("Select one retained web research result")
+        response = await self._document_http().post("/api/v1/web-preparations",
+            content=request.model_dump_json(by_alias=True, exclude_unset=True),
+            headers={"Content-Type": "application/json"}, timeout=30)
+        response.raise_for_status()
+        return DatasetBuild.model_validate_json(response.content)
 
     async def capture_document_url(self, request: CaptureDocumentRequest) -> DocumentCapture:
         """Capture exact URL bytes into Uploads. Reuse request_id after an unknown
