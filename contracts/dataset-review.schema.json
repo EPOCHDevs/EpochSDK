@@ -1,0 +1,5335 @@
+{
+  "interrupt": {
+    "$defs": {
+      "AssetClass": {
+        "enum": [
+          "Stocks",
+          "FX",
+          "Crypto",
+          "Futures"
+        ],
+        "title": "AssetClass",
+        "type": "string"
+      },
+      "DataFoundation": {
+        "enum": [
+          "Daily",
+          "Minute",
+          "Nanosecond",
+          "Null"
+        ],
+        "title": "DataFoundation",
+        "type": "string"
+      },
+      "DataSourceCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "availability_axis": {
+            "$ref": "#/$defs/SourceAvailabilityAxis"
+          },
+          "future_rows": {
+            "$ref": "#/$defs/SourceFutureCapability"
+          },
+          "predecessor": {
+            "$ref": "#/$defs/SourcePredecessorCapability"
+          },
+          "range": {
+            "$ref": "#/$defs/SourceRangeCapability"
+          }
+        },
+        "required": [
+          "availability_axis",
+          "future_rows",
+          "predecessor",
+          "range"
+        ],
+        "title": "DataSourceCapabilities",
+        "type": "object"
+      },
+      "DataSourceColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "dtype": {
+            "title": "Dtype",
+            "type": "string"
+          },
+          "is_index": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index"
+          },
+          "is_index_alternative": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index Alternative"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Semantic"
+          },
+          "synthetic": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Synthetic"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AssumeTimezone": "#/$defs/DataSourceValueTransform_AssumeTimezone",
+                      "FloorDay": "#/$defs/DataSourceValueTransform_FloorDay",
+                      "ParseDateTime": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_AssumeTimezone"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_FloorDay"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "dtype",
+          "name",
+          "nullable"
+        ],
+        "title": "DataSourceColumn",
+        "type": "object"
+      },
+      "DataSourceFrameMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AssetClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "data_type": {
+            "title": "Data Type",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "entity_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Entity Columns",
+            "type": "array"
+          },
+          "foundation": {
+            "$ref": "#/$defs/DataFoundation"
+          },
+          "source_capabilities": {
+            "$ref": "#/$defs/DataSourceCapabilities"
+          }
+        },
+        "required": [
+          "data_type",
+          "description",
+          "entity_columns",
+          "foundation",
+          "source_capabilities"
+        ],
+        "title": "DataSourceFrameMetadata",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_AddContextColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "col_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Col Name"
+          },
+          "kind": {
+            "const": "AddContextColumn",
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Path"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_AddContextColumn",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_CombineDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "date_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Col"
+          },
+          "kind": {
+            "const": "CombineDateTime",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Col"
+          },
+          "time_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time Col"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_CombineDateTime",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_PromoteIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "PromoteIndex",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_PromoteIndex",
+        "type": "object"
+      },
+      "DataSourceSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/$defs/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AddContextColumn": "#/$defs/DataSourcePostReadTransform_AddContextColumn",
+                      "CombineDateTime": "#/$defs/DataSourcePostReadTransform_CombineDateTime",
+                      "PromoteIndex": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_AddContextColumn"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_CombineDateTime"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          }
+        },
+        "required": [
+          "columns"
+        ],
+        "title": "DataSourceSchema",
+        "type": "object"
+      },
+      "DataSourceValueTransform_AssumeTimezone": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "AssumeTimezone",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tz": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tz"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_AssumeTimezone",
+        "type": "object"
+      },
+      "DataSourceValueTransform_FloorDay": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "FloorDay",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_FloorDay",
+        "type": "object"
+      },
+      "DataSourceValueTransform_ParseDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Format"
+          },
+          "kind": {
+            "const": "ParseDateTime",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_ParseDateTime",
+        "type": "object"
+      },
+      "DatasetBuild": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledged": {
+            "title": "Acknowledged",
+            "type": "boolean"
+          },
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "coverage": {
+            "$ref": "#/$defs/DatasetProcessingCoverage"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SavedDataset"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "draft_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Draft Ref"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Replaced By"
+          },
+          "request": {
+            "$ref": "#/$defs/DatasetBuildRequest"
+          },
+          "result_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Sha256"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/UserFileDescriptor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "state": {
+            "$ref": "#/$defs/DatasetBuildState"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "web_read_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Web Read Ref"
+          }
+        },
+        "required": [
+          "acknowledged",
+          "attempt",
+          "coverage",
+          "created_at",
+          "limitations",
+          "message",
+          "preparation_ref",
+          "request",
+          "state",
+          "updated_at"
+        ],
+        "title": "DatasetBuild",
+        "type": "object"
+      },
+      "DatasetBuildAction": {
+        "enum": [
+          "stop",
+          "retry_extraction",
+          "retry_save",
+          "save",
+          "save_available",
+          "discard",
+          "acknowledge"
+        ],
+        "title": "DatasetBuildAction",
+        "type": "string"
+      },
+      "DatasetBuildRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "preparation": {
+            "$ref": "#/$defs/DatasetPreparationRequest"
+          },
+          "replaces": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildRevision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "preparation",
+          "request_id"
+        ],
+        "title": "DatasetBuildRequest",
+        "type": "object"
+      },
+      "DatasetBuildReview": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/$defs/DatasetBuildAction"
+            },
+            "title": "Allowed Actions",
+            "type": "array"
+          },
+          "draft": {
+            "$ref": "#/$defs/DraftDataset"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed_actions",
+          "draft",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildReview",
+        "type": "object"
+      },
+      "DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "preparation_ref",
+          "result_sha256",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildRevision",
+        "type": "object"
+      },
+      "DatasetBuildState": {
+        "enum": [
+          "queued",
+          "preparing",
+          "checking",
+          "incomplete",
+          "clarification",
+          "no_matches",
+          "extraction_failed",
+          "saving",
+          "save_failed",
+          "saved",
+          "stopped",
+          "expired",
+          "discarded",
+          "pending_review",
+          "superseded"
+        ],
+        "title": "DatasetBuildState",
+        "type": "string"
+      },
+      "DatasetConfigureInterrupt": {
+        "additionalProperties": false,
+        "properties": {
+          "preparation_ref": {
+            "pattern": "^preparation:[a-f0-9]{64}$",
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "proposal_ref": {
+            "pattern": "^proposal:[a-f0-9]{64}$",
+            "title": "Proposal Ref",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/$defs/DatasetBuildRequest"
+          },
+          "stage": {
+            "const": "configure",
+            "default": "configure",
+            "title": "Stage",
+            "type": "string"
+          },
+          "tool_call_id": {
+            "minLength": 1,
+            "title": "Tool Call Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "dataset_review",
+            "default": "dataset_review",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "proposal_ref",
+          "preparation_ref",
+          "request"
+        ],
+        "title": "DatasetConfigureInterrupt",
+        "type": "object"
+      },
+      "DatasetCoverage": {
+        "additionalProperties": true,
+        "properties": {
+          "first_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "First Timestamp"
+          },
+          "last_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Last Timestamp"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_count"
+        ],
+        "title": "DatasetCoverage",
+        "type": "object"
+      },
+      "DatasetDescriptor": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Ref"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "preparation": {
+            "$ref": "#/$defs/DatasetPreparation"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          },
+          "shape": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/$defs/DatasetShape_Json",
+                "table": "#/$defs/DatasetShape_Table"
+              },
+              "propertyName": "format"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetShape_Json"
+              },
+              {
+                "$ref": "#/$defs/DatasetShape_Table"
+              }
+            ],
+            "title": "Shape"
+          },
+          "sources": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/$defs/DatasetProvenanceSource_Dataset",
+                  "file": "#/$defs/DatasetProvenanceSource_File",
+                  "study_result": "#/$defs/DatasetProvenanceSource_StudyResult",
+                  "web": "#/$defs/DatasetProvenanceSource_Web"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_Dataset"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_File"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_StudyResult"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_Web"
+                }
+              ]
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "limitations",
+          "preparation",
+          "schema_sha256",
+          "shape",
+          "sources"
+        ],
+        "title": "DatasetDescriptor",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_Automatic": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "automatic",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_Automatic",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_UserDefined": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTableSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "mode": {
+            "const": "user_defined",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_UserDefined",
+        "type": "object"
+      },
+      "DatasetEnrichmentMode": {
+        "enum": [
+          "automatic",
+          "user_defined"
+        ],
+        "title": "DatasetEnrichmentMode",
+        "type": "string"
+      },
+      "DatasetOrigin": {
+        "enum": [
+          "upload",
+          "document",
+          "web",
+          "derived"
+        ],
+        "title": "DatasetOrigin",
+        "type": "string"
+      },
+      "DatasetOutputFormat": {
+        "enum": [
+          "table",
+          "json"
+        ],
+        "title": "DatasetOutputFormat",
+        "type": "string"
+      },
+      "DatasetPreparation": {
+        "additionalProperties": true,
+        "properties": {
+          "enrichment": {
+            "$ref": "#/$defs/DatasetEnrichmentMode"
+          },
+          "implementation_version": {
+            "title": "Implementation Version",
+            "type": "string"
+          },
+          "import_options": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StructuredImportOptions"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/$defs/DatasetOrigin"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          },
+          "provider_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider Version"
+          },
+          "purpose": {
+            "$ref": "#/$defs/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/$defs/DatasetSchemaChoice_Agent",
+                "imported": "#/$defs/DatasetSchemaChoice_Imported",
+                "provided": "#/$defs/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "implementation_version",
+          "instruction",
+          "origin",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparation",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Dataset": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "dataset_ref"
+        ],
+        "title": "DatasetPreparationInput_Dataset",
+        "type": "object"
+      },
+      "DatasetPreparationInput_File": {
+        "additionalProperties": false,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "file_ref"
+        ],
+        "title": "DatasetPreparationInput_File",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Search": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "search",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "title": "DatasetPreparationInput_Search",
+        "type": "object"
+      },
+      "DatasetPreparationInput_StudyResult": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetPreparationInput_StudyResult",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Url": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "url",
+            "title": "Kind",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "DatasetPreparationInput_Url",
+        "type": "object"
+      },
+      "DatasetPreparationInput_WebRead": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read",
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "read_ref"
+        ],
+        "title": "DatasetPreparationInput_WebRead",
+        "type": "object"
+      },
+      "DatasetPreparationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capture_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capture Ref"
+          },
+          "enrichment": {
+            "discriminator": {
+              "mapping": {
+                "automatic": "#/$defs/DatasetEnrichmentChoice_Automatic",
+                "user_defined": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_Automatic"
+              },
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              }
+            ],
+            "title": "Enrichment"
+          },
+          "inputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/$defs/DatasetPreparationInput_Dataset",
+                  "file": "#/$defs/DatasetPreparationInput_File",
+                  "search": "#/$defs/DatasetPreparationInput_Search",
+                  "study_result": "#/$defs/DatasetPreparationInput_StudyResult",
+                  "url": "#/$defs/DatasetPreparationInput_Url",
+                  "web_read": "#/$defs/DatasetPreparationInput_WebRead"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Dataset"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_File"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Search"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_StudyResult"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Url"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_WebRead"
+                }
+              ]
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "output_format": {
+            "$ref": "#/$defs/DatasetOutputFormat"
+          },
+          "purpose": {
+            "$ref": "#/$defs/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/$defs/DatasetSchemaChoice_Agent",
+                "imported": "#/$defs/DatasetSchemaChoice_Imported",
+                "provided": "#/$defs/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "inputs",
+          "instruction",
+          "output_format",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparationRequest",
+        "type": "object"
+      },
+      "DatasetPreviewContent_Json": {
+        "additionalProperties": true,
+        "properties": {
+          "format": {
+            "const": "json",
+            "default": "json",
+            "title": "Format",
+            "type": "string"
+          },
+          "json_pointer": {
+            "title": "Json Pointer",
+            "type": "string"
+          },
+          "json_text": {
+            "title": "Json Text",
+            "type": "string"
+          },
+          "requires_download": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Download"
+          }
+        },
+        "required": [
+          "json_pointer",
+          "json_text"
+        ],
+        "title": "DatasetPreviewContent_Json",
+        "type": "object"
+      },
+      "DatasetPreviewContent_Table": {
+        "additionalProperties": true,
+        "properties": {
+          "field_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Field Ids",
+            "type": "array"
+          },
+          "format": {
+            "const": "table",
+            "default": "table",
+            "title": "Format",
+            "type": "string"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Next Cursor"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "requires_download": {
+            "title": "Requires Download",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "total_rows": {
+            "title": "Total Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "field_ids",
+          "offset",
+          "requires_download",
+          "rows",
+          "total_rows"
+        ],
+        "title": "DatasetPreviewContent_Table",
+        "type": "object"
+      },
+      "DatasetPreviewPage": {
+        "additionalProperties": true,
+        "properties": {
+          "content": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/$defs/DatasetPreviewContent_Json",
+                "table": "#/$defs/DatasetPreviewContent_Table"
+              },
+              "propertyName": "format"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetPreviewContent_Json"
+              },
+              {
+                "$ref": "#/$defs/DatasetPreviewContent_Table"
+              }
+            ],
+            "title": "Content"
+          },
+          "target": {
+            "discriminator": {
+              "mapping": {
+                "draft": "#/$defs/DatasetPreviewTarget_Draft",
+                "saved": "#/$defs/DatasetPreviewTarget_Saved"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetPreviewTarget_Draft"
+              },
+              {
+                "$ref": "#/$defs/DatasetPreviewTarget_Saved"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "content",
+          "target"
+        ],
+        "title": "DatasetPreviewPage",
+        "type": "object"
+      },
+      "DatasetPreviewTarget_Draft": {
+        "additionalProperties": true,
+        "properties": {
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "draft",
+            "default": "draft",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "draft_ref"
+        ],
+        "title": "DatasetPreviewTarget_Draft",
+        "type": "object"
+      },
+      "DatasetPreviewTarget_Saved": {
+        "additionalProperties": true,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "saved",
+            "default": "saved",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_ref"
+        ],
+        "title": "DatasetPreviewTarget_Saved",
+        "type": "object"
+      },
+      "DatasetProcessingCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "processed_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Processed Pages",
+            "type": "array"
+          },
+          "total_pages": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Total Pages"
+          },
+          "unread_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unread Pages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "processed_pages",
+          "unread_pages"
+        ],
+        "title": "DatasetProcessingCoverage",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Dataset": {
+        "additionalProperties": true,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "default": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_ref"
+        ],
+        "title": "DatasetProvenanceSource_Dataset",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_File": {
+        "additionalProperties": true,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "default": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_ref"
+        ],
+        "title": "DatasetProvenanceSource_File",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_StudyResult": {
+        "additionalProperties": true,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "default": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetProvenanceSource_StudyResult",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Web": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Ref"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "kind": {
+            "const": "web",
+            "default": "web",
+            "title": "Kind",
+            "type": "string"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "fetched_at",
+          "url"
+        ],
+        "title": "DatasetProvenanceSource_Web",
+        "type": "object"
+      },
+      "DatasetPurpose": {
+        "enum": [
+          "knowledge",
+          "study_source"
+        ],
+        "title": "DatasetPurpose",
+        "type": "string"
+      },
+      "DatasetResultInterrupt": {
+        "additionalProperties": false,
+        "properties": {
+          "can_edit": {
+            "default": false,
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "operation": {
+            "$ref": "#/$defs/DatasetBuild"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetPreviewPage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "stage": {
+            "const": "review",
+            "default": "review",
+            "title": "Stage",
+            "type": "string"
+          },
+          "tool_call_id": {
+            "minLength": 1,
+            "title": "Tool Call Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "dataset_review",
+            "default": "dataset_review",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool_call_id",
+          "operation"
+        ],
+        "title": "DatasetResultInterrupt",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Agent": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "agent",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Agent",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Imported": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "imported",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Imported",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Provided": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          },
+          "mode": {
+            "const": "provided",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "json_schema_text"
+        ],
+        "title": "DatasetSchemaChoice_Provided",
+        "type": "object"
+      },
+      "DatasetShape_Json": {
+        "additionalProperties": true,
+        "properties": {
+          "format": {
+            "const": "json",
+            "default": "json",
+            "title": "Format",
+            "type": "string"
+          },
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json_schema_text"
+        ],
+        "title": "DatasetShape_Json",
+        "type": "object"
+      },
+      "DatasetShape_Table": {
+        "additionalProperties": true,
+        "properties": {
+          "coverage": {
+            "$ref": "#/$defs/DatasetCoverage"
+          },
+          "format": {
+            "const": "table",
+            "default": "table",
+            "title": "Format",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/$defs/DatasetTableSchema"
+          }
+        },
+        "required": [
+          "coverage",
+          "schema"
+        ],
+        "title": "DatasetShape_Table",
+        "type": "object"
+      },
+      "DatasetTableSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Field"
+          },
+          "dataframe_metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceFrameMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "frame_schema": {
+            "$ref": "#/$defs/DataSourceSchema"
+          },
+          "key_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Key Fields",
+            "type": "array"
+          },
+          "time_axis": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTimeAxis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "frame_schema",
+          "key_fields"
+        ],
+        "title": "DatasetTableSchema",
+        "type": "object"
+      },
+      "DatasetTimeAxis": {
+        "additionalProperties": false,
+        "properties": {
+          "assumed": {
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "date_only_convention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Only Convention"
+          },
+          "meaning": {
+            "$ref": "#/$defs/DatasetTimeMeaning"
+          },
+          "source_precision": {
+            "$ref": "#/$defs/DatasetTimePrecision"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assumed",
+          "meaning",
+          "source_precision",
+          "source_timezone"
+        ],
+        "title": "DatasetTimeAxis",
+        "type": "object"
+      },
+      "DatasetTimeMeaning": {
+        "enum": [
+          "observation",
+          "event",
+          "publication",
+          "user_snapshot"
+        ],
+        "title": "DatasetTimeMeaning",
+        "type": "string"
+      },
+      "DatasetTimePrecision": {
+        "enum": [
+          "date",
+          "second",
+          "millisecond",
+          "microsecond",
+          "nanosecond"
+        ],
+        "title": "DatasetTimePrecision",
+        "type": "string"
+      },
+      "DraftDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/$defs/DatasetDescriptor"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "descriptor",
+          "draft_ref",
+          "expires_at",
+          "name"
+        ],
+        "title": "DraftDataset",
+        "type": "object"
+      },
+      "SavedDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/$defs/DatasetDescriptor"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Ref"
+          }
+        },
+        "required": [
+          "archived",
+          "dataset_ref",
+          "descriptor",
+          "name",
+          "saved_at"
+        ],
+        "title": "SavedDataset",
+        "type": "object"
+      },
+      "SourceAvailabilityAxis": {
+        "enum": [
+          "None",
+          "ObservationIndex",
+          "KnownAtIndex",
+          "CurrentSnapshot"
+        ],
+        "title": "SourceAvailabilityAxis",
+        "type": "string"
+      },
+      "SourceFutureCapability": {
+        "enum": [
+          "PastOrPresentOnly",
+          "ProviderKnownFutureRows"
+        ],
+        "title": "SourceFutureCapability",
+        "type": "string"
+      },
+      "SourcePredecessorCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourcePredecessorCapability",
+        "type": "string"
+      },
+      "SourceRangeCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourceRangeCapability",
+        "type": "string"
+      },
+      "StructuredImportOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/$defs/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "delimiter": {
+            "title": "Delimiter",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "header": {
+            "title": "Header",
+            "type": "boolean"
+          },
+          "json_pointer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Json Pointer"
+          },
+          "null_values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Null Values",
+            "type": "array"
+          },
+          "sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sheet"
+          }
+        },
+        "required": [
+          "columns",
+          "delimiter",
+          "format",
+          "header",
+          "null_values"
+        ],
+        "title": "StructuredImportOptions",
+        "type": "object"
+      },
+      "UserFileDescriptor": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Content Sha256"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error"
+          },
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/$defs/UserFileStatus"
+          }
+        },
+        "required": [
+          "created_at",
+          "file_ref",
+          "media_type",
+          "name",
+          "size_bytes",
+          "status"
+        ],
+        "title": "UserFileDescriptor",
+        "type": "object"
+      },
+      "UserFileStatus": {
+        "enum": [
+          "uploading",
+          "uploaded",
+          "failed",
+          "archived"
+        ],
+        "title": "UserFileStatus",
+        "type": "string"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "configure": "#/$defs/DatasetConfigureInterrupt",
+        "review": "#/$defs/DatasetResultInterrupt"
+      },
+      "propertyName": "stage"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/DatasetConfigureInterrupt"
+      },
+      {
+        "$ref": "#/$defs/DatasetResultInterrupt"
+      }
+    ]
+  },
+  "progress": {
+    "$defs": {
+      "AssetClass": {
+        "enum": [
+          "Stocks",
+          "FX",
+          "Crypto",
+          "Futures"
+        ],
+        "title": "AssetClass",
+        "type": "string"
+      },
+      "DataFoundation": {
+        "enum": [
+          "Daily",
+          "Minute",
+          "Nanosecond",
+          "Null"
+        ],
+        "title": "DataFoundation",
+        "type": "string"
+      },
+      "DataSourceCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "availability_axis": {
+            "$ref": "#/$defs/SourceAvailabilityAxis"
+          },
+          "future_rows": {
+            "$ref": "#/$defs/SourceFutureCapability"
+          },
+          "predecessor": {
+            "$ref": "#/$defs/SourcePredecessorCapability"
+          },
+          "range": {
+            "$ref": "#/$defs/SourceRangeCapability"
+          }
+        },
+        "required": [
+          "availability_axis",
+          "future_rows",
+          "predecessor",
+          "range"
+        ],
+        "title": "DataSourceCapabilities",
+        "type": "object"
+      },
+      "DataSourceColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "dtype": {
+            "title": "Dtype",
+            "type": "string"
+          },
+          "is_index": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index"
+          },
+          "is_index_alternative": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index Alternative"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Semantic"
+          },
+          "synthetic": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Synthetic"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AssumeTimezone": "#/$defs/DataSourceValueTransform_AssumeTimezone",
+                      "FloorDay": "#/$defs/DataSourceValueTransform_FloorDay",
+                      "ParseDateTime": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_AssumeTimezone"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_FloorDay"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "dtype",
+          "name",
+          "nullable"
+        ],
+        "title": "DataSourceColumn",
+        "type": "object"
+      },
+      "DataSourceFrameMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AssetClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "data_type": {
+            "title": "Data Type",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "entity_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Entity Columns",
+            "type": "array"
+          },
+          "foundation": {
+            "$ref": "#/$defs/DataFoundation"
+          },
+          "source_capabilities": {
+            "$ref": "#/$defs/DataSourceCapabilities"
+          }
+        },
+        "required": [
+          "data_type",
+          "description",
+          "entity_columns",
+          "foundation",
+          "source_capabilities"
+        ],
+        "title": "DataSourceFrameMetadata",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_AddContextColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "col_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Col Name"
+          },
+          "kind": {
+            "const": "AddContextColumn",
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Path"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_AddContextColumn",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_CombineDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "date_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Col"
+          },
+          "kind": {
+            "const": "CombineDateTime",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Col"
+          },
+          "time_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time Col"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_CombineDateTime",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_PromoteIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "PromoteIndex",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_PromoteIndex",
+        "type": "object"
+      },
+      "DataSourceSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/$defs/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AddContextColumn": "#/$defs/DataSourcePostReadTransform_AddContextColumn",
+                      "CombineDateTime": "#/$defs/DataSourcePostReadTransform_CombineDateTime",
+                      "PromoteIndex": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_AddContextColumn"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_CombineDateTime"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          }
+        },
+        "required": [
+          "columns"
+        ],
+        "title": "DataSourceSchema",
+        "type": "object"
+      },
+      "DataSourceValueTransform_AssumeTimezone": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "AssumeTimezone",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tz": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tz"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_AssumeTimezone",
+        "type": "object"
+      },
+      "DataSourceValueTransform_FloorDay": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "FloorDay",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_FloorDay",
+        "type": "object"
+      },
+      "DataSourceValueTransform_ParseDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Format"
+          },
+          "kind": {
+            "const": "ParseDateTime",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_ParseDateTime",
+        "type": "object"
+      },
+      "DatasetBuild": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledged": {
+            "title": "Acknowledged",
+            "type": "boolean"
+          },
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "coverage": {
+            "$ref": "#/$defs/DatasetProcessingCoverage"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SavedDataset"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "draft_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Draft Ref"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Replaced By"
+          },
+          "request": {
+            "$ref": "#/$defs/DatasetBuildRequest"
+          },
+          "result_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Sha256"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/UserFileDescriptor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "state": {
+            "$ref": "#/$defs/DatasetBuildState"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "web_read_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Web Read Ref"
+          }
+        },
+        "required": [
+          "acknowledged",
+          "attempt",
+          "coverage",
+          "created_at",
+          "limitations",
+          "message",
+          "preparation_ref",
+          "request",
+          "state",
+          "updated_at"
+        ],
+        "title": "DatasetBuild",
+        "type": "object"
+      },
+      "DatasetBuildAction": {
+        "enum": [
+          "stop",
+          "retry_extraction",
+          "retry_save",
+          "save",
+          "save_available",
+          "discard",
+          "acknowledge"
+        ],
+        "title": "DatasetBuildAction",
+        "type": "string"
+      },
+      "DatasetBuildRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "preparation": {
+            "$ref": "#/$defs/DatasetPreparationRequest"
+          },
+          "replaces": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildRevision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "preparation",
+          "request_id"
+        ],
+        "title": "DatasetBuildRequest",
+        "type": "object"
+      },
+      "DatasetBuildReview": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/$defs/DatasetBuildAction"
+            },
+            "title": "Allowed Actions",
+            "type": "array"
+          },
+          "draft": {
+            "$ref": "#/$defs/DraftDataset"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed_actions",
+          "draft",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildReview",
+        "type": "object"
+      },
+      "DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "preparation_ref",
+          "result_sha256",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildRevision",
+        "type": "object"
+      },
+      "DatasetBuildState": {
+        "enum": [
+          "queued",
+          "preparing",
+          "checking",
+          "incomplete",
+          "clarification",
+          "no_matches",
+          "extraction_failed",
+          "saving",
+          "save_failed",
+          "saved",
+          "stopped",
+          "expired",
+          "discarded",
+          "pending_review",
+          "superseded"
+        ],
+        "title": "DatasetBuildState",
+        "type": "string"
+      },
+      "DatasetCoverage": {
+        "additionalProperties": true,
+        "properties": {
+          "first_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "First Timestamp"
+          },
+          "last_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Last Timestamp"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row_count"
+        ],
+        "title": "DatasetCoverage",
+        "type": "object"
+      },
+      "DatasetDescriptor": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Ref"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "preparation": {
+            "$ref": "#/$defs/DatasetPreparation"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          },
+          "shape": {
+            "discriminator": {
+              "mapping": {
+                "json": "#/$defs/DatasetShape_Json",
+                "table": "#/$defs/DatasetShape_Table"
+              },
+              "propertyName": "format"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetShape_Json"
+              },
+              {
+                "$ref": "#/$defs/DatasetShape_Table"
+              }
+            ],
+            "title": "Shape"
+          },
+          "sources": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/$defs/DatasetProvenanceSource_Dataset",
+                  "file": "#/$defs/DatasetProvenanceSource_File",
+                  "study_result": "#/$defs/DatasetProvenanceSource_StudyResult",
+                  "web": "#/$defs/DatasetProvenanceSource_Web"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_Dataset"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_File"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_StudyResult"
+                },
+                {
+                  "$ref": "#/$defs/DatasetProvenanceSource_Web"
+                }
+              ]
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "limitations",
+          "preparation",
+          "schema_sha256",
+          "shape",
+          "sources"
+        ],
+        "title": "DatasetDescriptor",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_Automatic": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "automatic",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_Automatic",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_UserDefined": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTableSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "mode": {
+            "const": "user_defined",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_UserDefined",
+        "type": "object"
+      },
+      "DatasetEnrichmentMode": {
+        "enum": [
+          "automatic",
+          "user_defined"
+        ],
+        "title": "DatasetEnrichmentMode",
+        "type": "string"
+      },
+      "DatasetOrigin": {
+        "enum": [
+          "upload",
+          "document",
+          "web",
+          "derived"
+        ],
+        "title": "DatasetOrigin",
+        "type": "string"
+      },
+      "DatasetOutputFormat": {
+        "enum": [
+          "table",
+          "json"
+        ],
+        "title": "DatasetOutputFormat",
+        "type": "string"
+      },
+      "DatasetPreparation": {
+        "additionalProperties": true,
+        "properties": {
+          "enrichment": {
+            "$ref": "#/$defs/DatasetEnrichmentMode"
+          },
+          "implementation_version": {
+            "title": "Implementation Version",
+            "type": "string"
+          },
+          "import_options": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StructuredImportOptions"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/$defs/DatasetOrigin"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          },
+          "provider_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider Version"
+          },
+          "purpose": {
+            "$ref": "#/$defs/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/$defs/DatasetSchemaChoice_Agent",
+                "imported": "#/$defs/DatasetSchemaChoice_Imported",
+                "provided": "#/$defs/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "implementation_version",
+          "instruction",
+          "origin",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparation",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Dataset": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "dataset_ref"
+        ],
+        "title": "DatasetPreparationInput_Dataset",
+        "type": "object"
+      },
+      "DatasetPreparationInput_File": {
+        "additionalProperties": false,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "file_ref"
+        ],
+        "title": "DatasetPreparationInput_File",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Search": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "search",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "title": "DatasetPreparationInput_Search",
+        "type": "object"
+      },
+      "DatasetPreparationInput_StudyResult": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetPreparationInput_StudyResult",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Url": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "url",
+            "title": "Kind",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "DatasetPreparationInput_Url",
+        "type": "object"
+      },
+      "DatasetPreparationInput_WebRead": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read",
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "read_ref"
+        ],
+        "title": "DatasetPreparationInput_WebRead",
+        "type": "object"
+      },
+      "DatasetPreparationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capture_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capture Ref"
+          },
+          "enrichment": {
+            "discriminator": {
+              "mapping": {
+                "automatic": "#/$defs/DatasetEnrichmentChoice_Automatic",
+                "user_defined": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_Automatic"
+              },
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              }
+            ],
+            "title": "Enrichment"
+          },
+          "inputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/$defs/DatasetPreparationInput_Dataset",
+                  "file": "#/$defs/DatasetPreparationInput_File",
+                  "search": "#/$defs/DatasetPreparationInput_Search",
+                  "study_result": "#/$defs/DatasetPreparationInput_StudyResult",
+                  "url": "#/$defs/DatasetPreparationInput_Url",
+                  "web_read": "#/$defs/DatasetPreparationInput_WebRead"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Dataset"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_File"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Search"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_StudyResult"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Url"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_WebRead"
+                }
+              ]
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "output_format": {
+            "$ref": "#/$defs/DatasetOutputFormat"
+          },
+          "purpose": {
+            "$ref": "#/$defs/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/$defs/DatasetSchemaChoice_Agent",
+                "imported": "#/$defs/DatasetSchemaChoice_Imported",
+                "provided": "#/$defs/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "inputs",
+          "instruction",
+          "output_format",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparationRequest",
+        "type": "object"
+      },
+      "DatasetProcessingCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "processed_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Processed Pages",
+            "type": "array"
+          },
+          "total_pages": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Total Pages"
+          },
+          "unread_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unread Pages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "processed_pages",
+          "unread_pages"
+        ],
+        "title": "DatasetProcessingCoverage",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Dataset": {
+        "additionalProperties": true,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "default": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_ref"
+        ],
+        "title": "DatasetProvenanceSource_Dataset",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_File": {
+        "additionalProperties": true,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "default": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_ref"
+        ],
+        "title": "DatasetProvenanceSource_File",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_StudyResult": {
+        "additionalProperties": true,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "default": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetProvenanceSource_StudyResult",
+        "type": "object"
+      },
+      "DatasetProvenanceSource_Web": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Ref"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "kind": {
+            "const": "web",
+            "default": "web",
+            "title": "Kind",
+            "type": "string"
+          },
+          "snapshot_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot As Of"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_sha256",
+          "fetched_at",
+          "url"
+        ],
+        "title": "DatasetProvenanceSource_Web",
+        "type": "object"
+      },
+      "DatasetPurpose": {
+        "enum": [
+          "knowledge",
+          "study_source"
+        ],
+        "title": "DatasetPurpose",
+        "type": "string"
+      },
+      "DatasetSchemaChoice_Agent": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "agent",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Agent",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Imported": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "imported",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Imported",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Provided": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          },
+          "mode": {
+            "const": "provided",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "json_schema_text"
+        ],
+        "title": "DatasetSchemaChoice_Provided",
+        "type": "object"
+      },
+      "DatasetShape_Json": {
+        "additionalProperties": true,
+        "properties": {
+          "format": {
+            "const": "json",
+            "default": "json",
+            "title": "Format",
+            "type": "string"
+          },
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json_schema_text"
+        ],
+        "title": "DatasetShape_Json",
+        "type": "object"
+      },
+      "DatasetShape_Table": {
+        "additionalProperties": true,
+        "properties": {
+          "coverage": {
+            "$ref": "#/$defs/DatasetCoverage"
+          },
+          "format": {
+            "const": "table",
+            "default": "table",
+            "title": "Format",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/$defs/DatasetTableSchema"
+          }
+        },
+        "required": [
+          "coverage",
+          "schema"
+        ],
+        "title": "DatasetShape_Table",
+        "type": "object"
+      },
+      "DatasetTableSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Field"
+          },
+          "dataframe_metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceFrameMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "frame_schema": {
+            "$ref": "#/$defs/DataSourceSchema"
+          },
+          "key_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Key Fields",
+            "type": "array"
+          },
+          "time_axis": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTimeAxis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "frame_schema",
+          "key_fields"
+        ],
+        "title": "DatasetTableSchema",
+        "type": "object"
+      },
+      "DatasetTimeAxis": {
+        "additionalProperties": false,
+        "properties": {
+          "assumed": {
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "date_only_convention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Only Convention"
+          },
+          "meaning": {
+            "$ref": "#/$defs/DatasetTimeMeaning"
+          },
+          "source_precision": {
+            "$ref": "#/$defs/DatasetTimePrecision"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assumed",
+          "meaning",
+          "source_precision",
+          "source_timezone"
+        ],
+        "title": "DatasetTimeAxis",
+        "type": "object"
+      },
+      "DatasetTimeMeaning": {
+        "enum": [
+          "observation",
+          "event",
+          "publication",
+          "user_snapshot"
+        ],
+        "title": "DatasetTimeMeaning",
+        "type": "string"
+      },
+      "DatasetTimePrecision": {
+        "enum": [
+          "date",
+          "second",
+          "millisecond",
+          "microsecond",
+          "nanosecond"
+        ],
+        "title": "DatasetTimePrecision",
+        "type": "string"
+      },
+      "DraftDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/$defs/DatasetDescriptor"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "descriptor",
+          "draft_ref",
+          "expires_at",
+          "name"
+        ],
+        "title": "DraftDataset",
+        "type": "object"
+      },
+      "SavedDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/$defs/DatasetDescriptor"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Ref"
+          }
+        },
+        "required": [
+          "archived",
+          "dataset_ref",
+          "descriptor",
+          "name",
+          "saved_at"
+        ],
+        "title": "SavedDataset",
+        "type": "object"
+      },
+      "SourceAvailabilityAxis": {
+        "enum": [
+          "None",
+          "ObservationIndex",
+          "KnownAtIndex",
+          "CurrentSnapshot"
+        ],
+        "title": "SourceAvailabilityAxis",
+        "type": "string"
+      },
+      "SourceFutureCapability": {
+        "enum": [
+          "PastOrPresentOnly",
+          "ProviderKnownFutureRows"
+        ],
+        "title": "SourceFutureCapability",
+        "type": "string"
+      },
+      "SourcePredecessorCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourcePredecessorCapability",
+        "type": "string"
+      },
+      "SourceRangeCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourceRangeCapability",
+        "type": "string"
+      },
+      "StructuredImportOptions": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/$defs/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "delimiter": {
+            "title": "Delimiter",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "header": {
+            "title": "Header",
+            "type": "boolean"
+          },
+          "json_pointer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Json Pointer"
+          },
+          "null_values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Null Values",
+            "type": "array"
+          },
+          "sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sheet"
+          }
+        },
+        "required": [
+          "columns",
+          "delimiter",
+          "format",
+          "header",
+          "null_values"
+        ],
+        "title": "StructuredImportOptions",
+        "type": "object"
+      },
+      "UserFileDescriptor": {
+        "additionalProperties": true,
+        "properties": {
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Content Sha256"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Error"
+          },
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/$defs/UserFileStatus"
+          }
+        },
+        "required": [
+          "created_at",
+          "file_ref",
+          "media_type",
+          "name",
+          "size_bytes",
+          "status"
+        ],
+        "title": "UserFileDescriptor",
+        "type": "object"
+      },
+      "UserFileStatus": {
+        "enum": [
+          "uploading",
+          "uploaded",
+          "failed",
+          "archived"
+        ],
+        "title": "UserFileStatus",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "message": {
+        "title": "Message",
+        "type": "string"
+      },
+      "operation": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/DatasetBuild"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "stage": {
+        "enum": [
+          "preparing",
+          "saved",
+          "not_saved",
+          "not_started"
+        ],
+        "title": "Stage",
+        "type": "string"
+      },
+      "tool_call_id": {
+        "title": "Tool Call Id",
+        "type": "string"
+      }
+    },
+    "required": [
+      "tool_call_id",
+      "stage",
+      "message"
+    ],
+    "title": "DatasetWorkflowProgress",
+    "type": "object"
+  },
+  "response": {
+    "$defs": {
+      "AssetClass": {
+        "enum": [
+          "Stocks",
+          "FX",
+          "Crypto",
+          "Futures"
+        ],
+        "title": "AssetClass",
+        "type": "string"
+      },
+      "DataFoundation": {
+        "enum": [
+          "Daily",
+          "Minute",
+          "Nanosecond",
+          "Null"
+        ],
+        "title": "DataFoundation",
+        "type": "string"
+      },
+      "DataSourceCapabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "availability_axis": {
+            "$ref": "#/$defs/SourceAvailabilityAxis"
+          },
+          "future_rows": {
+            "$ref": "#/$defs/SourceFutureCapability"
+          },
+          "predecessor": {
+            "$ref": "#/$defs/SourcePredecessorCapability"
+          },
+          "range": {
+            "$ref": "#/$defs/SourceRangeCapability"
+          }
+        },
+        "required": [
+          "availability_axis",
+          "future_rows",
+          "predecessor",
+          "range"
+        ],
+        "title": "DataSourceCapabilities",
+        "type": "object"
+      },
+      "DataSourceColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Display Name"
+          },
+          "dtype": {
+            "title": "Dtype",
+            "type": "string"
+          },
+          "is_index": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index"
+          },
+          "is_index_alternative": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Index Alternative"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Semantic"
+          },
+          "synthetic": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Synthetic"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AssumeTimezone": "#/$defs/DataSourceValueTransform_AssumeTimezone",
+                      "FloorDay": "#/$defs/DataSourceValueTransform_FloorDay",
+                      "ParseDateTime": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_AssumeTimezone"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_FloorDay"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourceValueTransform_ParseDateTime"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "dtype",
+          "name",
+          "nullable"
+        ],
+        "title": "DataSourceColumn",
+        "type": "object"
+      },
+      "DataSourceFrameMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AssetClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "data_type": {
+            "title": "Data Type",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "entity_columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Entity Columns",
+            "type": "array"
+          },
+          "foundation": {
+            "$ref": "#/$defs/DataFoundation"
+          },
+          "source_capabilities": {
+            "$ref": "#/$defs/DataSourceCapabilities"
+          }
+        },
+        "required": [
+          "data_type",
+          "description",
+          "entity_columns",
+          "foundation",
+          "source_capabilities"
+        ],
+        "title": "DataSourceFrameMetadata",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_AddContextColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "col_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Col Name"
+          },
+          "kind": {
+            "const": "AddContextColumn",
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Path"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_AddContextColumn",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_CombineDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "date_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Col"
+          },
+          "kind": {
+            "const": "CombineDateTime",
+            "title": "Kind",
+            "type": "string"
+          },
+          "output_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Output Col"
+          },
+          "time_col": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time Col"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_CombineDateTime",
+        "type": "object"
+      },
+      "DataSourcePostReadTransform_PromoteIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "PromoteIndex",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourcePostReadTransform_PromoteIndex",
+        "type": "object"
+      },
+      "DataSourceSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/$defs/DataSourceColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "transforms": {
+            "anyOf": [
+              {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "AddContextColumn": "#/$defs/DataSourcePostReadTransform_AddContextColumn",
+                      "CombineDateTime": "#/$defs/DataSourcePostReadTransform_CombineDateTime",
+                      "PromoteIndex": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_AddContextColumn"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_CombineDateTime"
+                    },
+                    {
+                      "$ref": "#/$defs/DataSourcePostReadTransform_PromoteIndex"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transforms"
+          }
+        },
+        "required": [
+          "columns"
+        ],
+        "title": "DataSourceSchema",
+        "type": "object"
+      },
+      "DataSourceValueTransform_AssumeTimezone": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "AssumeTimezone",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tz": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tz"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_AssumeTimezone",
+        "type": "object"
+      },
+      "DataSourceValueTransform_FloorDay": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "FloorDay",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_FloorDay",
+        "type": "object"
+      },
+      "DataSourceValueTransform_ParseDateTime": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Format"
+          },
+          "kind": {
+            "const": "ParseDateTime",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "DataSourceValueTransform_ParseDateTime",
+        "type": "object"
+      },
+      "DatasetBuildRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "preparation": {
+            "$ref": "#/$defs/DatasetPreparationRequest"
+          },
+          "replaces": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildRevision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "preparation",
+          "request_id"
+        ],
+        "title": "DatasetBuildRequest",
+        "type": "object"
+      },
+      "DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "preparation_ref",
+          "result_sha256",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildRevision",
+        "type": "object"
+      },
+      "DatasetConfigureResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "build_preview",
+              "cancel"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "proposal_ref": {
+            "pattern": "^proposal:[a-f0-9]{64}$",
+            "title": "Proposal Ref",
+            "type": "string"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "stage": {
+            "const": "configure",
+            "default": "configure",
+            "title": "Stage",
+            "type": "string"
+          },
+          "type": {
+            "const": "dataset_review",
+            "default": "dataset_review",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal_ref",
+          "action"
+        ],
+        "title": "DatasetConfigureResponse",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_Automatic": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "automatic",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_Automatic",
+        "type": "object"
+      },
+      "DatasetEnrichmentChoice_UserDefined": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTableSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "mode": {
+            "const": "user_defined",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetEnrichmentChoice_UserDefined",
+        "type": "object"
+      },
+      "DatasetOutputFormat": {
+        "enum": [
+          "table",
+          "json"
+        ],
+        "title": "DatasetOutputFormat",
+        "type": "string"
+      },
+      "DatasetPreparationInput_Dataset": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_ref": {
+            "title": "Dataset Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "dataset",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "dataset_ref"
+        ],
+        "title": "DatasetPreparationInput_Dataset",
+        "type": "object"
+      },
+      "DatasetPreparationInput_File": {
+        "additionalProperties": false,
+        "properties": {
+          "file_ref": {
+            "title": "File Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "file",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "file_ref"
+        ],
+        "title": "DatasetPreparationInput_File",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Search": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "search",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "title": "DatasetPreparationInput_Search",
+        "type": "object"
+      },
+      "DatasetPreparationInput_StudyResult": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_ref": {
+            "title": "Execution Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "study_result",
+            "title": "Kind",
+            "type": "string"
+          },
+          "query_sha256": {
+            "title": "Query Sha256",
+            "type": "string"
+          },
+          "result_ref": {
+            "title": "Result Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "execution_ref",
+          "query_sha256",
+          "result_ref"
+        ],
+        "title": "DatasetPreparationInput_StudyResult",
+        "type": "object"
+      },
+      "DatasetPreparationInput_Url": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "url",
+            "title": "Kind",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "url"
+        ],
+        "title": "DatasetPreparationInput_Url",
+        "type": "object"
+      },
+      "DatasetPreparationInput_WebRead": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_read",
+            "title": "Kind",
+            "type": "string"
+          },
+          "read_ref": {
+            "title": "Read Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "read_ref"
+        ],
+        "title": "DatasetPreparationInput_WebRead",
+        "type": "object"
+      },
+      "DatasetPreparationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capture_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capture Ref"
+          },
+          "enrichment": {
+            "discriminator": {
+              "mapping": {
+                "automatic": "#/$defs/DatasetEnrichmentChoice_Automatic",
+                "user_defined": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_Automatic"
+              },
+              {
+                "$ref": "#/$defs/DatasetEnrichmentChoice_UserDefined"
+              }
+            ],
+            "title": "Enrichment"
+          },
+          "inputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "dataset": "#/$defs/DatasetPreparationInput_Dataset",
+                  "file": "#/$defs/DatasetPreparationInput_File",
+                  "search": "#/$defs/DatasetPreparationInput_Search",
+                  "study_result": "#/$defs/DatasetPreparationInput_StudyResult",
+                  "url": "#/$defs/DatasetPreparationInput_Url",
+                  "web_read": "#/$defs/DatasetPreparationInput_WebRead"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Dataset"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_File"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Search"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_StudyResult"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_Url"
+                },
+                {
+                  "$ref": "#/$defs/DatasetPreparationInput_WebRead"
+                }
+              ]
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "instruction": {
+            "title": "Instruction",
+            "type": "string"
+          },
+          "output_format": {
+            "$ref": "#/$defs/DatasetOutputFormat"
+          },
+          "purpose": {
+            "$ref": "#/$defs/DatasetPurpose"
+          },
+          "schema_choice": {
+            "discriminator": {
+              "mapping": {
+                "agent": "#/$defs/DatasetSchemaChoice_Agent",
+                "imported": "#/$defs/DatasetSchemaChoice_Imported",
+                "provided": "#/$defs/DatasetSchemaChoice_Provided"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Agent"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Imported"
+              },
+              {
+                "$ref": "#/$defs/DatasetSchemaChoice_Provided"
+              }
+            ],
+            "title": "Schema Choice"
+          }
+        },
+        "required": [
+          "enrichment",
+          "inputs",
+          "instruction",
+          "output_format",
+          "purpose",
+          "schema_choice"
+        ],
+        "title": "DatasetPreparationRequest",
+        "type": "object"
+      },
+      "DatasetPurpose": {
+        "enum": [
+          "knowledge",
+          "study_source"
+        ],
+        "title": "DatasetPurpose",
+        "type": "string"
+      },
+      "DatasetResultResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "save",
+              "save_available",
+              "decline",
+              "edit",
+              "continue"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "attempt": {
+            "minimum": 1,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "pattern": "^preparation:[a-f0-9]{64}$",
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetBuildRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "result_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "pattern": "^review:[a-f0-9]{64}$",
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Schema Sha256",
+            "type": "string"
+          },
+          "stage": {
+            "const": "review",
+            "default": "review",
+            "title": "Stage",
+            "type": "string"
+          },
+          "type": {
+            "const": "dataset_review",
+            "default": "dataset_review",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preparation_ref",
+          "attempt",
+          "review_ref",
+          "result_sha256",
+          "schema_sha256",
+          "action"
+        ],
+        "title": "DatasetResultResponse",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Agent": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "agent",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Agent",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Imported": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "imported",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "DatasetSchemaChoice_Imported",
+        "type": "object"
+      },
+      "DatasetSchemaChoice_Provided": {
+        "additionalProperties": false,
+        "properties": {
+          "json_schema_text": {
+            "title": "Json Schema Text",
+            "type": "string"
+          },
+          "mode": {
+            "const": "provided",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "json_schema_text"
+        ],
+        "title": "DatasetSchemaChoice_Provided",
+        "type": "object"
+      },
+      "DatasetTableSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Asset Field"
+          },
+          "dataframe_metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceFrameMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "frame_schema": {
+            "$ref": "#/$defs/DataSourceSchema"
+          },
+          "key_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Key Fields",
+            "type": "array"
+          },
+          "time_axis": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatasetTimeAxis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "frame_schema",
+          "key_fields"
+        ],
+        "title": "DatasetTableSchema",
+        "type": "object"
+      },
+      "DatasetTimeAxis": {
+        "additionalProperties": false,
+        "properties": {
+          "assumed": {
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "date_only_convention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date Only Convention"
+          },
+          "meaning": {
+            "$ref": "#/$defs/DatasetTimeMeaning"
+          },
+          "source_precision": {
+            "$ref": "#/$defs/DatasetTimePrecision"
+          },
+          "source_timezone": {
+            "title": "Source Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assumed",
+          "meaning",
+          "source_precision",
+          "source_timezone"
+        ],
+        "title": "DatasetTimeAxis",
+        "type": "object"
+      },
+      "DatasetTimeMeaning": {
+        "enum": [
+          "observation",
+          "event",
+          "publication",
+          "user_snapshot"
+        ],
+        "title": "DatasetTimeMeaning",
+        "type": "string"
+      },
+      "DatasetTimePrecision": {
+        "enum": [
+          "date",
+          "second",
+          "millisecond",
+          "microsecond",
+          "nanosecond"
+        ],
+        "title": "DatasetTimePrecision",
+        "type": "string"
+      },
+      "SourceAvailabilityAxis": {
+        "enum": [
+          "None",
+          "ObservationIndex",
+          "KnownAtIndex",
+          "CurrentSnapshot"
+        ],
+        "title": "SourceAvailabilityAxis",
+        "type": "string"
+      },
+      "SourceFutureCapability": {
+        "enum": [
+          "PastOrPresentOnly",
+          "ProviderKnownFutureRows"
+        ],
+        "title": "SourceFutureCapability",
+        "type": "string"
+      },
+      "SourcePredecessorCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourcePredecessorCapability",
+        "type": "string"
+      },
+      "SourceRangeCapability": {
+        "enum": [
+          "Unsupported",
+          "ExactBounded",
+          "FullPayloadLocalSlice"
+        ],
+        "title": "SourceRangeCapability",
+        "type": "string"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "configure": "#/$defs/DatasetConfigureResponse",
+        "review": "#/$defs/DatasetResultResponse"
+      },
+      "propertyName": "stage"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/DatasetConfigureResponse"
+      },
+      {
+        "$ref": "#/$defs/DatasetResultResponse"
+      }
+    ]
+  },
+  "version": 1
+}

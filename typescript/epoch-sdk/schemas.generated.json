@@ -1519,7 +1519,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "d8f93724c380e34ce5f3d80f8c57f169f6ed6b59e676cb77d24a845342f3e0e7",
+    "openapi.json": "92389fe48c9c25a983c92a4133c036b2a35006b41bae3143e7c0dac53ad64273",
     "research-response.schema.json": "3ff82b80f36c90b0457c5d304e23744f883d0d0a0449dd3bbc73ea00d3a73c71"
   }
 }

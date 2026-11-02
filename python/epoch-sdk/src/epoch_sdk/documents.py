@@ -173,7 +173,8 @@ class DocumentClient:
 
     async def act_document_preparation(self, preparation_ref: str, request: DatasetBuildActionRequest) -> DatasetBuild:
         _closed(request)
-        return await self.backend.user_files.act_on_dataset_preparation(preparation_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256, request_options={"max_retries": 0})
+        return await self.backend.user_files.act_on_dataset_preparation(preparation_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256,
+            review_ref=request.review_ref, schema_sha256=request.schema_sha256, request_options={"max_retries": 0})
 
     async def act_document_read(self, read_ref: str, request: DatasetBuildActionRequest) -> DocumentRead:
         _closed(request)
