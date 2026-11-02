@@ -7,7 +7,7 @@ import base64
 import binascii
 import inspect
 import os
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Mapping
 from copy import deepcopy
 from importlib.resources import files
 from typing import Annotated, Literal, cast
@@ -54,7 +54,7 @@ from .agent_tools import AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
 from .documents import CaptureDocumentRequest
 from .errors import EpochError
-from .supervisor import Answers
+from .supervisor import InterruptResponse
 
 # Old handles remain readable through AgentToolsClient. New MCP discovery is
 # native Backend lookup; the legacy Discovery LLM is never advertised/invoked.
@@ -526,7 +526,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
     async def prepare_document_dataset(request: DatasetBuildRequest) -> CallToolResult:
         """Explicit schema-driven document extraction; distinct from deterministic
         epoch_prepare_dataset imports. Retain request_id on retries. Table/JSON/text
-        or scalar output is saved with provenance; partial data needs explicit acceptance.
+        or scalar output is retained as a preview with provenance. Save or decline
+        the exact reviewed result explicitly; preparation never saves automatically.
         """
         return await _call(client.prepare_document_dataset(request))
 
@@ -535,8 +536,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         return await _call(client.document_preparation(preparation_ref))
 
     async def act_document_preparation(preparation_ref: str, request: DatasetBuildActionRequest) -> CallToolResult:
-        """Apply an explicit stop, save-only retry, extraction retry or partial
-        acceptance to an exact current attempt. save_available requires result_sha256.
+        """Apply an explicit Save, decline, stop or retry to the exact current
+        attempt. Decisions require review_ref, result_sha256 and schema_sha256.
         An unknown status is not permission to retry extraction.
         """
         return await _call(client.act_document_preparation(preparation_ref, request))
@@ -714,7 +715,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """
         return await _call(client.execute_extension(request))
 
-    async def resume(handle: AgentToolHandle, responses: dict[str, Answers]) -> CallToolResult:
+    async def resume(handle: AgentToolHandle, responses: Mapping[str, InterruptResponse]) -> CallToolResult:
         """Explicitly answer pending specialist questions and continue that operation.
         Copy returned interrupt/question/option IDs. Recommendations are never
         selected automatically. Completed operations cannot be resumed.

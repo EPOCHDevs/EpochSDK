@@ -75,8 +75,8 @@ historical page is unavailable, not evidence that its facts did not exist.
 `prepare_web_dataset` takes the generated `DatasetBuildRequest` with input
 `{"kind":"web_read","read_ref":research.read_ref}` and a reviewed schema.
 Use `document_preparation` and `act_document_preparation` for the shared
-status/partial-save/recovery lifecycle. Only an explicit Build creates reusable
-data; acquisition never replaces the schema editor or saves a dataset by itself.
+status/review/recovery lifecycle. Build creates an unsaved preview; explicit
+Save publishes reusable data; acquisition never replaces the schema editor or saves a dataset by itself.
 Saved evidence includes exact source references, SHA-256 digests, quotation text
 and UTF-8 byte offsets. `read_web_source` reopens retained bytes without another
 provider call.
@@ -219,6 +219,9 @@ a reviewed Backend export; no Backend checkout is needed for ordinary client
 checks. `tools/check_python_contracts.py` checks Python conformance without
 rewriting the shared contract. Standard JSON Schema 2020-12 and local references
 are supported; remote schema references are never fetched.
+
+See [shared dataset review](../../docs/dataset-review.md) for agent configuration,
+explicit result decisions, notebook/terminal input and MCP continuation.
 
 ## Check real API availability
 

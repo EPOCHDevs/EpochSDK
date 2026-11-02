@@ -7,7 +7,7 @@ state store. Renderers and MCP consume the same finite session event variants.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Mapping
 from contextlib import aclosing
 from typing import Annotated, Literal, cast
 
@@ -23,7 +23,7 @@ from .research import (
     ResearchFailure,
     ResearchResult,
 )
-from .supervisor import Answers, InProgress, NeedsInput, WorkflowHandle
+from .supervisor import InProgress, InterruptResponse, NeedsInput, WorkflowHandle
 
 
 class _Closed(BaseModel):
@@ -88,7 +88,7 @@ type SessionEvent = Annotated[
     Field(discriminator="event"),
 ]
 type EventHandler = Callable[[SessionEvent], Awaitable[None]]
-type QuestionHandler = Callable[[NeedsInput], Awaitable[dict[str, Answers] | None]]
+type QuestionHandler = Callable[[NeedsInput], Awaitable[Mapping[str, InterruptResponse] | None]]
 
 
 class _ToolCall(BaseModel):
@@ -313,7 +313,7 @@ class ResearchSession:
                 # Reading status here starts no new work and creates no local registry.
                 await asyncio.sleep(0.25)
 
-    async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> None:
+    async def resume(self, waiting: NeedsInput, responses: Mapping[str, InterruptResponse]) -> None:
         if waiting.handle.operation_id != self.operation_id:
             raise ValueError("The pending question belongs to a different operation")
         self._current = await self.client.resume_research(waiting, responses, wait=False)

@@ -6,7 +6,7 @@ Selecting an engine execution is separate from validating its requested outputs.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Literal, NotRequired, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -27,6 +27,14 @@ from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import DomainError
+from .dataset_reviews import (
+    DatasetConfigureInterrupt,
+    DatasetConfigureResponse,
+    DatasetResultInterrupt,
+    DatasetResultResponse,
+    DatasetWorkflowInterrupt,
+    interrupt_adapter,
+)
 from .responses import (
     ResearchResponseContent,
     ResponsePlanReference,
@@ -74,6 +82,9 @@ class GraphInterrupt(Closed):
     def ask_user(self) -> AskUser:
         return AskUser.model_validate(self.value)
 
+    def dataset_review(self) -> DatasetWorkflowInterrupt:
+        return interrupt_adapter.validate_python(self.value)
+
 
 class Answer(Closed):
     question_index: int
@@ -85,6 +96,9 @@ class Answers(Closed):
     """Source wire: EpochAI agent_src/common/ask_user.py::AskUserResponse."""
 
     answers: list[Answer]
+
+
+type InterruptResponse = Answers | DatasetConfigureResponse | DatasetResultResponse
 
 
 class WorkflowHandle(Closed):
@@ -106,6 +120,50 @@ class NeedsInput(Closed):
     def feedback(self) -> str:
         lines = ["The workflow is waiting for input."]
         for item in self.interrupts:
+            if isinstance(item.value, dict) and item.value.get("type") == "dataset_review":
+                review = item.dataset_review()
+                if isinstance(review, DatasetConfigureInterrupt):
+                    lines.extend(
+                        [
+                            f"Review dataset fields: {review.request.name}",
+                            review.request.preparation.schema_choice.model_dump_json(by_alias=True),
+                            "Choose Build preview or Cancel explicitly. No processing has started.",
+                        ]
+                    )
+                else:
+                    lines.extend(
+                        [
+                            f"Review dataset preview: {review.operation.request.name}",
+                            review.operation.message,
+                            f"Operation: {review.operation.preparation_ref}",
+                            "Choose an available explicit action; no decision is selected automatically.",
+                        ]
+                    )
+                    if review.preview is not None:
+                        lines.append(
+                            review.preview.model_dump_json(by_alias=True, exclude_none=True)
+                        )
+                    lines.append(review.operation.coverage.model_dump_json(by_alias=True))
+                    allowed = (
+                        review.operation.review.allowed_actions if review.operation.review else []
+                    )
+                    labels = [
+                        label
+                        for action, label in (
+                            ("save", "Save dataset"),
+                            ("save_available", "Save available data"),
+                            ("retry_save", "Retry saving"),
+                            ("discard", "Don't save"),
+                        )
+                        if action in allowed
+                    ]
+                    if review.can_edit:
+                        labels.append("Edit then Build preview")
+                    if review.operation.state.value in {"saved", "discarded", "expired", "stopped"}:
+                        labels.append("Continue conversation")
+                    lines.append("Available: " + ", ".join(labels))
+                    lines.extend(review.operation.limitations)
+                continue
             if not isinstance(item.value, dict) or item.value.get("type") != "ask_user":
                 lines.append("Open the conversation to respond to this interrupt.")
                 continue
@@ -192,6 +250,7 @@ class _Outcome(BaseModel):
 
 class _MessageToolCall(BaseModel):
     """Consumer projection; the registered tool owns its unused argument shape."""
+
     model_config = ConfigDict(extra="ignore", strict=True)
     id: str
     name: str
@@ -382,7 +441,9 @@ class SupervisorClient:
             AsyncStratifyX(base_url=backend_url, token=token, httpx_client=backend_http),
             assistant_id=assistant_id,
             ui_url=ui_url,
-            source_connections=AsyncSourcesClient(base_url=backend_url, token=token, http=backend_http),
+            source_connections=AsyncSourcesClient(
+                base_url=backend_url, token=token, http=backend_http
+            ),
             document_http=graph_http,
         )
         client._owned_http = [graph_http, backend_http]
@@ -565,16 +626,75 @@ class SupervisorClient:
         return await self.status(handle)
 
     @staticmethod
-    def resume_command(waiting: NeedsInput, responses: dict[str, Answers]) -> Command:
+    def resume_command(waiting: NeedsInput, responses: Mapping[str, InterruptResponse]) -> Command:
         expected = {item.id for item in waiting.interrupts}
         if not expected:
             raise ValueError("There are no pending interrupts to resume")
-        if responses.keys() != expected:
+        if set(responses) != expected:
             raise ValueError("Provide answers for exactly the pending interrupt ids")
         resume: dict[str, JsonValue] = {}
         for item in waiting.interrupts:
+            answer = responses[item.id]
+            if isinstance(item.value, dict) and item.value.get("type") == "dataset_review":
+                review = item.dataset_review()
+                if isinstance(review, DatasetConfigureInterrupt):
+                    if (
+                        not isinstance(answer, DatasetConfigureResponse)
+                        or answer.proposal_ref != review.proposal_ref
+                    ):
+                        raise ValueError("Provide the exact dataset configuration decision")
+                else:
+                    operation = review.operation
+                    identity = operation.review
+                    if (
+                        not isinstance(answer, DatasetResultResponse)
+                        or identity is None
+                        or (
+                            answer.preparation_ref != operation.preparation_ref
+                            or answer.attempt != operation.attempt
+                            or answer.review_ref != identity.review_ref
+                            or answer.result_sha256 != operation.result_sha256
+                            or answer.schema_sha256 != identity.schema_sha256
+                        )
+                    ):
+                        raise ValueError(
+                            "Provide a decision for the exact displayed dataset result"
+                        )
+                    if answer.action == "continue":
+                        if operation.state.value not in {
+                            "saved",
+                            "discarded",
+                            "expired",
+                            "stopped",
+                        }:
+                            raise ValueError(
+                                "Continue can only deliver a confirmed terminal dataset outcome"
+                            )
+                    elif answer.action == "edit":
+                        if not review.can_edit:
+                            raise ValueError("This dataset review cannot be edited")
+                    elif (
+                        not (
+                            operation.state.value == "saved"
+                            and answer.action in {"save", "save_available"}
+                            or operation.state.value == "discarded"
+                            and answer.action == "decline"
+                            or operation.state.value == "save_failed"
+                            and "retry_save" in identity.allowed_actions
+                            and answer.action in {"save", "save_available"}
+                        )
+                        and ("discard" if answer.action == "decline" else answer.action)
+                        not in identity.allowed_actions
+                    ):
+                        raise ValueError(
+                            "This action is unavailable for the current dataset review"
+                        )
+                resume[item.id] = answer.model_dump(mode="json", by_alias=True, exclude_none=True)
+                continue
+            if not isinstance(answer, Answers):
+                raise TypeError("A question interrupt requires structured answers")
             questions = item.ask_user().questions
-            answers = responses[item.id]
+            answers = answer
             used: set[int] = set()
             for answer in answers.answers:
                 index = answer.question_index
@@ -601,9 +721,102 @@ class SupervisorClient:
             resume[item.id] = answers.model_dump(mode="json", exclude_unset=True)
         return Command(resume=resume)
 
-    async def start_resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> None:
-        """Resume the exact native interrupt in a kept background run."""
+    async def _prepare_resume(
+        self, waiting: NeedsInput, responses: Mapping[str, InterruptResponse]
+    ) -> Command:
         command = self.resume_command(waiting, responses)
+        if all(isinstance(answer, Answers) for answer in responses.values()):
+            return command
+        current = await self.status(waiting.handle)
+        if not isinstance(current, NeedsInput) or {i.id for i in current.interrupts} != {
+            i.id for i in waiting.interrupts
+        }:
+            raise ValueError("The pending interrupt changed; reopen the current workflow")
+        for old in waiting.interrupts:
+            fresh = next(item for item in current.interrupts if item.id == old.id)
+            if isinstance(old.value, dict) and old.value.get("type") == "dataset_review":
+                old_review, fresh_review = old.dataset_review(), fresh.dataset_review()
+                if isinstance(old_review, DatasetConfigureInterrupt):
+                    if (
+                        not isinstance(fresh_review, DatasetConfigureInterrupt)
+                        or old_review.proposal_ref != fresh_review.proposal_ref
+                    ):
+                        raise ValueError("The current dataset proposal changed")
+                elif isinstance(fresh_review, DatasetConfigureInterrupt) or (
+                    old_review.operation.preparation_ref != fresh_review.operation.preparation_ref
+                    or old_review.operation.attempt != fresh_review.operation.attempt
+                    or old_review.operation.result_sha256 != fresh_review.operation.result_sha256
+                    or old_review.operation.review is None
+                    or fresh_review.operation.review is None
+                    or old_review.operation.review.review_ref
+                    != fresh_review.operation.review.review_ref
+                ):
+                    raise ValueError("The current dataset review changed")
+            elif old.value != fresh.value:
+                raise ValueError("The pending question changed")
+        for item in waiting.interrupts:
+            answer = responses[item.id]
+            if not isinstance(answer, DatasetResultResponse) or answer.action == "edit":
+                continue
+            native = await self.backend.user_files.get_dataset_preparation(
+                answer.preparation_ref,
+                request_options={"max_retries": 0},
+            )
+            identity = native.review
+            if (
+                identity is None
+                or native.attempt != answer.attempt
+                or (
+                    identity.review_ref != answer.review_ref
+                    or native.result_sha256 != answer.result_sha256
+                    or identity.schema_sha256 != answer.schema_sha256
+                )
+            ):
+                raise ValueError("The native dataset review changed; reopen it before deciding")
+            if native.state.value == "saving":
+                raise ValueError(
+                    "Save is not yet confirmed. Reconcile this operation; the agent remains paused."
+                )
+            if answer.action == "continue":
+                if native.state.value not in {"saved", "discarded", "expired", "stopped"}:
+                    raise ValueError("The terminal dataset outcome is not confirmed")
+                continue
+            terminal = "discarded" if answer.action == "decline" else "saved"
+            if native.state.value != terminal:
+                action = "discard" if answer.action == "decline" else answer.action
+                if native.state.value == "save_failed" and answer.action != "decline":
+                    action = "retry_save"
+                from stratifyx.types import DatasetBuildActionRequest
+
+                decision = DatasetBuildActionRequest.model_validate(
+                    {
+                        "action": action,
+                        "attempt": answer.attempt,
+                        "result_sha256": answer.result_sha256,
+                        "review_ref": answer.review_ref,
+                        "schema_sha256": answer.schema_sha256,
+                    }
+                )
+                native = await self.backend.user_files.act_on_dataset_preparation(
+                    answer.preparation_ref,
+                    action=decision.action,
+                    attempt=decision.attempt,
+                    result_sha256=decision.result_sha256,
+                    review_ref=decision.review_ref,
+                    schema_sha256=decision.schema_sha256,
+                    request_options={"max_retries": 0},
+                )
+            if native.state.value != terminal:
+                raise ValueError(
+                    "The dataset decision is not confirmed. Reopen the same operation; the agent remains paused."
+                )
+        return command
+
+    async def start_resume(
+        self, waiting: NeedsInput, responses: Mapping[str, InterruptResponse]
+    ) -> None:
+        """Resume the exact native interrupt in a kept background run."""
+        command = await self._prepare_resume(waiting, responses)
         await cast(_RunsAdmission, self.graph.runs).create(
             waiting.handle.thread_id,
             waiting.handle.assistant_id,
@@ -620,8 +833,12 @@ class SupervisorClient:
             stream_resumable=True,
         )
 
-    async def resume(self, waiting: NeedsInput, responses: dict[str, Answers]) -> SupervisorResult:
-        return await self._wait(waiting.handle, command=self.resume_command(waiting, responses))
+    async def resume(
+        self, waiting: NeedsInput, responses: Mapping[str, InterruptResponse]
+    ) -> SupervisorResult:
+        return await self._wait(
+            waiting.handle, command=await self._prepare_resume(waiting, responses)
+        )
 
     async def _wait(
         self,
@@ -791,6 +1008,72 @@ class SupervisorClient:
             raise ValueError("The answer differs from the linked native research operation")
         return PublishedAnswer(handle=handle, response=answer.reference())
 
+    async def _review_interrupts(self, items: list[GraphInterrupt]) -> list[GraphInterrupt]:
+        """An explicit native edit may have happened through another client.
+
+        Keep the real graph interrupt ID and follow only its native replacement
+        chain. This is observation; it never prepares, saves or resumes anything.
+        """
+        result: list[GraphInterrupt] = []
+        for item in items:
+            if not isinstance(item.value, dict) or item.value.get("type") != "dataset_review":
+                result.append(item)
+                continue
+            payload = item.dataset_review()
+            if isinstance(payload, DatasetConfigureInterrupt):
+                result.append(item)
+                continue
+            operation = await self.backend.user_files.get_dataset_preparation(
+                payload.operation.preparation_ref,
+                request_options={"max_retries": 0},
+            )
+            seen: set[str] = set()
+            while operation.replaced_by is not None:
+                if operation.preparation_ref in seen or len(seen) >= 32:
+                    raise ValueError("Invalid dataset review replacement chain")
+                seen.add(operation.preparation_ref)
+                child = await self.backend.user_files.get_dataset_preparation(
+                    operation.replaced_by,
+                    request_options={"max_retries": 0},
+                )
+                if (
+                    child.request.replaces is None
+                    or child.request.replaces.preparation_ref != operation.preparation_ref
+                ):
+                    raise ValueError("Dataset replacement does not belong to this workflow")
+                operation = child
+            preview = None
+            if operation.draft_ref is not None and operation.state.value in {
+                "pending_review",
+                "incomplete",
+                "save_failed",
+                "saved",
+            }:
+                preview = await self.backend.user_files.preview_saved_dataset(
+                    operation.draft_ref,
+                    offset=0,
+                    limit=5,
+                    request_options={"max_retries": 0},
+                )
+            projected = DatasetResultInterrupt(
+                tool_call_id=payload.tool_call_id,
+                operation=operation,
+                preview=preview,
+                can_edit=operation.state.value in {"pending_review", "incomplete"},
+            )
+            result.append(
+                GraphInterrupt.model_validate(
+                    {
+                        "id": item.id,
+                        "value": projected.model_dump(
+                            mode="json", by_alias=True, exclude_none=True
+                        ),
+                        "response_schema": item.response_schema,
+                    }
+                )
+            )
+        return result
+
     async def _select(self, handle: WorkflowHandle, state: _State) -> SupervisorResult:
         native = await self._native_research_outcome(handle)
         if native is not None:
@@ -799,7 +1082,7 @@ class SupervisorClient:
         if state.interrupts:
             return NeedsInput(
                 handle=handle,
-                interrupts=state.interrupts,
+                interrupts=await self._review_interrupts(state.interrupts),
                 conversation_url=self.conversation_url(handle.thread_id),
             )
         reference = state.published_response
@@ -828,7 +1111,8 @@ class SupervisorClient:
             handle=handle,
             reason=failed[-1].detail
             if failed
-            else "Conversation completed without an engine execution." if state.reply().strip()
+            else "Conversation completed without an engine execution."
+            if state.reply().strip()
             else "The supervisor finished without delivering an answer for this query.",
             publication_failed=not bool(failed) and not bool(state.reply().strip()),
             execution_id=failed[-1].execution_id if failed else None,

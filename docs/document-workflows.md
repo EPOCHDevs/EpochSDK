@@ -53,8 +53,9 @@ work to hide an incomplete or unknown result.
 
 Schema is required. Table uses an object containing a `rows` array of flat
 objects; JSON supports a flat object or text/number/integer/Boolean primitive.
-Partial output requires explicit `save_available` with the displayed attempt and
-result digest. Saving retry performs no extraction. Closing a view acknowledges
+Complete output remains `pending_review`; only explicit `save` publishes it.
+Partial output requires explicit `save_available`. All decisions carry the
+displayed attempt, `review_ref`, `schema_sha256` and `result_sha256`. Saving retry performs no extraction. Closing a view acknowledges
 nothing. An accepted result exposes its ordinary stable `dataset_ref`.
 
 `download_dataset` returns complete verified native content. JSON is UTF-8 text
@@ -74,6 +75,6 @@ resource. Reading that resource rechecks ownership and starts no processing.
 
 The first extraction adapter accepts PDF, PNG, JPEG, TIFF and DOCX. UTF-8
 plain-text/CSV/TSV/JSON source reading is native; dataset extraction from those
-originals is not provided by this AWS adapter. General HTML/web preparation,
-nested extraction schemas and FMP/Data Explorer document intelligence are
-separate scope. DOCX has no invented original page highlights.
+originals is not provided by this AWS adapter. Public web preparation uses the same review lifecycle; see
+[shared dataset review](dataset-review.md). Nested extraction schemas and
+FMP/Data Explorer document intelligence remain separate scope. DOCX has no invented original page highlights.

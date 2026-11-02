@@ -1,0 +1,12 @@
+{
+  "scope": "Exported by actual C++ storage test. Synthetic document values, no provider/model execution. The full native gate is recorded separately.",
+  "producer_git_sha": "90e754dc7ebc1fadf6fd934a1edd9c4d9d82a088",
+  "producer_worktree_dirty": true,
+  "producer_diff_sha256": "cc6ef347e1125b05c9585eb85015ce2145592e42e72d0ae00230c2cc0bbfabb5",
+  "case": "Complete document outputs stay unsaved across reopen and require an exact decision",
+  "files": {
+    "build-review.json": "5321e98367329e2e28289a104202dd033a844a8c390e4bec8eba1c9c53afccdd",
+    "preview.json": "5e1f4abc69508af69661180bf7958ab20e99fbecd8d0f21f0574cb33609b30a8",
+    "evidence.json": "e92302516bc87bebc37cb3b82e344ac097280dc48e5fac4ea72740081e016ecf"
+  }
+}

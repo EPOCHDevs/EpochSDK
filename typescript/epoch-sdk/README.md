@@ -37,7 +37,10 @@ The main methods are:
 - `run(request, { operationId })`: create or attach to accepted research, then
   observe it until a saved answer or explicit clarification is available.
 - `resume(waiting, answers)`: validate and submit the current interrupt replies.
-  Each reply identifies the interrupt, question index and option indices.
+  Questions identify the interrupt, question index and option indices. Dataset
+  decisions use the source-owned `DatasetReviewResponse` with exact native
+  review/schema/result identity; native Save/decline is confirmed before graph
+  delivery. See [shared dataset review](../../docs/dataset-review.md).
 - `execute(savedStudy, { operationId, period })`: run a retained study reference
   or a completed research operation's reference. Source settings, report
   templates and historical response plans retain their native semantics.
@@ -64,7 +67,7 @@ are substituted for missing or invalid outputs.
 
 ## Development
 
-Node.js 24+, the versioned native StratifyX client (3.3.0-rc.44 or later), and
+Node.js 24+, the versioned native StratifyX client (3.3.0-rc.57 or later), and
 LangGraph SDK 1.12.1+ are required. Install native packages through the Backend's
 normal package workflow; do not regenerate or edit them in this repository.
 

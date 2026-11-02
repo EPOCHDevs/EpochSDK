@@ -1,5 +1,7 @@
 import { EpochError, canonical, invariant, normalizedDeclarations, operationId, parseRequest,
   requestToWire, responseToWire, statusCode, throwNativeError } from "./contract.js"
+import { datasetInterrupt, validateDatasetResponse, refreshDatasetInterrupts,
+  confirmDatasetDecisions, interruptionIdentity } from "./dataset-review.js"
 
 const opts = signal => ({ maxRetries: 0, abortSignal: signal })
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value)
@@ -30,6 +32,7 @@ export function parseInterrupts(value) {
   return value.map(item => {
     invariant(object(item) && typeof item.id === "string" && item.id && object(item.value), "Invalid interrupt identity.")
     const ask = item.value
+    if (ask.type === "dataset_review") return { id: item.id, value: datasetInterrupt(ask) }
     invariant(ask.type === "ask_user" && Array.isArray(ask.questions) && typeof ask.tool_call_id === "string",
       "This interrupt must be answered in the existing Epoch conversation.", "UNSUPPORTED_INTERRUPT")
     for (const q of ask.questions) {
@@ -47,6 +50,10 @@ export function resumeCommand(waiting, responses) {
   invariant(object(responses) && canonical(Object.keys(responses).sort()) === canonical(ids.sort()),
     "Answer exactly the current interrupt IDs.", "VALIDATION_ERROR")
   for (const item of waiting.interrupts) {
+    if (item.value.type === "dataset_review") {
+      validateDatasetResponse(item.value, responses[item.id])
+      continue
+    }
     invariant(object(responses[item.id]) && Object.keys(responses[item.id]).length === 1 && "answers" in responses[item.id],
       "Unknown clarification response field.", "VALIDATION_ERROR")
     const answers = responses[item.id]?.answers
@@ -208,7 +215,7 @@ export async function researchStatus(client, op, { signal } = {}) {
     "The checkpoint belongs to another research request.")
   const interrupts = snapshot.interrupts?.length ? snapshot.interrupts : state.__interrupt__ ?? []
   if (interrupts.length) return { status: "needs_input", kind: "run", operationId: op,
-    requestId: record.requestId, handle: h, interrupts: parseInterrupts(interrupts) }
+    requestId: record.requestId, handle: h, interrupts: await refreshDatasetInterrupts(client, parseInterrupts(interrupts), signal) }
   // Completion may have been recorded while the graph was being observed.
   record = await current(client, record.requestId, signal)
   throwNativeError(record)
@@ -237,9 +244,11 @@ export async function resumeResearch(client, waiting, responses, options = {}) {
   invariant(waiting.status === "needs_input", "This operation is not waiting for an answer.")
   const latest = await researchStatus(client, waiting.operationId, options)
   if (latest.status !== "needs_input") return latest
-  invariant(canonical(latest.handle) === canonical(waiting.handle) && canonical(latest.interrupts) === canonical(waiting.interrupts),
+  invariant(canonical(latest.handle) === canonical(waiting.handle) &&
+    canonical(latest.interrupts.map(interruptionIdentity)) === canonical(waiting.interrupts.map(interruptionIdentity)),
     "The pending question changed. Review the current questions before replying.", "STALE_QUESTION")
   const command = resumeCommand(latest, responses)
+  await confirmDatasetDecisions(client, latest, responses, options.signal)
   const record = await current(client, latest.requestId, options.signal)
   try { await client.graph.runs.create(latest.handle.threadId, latest.handle.assistantId, { ...runPayload(record), signal: options.signal, command }) }
   catch (error) { if (statusCode(error) !== 409) throw error }

@@ -6,13 +6,15 @@ import asyncio
 import html
 import json
 from dataclasses import dataclass
-from typing import cast
+from typing import Literal, cast
 
 import ipywidgets as widgets  # pyright: ignore[reportMissingTypeStubs]
 from IPython.display import HTML, JSON, display  # pyright: ignore[reportUnknownVariableType]
 from markdown_it import MarkdownIt
-from pydantic import TypeAdapter
+from pydantic import JsonValue, TypeAdapter
+from stratifyx.types import DatasetSchemaChoice_Provided
 
+from .dataset_reviews import DatasetConfigureInterrupt, dataset_response
 from .errors import EpochError
 from .output_validation import JsonValueOutput, TableValue
 from .presentation import ui_text
@@ -27,7 +29,7 @@ from .session import (
     SessionUI,
     SessionUIRemoved,
 )
-from .supervisor import Answer, Answers, NeedsInput, Question
+from .supervisor import Answer, Answers, InterruptResponse, NeedsInput, Question
 
 type _WidgetSelection = int | tuple[int, ...] | None
 _selection: TypeAdapter[_WidgetSelection] = TypeAdapter(_WidgetSelection)
@@ -170,6 +172,13 @@ class _QuestionControl:
         )
 
 
+def _visible(widget: widgets.DOMWidget, visible: bool) -> None:
+    # ipywidgets ships no layout annotation. This is a native widget property,
+    # not a transport or application-state escape hatch.
+    layout = cast(widgets.Layout, cast(object, widget.layout))  # pyright: ignore[reportUnknownMemberType]
+    layout.display = "" if visible else "none"
+
+
 class NotebookView:
     def __init__(self, session: ResearchSession) -> None:
         self.session = session
@@ -179,7 +188,7 @@ class NotebookView:
         self.questions = widgets.VBox()
         self.answer_output = widgets.Output()
         self.root = widgets.VBox([self.progress, self.questions, self.answer_output])
-        self.pending_reply: asyncio.Future[dict[str, Answers] | None] | None = None
+        self.pending_reply: asyncio.Future[dict[str, InterruptResponse] | None] | None = None
         self.submit: widgets.Button | None = None
         self.leave: widgets.Button | None = None
 
@@ -220,7 +229,226 @@ class NotebookView:
             self.status = "Answer published"
         self._refresh()
 
-    async def ask(self, waiting: NeedsInput) -> dict[str, Answers] | None:
+    async def _ask_dataset(self, waiting: NeedsInput) -> dict[str, InterruptResponse] | None:
+        # One native workflow owns this form. Concurrent heterogeneous interrupts
+        # remain fully structured for the explicit headless resume API.
+        if len(waiting.interrupts) != 1:
+            self.questions.children = (
+                widgets.HTML(
+                    "<pre>"
+                    + html.escape(waiting.feedback())
+                    + "</pre><p>Use the SDK resume method to supply explicit choices for every pending interrupt.</p>"
+                ),
+            )
+            return None
+        item = waiting.interrupts[0]
+        payload = item.dataset_review()
+        request = (
+            payload.request
+            if isinstance(payload, DatasetConfigureInterrupt)
+            else payload.operation.request
+        )
+        schema = request.preparation.schema_choice
+        supplied = schema.json_schema_text if schema.mode == "provided" else ""
+        parsed = TypeAdapter(JsonValue).validate_json(supplied) if supplied else None
+        root_type = parsed.get("type") if isinstance(parsed, dict) else None
+        primitive = isinstance(root_type, str) and root_type in {
+            "string",
+            "integer",
+            "number",
+            "boolean",
+        }
+        name = widgets.Text(
+            value=request.name, description="Name", layout=widgets.Layout(width="100%")
+        )
+        instructions = widgets.Textarea(
+            value=request.preparation.instruction,
+            description="Instructions",
+            layout=widgets.Layout(width="100%", height="80px"),
+        )
+        structure = widgets.Textarea(
+            value=supplied,
+            description="Structure",
+            disabled=primitive,
+            layout=widgets.Layout(width="100%", height="160px"),
+        )
+        form = widgets.VBox([name, instructions, structure])
+        error = widgets.HTML()
+        parts: list[widgets.Widget] = [
+            widgets.HTML(
+                '<pre style="white-space:pre-wrap">' + html.escape(waiting.feedback()) + "</pre>"
+            )
+        ]
+        submit = widgets.Button(description="Build preview", button_style="primary")
+        self.submit = submit
+        leave = widgets.Button(description="Leave waiting", icon="pause")
+        self.leave = leave
+        cancel = widgets.Button(
+            description="Cancel"
+            if isinstance(payload, DatasetConfigureInterrupt)
+            else "Cancel edit"
+        )
+        future: asyncio.Future[dict[str, InterruptResponse] | None] = (
+            asyncio.get_running_loop().create_future()
+        )
+        self.pending_reply = future
+        text = TypeAdapter(str)
+
+        def choose(action: Literal["build", "cancel", "save", "decline", "continue"]) -> None:
+            if future.done():
+                return
+            try:
+                if action == "build":
+                    chosen_schema = schema
+                    if schema.mode == "provided" and not primitive:
+                        exact = text.validate_python(cast(object, structure.value))  # pyright: ignore[reportUnknownMemberType]
+                        json.loads(exact)
+                        chosen_schema = DatasetSchemaChoice_Provided(
+                            mode="provided", json_schema_text=exact
+                        )
+                    candidate = request.model_copy(
+                        update={
+                            "name": text.validate_python(cast(object, name.value)),  # pyright: ignore[reportUnknownMemberType]
+                            "preparation": request.preparation.model_copy(
+                                update={
+                                    "instruction": text.validate_python(
+                                        cast(object, instructions.value)
+                                    ),  # pyright: ignore[reportUnknownMemberType]
+                                    "schema_choice": chosen_schema,
+                                }
+                            ),
+                        }
+                    )
+                    response = dataset_response(
+                        payload,
+                        "build_preview"
+                        if isinstance(payload, DatasetConfigureInterrupt)
+                        else "edit",
+                        candidate,
+                    )
+                elif action == "cancel":
+                    response = dataset_response(payload, "cancel")
+                elif action == "save":
+                    assert not isinstance(payload, DatasetConfigureInterrupt)
+                    response = dataset_response(
+                        payload,
+                        "save_available"
+                        if payload.operation.review
+                        and "save_available" in payload.operation.review.allowed_actions
+                        else "save",
+                    )
+                elif action == "decline":
+                    response = dataset_response(payload, "decline")
+                else:
+                    response = dataset_response(payload, "continue")
+                future.set_result({item.id: response})
+            except (ValueError, TypeError) as problem:
+                error.value = "<p>" + html.escape(str(problem)) + "</p>"
+
+        def bind(
+            button: widgets.Button,
+            action: Literal["build", "cancel", "save", "decline", "continue"],
+        ) -> None:
+            def click(_button: widgets.Button) -> None:
+                choose(action)
+
+            button.on_click(click)  # pyright: ignore[reportUnknownMemberType]
+
+        def leave_waiting(_button: widgets.Button) -> None:
+            if not future.done():
+                future.set_result(None)
+
+        actions: list[widgets.Button] = []
+        if isinstance(payload, DatasetConfigureInterrupt):
+            parts.extend(
+                [form, widgets.HTML("<p>Build prepares a preview. It does not save a dataset.</p>")]
+            )
+            actions.extend([cancel, submit])
+            bind(cancel, "cancel")
+        else:
+            _visible(form, False)
+            _visible(submit, False)
+            _visible(cancel, False)
+            parts.append(form)
+            allowed = payload.operation.review.allowed_actions if payload.operation.review else []
+            if "discard" in allowed:
+                decline = widgets.Button(description="Don’t save")
+                bind(decline, "decline")
+                actions.append(decline)
+            if payload.can_edit:
+                edit = widgets.Button(
+                    description="Edit instructions" if primitive else "Edit fields"
+                )
+
+                def editing(_button: widgets.Button) -> None:
+                    _visible(form, True)
+                    _visible(submit, True)
+                    _visible(cancel, True)
+                    for button in actions:
+                        _visible(button, False)
+                    _visible(cancel, True)
+                    _visible(submit, True)
+
+                def cancel_edit(_button: widgets.Button) -> None:
+                    _visible(form, False)
+                    _visible(submit, False)
+                    _visible(cancel, False)
+                    for button in actions:
+                        _visible(button, True)
+
+                edit.on_click(editing)  # pyright: ignore[reportUnknownMemberType]
+                cancel.on_click(cancel_edit)  # pyright: ignore[reportUnknownMemberType]
+                actions.append(edit)
+            if any(action in allowed for action in ("save", "save_available", "retry_save")):
+                save = widgets.Button(
+                    description="Save available data"
+                    if "save_available" in allowed
+                    else "Retry saving"
+                    if "retry_save" in allowed
+                    else "Save dataset",
+                    button_style="primary",
+                )
+                bind(save, "save")
+                actions.append(save)
+            if payload.operation.state.value in {"saved", "discarded", "expired", "stopped"}:
+                proceed = widgets.Button(
+                    description="Continue conversation", button_style="primary"
+                )
+                bind(proceed, "continue")
+                actions.append(proceed)
+        bind(submit, "build")
+        leave.on_click(leave_waiting)  # pyright: ignore[reportUnknownMemberType]
+        parts.extend(
+            [
+                error,
+                widgets.HBox(actions + [cancel, submit, leave])
+                if not isinstance(payload, DatasetConfigureInterrupt)
+                else widgets.HBox(actions + [leave]),
+                widgets.HTML(
+                    "<small>Only an explicit choice resumes the server. Closing this cell leaves the operation waiting.</small>"
+                ),
+            ]
+        )
+        self.questions.children = tuple(parts)
+        try:
+            return await future
+        finally:
+            submit.disabled = True
+            leave.disabled = True
+            for button in actions:
+                button.disabled = True
+            cancel.disabled = True
+            name.disabled = True
+            instructions.disabled = True
+            structure.disabled = True
+            self.pending_reply = None
+
+    async def ask(self, waiting: NeedsInput) -> dict[str, InterruptResponse] | None:
+        if any(
+            isinstance(item.value, dict) and item.value.get("type") == "dataset_review"
+            for item in waiting.interrupts
+        ):
+            return await self._ask_dataset(waiting)
         controls: list[_QuestionControl] = []
         parts: list[widgets.Widget] = []
         for interrupt in waiting.interrupts:
@@ -266,9 +494,11 @@ class NotebookView:
                     )
                 )
         error = widgets.HTML()
-        self.submit = widgets.Button(description="Send reply", button_style="primary", icon="send")
-        self.leave = widgets.Button(description="Leave waiting", icon="pause")
-        future: asyncio.Future[dict[str, Answers] | None] = (
+        send_button = widgets.Button(description="Send reply", button_style="primary", icon="send")
+        self.submit = send_button
+        leave_button = widgets.Button(description="Leave waiting", icon="pause")
+        self.leave = leave_button
+        future: asyncio.Future[dict[str, InterruptResponse] | None] = (
             asyncio.get_running_loop().create_future()
         )
         self.pending_reply = future
@@ -291,12 +521,12 @@ class NotebookView:
                 future.set_result(None)
 
         # ipywidgets callback registration has no shipped type annotations.
-        self.submit.on_click(submit)  # pyright: ignore[reportUnknownMemberType]
-        self.leave.on_click(leave)  # pyright: ignore[reportUnknownMemberType]
+        send_button.on_click(submit)  # pyright: ignore[reportUnknownMemberType]
+        leave_button.on_click(leave)  # pyright: ignore[reportUnknownMemberType]
         parts.extend(
             [
                 error,
-                widgets.HBox([self.submit, self.leave]),
+                widgets.HBox([send_button, leave_button]),
                 widgets.HTML(
                     "<small>Only Send reply resumes the server. No option is selected automatically. "
                     "Stopping this cell leaves the operation available under the same ID.</small>"
@@ -309,8 +539,8 @@ class NotebookView:
             # to process widget messages while this one cell owns the session.
             return await future
         finally:
-            self.submit.disabled = True
-            self.leave.disabled = True
+            send_button.disabled = True
+            leave_button.disabled = True
             for control in controls:
                 control.choices.disabled = True
                 control.reply.disabled = True

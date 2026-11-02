@@ -7,6 +7,7 @@ reads use the generated Backend client directly; no response is published.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from typing import Literal, Protocol, TypedDict, cast
 from uuid import uuid4
 
@@ -36,8 +37,8 @@ from .files import FileClient
 from .json_schema import validate_schema
 from .sources import SourceClient
 from .supervisor import (
-    Answers,
     GraphInterrupt,
+    InterruptResponse,
     NeedsInput,
     SupervisorClient,
     WorkflowHandle,
@@ -298,7 +299,7 @@ class AgentToolsClient(DatasetClient, FileClient, DocumentClient, SourceClient, 
         )
 
     async def resume(
-        self, handle: AgentToolHandle, responses: dict[str, Answers]
+        self, handle: AgentToolHandle, responses: Mapping[str, InterruptResponse]
     ) -> AgentToolOperation:
         from .agent_tools_contract import MCP_TOOL_NAMES
         if handle.tool not in MCP_TOOL_NAMES:

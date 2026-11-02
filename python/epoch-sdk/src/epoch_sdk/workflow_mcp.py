@@ -5,14 +5,19 @@ from __future__ import annotations
 import asyncio
 import inspect
 import os
+from collections.abc import Mapping
 from typing import Literal, cast
+from urllib.parse import quote
 
+import httpx
 from mcp.server import MCPServer
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
 from mcp.server.mcpserver import Context
-from mcp.types import CallToolResult, ListToolsResult, TextContent
+from mcp.shared.exceptions import MCPError
+from mcp.types import CallToolResult, ListToolsResult, ResourceLink, TextContent
 from pydantic import JsonValue
 from stratifyx import DatePeriodConfig, ExecutionOptions
+from stratifyx.core.api_error import ApiError
 
 from .contracts import ErrorResponse, OutputRequest, RunParameters
 from .errors import EpochError
@@ -27,9 +32,9 @@ from .research import (
 from .responses import ResponseTablePage, SavedResearchResponse
 from .session import EventHandler, SessionCompleted, SessionEvent, SessionQuestions
 from .supervisor import (
-    Answers,
     ChosenExecution,
     InProgress,
+    InterruptResponse,
     NeedsInput,
     NoExecution,
     PublishedAnswer,
@@ -138,6 +143,46 @@ def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
     server = MCPServer("Epoch", middleware=[closed_arguments])
     epoch = client if isinstance(client, EpochClient) else EpochClient(client)
 
+    def draft_identity(draft_ref: str, digest: str) -> None:
+        if not draft_ref.startswith("draft:") or len(draft_ref) > 256:
+            raise ValueError("Use the exact retained draft_ref from the review")
+        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+            raise ValueError("Use the exact draft descriptor content_sha256 from the review")
+
+    async def draft_bytes(
+        draft_ref: str, digest: str, output_format: Literal["json", "table"]
+    ) -> bytes:
+        try:
+            draft_identity(draft_ref, digest)
+            preview = await epoch.preview_dataset(draft_ref, limit=1)
+            if preview.content.format != output_format:
+                raise ValueError("The draft resource has a different content format")
+            return await epoch.download_dataset(draft_ref, expected_sha256=digest)
+        except (ApiError, httpx.HTTPError, ValueError):
+            raise MCPError(
+                -32001,
+                "This draft content could not be authorized or verified. Reopen its exact review.",
+            ) from None
+
+    @server.resource(
+        "epoch://review-json/{draft_ref}/{digest}",
+        mime_type="application/json",
+        description="Complete owner-checked retained JSON/text/scalar draft, pinned to its content digest.",
+    )
+    async def draft_json(draft_ref: str, digest: str) -> str:
+        try:
+            return (await draft_bytes(draft_ref, digest, "json")).decode("utf-8")
+        except UnicodeError:
+            raise MCPError(-32001, "The retained JSON draft is not valid UTF-8.") from None
+
+    @server.resource(
+        "epoch://review-arrow/{draft_ref}/{digest}",
+        mime_type="application/vnd.apache.arrow.file",
+        description="Complete owner-checked retained Arrow draft, pinned to its content digest.",
+    )
+    async def draft_arrow(draft_ref: str, digest: str) -> bytes:
+        return await draft_bytes(draft_ref, digest, "table")
+
     def progress(context: Context[object, object]) -> EventHandler:
         count = 0
 
@@ -211,12 +256,15 @@ def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
 
     async def resume(
         operation_id: str,
-        responses: dict[str, Answers],
+        responses: Mapping[str, InterruptResponse],
         ctx: Context[object, object],
     ) -> CallToolResult:
-        """Answer the current questions and continue the same operation to its answer.
-        Copy interrupt IDs and zero-based question/option indices from needs_input.
-        Explicit user/agent answers are required; recommendations are never selected.
+        """Respond to current questions or dataset reviews in the same operation.
+        Copy the exact interrupt IDs from needs_input. Questions use zero-based
+        indices; dataset reviews use the displayed proposal/result identity and
+        an explicit Build preview, Save, Edit or decline action. Native dataset
+        decisions are confirmed before conversation delivery; retrying delivery
+        never extracts or saves a second result. No choice is selected by default.
         """
         try:
             return _value(
@@ -244,25 +292,81 @@ def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
             return _error(error)
 
     async def read(
-        response_id: str,
+        response_id: str | None = None,
         table: str | None = None,
         version: int | None = None,
         offset: int = 0,
-        page_size: int = 1000,
+        page_size: int | None = None,
+        draft_ref: str | None = None,
+        full_content: bool = False,
+        expected_sha256: str | None = None,
     ) -> CallToolResult:
-        """Read a saved answer, or one table page when table is supplied.
+        """Read a saved answer/table or inspect a retained pending dataset draft.
         Pin the returned version for subsequent pages and follow next_offset until
-        null. Page size limits one transfer; there is no total table row ceiling.
+        null. For a pending review, supply draft_ref instead of response_id. Draft
+        pages use offset/page_size (default 100, maximum 100); follow next_cursor.
+        full_content returns an exact JSON/Arrow resource link and requires the
+        review draft descriptor's content_sha256 as expected_sha256. Read that
+        resource to inspect all values, including JSON requires_download. Resource
+        reads recheck native ownership and digest. Nothing is saved by reading.
         Reads call Backend only and never start a study or model call.
         """
         try:
+            if (response_id is None) == (draft_ref is None):
+                raise ValueError("Choose exactly one saved response_id or pending draft_ref")
+            if draft_ref is not None:
+                if table is not None or version is not None:
+                    raise ValueError("Answer table/version settings do not apply to a draft")
+                if not draft_ref.startswith("draft:") or len(draft_ref) > 256:
+                    raise ValueError("Use the retained draft_ref from the dataset review")
+                if full_content:
+                    if expected_sha256 is None or offset != 0 or page_size is not None:
+                        raise ValueError(
+                            "Full draft content requires its exact content digest and no paging"
+                        )
+                    draft_identity(draft_ref, expected_sha256)
+                    preview = await epoch.preview_dataset(draft_ref, limit=1)
+                    is_json = preview.content.format == "json"
+                    return CallToolResult(
+                        content=[
+                            ResourceLink(
+                                name=draft_ref + (".json" if is_json else ".arrow"),
+                                uri=("epoch://review-json/" if is_json else "epoch://review-arrow/")
+                                + quote(draft_ref, safe="")
+                                + "/"
+                                + expected_sha256,
+                                mime_type="application/json"
+                                if is_json
+                                else "application/vnd.apache.arrow.file",
+                            )
+                        ]
+                    )
+                if expected_sha256 is not None:
+                    raise ValueError("The content digest applies to full_content resource reads")
+                preview = await epoch.preview_dataset(
+                    draft_ref, offset=offset, limit=100 if page_size is None else page_size
+                )
+                return CallToolResult(
+                    content=[
+                        TextContent(
+                            type="text",
+                            text="Retained draft preview; follow next_cursor for table continuation, or full_content for all JSON/Arrow bytes.",
+                        )
+                    ],
+                    structured_content=preview.model_dump(
+                        mode="json", by_alias=True, exclude_none=True
+                    ),
+                )
+            if full_content or expected_sha256 is not None:
+                raise ValueError("Draft content settings require draft_ref")
+            assert response_id is not None
             return _value(
                 await epoch.read(
                     response_id,
                     table=table,
                     version=version,
                     offset=offset,
-                    page_size=page_size,
+                    page_size=1000 if page_size is None else page_size,
                 )
             )
         except EpochError as error:

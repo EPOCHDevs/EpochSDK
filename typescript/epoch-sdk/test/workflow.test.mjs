@@ -31,6 +31,22 @@ function harness() {
     const path = new URL(args.url).pathname
     const body = typeof args.body === "string" ? JSON.parse(args.body) : args.body
     calls.push({ path, method: args.method, body: body && copy(body), query: args.queryParameters })
+    if (path.startsWith("/api/v1/files/preparations/")) {
+      assert.ok(state.datasetBuild)
+      if (args.method === "POST") {
+        assert.equal(body.review_ref, state.datasetBuild.review.review_ref)
+        assert.equal(body.schema_sha256, state.datasetBuild.review.schema_sha256)
+        assert.equal(body.result_sha256, state.datasetBuild.result_sha256)
+        state.datasetBuild.state = body.action === "discard" ? "discarded" : state.saveStatus ?? "saved"
+        if (state.datasetBuild.state === "saved") state.datasetBuild.dataset = {
+          dataset_ref: "dataset:" + "e".repeat(64), name: state.datasetBuild.request.name,
+          descriptor: state.datasetBuild.review.draft.descriptor, saved_at: "2026-11-02T00:00:00Z", archived: false,
+        }
+        if (state.lostNativeAck) throw new Error("Lost response")
+      }
+      return response(state.datasetBuild, args)
+    }
+    if (path.endsWith("/preview")) return response(state.datasetPreview, args)
     if (path === "/api/v1/integration/requests" && args.method === "POST") {
       if (state.record) {
         if (JSON.stringify(state.record.request) !== JSON.stringify(body.request)) return { ok: false,
@@ -297,4 +313,63 @@ test("prepared execution keeps captured options and waits for required output pu
   assert.equal((await h.client.status("execute-example", { kind: "execute" })).status, "in_progress")
   h.state.execution.response_phase = "failed"
   await assert.rejects(h.client.status("execute-example", { kind: "execute" }), e => e.code === "OUTPUT_VALIDATION_FAILED")
+})
+
+
+const reviewFixture = JSON.parse(await readFile(new URL("../../../python/epoch-sdk/tests/fixtures/document-review/build-review.json", import.meta.url), "utf8"))
+const previewFixture = JSON.parse(await readFile(new URL("../../../python/epoch-sdk/tests/fixtures/document-review/preview.json", import.meta.url), "utf8"))
+const resultDecision = (operation, action) => ({ type: "dataset_review", stage: "review", action,
+  preparation_ref: operation.preparation_ref, attempt: operation.attempt, review_ref: operation.review.review_ref,
+  result_sha256: operation.result_sha256, schema_sha256: operation.review.schema_sha256 })
+async function reviewHarness() {
+  const h = harness()
+  await h.client.run(request(), { operationId: "dataset-review", wait: false })
+  h.state.datasetBuild = copy(reviewFixture); h.state.datasetPreview = copy(previewFixture)
+  h.state.interrupts = [{ id: "dataset-one", value: { type: "dataset_review", stage: "review",
+    tool_call_id: "prepare-one", operation: copy(reviewFixture), can_edit: true } }]
+  h.state.runStatus = "interrupted"
+  return { ...h, waiting: await h.client.status("dataset-review") }
+}
+
+for (const action of ["save", "decline"]) test(`dataset ${action} confirms the native outcome before the same agent resumes`, async () => {
+  const h = await reviewHarness()
+  assert.equal(h.waiting.status, "needs_input")
+  assert.equal(h.state.datasetBuild.dataset, undefined)
+  const before = h.graphCalls.filter(c => c[0] === "runs.create").length
+  await h.client.resume(h.waiting, { "dataset-one": resultDecision(reviewFixture, action) }, { wait: false })
+  assert.equal(h.state.datasetBuild.state, action === "save" ? "saved" : "discarded")
+  assert.equal(h.calls.filter(c => c.path.endsWith("/actions")).length, 1)
+  assert.equal(h.graphCalls.filter(c => c[0] === "runs.create").length, before + 1)
+})
+
+test("unknown dataset Save blocks competing decisions and never repeats extraction", async () => {
+  const h = await reviewHarness(); h.state.saveStatus = "saving"
+  const before = h.graphCalls.filter(c => c[0] === "runs.create").length
+  await assert.rejects(h.client.resume(h.waiting, { "dataset-one": resultDecision(reviewFixture, "save") }, { wait: false }), /not confirmed/)
+  await assert.rejects(h.client.resume(h.waiting, { "dataset-one": resultDecision(reviewFixture, "decline") }, { wait: false }), /unavailable|not confirmed/)
+  assert.equal(h.calls.filter(c => c.path.endsWith("/actions")).length, 1)
+  assert.equal(h.graphCalls.filter(c => c[0] === "runs.create").length, before)
+})
+
+test("lost native Save acknowledgement reconciles retained bytes and sends no second Save", async () => {
+  const h = await reviewHarness(); h.state.lostNativeAck = true
+  await h.client.resume(h.waiting, { "dataset-one": resultDecision(reviewFixture, "save") }, { wait: false })
+  assert.equal(h.state.datasetBuild.state, "saved")
+  assert.equal(h.calls.filter(c => c.path.endsWith("/actions")).length, 1)
+})
+
+test("stale schema decisions fail before native or graph mutation", async () => {
+  const h = await reviewHarness(); const before = h.calls.length
+  const answer = resultDecision(reviewFixture, "save"); answer.schema_sha256 = "f".repeat(64)
+  await assert.rejects(h.client.resume(h.waiting, { "dataset-one": answer }, { wait: false }), /changed/)
+  assert.ok(h.calls.slice(before).every(c => c.method === "GET"))
+})
+
+test("expired dataset reviews remain observable and continue without another native decision", async () => {
+  const h = await reviewHarness()
+  h.state.datasetBuild.state = "expired"; h.state.datasetBuild.review.allowed_actions = []
+  const current = await h.client.status("dataset-review")
+  assert.equal(current.interrupts[0].value.operation.state, "expired")
+  await h.client.resume(current, { "dataset-one": resultDecision(h.state.datasetBuild, "continue") }, { wait: false })
+  assert.equal(h.calls.filter(c => c.path.endsWith("/actions")).length, 0)
 })

@@ -961,6 +961,18 @@
             "title": "Preparation Ref",
             "type": "string"
           },
+          "replaced_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Replaced By"
+          },
           "request": {
             "$ref": "#/components/schemas/EpochDocument_DatasetBuildRequest"
           },
@@ -975,6 +987,17 @@
             ],
             "default": null,
             "title": "Result Sha256"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_DatasetBuildReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "source": {
             "anyOf": [
@@ -1023,6 +1046,19 @@
         "title": "DatasetBuild",
         "type": "object"
       },
+      "EpochDocument_DatasetBuildAction": {
+        "enum": [
+          "stop",
+          "retry_extraction",
+          "retry_save",
+          "save",
+          "save_available",
+          "discard",
+          "acknowledge"
+        ],
+        "title": "DatasetBuildAction",
+        "type": "string"
+      },
       "EpochDocument_DatasetBuildList": {
         "additionalProperties": false,
         "properties": {
@@ -1050,6 +1086,17 @@
           "preparation": {
             "$ref": "#/components/schemas/EpochDocument_DatasetPreparationRequest"
           },
+          "replaces": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_DatasetBuildRevision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "request_id": {
             "title": "Request Id",
             "type": "string"
@@ -1061,6 +1108,73 @@
           "request_id"
         ],
         "title": "DatasetBuildRequest",
+        "type": "object"
+      },
+      "EpochDocument_DatasetBuildReview": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/components/schemas/EpochDocument_DatasetBuildAction"
+            },
+            "title": "Allowed Actions",
+            "type": "array"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/EpochDocument_DraftDataset"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "allowed_actions",
+          "draft",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildReview",
+        "type": "object"
+      },
+      "EpochDocument_DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "preparation_ref",
+          "result_sha256",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildRevision",
         "type": "object"
       },
       "EpochDocument_DatasetBuildState": {
@@ -1077,7 +1191,9 @@
           "saved",
           "stopped",
           "expired",
-          "discarded"
+          "discarded",
+          "pending_review",
+          "superseded"
         ],
         "title": "DatasetBuildState",
         "type": "string"
@@ -2122,6 +2238,41 @@
         "title": "DocumentReadState",
         "type": "string"
       },
+      "EpochDocument_DraftDataset": {
+        "additionalProperties": true,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "descriptor": {
+            "$ref": "#/components/schemas/EpochDocument_DatasetDescriptor"
+          },
+          "draft_ref": {
+            "title": "Draft Ref",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "descriptor",
+          "draft_ref",
+          "expires_at",
+          "name"
+        ],
+        "title": "DraftDataset",
+        "type": "object"
+      },
       "EpochDocument_Request_AssetClass": {
         "enum": [
           "Stocks",
@@ -2608,6 +2759,7 @@
           "stop",
           "retry_extraction",
           "retry_save",
+          "save",
           "save_available",
           "discard",
           "acknowledge"
@@ -2638,6 +2790,30 @@
             ],
             "default": null,
             "title": "Result Sha256"
+          },
+          "review_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Review Ref"
+          },
+          "schema_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Schema Sha256"
           }
         },
         "required": [
@@ -2657,6 +2833,17 @@
           "preparation": {
             "$ref": "#/components/schemas/EpochDocument_Request_DatasetPreparationRequest"
           },
+          "replaces": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochDocument_Request_DatasetBuildRevision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "request_id": {
             "title": "Request Id",
             "type": "string"
@@ -2668,6 +2855,42 @@
           "request_id"
         ],
         "title": "DatasetBuildRequest",
+        "type": "object"
+      },
+      "EpochDocument_Request_DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "title": "Preparation Ref",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "review_ref": {
+            "title": "Review Ref",
+            "type": "string"
+          },
+          "schema_sha256": {
+            "title": "Schema Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "preparation_ref",
+          "result_sha256",
+          "review_ref",
+          "schema_sha256"
+        ],
+        "title": "DatasetBuildRevision",
         "type": "object"
       },
       "EpochDocument_Request_DatasetEnrichmentChoice_Automatic": {
@@ -5189,11 +5412,17 @@
           "preparation_ref": {
             "type": "string"
           },
+          "replaced_by": {
+            "type": "string"
+          },
           "request": {
             "$ref": "#/components/schemas/NativeResource_DatasetBuildRequest"
           },
           "result_sha256": {
             "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/NativeResource_DatasetBuildReview"
           },
           "source": {
             "$ref": "#/components/schemas/NativeResource_UserFileDescriptor"
@@ -5229,6 +5458,7 @@
           "stop",
           "retry_extraction",
           "retry_save",
+          "save",
           "save_available",
           "discard",
           "acknowledge"
@@ -5247,6 +5477,12 @@
             "type": "integer"
           },
           "result_sha256": {
+            "type": "string"
+          },
+          "review_ref": {
+            "type": "string"
+          },
+          "schema_sha256": {
             "type": "string"
           }
         },
@@ -5329,6 +5565,9 @@
           "preparation": {
             "$ref": "#/components/schemas/NativeResource_DatasetPreparationRequest"
           },
+          "replaces": {
+            "$ref": "#/components/schemas/NativeResource_DatasetBuildRevision"
+          },
           "request_id": {
             "type": "string"
           }
@@ -5340,6 +5579,69 @@
         ],
         "title": "DatasetBuildRequest",
         "type": "object"
+      },
+      "NativeResource_DatasetBuildReview": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/components/schemas/NativeResource_DatasetBuildAction"
+            },
+            "type": "array"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/NativeResource_DraftDataset"
+          },
+          "review_ref": {
+            "type": "string"
+          },
+          "schema_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_ref",
+          "schema_sha256",
+          "draft",
+          "allowed_actions"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "NativeResource_DatasetBuildRevision": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "preparation_ref": {
+            "type": "string"
+          },
+          "result_sha256": {
+            "type": "string"
+          },
+          "review_ref": {
+            "type": "string"
+          },
+          "schema_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "preparation_ref",
+          "attempt",
+          "review_ref",
+          "result_sha256",
+          "schema_sha256"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
       },
       "NativeResource_DatasetBuildState": {
         "enum": [
@@ -5355,7 +5657,9 @@
           "saved",
           "stopped",
           "expired",
-          "discarded"
+          "discarded",
+          "pending_review",
+          "superseded"
         ],
         "type": "string"
       },
@@ -28910,8 +29214,8 @@
     "transport_schema": "agent-tools.schema.json"
   },
   "x-epoch-document-operations": {
-    "backend_sha256": "3e8e8ad80d5aeef3e3d9691b81c2251882992f400d5d688b09fbcbf9456b4190",
-    "epochai_sha256": "a5721a0120feea29e3a69cb2f36dbe8f433cc6913d012872caa59eba107e0034",
+    "backend_sha256": "c0370bd8449396fcd539fcff5c7f2e9e7757ac92dc1fba37b144d6cb2398632e",
+    "epochai_sha256": "4e1859bb3b5c3dbf51675646cb21fe3e94cc54a8580bea42ed2245100013db6b",
     "paths": [
       "/api/v1/document-captures",
       "/api/v1/document-preparations",
@@ -28974,8 +29278,11 @@
       "EpochDocument_DataSourceValueTransform_FloorDay",
       "EpochDocument_DataSourceValueTransform_ParseDateTime",
       "EpochDocument_DatasetBuild",
+      "EpochDocument_DatasetBuildAction",
       "EpochDocument_DatasetBuildList",
       "EpochDocument_DatasetBuildRequest",
+      "EpochDocument_DatasetBuildReview",
+      "EpochDocument_DatasetBuildRevision",
       "EpochDocument_DatasetBuildState",
       "EpochDocument_DatasetCoverage",
       "EpochDocument_DatasetDescriptor",
@@ -29010,6 +29317,7 @@
       "EpochDocument_DocumentCapture",
       "EpochDocument_DocumentRead",
       "EpochDocument_DocumentReadState",
+      "EpochDocument_DraftDataset",
       "EpochDocument_Request_AssetClass",
       "EpochDocument_Request_CaptureRequest",
       "EpochDocument_Request_DataFoundation",
@@ -29026,6 +29334,7 @@
       "EpochDocument_Request_DatasetBuildAction",
       "EpochDocument_Request_DatasetBuildActionRequest",
       "EpochDocument_Request_DatasetBuildRequest",
+      "EpochDocument_Request_DatasetBuildRevision",
       "EpochDocument_Request_DatasetEnrichmentChoice_Automatic",
       "EpochDocument_Request_DatasetEnrichmentChoice_UserDefined",
       "EpochDocument_Request_DatasetOutputFormat",
@@ -29101,6 +29410,8 @@
       "NativeResource_DatasetBuildAttentionList",
       "NativeResource_DatasetBuildList",
       "NativeResource_DatasetBuildRequest",
+      "NativeResource_DatasetBuildReview",
+      "NativeResource_DatasetBuildRevision",
       "NativeResource_DatasetBuildState",
       "NativeResource_DatasetCitation",
       "NativeResource_DatasetCoverage",

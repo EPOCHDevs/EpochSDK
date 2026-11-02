@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Literal, TypedDict
 from uuid import uuid4
@@ -45,9 +45,9 @@ from .files import FileClient
 from .responses import ResponseTablePage, SavedResearchResponse
 from .sources import SourceClient
 from .supervisor import (
-    Answers,
     ChosenExecution,
     InProgress,
+    InterruptResponse,
     NeedsInput,
     NoExecution,
     PublishedAnswer,
@@ -283,7 +283,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
     async def resume(
         self,
         operation_id: str,
-        responses: dict[str, Answers],
+        responses: Mapping[str, InterruptResponse],
         *,
         interface: Literal["auto", "terminal", "notebook", "headless"] = "auto",
         on_event: EventHandler | None = None,
@@ -842,7 +842,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
     async def resume_research(
         self,
         waiting: NeedsInput,
-        responses: dict[str, Answers],
+        responses: Mapping[str, InterruptResponse],
         *,
         wait: bool = True,
     ) -> ResearchResult:
