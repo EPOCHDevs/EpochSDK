@@ -156,18 +156,37 @@ class FileClient:
             dataset_ref, offset=offset, limit=limit, request_options={"max_retries": 0}
         )
 
-    async def download_dataset(self, dataset_ref: str) -> bytes:
-        """Read a complete verified prepared Arrow IPC file, draft or saved.
+    async def download_dataset(self, dataset_ref: str, *, max_bytes: int = 256 * 1024 * 1024,
+                               expected_sha256: str | None = None) -> bytes:
+        """Read complete native prepared bytes, draft or saved.
 
-        Use pyarrow.ipc.open_file on these bytes. Unlike previews, this includes
-        every row and preserves native types, precision, nulls and duplicates.
+        JSON datasets return exact UTF-8 JSON; tables return Arrow IPC files.
+        Inspect preview.content.format or the saved descriptor before decoding.
+        Unlike previews, this includes every value and preserves its precision.
         """
+        if type(max_bytes) is not int or not 1 <= max_bytes <= 256 * 1024 * 1024:
+            raise ValueError("Dataset download budget must be in 1..256 MiB")
+        if expected_sha256 is not None and (len(expected_sha256) != 64 or
+                any(char not in "0123456789abcdef" for char in expected_sha256)):
+            raise ValueError("Expected dataset SHA-256 must be an exact lowercase digest")
         data = bytearray()
         async with self.backend.user_files.with_raw_response.download_prepared_dataset(
             dataset_ref, request_options={"max_retries": 0}
         ) as response:
+            media = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+            if media not in {"application/json", "application/vnd.apache.arrow.file"}:
+                raise ValueError("Prepared dataset returned an unsupported content type")
+            length = response.headers.get("content-length")
+            if length is not None and (not length.isascii() or not length.isdecimal() or int(length) > max_bytes):
+                raise ValueError("Prepared dataset exceeds the download budget or has an invalid length")
             async for chunk in response.data:
+                if len(data) + len(chunk) > max_bytes:
+                    raise ValueError("Prepared dataset exceeds the download budget")
                 data.extend(chunk)
+            if length is not None and len(data) != int(length):
+                raise ValueError("Prepared dataset download is incomplete")
+        if expected_sha256 is not None and hashlib.sha256(data).hexdigest() != expected_sha256:
+            raise ValueError("Prepared dataset differs from its saved SHA-256 identity")
         return bytes(data)
 
     async def create_folder(self, name: str, *, parent_folder_ref: str | None = None) -> SpaceFolder:

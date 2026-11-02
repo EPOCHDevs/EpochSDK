@@ -1,5 +1,14 @@
 # Shared contract
 
+Document resource paths mirror the existing EpochBackend and EpochAI OpenAPI
+through `tools/sync_document_contract.py`; their source hashes and path/schema
+inventory are recorded in `x-epoch-document-operations`. Regenerate with both
+canonical exports and use `--check` to verify the mirror. These paths preserve
+the service schemas without inventing inline examples. `test_documents.py`
+checks captured SDK/MCP document fixtures against the projection; live drivers
+under `tests/live` provide separate opt-in service/AWS evidence. SDK-owned paths
+retain complete inline wire-example coverage in `test_contracts.py`.
+
 `openapi.json` is the language-neutral API contract for Epoch SDK clients and MCP.
 It defines the eight logical operations, requests, named outputs, acceptance and
 domain errors. Its REST paths are illustrative bindings, not another deployed

@@ -351,12 +351,14 @@ class SupervisorClient:
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
         source_connections: AsyncSourcesClient | None = None,
+        document_http: httpx.AsyncClient | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
         self.assistant_id = assistant_id
         self.ui_url = ui_url
         self.source_connections = source_connections
+        self.document_http = document_http
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -381,6 +383,7 @@ class SupervisorClient:
             assistant_id=assistant_id,
             ui_url=ui_url,
             source_connections=AsyncSourcesClient(base_url=backend_url, token=token, http=backend_http),
+            document_http=graph_http,
         )
         client._owned_http = [graph_http, backend_http]
         return client

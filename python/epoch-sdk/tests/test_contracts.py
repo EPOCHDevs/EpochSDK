@@ -376,12 +376,17 @@ def test_documented_wire_examples_agree_with_shared_contract() -> None:
                             ErrorResponse.model_validate(value)
                         elif schema.get("$ref") == "#/components/schemas/Acknowledgement":
                             Acknowledgement.model_validate(value)
-    assert covered == {
+    # Service projections preserve their OpenAPI without adding authored examples.
+    # test_documents checks captured wire fixtures against those service schemas.
+    projected_paths = set(document.get("x-epoch-document-operations", {}).get("paths", []))
+    assert projected_paths <= document["paths"].keys()
+    assert {
         operation["operationId"]
-        for methods in document["paths"].values()
+        for path, methods in document["paths"].items()
+        if path not in projected_paths
         for operation in methods.values()
         if isinstance(operation, dict) and "operationId" in operation
-    }
+    } <= covered
 
 
 def test_language_neutral_validation_fixtures() -> None:

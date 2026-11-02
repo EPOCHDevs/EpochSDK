@@ -33,6 +33,8 @@ from stratifyx import DatePeriodConfig, ExecutionOptions
 from stratifyx.core.api_error import ApiError
 from stratifyx.types import (
     CreateSdkExecutionRequest,
+    DatasetBuildActionRequest,
+    DatasetBuildRequest,
     DatasetCatalogResponse,
     DatasetReviewRequest,
     DatasetSearchQuery,
@@ -49,6 +51,7 @@ from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
 from .agent_tools import AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
+from .documents import CaptureDocumentRequest
 from .errors import EpochError
 from .supervisor import Answers
 
@@ -289,7 +292,7 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "Read exact answer or presentation pins from extension_outputs; source_execution_id is not the derived execution_id."
             " Files and Space persist independently of conversations. Use epoch_upload_file, epoch_prepare_dataset and epoch_review_datasets for imports. "
             "Use returned dataset_ref/source_ref exactly; knowledge datasets do not automatically become study sources. "
-            "epoch_dataset_content returns a resource link to the complete prepared Arrow IPC file; read that resource when preview requires_download is true. "
+            "epoch_dataset_content returns a correctly typed resource link to complete JSON or Arrow content; read it when preview requires_download is true. "
             "Space folder and placement operations preserve existing resource references. "
             "Source connections use the Epoch Python gateway. Credentials are supplied through the source UI or typed SDK, never an MCP tool. "
             "Discover and explicitly select tables, then explicitly start a full-refresh sync. Poll its returned sync_ref; do not resubmit an unconfirmed job. "
@@ -299,13 +302,11 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         middleware=[checked_dispatch],
     )
 
-    @server.resource(
-        "epoch://prepared-datasets/{dataset_ref}", name="prepared_dataset",
-        description="Complete owner-authorized prepared Arrow IPC file, for an exact draft or saved dataset.",
-        mime_type="application/vnd.apache.arrow.file",
-    )
-    async def prepared_dataset(dataset_ref: str) -> bytes:
+    async def prepared_content(dataset_ref: str, output_format: Literal["table", "json"]) -> bytes:
         try:
+            preview = await client.preview_dataset(dataset_ref, limit=1)
+            if preview.content.format != output_format:
+                raise ValueError("Use epoch_dataset_content to select this dataset's actual resource format")
             return await client.download_dataset(dataset_ref)
         except ApiError as error:
             try:
@@ -316,6 +317,16 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             raise MCPError(-32001, f"Backend returned HTTP {error.status_code}: {message}") from None
         except httpx.HTTPError:
             raise MCPError(-32001, "The prepared dataset service could not be reached.") from None
+        except ValueError:
+            raise MCPError(-32001, "The dataset format or complete content could not be verified. Use epoch_dataset_content for the exact resource link.") from None
+
+    @server.resource(
+        "epoch://prepared-datasets/{dataset_ref}", name="prepared_dataset",
+        description="Complete owner-authorized prepared Arrow IPC file, for an exact draft or saved dataset.",
+        mime_type="application/vnd.apache.arrow.file",
+    )
+    async def prepared_dataset(dataset_ref: str) -> bytes:
+        return await prepared_content(dataset_ref, "table")
 
     async def upload_file(name: str, media_type: str, content_base64: str) -> CallToolResult:
         """Upload exact base64-encoded file bytes in verified native chunks.
@@ -423,16 +434,86 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         """
         return await _call(client.preview_dataset(dataset_ref, offset=offset, limit=limit))
 
+    @server.resource("epoch://prepared-json/{dataset_ref}", name="prepared_json", description="Complete exact owner-authorized JSON dataset, including primitive text/number/boolean roots.", mime_type="application/json")
+    async def prepared_json(dataset_ref: str) -> str:
+        try:
+            return (await prepared_content(dataset_ref, "json")).decode("utf-8")
+        except UnicodeError:
+            raise MCPError(-32001, "The saved JSON content is not valid UTF-8.") from None
+
     async def dataset_content(dataset_ref: str) -> CallToolResult:
-        """Get a resource link for complete prepared data, beyond preview limits.
-        Read the returned resource to fetch the owner-authorized Arrow IPC file.
-        A link alone does not read the data or grant access to another owner.
+        """Get a typed resource link for complete JSON or Arrow content. A link
+        does not grant access or start document processing; the read is owner checked.
         """
-        return CallToolResult(content=[ResourceLink(
-            name=dataset_ref + ".arrow",
-            uri="epoch://prepared-datasets/" + quote(dataset_ref, safe=""),
-            mime_type="application/vnd.apache.arrow.file",
-        )])
+        async def resource() -> CallToolResult:
+            preview = await client.preview_dataset(dataset_ref, limit=1)
+            is_json = preview.content.format == "json"
+            return CallToolResult(content=[ResourceLink(
+                name=dataset_ref + (".json" if is_json else ".arrow"),
+                uri=("epoch://prepared-json/" if is_json else "epoch://prepared-datasets/") + quote(dataset_ref, safe=""),
+                mime_type="application/json" if is_json else "application/vnd.apache.arrow.file",
+            )])
+        return await _call(resource())
+
+    async def capture_document_url(request: CaptureDocumentRequest) -> CallToolResult:
+        """Explicitly capture a direct document URL into Uploads. Reuse request_id
+        after an uncertain response. This fetches the URL; it never starts parsing.
+        Private networks and general HTML pages are unsupported.
+        """
+        return await _call(client.capture_document_url(request))
+
+    async def document_capture(capture_ref: str) -> CallToolResult:
+        """Read exact captured file/URL provenance; query credentials stay private."""
+        return await _call(client.document_capture(capture_ref))
+
+    async def start_document_read(file_ref: str) -> CallToolResult:
+        """Explicitly read an Upload. May start AWS parsing; no dataset is created.
+        Reuse the returned read_ref to check status rather than resubmitting work.
+        """
+        return await _call(client.start_document_read(file_ref))
+
+    async def document_read(read_ref: str) -> CallToolResult:
+        """Reopen an exact durable document read, without starting processing."""
+        return await _call(client.document_read(read_ref))
+
+    async def act_document_read(read_ref: str, request: DatasetBuildActionRequest) -> CallToolResult:
+        """Explicitly stop or retry one current read attempt. No save or partial-data acceptance."""
+        return await _call(client.act_document_read(read_ref, request))
+
+    async def document_content(document_version_ref: str, offset: Annotated[int, Field(strict=True, ge=0)] = 0, limit: Annotated[int, Field(strict=True, ge=1, le=100)] = 4, layer: Literal["primary", "element", "all"] = "primary") -> CallToolResult:
+        """Read bounded immutable source text. Primary is one stream; element/all
+        include alternate layout text that may overlap. Follow has_more; preserve
+        the exact version/block refs, original-file hash and coverage limits.
+        """
+        return await _call(client.document_content(document_version_ref, offset=offset, limit=limit, layer=layer))
+
+    async def document_passage(document_version_ref: str, block_ref: str) -> CallToolResult:
+        """Resolve one exact original source citation without processing again."""
+        return await _call(client.document_passage(document_version_ref, block_ref))
+
+    async def search_documents(query: str, file_refs: list[str] | None = None, cursor: str | None = None, limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10) -> CallToolResult:
+        """Search owner filenames and already prepared primary source text. No AI
+        starts. Unprepared files and unknown coverage are not proof of absence.
+        """
+        return await _call(client.search_documents(query, file_refs=file_refs, cursor=cursor, limit=limit))
+
+    async def prepare_document_dataset(request: DatasetBuildRequest) -> CallToolResult:
+        """Explicit schema-driven document extraction; distinct from deterministic
+        epoch_prepare_dataset imports. Retain request_id on retries. Table/JSON/text
+        or scalar output is saved with provenance; partial data needs explicit acceptance.
+        """
+        return await _call(client.prepare_document_dataset(request))
+
+    async def document_preparation(preparation_ref: str) -> CallToolResult:
+        """Reopen a durable dataset preparation; never starts another extraction."""
+        return await _call(client.document_preparation(preparation_ref))
+
+    async def act_document_preparation(preparation_ref: str, request: DatasetBuildActionRequest) -> CallToolResult:
+        """Apply an explicit stop, save-only retry, extraction retry or partial
+        acceptance to an exact current attempt. save_available requires result_sha256.
+        An unknown status is not permission to retry extraction.
+        """
+        return await _call(client.act_document_preparation(preparation_ref, request))
 
     async def browse_space(
         folder_ref: str | None = None,
@@ -739,6 +820,17 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         ("epoch_source_snapshot", source_snapshot),
         ("epoch_review_source_snapshot", review_source_snapshot),
         ("epoch_delete_source_connection", delete_source_connection),
+        ("epoch_start_document_read", start_document_read),
+        ("epoch_capture_document_url", capture_document_url),
+        ("epoch_document_capture", document_capture),
+        ("epoch_document_read", document_read),
+        ("epoch_act_document_read", act_document_read),
+        ("epoch_read_documents", document_content),
+        ("epoch_document_passage", document_passage),
+        ("epoch_search_documents", search_documents),
+        ("epoch_prepare_document_dataset", prepare_document_dataset),
+        ("epoch_document_preparation", document_preparation),
+        ("epoch_act_document_preparation", act_document_preparation),
         ("epoch_upload_file", upload_file),
         ("epoch_list_files", list_files),
         ("epoch_inspect_file", inspect_file),

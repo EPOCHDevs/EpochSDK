@@ -153,3 +153,62 @@ runtime. The immutable model catalogue has no public deletion endpoint, and
 versioned S3 retains old bytes after API deletion; namespace cleanup must remove
 all object versions and delete markers as well as test buckets/tables. Verify
 their absence and retain the cleanup receipt.
+
+### Document source reads through real services
+
+`document_read_acceptance.py` uses the running local EpochAI document route,
+native storage, installed SDK and a fresh stdio MCP process. It checks that
+metadata browsing starts no read; an explicit read preserves exact UTF-8,
+large numeric text, false, source versions and literal search; reopening keeps
+the same attempt. This focused check starts no paid model or AWS parsing job.
+PDF parsing, extraction, the agent conversation and browser flows require
+their separate live acceptance checks.
+
+```bash
+python python/epoch-sdk/tests/live/document_read_acceptance.py create \
+  --backend-url http://127.0.0.1:8095 --graph-url http://127.0.0.1:8096 \
+  --token-file "$EPOCH_TEST_LOGIN_FILE" --evidence /private/run/document-read.json
+```
+
+Run the same command with `verify` after restarting the candidates. Verification
+only reads recorded resources; it cannot upload or start a replacement read. Supply
+`--foreign-token-file "$EPOCH_OTHER_TEST_LOGIN_FILE"` to verify another real
+Cognito owner cannot read or search these resources. Retain the synthetic
+original and read for review, then run the same command with `cleanup`.
+The cleanup uses only references from this runner's evidence and refuses a
+different service origin or Cognito owner. Retired receipts cannot create new
+fixtures. Keep the evidence file; do not commit login files.
+
+### Real AWS document preparation
+
+`document_preparation_acceptance.py` runs the reviewed synthetic Northstar PDF
+through the existing EpochAI worker and actual native storage. Use a dedicated
+empty review namespace, the candidate native SDK, and normal Cognito login.
+Create requires `--run-live-aws` because it submits five real extraction cases:
+Table, JSON object, text, scalar and absent Q1. It makes no automatic paid retry.
+The JSON submission and every full-content resource also pass through a fresh
+stdio MCP process. Output checks include exact saved identities, previews,
+complete hashes and original-page citations. The receipt records each request
+before submission and locks its evidence path against concurrent creates.
+
+```bash
+python python/epoch-sdk/tests/live/document_preparation_acceptance.py create \
+  --backend-url http://127.0.0.1:8095 --graph-url http://127.0.0.1:8096 \
+  --token-file "$EPOCH_TEST_LOGIN_FILE" --evidence /private/run/preparation.json \
+  --original /absolute/path/to/Northstar-document-fixture.pdf --run-live-aws
+```
+
+After restarting only the candidates with the same cloud namespace, run the
+same command with `verify` (the original/opt-in flags are unnecessary). Verify
+requires all five confirmed cases and reads their recorded attempts, saved
+references and content hashes; it never uploads, initiates, retries or
+acknowledges work. A failed or unknown create needs reconciliation of its exact
+recorded operation, rather than another create. After resolving that operation,
+`resume --run-live-aws` continues this same receipt: accepted cases use their
+recorded attempt, and previously unstarted cases submit their original stored
+request. Resume never retries failed/incomplete work, accepts limitations or
+re-uploads the original. An incomplete result must be explicitly reviewed and
+saved through the product before that case can pass. All value, evidence, hash
+and fresh MCP assertions still apply. These resources and receipts
+remain for owner review. They do not establish provider-failure, cross-owner,
+URL, agent, browser or scalar-execution evidence; those are separate checks.

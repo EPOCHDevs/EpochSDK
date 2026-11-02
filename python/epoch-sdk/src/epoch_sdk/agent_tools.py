@@ -30,6 +30,7 @@ from .agent_tools_contract import (
     ToolWorkspace,
 )
 from .datasets import DatasetClient
+from .documents import DocumentClient
 from .extensions import ExecutionExtensionClient
 from .files import FileClient
 from .json_schema import validate_schema
@@ -138,7 +139,7 @@ class _WorkspaceState(BaseModel):
         )
 
 
-class AgentToolsClient(DatasetClient, FileClient, SourceClient, ExecutionExtensionClient):
+class AgentToolsClient(DatasetClient, FileClient, DocumentClient, SourceClient, ExecutionExtensionClient):
     def __init__(
         self, graph: LangGraphClient, backend: AsyncStratifyX, graph_http: httpx.AsyncClient,
         *, source_connections: AsyncSourcesClient | None = None,
@@ -146,6 +147,7 @@ class AgentToolsClient(DatasetClient, FileClient, SourceClient, ExecutionExtensi
         self.graph = graph
         self.backend = backend
         self.graph_http = graph_http
+        self.document_http = graph_http
         self.source_connections = source_connections
         self._catalog: AgentToolsCatalog | None = None
         self._owned_http: list[httpx.AsyncClient] = []
