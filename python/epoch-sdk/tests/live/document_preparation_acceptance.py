@@ -111,7 +111,9 @@ def validate_receipt(state: Evidence, *, verify: bool) -> None:
     for case in state.cases:
         if case.request != request(case.name, state.run_id, state.file_ref):
             raise ValueError("A recorded request differs from the admitted synthetic case")
-        if verify:
+        if (case.preparation_ref is None) != (case.attempt is None):
+            raise ValueError("An accepted case must retain both its reference and attempt")
+        if verify or case.confirmed:
             if not case.confirmed or not case.preparation_ref or not case.attempt or case.attempt < 1:
                 raise ValueError("Verify requires every create case to have confirmed its own attempt")
             if case.name == "no_match":
@@ -165,10 +167,11 @@ async def scenario(args, state: Evidence) -> None:
         else:
             uploaded = (await client.file(state.file_ref)).file
             assert uploaded.content_sha256 == state.original_sha256
-            assert all(case.confirmed for case in state.cases), "Verify cannot repair an unconfirmed create"
+            if args.mode == "verify":
+                assert all(case.confirmed for case in state.cases), "Verify cannot repair an unconfirmed create"
         async with mcp_process(args.backend_url, args.graph_url, bearer) as mcp:
             for case in state.cases:
-                if args.mode == "create":
+                if args.mode != "verify" and case.preparation_ref is None:
                     # The JSON case exercises explicit extraction through a real
                     # fresh stdio process; the other cases use the same SDK API.
                     build = DatasetBuild.model_validate(await call(mcp, "epoch_prepare_document_dataset", {
@@ -180,6 +183,8 @@ async def scenario(args, state: Evidence) -> None:
                 else:
                     assert case.preparation_ref and case.attempt
                     build = await client.document_preparation(case.preparation_ref)
+                    if args.mode == "resume":
+                        build = await finished(client, case.preparation_ref)
                 assert build.attempt == case.attempt and build.source.content_sha256 == state.original_sha256
                 assert build.request == case.request
                 (directory / (case.name + "-build.json")).write_text(build.model_dump_json(indent=2))
@@ -188,7 +193,7 @@ async def scenario(args, state: Evidence) -> None:
                 else:
                     assert build.state == "saved" and build.dataset is not None, build.message
                     saved = build.dataset
-                    if args.mode == "create":
+                    if args.mode != "verify" and case.dataset_ref is None:
                         case.dataset_ref = saved.dataset_ref
                         case.content_sha256 = saved.descriptor.content_sha256
                         state.persist(args.evidence)
@@ -241,7 +246,7 @@ async def scenario(args, state: Evidence) -> None:
                         assert base64.b64decode(content.contents[0].blob, validate=True) == raw
                 reopened = DatasetBuild.model_validate(await call(mcp, "epoch_document_preparation", {"preparation_ref": build.preparation_ref}))
                 assert reopened == build
-                if args.mode == "create":
+                if args.mode != "verify" and not case.confirmed:
                     await client.act_document_preparation(build.preparation_ref,
                         DatasetBuildActionRequest(action="acknowledge", attempt=build.attempt))
                     case.confirmed = True
@@ -256,7 +261,7 @@ async def scenario(args, state: Evidence) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("create", "verify"))
+    parser.add_argument("mode", choices=("create", "resume", "verify"))
     parser.add_argument("--backend-url", type=loopback, required=True)
     parser.add_argument("--graph-url", type=loopback, required=True)
     parser.add_argument("--token-file", type=Path, required=True)
@@ -276,6 +281,8 @@ def main():
 
 
 def run(args, parser):
+    if args.mode == "resume" and not args.run_live_aws:
+        parser.error("Resume requires explicit --run-live-aws for previously unstarted cases")
     if args.mode == "create":
         if not args.run_live_aws or not args.original or args.evidence.exists():
             parser.error("Create requires --run-live-aws, the synthetic --original, and a fresh evidence path")

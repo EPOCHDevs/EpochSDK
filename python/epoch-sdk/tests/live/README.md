@@ -203,6 +203,12 @@ same command with `verify` (the original/opt-in flags are unnecessary). Verify
 requires all five confirmed cases and reads their recorded attempts, saved
 references and content hashes; it never uploads, initiates, retries or
 acknowledges work. A failed or unknown create needs reconciliation of its exact
-recorded operation, rather than another create. These resources and receipts
+recorded operation, rather than another create. After resolving that operation,
+`resume --run-live-aws` continues this same receipt: accepted cases use their
+recorded attempt, and previously unstarted cases submit their original stored
+request. Resume never retries failed/incomplete work, accepts limitations or
+re-uploads the original. An incomplete result must be explicitly reviewed and
+saved through the product before that case can pass. All value, evidence, hash
+and fresh MCP assertions still apply. These resources and receipts
 remain for owner review. They do not establish provider-failure, cross-owner,
 URL, agent, browser or scalar-execution evidence; those are separate checks.
