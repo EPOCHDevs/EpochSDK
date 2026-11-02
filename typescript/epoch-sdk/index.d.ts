@@ -1,13 +1,13 @@
 import type { StratifyXClient } from "@epoch/stratifyx"
 import type { Client as LangGraphClient } from "@langchain/langgraph-sdk"
-import type { ResearchResponseRecord, JobListItem, SdkExecutionRecord, ExecutionReportReference, SdkContractResponsePlanReference } from "@epoch/stratifyx/api/types"
-import type { SdkContractRunRequest as RunSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunRequest"
-import type { SdkContractRunParameters as ParametersSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunParameters"
-import type { ResearchResponseRecord as ResponseSchema } from "@epoch/stratifyx/serialization/types/ResearchResponseRecord"
-import type { SdkContractRunRequest as NativeRunRequest } from "@epoch/stratifyx/api/types"
-import type { DatasetBuild as BuildSchema } from "@epoch/stratifyx/serialization/types/DatasetBuild"
-import type { DatasetBuildRequest as BuildRequestSchema } from "@epoch/stratifyx/serialization/types/DatasetBuildRequest"
-import type { DatasetPreviewPage as PreviewSchema } from "@epoch/stratifyx/serialization/types/DatasetPreviewPage"
+import type { ResearchResponseRecord, JobListItem, SdkExecutionRecord, ExecutionReportReference, SdkContractResponsePlanReference } from "@epoch/stratifyx/api/types/index.js"
+import type { SdkContractRunRequest as RunSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunRequest.js"
+import type { SdkContractRunParameters as ParametersSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunParameters.js"
+import type { ResearchResponseRecord as ResponseSchema } from "@epoch/stratifyx/serialization/types/ResearchResponseRecord.js"
+import type { SdkContractRunRequest as NativeRunRequest } from "@epoch/stratifyx/api/types/index.js"
+import type { DatasetBuild as BuildSchema } from "@epoch/stratifyx/serialization/types/DatasetBuild.js"
+import type { DatasetBuildRequest as BuildRequestSchema } from "@epoch/stratifyx/serialization/types/DatasetBuildRequest.js"
+import type { DatasetPreviewPage as PreviewSchema } from "@epoch/stratifyx/serialization/types/DatasetPreviewPage.js"
 
 export type RunRequest = Pick<RunSchema.Raw, "task" | "outputs" | "parameters"> & { context?: string[] }
 export type OutputDefinition = RunRequest["outputs"][number]
