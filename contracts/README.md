@@ -9,6 +9,12 @@ checks captured SDK/MCP document fixtures against the projection; live drivers
 under `tests/live` provide separate opt-in service/AWS evidence. SDK-owned paths
 retain complete inline wire-example coverage in `test_contracts.py`.
 
+`public-v1.openapi.json` is the draft public v1 API: research, saved-study execution, answers,
+files, datasets, Space, webhooks and API keys. EpochAI generates it from its v1 routes and models
+(`tools/export_public_api.py`); copy it with `tools/sync_public_contract.py` and never edit it here.
+`tools/validate_public_contract.py` checks the copy. It replaces the illustrative `/v1` paths in
+`openapi.json` once approved; see [the review doc](../docs/public-api-v1.md).
+
 `openapi.json` is the language-neutral API contract for Epoch SDK clients and MCP.
 It defines the eight logical operations, requests, named outputs, acceptance and
 domain errors. Its REST paths are illustrative bindings, not another deployed
