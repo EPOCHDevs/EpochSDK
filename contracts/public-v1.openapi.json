@@ -2786,7 +2786,7 @@
           "Auth"
         ],
         "summary": "Exchange a sign-in for Epoch tokens",
-        "description": "OAuth 2.0 token endpoint for browser sign-in: exchange a Cognito ID token from the PKCE sign-in (RFC 8693), or refresh. API keys are sent directly as bearer credentials and never need this.",
+        "description": "OAuth 2.0 token endpoint for browser sign-in: exchange an unexpired Cognito ID token from the PKCE sign-in (RFC 8693). There are no Epoch refresh tokens: refresh the Cognito session and exchange again. API keys are sent directly as bearer credentials and never need this.",
         "operationId": "exchangeToken",
         "requestBody": {
           "content": {
@@ -2800,12 +2800,6 @@
                     "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                     "subject_token": "<cognito-id-token>",
                     "subject_token_type": "urn:ietf:params:oauth:token-type:id_token"
-                  }
-                },
-                "refresh": {
-                  "value": {
-                    "grant_type": "refresh_token",
-                    "refresh_token": "<epoch-refresh-token>"
                   }
                 }
               }
@@ -2827,7 +2821,6 @@
                       "access_token": "<epoch-access-token>",
                       "token_type": "Bearer",
                       "expires_in": 900,
-                      "refresh_token": "<epoch-refresh-token>",
                       "scope": "read research execute"
                     }
                   }
@@ -2878,84 +2871,8 @@
         },
         "x-epoch-scopes": [],
         "x-epoch-reuses": {
-          "native": [],
-          "gaps": [
-            "New Backend token issuer (ENG-2505)."
-          ]
-        }
-      }
-    },
-    "/v1/auth/revoke": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Revoke a refresh token",
-        "description": "RFC 7009 revocation, used by epoch logout. Always 200, even for an unknown token.",
-        "operationId": "revokeToken",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/RevokeRequest"
-              },
-              "examples": {
-                "logout": {
-                  "value": {
-                    "token": "<epoch-refresh-token>",
-                    "token_type_hint": "refresh_token"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Revoked, or already unknown.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "400": {
-            "description": "The request is invalid.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests for this credential; see Retry-After.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "A dependent service is unavailable; see Retry-After.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "x-epoch-scopes": [],
-        "x-epoch-reuses": {
-          "native": [],
-          "gaps": [
-            "New Backend token issuer (ENG-2505)."
+          "native": [
+            "Backend POST /api/v1/auth/token (exchange_epoch_token)"
           ]
         }
       }
@@ -3009,9 +2926,8 @@
         },
         "x-epoch-scopes": [],
         "x-epoch-reuses": {
-          "native": [],
-          "gaps": [
-            "New Backend token issuer (ENG-2505)."
+          "native": [
+            "Backend GET /api/v1/auth/jwks (get_epoch_jwks)"
           ]
         }
       }
@@ -7881,32 +7797,6 @@
         "title": "ResponseTablePage",
         "description": "One bounded page of a saved answer's table, never an implicit full result."
       },
-      "RevokeRequest": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          },
-          "token_type_hint": {
-            "anyOf": [
-              {
-                "type": "string",
-                "const": "refresh_token"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Token Type Hint"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "RevokeRequest"
-      },
       "RunParameters": {
         "properties": {
           "period": {
@@ -9389,45 +9279,17 @@
         "properties": {
           "grant_type": {
             "type": "string",
-            "enum": [
-              "urn:ietf:params:oauth:grant-type:token-exchange",
-              "refresh_token"
-            ],
+            "const": "urn:ietf:params:oauth:grant-type:token-exchange",
             "title": "Grant Type"
           },
           "subject_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Subject Token"
           },
           "subject_token_type": {
-            "anyOf": [
-              {
-                "type": "string",
-                "const": "urn:ietf:params:oauth:token-type:id_token"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "const": "urn:ietf:params:oauth:token-type:id_token",
             "title": "Subject Token Type"
-          },
-          "refresh_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Refresh Token"
           },
           "scope": {
             "anyOf": [
@@ -9445,10 +9307,12 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "grant_type"
+          "grant_type",
+          "subject_token",
+          "subject_token_type"
         ],
         "title": "TokenRequest",
-        "description": "OAuth token request: RFC 8693 exchange of a Cognito ID token, or a refresh."
+        "description": "OAuth token request: RFC 8693 exchange of an unexpired Cognito ID token from browser sign-in.\n\nThere are no Epoch refresh tokens. A signed-in SDK refreshes its Cognito session and exchanges\nthe new ID token again; signing out revokes the Cognito session."
       },
       "TokenResponse": {
         "properties": {
@@ -9465,17 +9329,6 @@
             "type": "integer",
             "minimum": 1.0,
             "title": "Expires In"
-          },
-          "refresh_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Refresh Token"
           },
           "scope": {
             "type": "string",
