@@ -27,6 +27,7 @@ from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import DomainError
+from .credentials import Token, http_clients
 from .dataset_reviews import (
     DatasetConfigureInterrupt,
     DatasetConfigureResponse,
@@ -335,6 +336,11 @@ class _State(BaseModel):
         return ""
 
 
+def _header_from_auth_flow() -> str:
+    # AsyncSourcesClient writes "Bearer <this>"; with a provider, the auth flow replaces it.
+    return ""
+
+
 def api_url(value: str) -> str:
     parsed = urlsplit(value)
     if (
@@ -426,23 +432,50 @@ class SupervisorClient:
         *,
         graph_url: str,
         backend_url: str,
-        token: str,
+        token: Token,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
     ) -> SupervisorClient:
+        """Connect with a token string, or a provider that every request awaits for its token.
+
+        A provider is for a server acting for one user with renewing tokens (see
+        ``epoch_sdk.credentials``). Connect once per user and request.
+        """
+        return cls._connect(
+            graph_url=graph_url,
+            backend_url=backend_url,
+            token=token,
+            assistant_id=assistant_id,
+            ui_url=ui_url,
+        )
+
+    @classmethod
+    def _connect(
+        cls,
+        *,
+        graph_url: str,
+        backend_url: str,
+        token: Token,
+        assistant_id: str = "epoch-ai",
+        ui_url: str | None = None,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> SupervisorClient:
         graph_url = api_url(graph_url)
         backend_url = api_url(backend_url)
-        graph_http = httpx.AsyncClient(
-            base_url=graph_url, headers={"Authorization": f"Bearer {token}"}, timeout=None
+        graph_http, backend_http = http_clients(
+            graph_url=graph_url, backend_url=backend_url, token=token, transport=transport
         )
-        backend_http = httpx.AsyncClient(timeout=30.0)
+        fixed = token if isinstance(token, str) else None
         client = cls(
             LangGraphClient(graph_http),
-            AsyncStratifyX(base_url=backend_url, token=token, httpx_client=backend_http),
+            # With a provider, the auth flow on backend_http sets the header for every request.
+            AsyncStratifyX(base_url=backend_url, token=fixed, httpx_client=backend_http),
             assistant_id=assistant_id,
             ui_url=ui_url,
             source_connections=AsyncSourcesClient(
-                base_url=backend_url, token=token, http=backend_http
+                base_url=backend_url,
+                token=fixed if fixed is not None else _header_from_auth_flow,
+                http=backend_http,
             ),
             document_http=graph_http,
         )

@@ -29,6 +29,20 @@ native checkpoint and displays the saved answer once. The returned result stays
 ordinary Python data. `await epoch.run(operation_id="msft-quality-2025")`
 reconnects after a kernel/process restart. The explicit workflow MCP consumes that same headless session core; the default composable MCP uses the separate specialist interface. See [interactive sessions](../../docs/interactive-sessions.md).
 
+## Renewing tokens on a server
+
+`EpochClient.connect` and `SupervisorClient.connect` take `token` as a string, or as a function
+(async or plain) that returns the current token:
+
+```python
+client = EpochClient.connect(graph_url=graph, backend_url=backend, token=delegated_tokens.current)
+```
+
+The SDK reads the token for every graph, Backend and document request. A stream that is already
+open keeps the token it started with, so renewal never interrupts it. The token goes only to the
+graph and Backend hosts. Connect once per user and request, and never share a provider between
+users. A string token behaves as before.
+
 ## SDK workflows and composable MCP
 
 Notebook and terminal callers keep `EpochClient.run`, `execute`, `resume`, `status` and `read` for the research/published-answer workflow.
