@@ -37,6 +37,7 @@ from .contracts import (
     RunRequest,
     TextOutputRequest,
 )
+from .credentials import Token
 from .datasets import DatasetClient
 from .documents import DocumentClient
 from .errors import EpochError
@@ -182,10 +183,11 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         *,
         graph_url: str,
         backend_url: str,
-        token: str,
+        token: Token,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
     ) -> EpochClient:
+        """Connect with a token string, or a provider every request awaits (see SupervisorClient)."""
         return cls(
             SupervisorClient.connect(
                 graph_url=graph_url,
