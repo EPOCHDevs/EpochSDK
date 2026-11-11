@@ -4,14 +4,27 @@ This preview package supports the API Playground's three workflows: research,
 prepared study execution, and saved response reads. It wraps the current generated
 StratifyX client and LangGraph SDK; it does not add service endpoints or duplicate
 Backend persistence. It is not a full port of the Python data/MCP interfaces.
-The package has not been published to a registry.
 
 ## The v1 API: one URL and an API key
 
 `@epochdevs/epoch-sdk/api` calls Epoch's public v1 API with only `fetch`: no
 StratifyX or LangGraph client. It reads `EPOCH_API_KEY` (and `EPOCH_API_URL`).
-The StratifyX and LangGraph peers are optional: only the workflow entry
-(`@epochdevs/epoch-sdk`) needs them.
+Install it from GitHub Packages (`@epochdevs:registry=https://npm.pkg.github.com`,
+with a token that has `read:packages`):
+
+```sh
+npm install @epochdevs/epoch-sdk
+```
+
+The workflow entry (`@epochdevs/epoch-sdk`) also needs StratifyX, under its
+`@epoch/stratifyx` alias, and the LangGraph SDK. Install them alongside it:
+
+```sh
+npm install @epoch/stratifyx@npm:@epochdevs/stratifyx@^3.3.0-rc.57 @langchain/langgraph-sdk@^1.12.1
+```
+
+They aren't declared as peers, because GitHub Packages drops `peerDependenciesMeta`
+and npm would then try to install the alias, which no registry serves.
 
 ```ts
 import { Epoch } from "@epochdevs/epoch-sdk/api"
