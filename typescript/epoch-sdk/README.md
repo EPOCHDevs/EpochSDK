@@ -10,6 +10,8 @@ The package has not been published to a registry.
 
 `@epochdevs/epoch-sdk/api` calls Epoch's public v1 API with only `fetch`: no
 StratifyX or LangGraph client. It reads `EPOCH_API_KEY` (and `EPOCH_API_URL`).
+The StratifyX and LangGraph peers are optional: only the workflow entry
+(`@epochdevs/epoch-sdk`) needs them.
 
 ```ts
 import { Epoch } from "@epochdevs/epoch-sdk/api"

@@ -23,6 +23,14 @@ let notebook and explicit workflow-MCP clients attach after disconnecting.
 plus `wait` and `rows`, which repeat reads for you. Calls that start work send an
 `Idempotency-Key`, so a retried call attaches to the work it already started.
 
+It is published to Epoch's private CodeArtifact `epoch/python` registry, from
+0.1.0a38 onwards, with its StratifyX dependency:
+
+```sh
+aws codeartifact login --tool pip --domain epoch --domain-owner 549243453713 --repository python --region us-east-1
+pip install "epoch-sdk>=0.1.0a38"
+```
+
 ```python
 from epoch_sdk import Epoch
 

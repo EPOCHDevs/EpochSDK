@@ -33,6 +33,10 @@
     "@epoch/stratifyx": ">=3.3.0-rc.57 <4",
     "@langchain/langgraph-sdk": ">=1.12.1 <2"
   },
+  "peerDependenciesMeta": {
+    "@epoch/stratifyx": { "optional": true },
+    "@langchain/langgraph-sdk": { "optional": true }
+  },
   "engines": {
     "node": ">=24"
   },
