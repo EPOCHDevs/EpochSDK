@@ -6,6 +6,26 @@ StratifyX client and LangGraph SDK; it does not add service endpoints or duplica
 Backend persistence. It is not a full port of the Python data/MCP interfaces.
 The package has not been published to a registry.
 
+## The v1 API: one URL and an API key
+
+`@epochdevs/epoch-sdk/api` calls Epoch's public v1 API with only `fetch`: no
+StratifyX or LangGraph client. It reads `EPOCH_API_KEY` (and `EPOCH_API_URL`).
+
+```ts
+import { Epoch } from "@epochdevs/epoch-sdk/api"
+
+const epoch = new Epoch()
+let research = await epoch.research.create({
+  task: "Compare MSFT and SPY volatility in 2025.",
+  outputs: [{ name: "summary", type: "text", instructions: "Explain it briefly." }],
+})
+research = await epoch.research.wait(research.id)
+```
+
+Methods mirror the Python client: `research` (create, get, answer, wait,
+events), `executions` (create, get, wait), `responses` (get, table, rows),
+`files.upload` and `datasets` (prepare, save). Failures throw `EpochApiError`.
+
 ## Use
 
 Supply authenticated native clients. The application remains responsible for

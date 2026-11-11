@@ -16,6 +16,35 @@ answer with named table, JSON and text parts. Prepared-study execution remains
 a separate direct Backend operation. [Readable operation IDs](../../docs/reconnect-operations.md)
 let notebook and explicit workflow-MCP clients attach after disconnecting.
 
+## The v1 API: one URL and an API key
+
+`Epoch` calls Epoch's public v1 API. It needs only an API key, read from
+`EPOCH_API_KEY` (and `EPOCH_API_URL` when set). Each method is one v1 operation,
+plus `wait` and `rows`, which repeat reads for you. Calls that start work send an
+`Idempotency-Key`, so a retried call attaches to the work it already started.
+
+```python
+from epoch_sdk import Epoch
+
+epoch = Epoch()
+research = epoch.research.create(
+    task="Compare MSFT and SPY volatility in 2025.",
+    outputs=[{"name": "summary", "type": "text", "instructions": "Explain it briefly."}],
+)
+research = epoch.research.wait(research.id)  # until it finishes or asks a question
+if research.status == "completed":
+    ref = research.result.response
+    answer = epoch.responses.get(ref.id, version=ref.version)
+```
+
+`research.events(id)` streams progress and resumes after the last event if the
+connection drops; stopping never cancels the research. `research.answer`,
+`executions.create/wait`, `responses.table/rows`, `files.upload` and
+`datasets.prepare/save` cover the other v1 operations. Failures raise
+`EpochApiError` (an `EpochError`) with the API's status, code and request id.
+The direct `EpochClient` below remains for Epoch's own apps (ENG-2520 tracks
+moving it onto v1).
+
 ## One research session
 
 Install the `notebook` or `terminal` presentation extra and use:

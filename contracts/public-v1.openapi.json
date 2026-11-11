@@ -631,7 +631,7 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "EpochAI LangGraph runs.join_stream(thread_id, run_id, stream_mode=['values', 'custom'], last_event_id=..., cancel_on_disconnect=False)"
+            "EpochAI LangGraph runs.join_stream(thread_id, run_id, stream_mode=['custom'], last_event_id=..., cancel_on_disconnect=False)"
           ],
           "sdk": "ResearchSession.events()"
         }
