@@ -376,6 +376,7 @@
         "x-epoch-reuses": {
           "native": [
             "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)",
             "EpochAI LangGraph threads.get_state for pending interrupts"
           ],
           "sdk": "EpochClient.research_status(request_id)"
