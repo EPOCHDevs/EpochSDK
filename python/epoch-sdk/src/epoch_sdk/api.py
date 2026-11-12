@@ -12,7 +12,8 @@
 
 Each method is one v1 operation (contracts/public-v1.openapi.json), plus `wait` and `rows`, which
 repeat reads for you. Calls that start work send an Idempotency-Key, so a retried call attaches to
-the work it already started instead of starting it twice. Failures raise EpochApiError.
+the work it already started instead of starting it twice. Calls the server does not deduplicate
+(answering, saving a dataset) are never sent twice. Failures raise EpochApiError.
 
 The direct clients (EpochClient over Backend and LangGraph) remain for Epoch's own apps.
 """
@@ -48,22 +49,21 @@ type Status = Literal["queued", "running", "needs_input", "completed", "failed",
 class EpochApiError(EpochError):
     """A v1 problem response, with the API's own words and stable code."""
 
-    def __init__(self, problem: Problem) -> None:
+    def __init__(self, problem: Problem, *, retry_after: float | None = None) -> None:
         self.problem = problem
         self.status = problem.status
+        self.code = problem.code
+        self.retryable = problem.retryable
         self.request_id = problem.request_id
-        message = problem.detail or problem.title
-        try:
-            error = DomainError.model_validate(
-                {"code": problem.code, "message": message, "retryable": problem.retryable}
+        # Seconds the server asked you to wait, when it said.
+        self.retry_after = retry_after
+        message = problem.detail or problem.title or f"HTTP {problem.status}"
+        # The API's own code, including codes newer than this client: never remapped.
+        super().__init__(
+            DomainError.model_construct(
+                code=problem.code, message=message, retryable=problem.retryable
             )
-        except ValidationError:
-            error = DomainError(
-                code="TEMPORARILY_UNAVAILABLE" if problem.status >= 500 else "INVALID_REQUEST",
-                message=message,
-                retryable=problem.retryable,
-            )
-        super().__init__(error)
+        )
 
 
 class _Reply(BaseModel):
@@ -150,8 +150,11 @@ class ExecutionProgress(_Reply):
 
 
 class ExecutionAnswer(_Reply):
+    """The declared answer. The run is running until it settles, so completed means delivered."""
+
     status: Status
     response: ResponseRef | None = None
+    report_execution_id: str | None = None
 
 
 class Execution(_Reply):
@@ -159,6 +162,7 @@ class Execution(_Reply):
     status: Status
     operation_id: str | None = None
     study_id: str
+    parent_execution_id: str | None = None
     created_at: datetime
     progress: ExecutionProgress | None = None
     answer: ExecutionAnswer | None = None
@@ -213,10 +217,14 @@ class ResearchApi(_Resource):
         """Answers every pending question by its id; the research continues from the same point.
 
         An ask_user answer is {"answers": [{"question_index": 0, "selected_indices": [0]}]}, with
-        free_form_input for your own words.
+        free_form_input for your own words. It is sent once: if the reply is lost, read the
+        research to see whether it continued.
         """
         reply = self._client.request(
-            "POST", f"/v1/research/{_path(research_id)}/answers", json={"answers": dict(answers)}
+            "POST",
+            f"/v1/research/{_path(research_id)}/answers",
+            json={"answers": dict(answers)},
+            deduplicated=False,
         )
         return Research.model_validate(reply)
 
@@ -229,22 +237,21 @@ class ResearchApi(_Resource):
             research = self._client.retrying(lambda: self.get(research_id))
             if research is not None and research.status in FINISHED:
                 return research
-            if deadline is not None and time.monotonic() + poll_interval > deadline:
-                state = research.status if research else "unread"
-                raise TimeoutError(f"Research {research_id} is still {state}")
-            time.sleep(poll_interval)
+            state = research.status if research else "unread"
+            time.sleep(_pause(poll_interval, deadline, f"Research {research_id} is still {state}"))
 
     def events(
         self, research_id: str, *, last_event_id: str | None = None
     ) -> Iterator[dict[str, Any]]:
         """Each event as it happens, until a question, the answer or a failure.
 
-        A dropped connection reconnects after the last event received. Stopping early never
-        cancels the research.
+        A dropped, quiet or briefly unavailable stream reconnects after the last event received.
+        Stopping early never cancels the research.
         """
         last = last_event_id
         attempt = 0
         while True:
+            wait: float | None = None
             try:
                 for event_id, data in self._client.stream(
                     f"/v1/research/{_path(research_id)}/events", last
@@ -257,6 +264,10 @@ class ResearchApi(_Resource):
                         return
             except httpx.TransportError:
                 pass
+            except EpochApiError as error:
+                if not error.retryable:
+                    raise
+                wait = error.retry_after
             attempt += 1
             if attempt > self._client.max_retries:
                 raise EpochApiError(
@@ -267,7 +278,7 @@ class ResearchApi(_Resource):
                         retryable=True,
                     )
                 )
-            time.sleep(min(8.0, 0.5 * 2**attempt))
+            time.sleep(wait if wait is not None else min(8.0, 0.5 * 2**attempt))
 
 
 class ExecutionsApi(_Resource):
@@ -318,10 +329,8 @@ class ExecutionsApi(_Resource):
             )
             if execution is not None and execution.status in FINISHED and not writing:
                 return execution
-            if deadline is not None and time.monotonic() + poll_interval > deadline:
-                state = execution.status if execution else "unread"
-                raise TimeoutError(f"Run {execution_id} is still {state}")
-            time.sleep(poll_interval)
+            state = execution.status if execution else "unread"
+            time.sleep(_pause(poll_interval, deadline, f"Run {execution_id} is still {state}"))
 
 
 class ResponsesApi(_Resource):
@@ -394,7 +403,7 @@ class DatasetsApi(_Resource):
         file_ref: str,
         *,
         name: str,
-        columns: Sequence[Mapping[str, Any]],
+        columns: Sequence[Mapping[str, Any]] = (),
         delimiter: str = ",",
         header: bool = True,
         null_values: Sequence[str] = ("",),
@@ -402,8 +411,9 @@ class DatasetsApi(_Resource):
     ) -> dict[str, Any]:
         """Prepares a dataset from an uploaded CSV file and returns a preview. Nothing is saved yet.
 
-        Each column's ``dtype`` is Backend's native import type: utf8, int64, float64, bool,
-        date32 or timestamp[ns,UTC].
+        Leave out ``columns`` to keep the file's own. Otherwise name every column, in order, with
+        its exact name and a ``dtype`` in Backend's native import types: utf8, int64, float64,
+        bool, date32 or timestamp[ns,UTC].
         """
         body = {
             "file_ref": file_ref,
@@ -420,9 +430,9 @@ class DatasetsApi(_Resource):
         return self._client.request("POST", "/v1/datasets", json=body)
 
     def save(self, draft_ref: str, *, name: str) -> dict[str, Any]:
-        """Saves a prepared dataset; research can then find and use it."""
+        """Saves a prepared dataset; research can then find and use it. Sent once, like answer."""
         body = {"decisions": [{"action": "save", "draft_ref": draft_ref, "name": name}]}
-        return self._client.request("POST", "/v1/datasets/reviews", json=body)
+        return self._client.request("POST", "/v1/datasets/reviews", json=body, deduplicated=False)
 
 
 class Epoch:
@@ -472,10 +482,16 @@ class Epoch:
         content: bytes | None = None,
         headers: Mapping[str, str] | None = None,
         idempotency_key: str | None = None,
+        deduplicated: bool = True,
     ) -> Any:
-        """One call, retried on rate limits and outages. Starting work reuses one Idempotency-Key."""
+        """One call, retried when the server marks its problem retryable.
+
+        Starting work reuses one Idempotency-Key, so a retry attaches to the same work. A call the
+        server does not deduplicate is retried only after a rate limit, which refuses it before
+        any work.
+        """
         sent = {**self._headers, **(headers or {})}
-        if method == "POST":
+        if method == "POST" and deduplicated:
             sent["Idempotency-Key"] = idempotency_key or uuid.uuid4().hex
         query = {k: v for k, v in (params or {}).items() if v is not None}
         for attempt in range(self.max_retries + 1):
@@ -490,16 +506,18 @@ class Epoch:
                     headers=sent,
                 )
             except httpx.TransportError:
-                if last:
+                # A lost reply may follow work that was done: only a deduplicated call is sent again.
+                if last or not deduplicated:
                     raise
                 time.sleep(min(8.0, 0.5 * 2**attempt))
                 continue
-            if response.status_code in RETRYABLE and not last:
-                time.sleep(_retry_after(response, attempt))
-                continue
             if response.is_success:
                 return response.json()
-            raise EpochApiError(_problem(response))
+            problem = _problem(response)
+            if not last and problem.retryable and (deduplicated or response.status_code == 429):
+                time.sleep(_retry_after(response, attempt))
+                continue
+            raise EpochApiError(problem, retry_after=_header_seconds(response))
         raise AssertionError("unreachable")
 
     def retrying[T](self, read: Callable[[], T]) -> T | None:
@@ -525,7 +543,7 @@ class Epoch:
         ) as response:
             if not response.is_success:
                 response.read()
-                raise EpochApiError(_problem(response))
+                raise EpochApiError(_problem(response), retry_after=_header_seconds(response))
             event_id: str | None = None
             data: list[str] = []
             for line in response.iter_lines():
@@ -557,11 +575,26 @@ def _media_type(name: str) -> str:
     }.get(suffix, "application/octet-stream")
 
 
-def _retry_after(response: httpx.Response, attempt: int) -> float:
+def _header_seconds(response: httpx.Response) -> float | None:
     try:
-        return min(30.0, float(response.headers["Retry-After"]))
+        return min(30.0, max(0.0, float(response.headers["Retry-After"])))
     except (KeyError, ValueError):
-        return min(8.0, 0.5 * 2**attempt)
+        return None
+
+
+def _retry_after(response: httpx.Response, attempt: int) -> float:
+    seconds = _header_seconds(response)
+    return seconds if seconds is not None else min(8.0, 0.5 * 2**attempt)
+
+
+def _pause(poll_interval: float, deadline: float | None, waiting: str) -> float:
+    """How long a wait loop sleeps before reading again; at the deadline it gives up."""
+    if deadline is None:
+        return poll_interval
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError(waiting)
+    return min(poll_interval, remaining)
 
 
 def _problem(response: httpx.Response) -> Problem:

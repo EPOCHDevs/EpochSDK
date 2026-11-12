@@ -211,6 +211,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -377,9 +378,14 @@
           "native": [
             "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
             "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)",
+            "Backend GET /api/v1/studies/executions/{executionId} and /study (the completed run and its study)",
+            "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
             "EpochAI LangGraph threads.get_state for pending interrupts"
           ],
-          "sdk": "EpochClient.research_status(request_id)"
+          "sdk": "EpochClient.research_status(request_id)",
+          "gaps": [
+            "Reading also records what it observes with Backend PATCH /api/v1/integration/requests/{requestId} (the phase of a question, the answer's pin), which needs the research scope. A read-only key sees a run in progress and its questions; it gets 403 for research that finished and is not yet recorded."
+          ]
         }
       }
     },
@@ -403,6 +409,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -658,6 +665,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -979,6 +987,7 @@
           }
         },
         "x-epoch-scopes": [
+          "read",
           "execute"
         ],
         "x-epoch-reuses": {
@@ -1015,6 +1024,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Execution id.",
               "examples": [
                 "job_5a1e90c3"
@@ -1164,6 +1174,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Saved answer id.",
               "examples": [
                 "rsp_1111111111111111111111111111111111111111111111111111111111111111"
@@ -1285,6 +1296,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Saved answer id.",
               "examples": [
                 "rsp_1111111111111111111111111111111111111111111111111111111111111111"
@@ -5986,7 +5998,7 @@
           },
           "status": {
             "$ref": "#/components/schemas/OperationStatus",
-            "description": "The numeric run; never needs_input."
+            "description": "The run; never needs_input. A run with a declared answer is running until that answer settles, so completed is final and means the answer was delivered."
           },
           "operation_id": {
             "anyOf": [
@@ -6107,7 +6119,7 @@
           "status"
         ],
         "title": "ExecutionAnswer",
-        "description": "A prepared report's saved answer, separate from the run's own status."
+        "description": "The run's declared answer, or a prepared report's. It stops when the run stops."
       },
       "ExecutionCommentaryPin": {
         "properties": {
@@ -6293,7 +6305,8 @@
           "research_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
               },
               {
                 "type": "null"
@@ -7355,7 +7368,8 @@
           "thread_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
               },
               {
                 "type": "null"

@@ -20,7 +20,9 @@ export declare class EpochApiError extends Error {
   readonly code: string
   readonly retryable: boolean
   readonly requestId: string | null
-  constructor(problem: Problem)
+  /** Seconds the server asked you to wait, when it said. */
+  readonly retryAfter: number | null
+  constructor(problem: Problem, options?: { retryAfter?: number | null })
 }
 
 export interface Links {
@@ -80,7 +82,11 @@ export type ResearchEvent =
   | { event: "status"; research_id: string; status: Status }
   | { event: "ui"; research_id: string; message: { type: "ui"; id: string; name: string; props: Record<string, unknown>; metadata?: Record<string, unknown> } }
   | { event: "ui_removed"; research_id: string; id: string }
-  | { event: "progress"; research_id: string; progress: { kind: string; label?: string | null } }
+  | {
+      event: "progress"
+      research_id: string
+      progress: { kind: string; label?: string | null; study_id?: string | null; execution_id?: string | null; response?: ResponseRef | null }
+    }
   | { event: "questions" | "completed" | "failed"; research: Research }
 
 export interface Execution {
@@ -89,9 +95,11 @@ export interface Execution {
   status: Status
   operation_id?: string | null
   study_id: string
+  parent_execution_id?: string | null
   created_at: string
   progress?: { phase?: string | null; percent?: number | null; current?: number | null; total?: number | null; unit?: string | null } | null
-  answer?: { status: Status; response?: ResponseRef | null } | null
+  /** The declared answer; the run is running until it settles, so completed means delivered. */
+  answer?: { status: Status; response?: ResponseRef | null; report_execution_id?: string | null } | null
   reusable_study?: SavedStudy | null
   error?: Problem | null
   links: Links
@@ -127,6 +135,27 @@ export interface TablePage {
   next_offset: number | null
 }
 
+export interface UserFile {
+  file_ref: string
+  name: string
+  media_type: string
+  size_bytes: number
+  status: string
+  created_at: string
+  content_sha256?: string | null
+  error?: string | null
+  [field: string]: unknown
+}
+
+export interface EventsOptions {
+  /** Resume after this event id, from an earlier stream. */
+  lastEventId?: string
+  /** Stops the stream; the research continues. */
+  signal?: AbortSignal
+  /** Milliseconds without bytes before reconnecting (60 s by default). */
+  idleTimeout?: number
+}
+
 export interface EpochOptions {
   /** Defaults to EPOCH_API_KEY. */
   apiKey?: string
@@ -160,7 +189,7 @@ export declare class Epoch {
     get(researchId: string): Promise<Research>
     answer(researchId: string, answers: Record<string, unknown>): Promise<Research>
     wait(researchId: string, options?: Wait): Promise<Research>
-    events(researchId: string): AsyncGenerator<ResearchEvent>
+    events(researchId: string, options?: EventsOptions): AsyncGenerator<ResearchEvent>
   }
   readonly executions: {
     create(request: {
@@ -179,14 +208,17 @@ export declare class Epoch {
     rows(responseId: string, name: string, options?: { version?: number }): Promise<unknown[][]>
   }
   readonly files: {
-    upload(content: Uint8Array | Blob | ArrayBuffer, options: { name: string; mediaType?: string }): Promise<Record<string, unknown>>
+    upload(content: Uint8Array | Blob | ArrayBuffer, options: { name: string; mediaType?: string }): Promise<UserFile>
   }
   readonly datasets: {
     prepare(request: {
       fileRef: string
       name: string
-      /** Backend's native import types, as the Terminal's import dialog sends them. */
-      columns: { name: string; dtype: DatasetColumnType; nullable: boolean }[]
+      /**
+       * Leave out to keep the file's own columns. Otherwise every column, in order, with its exact
+       * name and one of Backend's native import types.
+       */
+      columns?: { name: string; dtype: DatasetColumnType; nullable: boolean }[]
       delimiter?: string
       header?: boolean
       nullValues?: string[]
@@ -194,5 +226,9 @@ export declare class Epoch {
     }): Promise<Record<string, unknown>>
     save(draftRef: string, options: { name: string }): Promise<Record<string, unknown>>
   }
-  request(method: string, route: string, options?: Record<string, unknown>): Promise<unknown>
+  request(
+    method: string,
+    route: string,
+    options?: { json?: unknown; body?: BodyInit; headers?: Record<string, string>; idempotencyKey?: string; deduplicated?: boolean },
+  ): Promise<unknown>
 }

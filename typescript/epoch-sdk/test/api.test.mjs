@@ -114,3 +114,107 @@ test("wait keeps reading through a passing outage", async () => {
   epoch.maxRetries = 0
   assert.equal((await epoch.research.wait("req_1", { pollInterval: 1 })).status, "completed")
 })
+
+const problem = (status, code, retryable) => ({ title: "Problem", status, code, retryable })
+
+test("the default fetch is called with its global, as browsers require", async () => {
+  const saved = globalThis.fetch
+  globalThis.fetch = function (url) {
+    if (this !== globalThis) throw new TypeError("Illegal invocation")
+    return Promise.resolve(json(200, RESEARCH))
+  }
+  try {
+    const epoch = new Epoch({ apiKey: KEY, apiUrl: "https://api.test.epoch.trade" })
+    assert.equal((await epoch.research.get("req_1")).id, "req_1")
+  } finally {
+    globalThis.fetch = saved
+  }
+})
+
+test("wait does not mistake a bad reply for an outage", async () => {
+  const { epoch } = client(() => new Response("<html>", { status: 200 }))
+  await assert.rejects(epoch.research.wait("req_1", { pollInterval: 1, timeout: 1000 }), SyntaxError)
+})
+
+test("an answer is sent once after an outage, and again after a rate limit", async () => {
+  const outage = client(() => json(503, problem(503, "TEMPORARILY_UNAVAILABLE", true), { "Retry-After": "0" }))
+  await assert.rejects(outage.epoch.research.answer("req_1", {}), EpochApiError)
+  assert.equal(outage.calls.length, 1)
+  assert.equal(outage.calls[0].headers["Idempotency-Key"], undefined)
+  const limited = client((url, init, n) => n === 1
+    ? json(429, problem(429, "RATE_LIMITED", true), { "Retry-After": "-1" })
+    : json(202, { ...RESEARCH, status: "running" }))
+  assert.equal((await limited.epoch.research.answer("req_1", {})).status, "running")
+  assert.equal(limited.calls.length, 2)
+})
+
+test("retries follow the server's retryable flag", async () => {
+  const { epoch, calls } = client((url, init, n) => n === 1
+    ? json(500, problem(500, "INTERNAL_ERROR", true), { "Retry-After": "0" })
+    : json(200, RESEARCH))
+  assert.equal((await epoch.research.get("req_1")).id, "req_1")
+  assert.equal(calls.length, 2)
+})
+
+const stream = (text, onCancel) => new ReadableStream({
+  start(controller) {
+    if (text !== null) controller.enqueue(new TextEncoder().encode(text))
+  },
+  cancel: onCancel,
+})
+
+test("stopping an event stream early closes its connection", async () => {
+  let cancelled = false
+  const { epoch } = client(() => new Response(stream('data: {"event":"status","research_id":"req_1","status":"running"}\n\n', () => {
+    cancelled = true
+  }), { headers: { "Content-Type": "text/event-stream" } }))
+  for await (const event of epoch.research.events("req_1")) {
+    assert.equal(event.event, "status")
+    break
+  }
+  assert.ok(cancelled)
+})
+
+test("events reconnect after a quiet connection or a brief outage, from the last event id", async () => {
+  const completed = `id: 3-0\ndata: ${JSON.stringify({ event: "completed", research: { ...RESEARCH, status: "completed" } })}\n\n`
+  const { epoch, calls } = client((url, init, n) => n === 1
+    ? new Response(stream(null), { headers: { "Content-Type": "text/event-stream" } })
+    : n === 2
+      ? json(503, problem(503, "TEMPORARILY_UNAVAILABLE", true), { "Retry-After": "0" })
+      : new Response(completed, { headers: { "Content-Type": "text/event-stream" } }))
+  epoch.maxRetries = 3
+  const events = []
+  for await (const event of epoch.research.events("req_1", { lastEventId: "2-0", idleTimeout: 20 })) events.push(event.event)
+  assert.deepEqual(events, ["completed"])
+  assert.deepEqual(calls.map(c => c.headers["Last-Event-ID"]), ["2-0", "2-0", "2-0"])
+})
+
+test("events stop at a lasting refusal and when the caller aborts", async () => {
+  const refused = client(() => json(404, problem(404, "NOT_FOUND", false)))
+  await assert.rejects((async () => {
+    for await (const event of refused.epoch.research.events("req_other")) void event
+  })(), error => error instanceof EpochApiError && error.code === "NOT_FOUND")
+  const controller = new AbortController()
+  controller.abort()
+  const aborted = client((url, init) => {
+    init.signal.throwIfAborted()
+    return json(200, {})
+  })
+  await assert.rejects((async () => {
+    for await (const event of aborted.epoch.research.events("req_1", { signal: controller.signal })) void event
+  })(), error => error.name === "AbortError")
+  assert.equal(aborted.calls.length, 1)
+})
+
+test("rows stops at the last page even when next_offset is left out", async () => {
+  const { epoch, calls } = client(() => json(200, { response_id: "rsp_1", version: 1, name: "t", type: "table", schema: [],
+    rows: [["a"]], offset: 0, total_rows: 1 }))
+  assert.deepEqual(await epoch.responses.rows("rsp_1", "t"), [["a"]])
+  assert.equal(calls.length, 1)
+})
+
+test("a dataset keeps the file's own columns unless you name them", async () => {
+  const { epoch, calls } = client(() => json(200, {}))
+  await epoch.datasets.prepare({ fileRef: "file:abc", name: "Sales" })
+  assert.deepEqual(JSON.parse(calls[0].body).options.columns, [])
+})

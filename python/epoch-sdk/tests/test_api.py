@@ -274,3 +274,113 @@ def test_upload_sends_the_exact_bytes_and_their_digest(tmp_path):
         return httpx.Response(200, json={"file_ref": "file_1", "name": "q3-sales.csv"})
 
     assert client(handler).files.upload(path)["file_ref"] == "file_1"
+
+
+def problem(status: int, code: str, *, retryable: bool, title: str = "Problem") -> dict:
+    return {"title": title, "status": status, "code": code, "retryable": retryable}
+
+
+def test_a_table_page_as_the_server_sends_it_parses():
+    # The v1 server leaves out a column's absent description and unit; null would be refused.
+    page = {
+        "response_id": "rsp_1", "version": 1, "name": "results", "type": "table",
+        "schema": [{"name": "ticker", "type": "string", "nullable": False},
+                   {"name": "volatility", "type": "float64", "nullable": True, "unit": "percent"}],
+        "rows": [["MSFT", 21.4], ["SPY", None]], "offset": 0, "total_rows": 2, "next_offset": None,
+    }
+    epoch = client(lambda request: httpx.Response(200, json=page))
+    assert epoch.responses.rows("rsp_1", "results") == [["MSFT", 21.4], ["SPY", None]]
+
+
+def test_an_answer_is_sent_once_after_an_outage(no_sleep):
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(503, json=problem(503, "TEMPORARILY_UNAVAILABLE", retryable=True))
+
+    with pytest.raises(EpochApiError):
+        client(handler).research.answer("req_1", {"q-1": {"answers": []}})
+    assert len(calls) == 1 and "Idempotency-Key" not in calls[0].headers
+
+
+def test_an_answer_is_sent_once_after_a_lost_connection():
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        raise httpx.ReadError("reset", request=request)
+
+    with pytest.raises(httpx.ReadError):
+        client(handler).datasets.save("drf_1", name="Sales")
+    assert len(calls) == 1
+
+
+def test_an_answer_refused_by_a_rate_limit_is_sent_again(no_sleep):
+    replies = iter([
+        httpx.Response(429, json=problem(429, "RATE_LIMITED", retryable=True), headers={"Retry-After": "-5"}),
+        httpx.Response(202, json={**RESEARCH, "status": "running"}),
+    ])
+    epoch = client(lambda request: next(replies))
+    assert epoch.research.answer("req_1", {"q-1": {"answers": []}}).status == "running"
+    assert no_sleep == [0.0]  # A negative Retry-After waits no time.
+
+
+def test_retries_follow_the_servers_retryable_flag(no_sleep):
+    replies = iter([
+        httpx.Response(500, json=problem(500, "INTERNAL_ERROR", retryable=True)),
+        httpx.Response(200, json=RESEARCH),
+    ])
+    assert client(lambda request: next(replies)).research.get("req_1").id == "req_1"
+    lasting = client(lambda request: httpx.Response(
+        503, json=problem(503, "TEMPORARILY_UNAVAILABLE", retryable=False)))
+    with pytest.raises(EpochApiError):
+        lasting.research.get("req_1")
+
+
+def test_an_api_error_keeps_the_servers_code():
+    reply = {**problem(422, "DATA_REQUIRED", retryable=False, title=""), "detail": "Upload the sales file."}
+    with pytest.raises(EpochApiError) as failure:
+        client(lambda request: httpx.Response(422, json=reply)).research.get("req_1")
+    error = failure.value
+    assert (error.code, error.error.code, error.retryable) == ("DATA_REQUIRED", "DATA_REQUIRED", False)
+    assert str(error) == "Upload the sales file."
+
+
+def test_wait_reads_once_more_at_its_deadline(monkeypatch):
+    now = [0.0]
+    reads: list[float] = []
+    monkeypatch.setattr(api_module.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(api_module.time, "sleep", lambda seconds: now.__setitem__(0, now[0] + seconds))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        reads.append(now[0])
+        return httpx.Response(200, json={**RESEARCH, "status": "running"})
+
+    with pytest.raises(TimeoutError, match="still running"):
+        client(handler).research.wait("req_1", poll_interval=5, timeout=12)
+    assert reads == [0.0, 5.0, 10.0, 12.0]
+
+
+def test_events_reconnect_after_a_brief_outage(no_sleep):
+    calls: list[str | None] = []
+    completed = {"event": "completed", "research": {**RESEARCH, "status": "completed"}}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.headers.get("Last-Event-ID"))
+        if len(calls) == 1:
+            return httpx.Response(503, json=problem(503, "TEMPORARILY_UNAVAILABLE", retryable=True),
+                                  headers={"Retry-After": "2"})
+        return httpx.Response(200, content=sse(f"id: 2-0\ndata: {json.dumps(completed)}\n\n"),
+                              headers={"Content-Type": "text/event-stream"})
+
+    events = list(client(handler).research.events("req_1", last_event_id="1-0"))
+    assert [e["event"] for e in events] == ["completed"]
+    assert calls == ["1-0", "1-0"] and no_sleep == [2.0]
+
+
+def test_events_stop_at_a_lasting_refusal():
+    epoch = client(lambda request: httpx.Response(404, json=problem(404, "NOT_FOUND", retryable=False)))
+    with pytest.raises(EpochApiError) as failure:
+        list(epoch.research.events("req_other"))
+    assert failure.value.code == "NOT_FOUND"

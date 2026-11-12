@@ -22,6 +22,8 @@ let notebook and explicit workflow-MCP clients attach after disconnecting.
 `EPOCH_API_KEY` (and `EPOCH_API_URL` when set). Each method is one v1 operation,
 plus `wait` and `rows`, which repeat reads for you. Calls that start work send an
 `Idempotency-Key`, so a retried call attaches to the work it already started.
+Answering questions and saving a dataset are sent once, because the server does
+not deduplicate them: if a reply is lost, read the research or dataset again.
 
 It is published to Epoch's private CodeArtifact `epoch/python` registry, from
 0.1.0a38 onwards, with its StratifyX dependency:
