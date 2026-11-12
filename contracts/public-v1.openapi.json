@@ -211,6 +211,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -376,9 +377,15 @@
         "x-epoch-reuses": {
           "native": [
             "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)",
+            "Backend GET /api/v1/studies/executions/{executionId} and /study (the completed run and its study)",
+            "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
             "EpochAI LangGraph threads.get_state for pending interrupts"
           ],
-          "sdk": "EpochClient.research_status(request_id)"
+          "sdk": "EpochClient.research_status(request_id)",
+          "gaps": [
+            "Reading also records what it observes with Backend PATCH /api/v1/integration/requests/{requestId} (the phase of a question, the answer's pin), which needs the research scope. A read-only key sees a run in progress and its questions; it gets 403 for research that finished and is not yet recorded."
+          ]
         }
       }
     },
@@ -402,6 +409,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -631,7 +639,7 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "EpochAI LangGraph runs.join_stream(thread_id, run_id, stream_mode=['values', 'custom'], last_event_id=..., cancel_on_disconnect=False)"
+            "EpochAI LangGraph runs.join_stream(thread_id, run_id, stream_mode=['custom'], last_event_id=..., cancel_on_disconnect=False)"
           ],
           "sdk": "ResearchSession.events()"
         }
@@ -657,6 +665,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Research id.",
               "examples": [
                 "req_7f9c2d41"
@@ -978,11 +987,19 @@
           }
         },
         "x-epoch-scopes": [
+          "read",
           "execute"
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend POST /api/v1/integration/execution-requests (createSdkExecutionRequest)"
+            "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
+            "Backend GET /api/v1/integration/execution-requests/by-handle/{operationId} (getSdkExecutionRequestByHandle)",
+            "Backend GET /api/v1/studies/executions/{executionId}/study",
+            "Backend POST /api/v1/integration/execution-requests (createSdkExecutionRequest)",
+            "Backend GET /api/v1/studies/executions/{executionId}",
+            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)"
           ],
           "sdk": "EpochClient.execute_saved(SavedStudy from the research or the reference, period=..., execution=..., operation_id=...)"
         }
@@ -1007,6 +1024,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Execution id.",
               "examples": [
                 "job_5a1e90c3"
@@ -1129,7 +1147,8 @@
         "x-epoch-reuses": {
           "native": [
             "Backend GET /api/v1/studies/executions/{executionId}",
-            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)"
+            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)"
           ],
           "sdk": "EpochClient.execution(execution_id)"
         }
@@ -1155,6 +1174,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Saved answer id.",
               "examples": [
                 "rsp_1111111111111111111111111111111111111111111111111111111111111111"
@@ -1276,6 +1296,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
               "description": "Saved answer id.",
               "examples": [
                 "rsp_1111111111111111111111111111111111111111111111111111111111111111"
@@ -1602,7 +1623,9 @@
         ],
         "x-epoch-reuses": {
           "native": [
+            "Backend GET /api/v1/files/limits (get_user_file_limits)",
             "Backend POST /api/v1/files/uploads (init_file_upload)",
+            "Backend GET /api/v1/files/{fileRef} (get_user_file)",
             "Backend PUT /api/v1/files/{fileRef}/content (upload_file_part)",
             "Backend POST /api/v1/files/{fileRef}/complete (complete_file_upload)"
           ],
@@ -1640,7 +1663,7 @@
                       "columns": [
                         {
                           "name": "date",
-                          "dtype": "date",
+                          "dtype": "date32",
                           "nullable": false
                         },
                         {
@@ -5975,7 +5998,7 @@
           },
           "status": {
             "$ref": "#/components/schemas/OperationStatus",
-            "description": "The numeric run; never needs_input."
+            "description": "The run; never needs_input. A run with a declared answer is running until that answer settles, so completed is final and means the answer was delivered."
           },
           "operation_id": {
             "anyOf": [
@@ -6096,7 +6119,7 @@
           "status"
         ],
         "title": "ExecutionAnswer",
-        "description": "A prepared report's saved answer, separate from the run's own status."
+        "description": "The run's declared answer, or a prepared report's. It stops when the run stops."
       },
       "ExecutionCommentaryPin": {
         "properties": {
@@ -6282,7 +6305,8 @@
           "research_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
               },
               {
                 "type": "null"
@@ -7344,7 +7368,8 @@
           "thread_id": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
               },
               {
                 "type": "null"

@@ -1,5 +1,6 @@
 """Shared Epoch contracts. SDK/MCP flow adapters are added in their owning issues."""
 
+from .api import Epoch, EpochApiError
 from .contracts import (
     Acknowledgement,
     DomainError,
@@ -22,6 +23,8 @@ from .errors import EpochError
 __all__ = [
     "Acknowledgement",
     "DomainError",
+    "Epoch",
+    "EpochApiError",
     "EpochError",
     "ErrorResponse",
     "FetchPageRequest",
