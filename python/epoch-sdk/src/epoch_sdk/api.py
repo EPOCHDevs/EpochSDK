@@ -400,7 +400,11 @@ class DatasetsApi(_Resource):
         null_values: Sequence[str] = ("",),
         request_id: str | None = None,
     ) -> dict[str, Any]:
-        """Prepares a dataset from an uploaded CSV file and returns a preview. Nothing is saved yet."""
+        """Prepares a dataset from an uploaded CSV file and returns a preview. Nothing is saved yet.
+
+        Each column's ``dtype`` is Backend's native import type: utf8, int64, float64, bool,
+        date32 or timestamp[ns,UTC].
+        """
         body = {
             "file_ref": file_ref,
             "request_id": request_id or uuid.uuid4().hex,

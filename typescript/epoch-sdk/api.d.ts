@@ -142,6 +142,9 @@ interface Wait {
   timeout?: number
 }
 
+/** A dataset column's native import type. Answer tables use their own column kinds. */
+export type DatasetColumnType = "utf8" | "int64" | "float64" | "bool" | "date32" | "timestamp[ns,UTC]"
+
 export declare class Epoch {
   constructor(options?: EpochOptions)
   readonly apiUrl: string
@@ -182,7 +185,8 @@ export declare class Epoch {
     prepare(request: {
       fileRef: string
       name: string
-      columns: { name: string; dtype: Column["type"]; nullable: boolean }[]
+      /** Backend's native import types, as the Terminal's import dialog sends them. */
+      columns: { name: string; dtype: DatasetColumnType; nullable: boolean }[]
       delimiter?: string
       header?: boolean
       nullValues?: string[]

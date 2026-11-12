@@ -983,7 +983,14 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend POST /api/v1/integration/execution-requests (createSdkExecutionRequest)"
+            "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
+            "Backend GET /api/v1/integration/execution-requests/by-handle/{operationId} (getSdkExecutionRequestByHandle)",
+            "Backend GET /api/v1/studies/executions/{executionId}/study",
+            "Backend POST /api/v1/integration/execution-requests (createSdkExecutionRequest)",
+            "Backend GET /api/v1/studies/executions/{executionId}",
+            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)"
           ],
           "sdk": "EpochClient.execute_saved(SavedStudy from the research or the reference, period=..., execution=..., operation_id=...)"
         }
@@ -1130,7 +1137,8 @@
         "x-epoch-reuses": {
           "native": [
             "Backend GET /api/v1/studies/executions/{executionId}",
-            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)"
+            "Backend GET /api/v1/studies/executions/{executionId}/outputs (getExecutionOutputs)",
+            "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)"
           ],
           "sdk": "EpochClient.execution(execution_id)"
         }
@@ -1603,7 +1611,9 @@
         ],
         "x-epoch-reuses": {
           "native": [
+            "Backend GET /api/v1/files/limits (get_user_file_limits)",
             "Backend POST /api/v1/files/uploads (init_file_upload)",
+            "Backend GET /api/v1/files/{fileRef} (get_user_file)",
             "Backend PUT /api/v1/files/{fileRef}/content (upload_file_part)",
             "Backend POST /api/v1/files/{fileRef}/complete (complete_file_upload)"
           ],
@@ -1641,7 +1651,7 @@
                       "columns": [
                         {
                           "name": "date",
-                          "dtype": "date",
+                          "dtype": "date32",
                           "nullable": false
                         },
                         {
