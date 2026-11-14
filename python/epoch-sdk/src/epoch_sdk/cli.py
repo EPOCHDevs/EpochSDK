@@ -98,8 +98,10 @@ def main() -> int:
     research.add_argument("--json", action="store_true", help="Structured result, without prompts")
     sign_in = commands.add_parser("login", help="Sign in through your browser")
     sign_in.add_argument("--api-url", help="The Epoch API (default: EPOCH_API_URL, then api.epoch.trade)")
-    sign_in.add_argument("--sign-in-domain", help="Managed login domain (default: EPOCH_SIGN_IN_DOMAIN)")
-    sign_in.add_argument("--client-id", help="Sign-in app client (default: EPOCH_SIGN_IN_CLIENT_ID)")
+    sign_in.add_argument("--sign-in-domain",
+                         help="Managed login domain (default: EPOCH_SIGN_IN_DOMAIN, else the API's own)")
+    sign_in.add_argument("--client-id",
+                         help="Sign-in app client (default: EPOCH_SIGN_IN_CLIENT_ID, else the API's own)")
     sign_in.add_argument("--no-browser", action="store_true", help="Print the sign-in link instead")
     sign_out = commands.add_parser("logout", help="Sign out and forget the stored sign-in")
     sign_out.add_argument("--api-url", help="The Epoch API (default: EPOCH_API_URL, then api.epoch.trade)")
