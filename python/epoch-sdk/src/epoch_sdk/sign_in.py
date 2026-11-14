@@ -81,17 +81,83 @@ class SignInSettings:
 
     @classmethod
     def resolve(
-        cls, api_url: str | None = None, domain: str | None = None, client_id: str | None = None
+        cls,
+        api_url: str | None = None,
+        domain: str | None = None,
+        client_id: str | None = None,
+        *,
+        http: httpx.Client | None = None,
     ) -> SignInSettings:
+        """The given or EPOCH_SIGN_IN_* settings, or else the ones the API publishes."""
         api = _base_url(api_url or os.environ.get("EPOCH_API_URL") or DEFAULT_API_URL, "API URL")
         domain = domain or os.environ.get("EPOCH_SIGN_IN_DOMAIN")
         client_id = client_id or os.environ.get("EPOCH_SIGN_IN_CLIENT_ID")
-        if not domain or not client_id:
-            raise SignInError(
-                "Set EPOCH_SIGN_IN_DOMAIN and EPOCH_SIGN_IN_CLIENT_ID for this API, "
-                "or pass --sign-in-domain and --client-id"
-            )
-        return cls(api, _base_url(domain, "sign-in domain"), client_id)
+        if domain and client_id:
+            return cls(api, _base_url(domain, "sign-in domain"), client_id)
+        if domain or client_id:
+            raise SignInError("Give both the sign-in domain and the client, or neither to use the API's own")
+        if http is not None:
+            return discover(api, http=http)
+        with httpx.Client(timeout=30.0) as owned:
+            return discover(api, http=owned)
+
+
+def discover(api_url: str, *, http: httpx.Client) -> SignInSettings:
+    """Where to sign in for an API: its protected resource metadata (RFC 9728) names its sign-in
+    issuer and public client, and the issuer's OpenID discovery gives the endpoints.
+
+    Each environment's API names its own user pool, so the API URL alone decides where to sign in.
+    """
+    api = _base_url(api_url, "API URL")
+    metadata = _discovery(http, f"{api}/.well-known/oauth-protected-resource",
+                          "This API doesn't publish its sign-in settings. Pass --sign-in-domain and "
+                          "--client-id.")
+    resource = metadata.get("resource")
+    if not isinstance(resource, str) or resource.rstrip("/") != api:
+        raise SignInError(f"The sign-in settings at {api} are for another address")
+    servers = metadata.get("authorization_servers")
+    client_id = metadata.get("epoch_sign_in_client_id")
+    if not isinstance(servers, list) or not servers or not isinstance(servers[0], str):
+        raise SignInError("The API's sign-in settings name no sign-in issuer")
+    if not isinstance(client_id, str) or not client_id:
+        raise SignInError("The API's sign-in settings name no sign-in client")
+    issuer = _base_url(servers[0], "sign-in issuer")
+    config = _discovery(http, f"{issuer}/.well-known/openid-configuration",
+                        "The sign-in issuer publishes no discovery document")
+    if config.get("issuer") != issuer:
+        raise SignInError("The sign-in issuer's discovery document names another issuer")
+    authorize = config.get("authorization_endpoint")
+    if not isinstance(authorize, str):
+        raise SignInError("The sign-in issuer has no browser sign-in page")
+    parts = urlsplit(authorize)
+    domain = _base_url(f"{parts.scheme}://{parts.netloc}", "sign-in domain")
+    # Sign-in uses Cognito managed login's endpoints on that domain.
+    expected = {"authorization_endpoint": "/oauth2/authorize", "token_endpoint": "/oauth2/token",
+                "revocation_endpoint": "/oauth2/revoke"}
+    if any(config.get(key) != domain + path for key, path in expected.items()):
+        raise SignInError("The sign-in issuer isn't a supported managed login")
+    methods = config.get("code_challenge_methods_supported")
+    if isinstance(methods, list) and "S256" not in methods:
+        raise SignInError("The sign-in issuer doesn't support PKCE (S256)")
+    return SignInSettings(api, domain, client_id)
+
+
+def _discovery(http: httpx.Client, url: str, missing: str) -> dict[str, object]:
+    try:
+        response = http.get(url)
+    except httpx.HTTPError as error:
+        raise SignInUnavailable(f"{urlsplit(url).netloc} could not be reached") from error
+    if response.status_code == 404:
+        raise SignInError(missing)
+    if response.status_code != 200:
+        raise SignInError(f"{urlsplit(url).netloc} refused the discovery request ({response.status_code})")
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    if not isinstance(body, dict):
+        raise SignInError(f"{urlsplit(url).netloc} returned an unreadable discovery document")
+    return body
 
 
 def _base_url(value: str, label: str) -> str:

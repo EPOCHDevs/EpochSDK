@@ -64,9 +64,11 @@ epoch login     # opens your browser; --no-browser prints the link instead
 epoch logout    # revokes the sign-in and removes it from this computer
 ```
 
-`epoch login` uses the API in `EPOCH_API_URL` (or `--api-url`), and needs its
-sign-in domain and app client in `EPOCH_SIGN_IN_DOMAIN` and
-`EPOCH_SIGN_IN_CLIENT_ID` (or `--sign-in-domain` and `--client-id`). It keeps
+`epoch login` signs in to the API in `EPOCH_API_URL` (or `--api-url`). Each API
+publishes where to sign in (RFC 9728 protected resource metadata at
+`/.well-known/oauth-protected-resource`), so the API URL alone picks the right
+environment's user pool. To sign in elsewhere, set both `EPOCH_SIGN_IN_DOMAIN`
+and `EPOCH_SIGN_IN_CLIENT_ID` (or `--sign-in-domain` and `--client-id`). It keeps
 only the sign-in's refresh token: in your system keychain with the `keychain`
 extra installed (`pip install "epoch-sdk[keychain]"`), otherwise in
 `~/.config/epoch/credentials.json`, which only you can read. Set

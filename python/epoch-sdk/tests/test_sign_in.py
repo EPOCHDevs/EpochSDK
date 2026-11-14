@@ -311,8 +311,6 @@ def test_the_keychain_store_keeps_one_entry_per_api():
 def test_settings_require_https_except_on_this_machine(monkeypatch):
     monkeypatch.delenv("EPOCH_SIGN_IN_DOMAIN", raising=False)
     monkeypatch.delenv("EPOCH_SIGN_IN_CLIENT_ID", raising=False)
-    with pytest.raises(SignInError, match="EPOCH_SIGN_IN_DOMAIN"):
-        SignInSettings.resolve(API)
     with pytest.raises(SignInError, match="https"):
         SignInSettings.resolve("http://api.example.com", DOMAIN, CLIENT)
     local = SignInSettings.resolve("http://localhost:2024/", DOMAIN + "/", CLIENT)
@@ -361,8 +359,13 @@ def test_the_cli_reports_sign_out_without_printing_tokens(monkeypatch, tmp_path,
     monkeypatch.setattr(sys, "argv", ["epoch", "login", "--api-url", API])
     monkeypatch.delenv("EPOCH_SIGN_IN_DOMAIN", raising=False)
     monkeypatch.delenv("EPOCH_SIGN_IN_CLIENT_ID", raising=False)
+
+    def unpublished(api_url: str, *, http: httpx.Client) -> SignInSettings:
+        raise SignInError("This API doesn't publish its sign-in settings. Pass --sign-in-domain and --client-id.")
+
+    monkeypatch.setattr(module, "discover", unpublished)
     assert cli.main() == 1
-    assert "EPOCH_SIGN_IN_DOMAIN" in capsys.readouterr().err
+    assert "--sign-in-domain" in capsys.readouterr().err
 
 
 def test_an_unusable_keychain_reports_how_to_use_the_file_instead():
@@ -465,3 +468,64 @@ def test_without_a_display_login_only_prints_the_link(monkeypatch):
     assert not cli._has_display()
     monkeypatch.setenv("DISPLAY", ":0")
     assert cli._has_display()
+
+
+ISSUER = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Pool"
+
+
+def discovery_documents(**changes: object):
+    metadata = {"resource": API, "authorization_servers": [ISSUER], "scopes_supported": ["openid", "email"],
+                "bearer_methods_supported": ["header"], "epoch_sign_in_client_id": CLIENT}
+    config = {"issuer": ISSUER, "authorization_endpoint": f"{DOMAIN}/oauth2/authorize",
+              "token_endpoint": f"{DOMAIN}/oauth2/token", "revocation_endpoint": f"{DOMAIN}/oauth2/revoke",
+              "code_challenge_methods_supported": ["S256"]}
+    for key, value in changes.items():
+        target = metadata if key in metadata else config
+        target[key] = value
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == f"{API}/.well-known/oauth-protected-resource":
+            return httpx.Response(200, json=metadata)
+        if str(request.url) == f"{ISSUER}/.well-known/openid-configuration":
+            return httpx.Response(200, json=config)
+        return httpx.Response(404)
+
+    return httpx.Client(transport=httpx.MockTransport(handle))
+
+
+def test_the_api_decides_where_to_sign_in(monkeypatch):
+    for name in ("EPOCH_SIGN_IN_DOMAIN", "EPOCH_SIGN_IN_CLIENT_ID"):
+        monkeypatch.delenv(name, raising=False)
+    assert SignInSettings.resolve(API, http=discovery_documents()) == SETTINGS
+
+
+def test_given_settings_skip_discovery_and_half_given_ones_are_refused(monkeypatch):
+    monkeypatch.delenv("EPOCH_SIGN_IN_DOMAIN", raising=False)
+    monkeypatch.delenv("EPOCH_SIGN_IN_CLIENT_ID", raising=False)
+
+    def unused(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("explicit settings must not be discovered")
+
+    http = httpx.Client(transport=httpx.MockTransport(unused))
+    assert SignInSettings.resolve(API, DOMAIN, CLIENT, http=http) == SETTINGS
+    with pytest.raises(SignInError, match="both"):
+        SignInSettings.resolve(API, DOMAIN, None, http=http)
+
+
+@pytest.mark.parametrize(("changes", "message"), [
+    ({"resource": "https://other.test"}, "another address"),
+    ({"authorization_servers": []}, "no sign-in issuer"),
+    ({"epoch_sign_in_client_id": ""}, "no sign-in client"),
+    ({"issuer": "https://cognito-idp.us-east-1.amazonaws.com/another"}, "names another issuer"),
+    ({"token_endpoint": "https://elsewhere.test/oauth2/token"}, "supported managed login"),
+    ({"code_challenge_methods_supported": ["plain"]}, "S256"),
+])
+def test_inconsistent_sign_in_settings_are_refused(changes, message):
+    with pytest.raises(SignInError, match=message):
+        module.discover(API, http=discovery_documents(**changes))
+
+
+def test_an_api_without_browser_sign_in_says_how_to_sign_in_anyway():
+    http = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
+    with pytest.raises(SignInError, match="--sign-in-domain"):
+        module.discover(API, http=http)
