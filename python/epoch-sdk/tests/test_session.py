@@ -20,12 +20,16 @@ from epoch_sdk import RunRequest
 from epoch_sdk.presentation import question_answer
 from epoch_sdk.research import ResearchCompleted, ResearchError
 from epoch_sdk.session import (
+    ProgressResponse,
+    ResearchProgress,
     SessionCompleted,
     SessionEvent,
+    SessionProgress,
+    SessionStatus,
     SessionUI,
     SessionUIRemoved,
 )
-from epoch_sdk.supervisor import Answer, Answers, NeedsInput
+from epoch_sdk.supervisor import Answer, Answers, NeedsInput, WorkflowHandle
 from epoch_sdk.workflow_mcp import create_server
 
 RESUMED_RUN = "01900000-0000-7000-8000-000000000002"
@@ -176,6 +180,59 @@ def test_session_uses_native_ui_replacement_merge_removal_and_nested_events():
         assert service.submissions == 1 and service.closed_streams == 1
 
     asyncio.run(scenario())
+
+
+def test_session_reports_stable_progress_and_skips_malformed_items():
+    async def scenario():
+        service = StreamService()
+        service.frames = [
+            ("custom", {"type": "progress", "kind": "step_started", "label": "Building New Study"}),
+            ("custom|delegate:one", {"type": "progress", "kind": "study_saved", "study_id": "std_1"}),
+            ("custom", {"type": "progress", "kind": "answer_saved",
+                        "response": {"id": "rsp_1", "version": "1"}}),  # malformed: skipped
+            ("custom", {"type": "progress", "kind": "answer_saved",
+                        "response": {"id": "rsp_1", "version": 1}}),
+            ("custom", {"type": "progress", "kind": "a_later_kind", "percent": 40}),
+        ]
+        async with service.client() as client:
+            events = [
+                event
+                async for event in client.session(
+                    RunRequest.model_validate(REQUEST), operation_id="same-research"
+                ).events()
+            ]
+        assert [event.progress for event in events if isinstance(event, SessionProgress)] == [
+            ResearchProgress(kind="step_started", label="Building New Study"),
+            ResearchProgress(kind="study_saved", study_id="std_1"),
+            ResearchProgress(kind="answer_saved", response=ProgressResponse(id="rsp_1", version=1)),
+            ResearchProgress(kind="a_later_kind"),
+        ]
+        assert isinstance(events[-1], SessionCompleted)
+
+    asyncio.run(scenario())
+
+
+def test_progress_never_reads_as_a_published_answer_in_the_terminal():
+    import io
+
+    pytest.importorskip("rich")
+    from rich.console import Console
+
+    from epoch_sdk.terminal import TerminalView
+
+    from types import SimpleNamespace
+
+    session = SimpleNamespace(operation_id="same-research")
+    view = TerminalView(session, console=Console(file=io.StringIO()))  # type: ignore[arg-type]
+    handle = WorkflowHandle(thread_id="thread", request_id=REQUEST_ID, assistant_id="epoch-ai")
+
+    async def scenario():
+        await view.update(SessionStatus(event="status", operation_id="op", status="in_progress"))
+        await view.update(SessionProgress(event="progress", handle=handle,
+                                          progress=ResearchProgress(kind="study_saved", study_id="std_1")))
+
+    asyncio.run(scenario())
+    assert view.status == "Research in progress"
 
 
 @pytest.mark.parametrize("mcp", [False, True])

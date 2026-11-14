@@ -83,6 +83,10 @@ export type ResearchEvent =
   | { event: "ui"; research_id: string; message: { type: "ui"; id: string; name: string; props: Record<string, unknown>; metadata?: Record<string, unknown> } }
   | { event: "ui_removed"; research_id: string; id: string }
   | {
+      /**
+       * A stable step: step_started and step_completed (each with a label) around the build and run
+       * steps, study_saved, execution_started and answer_saved. Ignore kinds you don't know.
+       */
       event: "progress"
       research_id: string
       progress: { kind: string; label?: string | null; study_id?: string | null; execution_id?: string | null; response?: ResponseRef | null }

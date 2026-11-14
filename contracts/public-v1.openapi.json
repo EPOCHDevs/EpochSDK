@@ -395,7 +395,7 @@
           "Research"
         ],
         "summary": "Stream research events",
-        "description": "Server-sent events; each event's data is one ResearchEvent. Event ids are LangGraph's, so reconnecting with Last-Event-ID resumes after the last event received. The stream ends after a questions, completed or failed event. Disconnecting never cancels the research. A comment line every 15 seconds keeps idle connections open.",
+        "description": "Server-sent events; each event's data is one ResearchEvent. Event ids are LangGraph's, so reconnecting with Last-Event-ID resumes after the last event received. progress events report the build and run steps and the study, run and answer they produce; ui events follow the Terminal and can change. The stream ends after a questions, completed or failed event. Disconnecting never cancels the research. A comment line every 15 seconds keeps idle connections open.",
         "operationId": "streamResearch",
         "security": [
           {
@@ -477,12 +477,32 @@
                 "research_id": "req_7f9c2d41",
                 "id": "ui-41"
               },
+              "progress_step": {
+                "event": "progress",
+                "research_id": "req_7f9c2d41",
+                "progress": {
+                  "kind": "step_started",
+                  "label": "Building New Study"
+                }
+              },
               "progress": {
                 "event": "progress",
                 "research_id": "req_7f9c2d41",
                 "progress": {
                   "kind": "study_saved",
                   "study_id": "std_2b7e11aa"
+                }
+              },
+              "progress_answer": {
+                "event": "progress",
+                "research_id": "req_7f9c2d41",
+                "progress": {
+                  "kind": "answer_saved",
+                  "label": "Volatility comparison",
+                  "response": {
+                    "id": "rsp_1111111111111111111111111111111111111111111111111111111111111111",
+                    "version": 1
+                  }
                 }
               },
               "questions": {
@@ -7118,7 +7138,7 @@
           "kind": {
             "type": "string",
             "title": "Kind",
-            "description": "Proposed: step_started, step_completed, study_saved, execution_started, answer_saved (ENG-2513). Ignore kinds you do not know."
+            "description": "step_started and step_completed, each with a label, around the build and run steps; study_saved (study_id) within the build step; execution_started (execution_id) and answer_saved (response) within the run step. A step that fails or is cancelled has no step_completed. Ignore kinds you do not know: more may be added."
           },
           "label": {
             "anyOf": [
@@ -7129,7 +7149,8 @@
                 "type": "null"
               }
             ],
-            "title": "Label"
+            "title": "Label",
+            "description": "A short description of the step or object."
           },
           "study_id": {
             "anyOf": [
@@ -7169,7 +7190,8 @@
         "required": [
           "kind"
         ],
-        "title": "Progress"
+        "title": "Progress",
+        "description": "A stable step of the research, unlike ui events, which follow the Terminal and can change."
       },
       "Question": {
         "properties": {

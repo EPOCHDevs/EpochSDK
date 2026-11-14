@@ -41,6 +41,86 @@
       "title": "NativeUIMessage",
       "type": "object"
     },
+    "ProgressResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "title": "ProgressResponse",
+      "type": "object"
+    },
+    "ResearchProgress": {
+      "description": "A stable step of the research, unlike UI messages, which follow the Terminal (ENG-2513).\n\n``kind`` is step_started or step_completed (each with a label) around the\nbuild and run steps, study_saved (study_id), execution_started\n(execution_id) or answer_saved (response). A step that fails has no\nstep_completed. The kinds and fields may grow: ignore kinds you don't know.\nFields a newer service adds are ignored rather than refused.",
+      "properties": {
+        "execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Id"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "response": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProgressResponse"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "study_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Study Id"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "ResearchProgress",
+      "type": "object"
+    },
     "SessionCompleted": {
       "additionalProperties": false,
       "properties": {
@@ -58,6 +138,29 @@
         "result"
       ],
       "title": "SessionCompleted",
+      "type": "object"
+    },
+    "SessionProgress": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "const": "progress",
+          "title": "Event",
+          "type": "string"
+        },
+        "handle": {
+          "$ref": "research-workflow.schema.json#/$defs/WorkflowHandle"
+        },
+        "progress": {
+          "$ref": "#/$defs/ResearchProgress"
+        }
+      },
+      "required": [
+        "event",
+        "handle",
+        "progress"
+      ],
+      "title": "SessionProgress",
       "type": "object"
     },
     "SessionQuestions": {
@@ -171,6 +274,7 @@
   "discriminator": {
     "mapping": {
       "completed": "#/$defs/SessionCompleted",
+      "progress": "#/$defs/SessionProgress",
       "questions": "#/$defs/SessionQuestions",
       "status": "#/$defs/SessionStatus",
       "ui": "#/$defs/SessionUI",
@@ -187,6 +291,9 @@
     },
     {
       "$ref": "#/$defs/SessionUIRemoved"
+    },
+    {
+      "$ref": "#/$defs/SessionProgress"
     },
     {
       "$ref": "#/$defs/SessionQuestions"

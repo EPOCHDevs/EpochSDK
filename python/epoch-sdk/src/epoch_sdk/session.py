@@ -12,7 +12,7 @@ from contextlib import aclosing
 from typing import Annotated, Literal, cast
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter, ValidationError
 
 from .contracts import DomainError, RunRequest
 from .research import (
@@ -50,6 +50,29 @@ class _RemoveUI(_Closed):
     id: str
 
 
+class ProgressResponse(_Closed):
+    id: str
+    version: int
+
+
+class ResearchProgress(BaseModel):
+    """A stable step of the research, unlike UI messages, which follow the Terminal (ENG-2513).
+
+    ``kind`` is step_started or step_completed (each with a label) around the
+    build and run steps, study_saved (study_id), execution_started
+    (execution_id) or answer_saved (response). A step that fails has no
+    step_completed. The kinds and fields may grow: ignore kinds you don't know.
+    Fields a newer service adds are ignored rather than refused.
+    """
+
+    model_config = ConfigDict(extra="ignore", strict=True, frozen=True)
+    kind: str
+    label: str | None = None
+    study_id: str | None = None
+    execution_id: str | None = None
+    response: ProgressResponse | None = None
+
+
 _ui_adapter = TypeAdapter(NativeUIMessage | _RemoveUI)
 _stream_data: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
 
@@ -78,13 +101,19 @@ class SessionQuestions(_Closed):
     waiting: NeedsInput
 
 
+class SessionProgress(_Closed):
+    event: Literal["progress"]
+    handle: WorkflowHandle
+    progress: ResearchProgress
+
+
 class SessionCompleted(_Closed):
     event: Literal["completed"]
     result: ResearchCompleted
 
 
 type SessionEvent = Annotated[
-    SessionStatus | SessionUI | SessionUIRemoved | SessionQuestions | SessionCompleted,
+    SessionStatus | SessionUI | SessionUIRemoved | SessionProgress | SessionQuestions | SessionCompleted,
     Field(discriminator="event"),
 ]
 type EventHandler = Callable[[SessionEvent], Awaitable[None]]
@@ -196,7 +225,7 @@ class ResearchSession:
 
     async def _observe(
         self, handle: WorkflowHandle
-    ) -> AsyncGenerator[SessionUI | SessionUIRemoved]:
+    ) -> AsyncGenerator[SessionUI | SessionUIRemoved | SessionProgress]:
         if handle.run_id is None:
             return
         native = await self.client.supervisor.graph.runs.get(handle.thread_id, handle.run_id)
@@ -238,6 +267,15 @@ class ResearchSession:
                     event = self._reduce_ui(_ui_adapter.validate_python(data), handle)
                     if event is not None:
                         yield event
+                elif kind == "custom" and isinstance(data, dict) and data.get("type") == "progress":
+                    # Observation only: a malformed progress item is skipped, never fatal.
+                    try:
+                        progress = ResearchProgress.model_validate(
+                            {key: value for key, value in data.items() if key != "type"}
+                        )
+                    except ValidationError:
+                        continue
+                    yield SessionProgress(event="progress", handle=handle, progress=progress)
                 elif kind == "values" and "|" not in part.event:
                     for event in self._state_ui(data, handle):
                         yield event

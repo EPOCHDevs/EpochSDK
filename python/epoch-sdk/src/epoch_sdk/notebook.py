@@ -23,7 +23,9 @@ from .responses import SavedResearchResponse
 from .session import (
     EventHandler,
     ResearchSession,
+    SessionCompleted,
     SessionEvent,
+    SessionProgress,
     SessionQuestions,
     SessionStatus,
     SessionUI,
@@ -225,8 +227,10 @@ class NotebookView:
             self.rows.pop(event.id, None)
         elif isinstance(event, SessionQuestions):
             self.status = "Waiting for your reply"
-        else:
+        elif isinstance(event, SessionCompleted):
             self.status = "Answer published"
+        elif isinstance(event, SessionProgress):
+            return  # The UI rows already show each step; progress carries ids for API callers.
         self._refresh()
 
     async def _ask_dataset(self, waiting: NeedsInput) -> dict[str, InterruptResponse] | None:

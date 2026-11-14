@@ -83,7 +83,13 @@ async for event in session.events():
     await my_event_handler(event)
 ```
 
-The event variants are `status`, `ui`, `ui_removed`, `questions`, and `completed`.
+The event variants are `status`, `ui`, `ui_removed`, `progress`, `questions`, and
+`completed`. `progress` events are the stable ones to build on: `step_started` and
+`step_completed`, each with a label, around the build and run steps, `study_saved`
+with its `study_id`, `execution_started` with its `execution_id`, and `answer_saved`
+with its `response` id and version. A step that fails has no `step_completed`.
+Ignore progress kinds you don't know; more may be added. Older SDK releases skip
+progress events without error.
 UI events preserve LangGraph's source ID, component name, properties and
 metadata. Service-owned component extensions remain JSON; the session event
 shapes and result/question contracts are closed models. Repeated UI IDs replace

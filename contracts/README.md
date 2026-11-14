@@ -50,7 +50,7 @@ receipt from the accepted workflow remains separate Backend/tool work. Check it
 with `tools/validate_saved_output_contract.py`; all references resolve to local,
 checked-in resources.
 
-`research-session.schema.json` defines the five client session event variants
+`research-session.schema.json` defines the six client session event variants
 used by Python renderers and structured MCP progress. It references the existing
 workflow/response schemas instead of copying native result or parameter models.
 `tools/validate_session_contract.py` checks reusable fixtures without private
