@@ -56,6 +56,11 @@ ID. This path uses no supervisor or authoring model and never reruns the source
 study. Tables/JSON and native dashboard reporters are independent destinations.
 An optional `llm_call` generates bounded cached text that explicit
 `response_text`, Markdown or `executive_summary` consumers can share.
+`llm_call(instructions=...)` is the text output's declared instructions: keep
+a requested output's instructions exactly as given. Put your own direction for
+writing from the facts (which facts to cite, their order and units, how to treat
+missing values) in `llm_call(guidance=...)`; the instructions win any conflict.
+Keep the method and statistical plan out of both.
 Read `epoch_status(kind="extension", operation_id=...)` until declared outputs
 are confirmed, then use `epoch_read` for exact answer revisions or presentation
 pins. Numerical completion alone does not establish text/publication completion.
