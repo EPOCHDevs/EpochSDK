@@ -60,6 +60,60 @@
     }
   },
   {
+    "name": "stable progress with its answer",
+    "valid": true,
+    "value": {
+      "event": "progress",
+      "handle": {
+        "thread_id": "example-thread",
+        "request_id": "req_example",
+        "assistant_id": "epoch-ai"
+      },
+      "progress": {
+        "kind": "answer_saved",
+        "label": "Volatility comparison",
+        "response": {
+          "id": "rsp_1111111111111111111111111111111111111111111111111111111111111111",
+          "version": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown progress kind stays for callers to ignore",
+    "valid": true,
+    "value": {
+      "event": "progress",
+      "handle": {
+        "thread_id": "example-thread",
+        "request_id": "req_example",
+        "assistant_id": "epoch-ai"
+      },
+      "progress": {
+        "kind": "a_later_kind"
+      }
+    }
+  },
+  {
+    "name": "progress answer version is a whole number",
+    "valid": false,
+    "value": {
+      "event": "progress",
+      "handle": {
+        "thread_id": "example-thread",
+        "request_id": "req_example",
+        "assistant_id": "epoch-ai"
+      },
+      "progress": {
+        "kind": "answer_saved",
+        "response": {
+          "id": "rsp_1",
+          "version": "1"
+        }
+      }
+    }
+  },
+  {
     "name": "question",
     "valid": true,
     "value": {
