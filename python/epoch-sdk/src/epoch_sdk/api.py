@@ -2,7 +2,7 @@
 
     from epoch_sdk import Epoch
 
-    epoch = Epoch()  # Reads EPOCH_API_KEY, and EPOCH_API_URL when set.
+    epoch = Epoch()  # Reads EPOCH_API_KEY (or uses your `epoch login`), and EPOCH_API_URL when set.
     research = epoch.research.create(
         task="Compare MSFT and SPY volatility in 2025.",
         outputs=[{"name": "summary", "type": "text", "instructions": "Explain it briefly."}],
@@ -447,24 +447,52 @@ class Epoch:
         max_retries: int = 2,
         http: httpx.Client | None = None,
     ) -> None:
-        key = api_key or os.environ.get("EPOCH_API_KEY")
-        if not key:
-            raise ValueError("Pass api_key or set EPOCH_API_KEY")
         self.api_url = (api_url or os.environ.get("EPOCH_API_URL") or DEFAULT_API_URL).rstrip("/")
+        key = api_key or os.environ.get("EPOCH_API_KEY")
+        if key:
+            self._token: Callable[[], str] = lambda: key
+        else:
+            # Without a key, the browser sign-in from `epoch login` renews short-lived tokens.
+            from .sign_in import SignInError, stored_session
+
+            try:
+                session = stored_session(self.api_url)
+            except SignInError as error:
+                raise ValueError(str(error)) from error
+            if session is None:
+                raise ValueError("Pass api_key, set EPOCH_API_KEY, or sign in with `epoch login`")
+            self._token = session
         self.max_retries = max_retries
         self._http = http or httpx.Client(timeout=timeout)
-        self._headers = {"Authorization": f"Bearer {key}", "User-Agent": "epoch-sdk-python"}
+        self._headers = {"User-Agent": "epoch-sdk-python"}
         self.research = ResearchApi(self)
         self.executions = ExecutionsApi(self)
         self.responses = ResponsesApi(self)
         self.files = FilesApi(self)
         self.datasets = DatasetsApi(self)
 
+    def _authorization(self) -> dict[str, str]:
+        from .sign_in import SignInError, SignInUnavailable
+
+        try:
+            token = self._token()
+        except SignInError as error:
+            # Report sign-in failures as the client's own errors; an unreachable service is retryable.
+            unavailable = isinstance(error, SignInUnavailable)
+            raise EpochApiError(Problem(
+                title=str(error), status=503 if unavailable else 401,
+                code="TEMPORARILY_UNAVAILABLE" if unavailable else "UNAUTHENTICATED",
+                retryable=unavailable)) from error
+        return {"Authorization": f"Bearer {token}"}
+
     def __repr__(self) -> str:  # Never shows the key.
         return f"Epoch(api_url={self.api_url!r})"
 
     def close(self) -> None:
         self._http.close()
+        close = getattr(self._token, "close", None)  # a signed-in session's own client
+        if callable(close):
+            close()
 
     def __enter__(self) -> Self:
         return self
@@ -490,7 +518,7 @@ class Epoch:
         server does not deduplicate is retried only after a rate limit, which refuses it before
         any work.
         """
-        sent = {**self._headers, **(headers or {})}
+        sent = {**self._headers, **self._authorization(), **(headers or {})}
         if method == "POST" and deduplicated:
             sent["Idempotency-Key"] = idempotency_key or uuid.uuid4().hex
         query = {k: v for k, v in (params or {}).items() if v is not None}
@@ -534,7 +562,7 @@ class Epoch:
     def stream(
         self, path: str, last_event_id: str | None
     ) -> Iterator[tuple[str | None, dict[str, Any]]]:
-        headers = {**self._headers, "Accept": "text/event-stream"}
+        headers = {**self._headers, **self._authorization(), "Accept": "text/event-stream"}
         if last_event_id:
             headers["Last-Event-ID"] = last_event_id
         # The server sends a comment every 15 seconds, so a minute without bytes is a dead connection.

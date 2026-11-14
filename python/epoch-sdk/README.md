@@ -55,6 +55,28 @@ connection drops; stopping never cancels the research. `research.answer`,
 The direct `EpochClient` below remains for Epoch's own apps (ENG-2520 tracks
 moving it onto v1).
 
+## Sign in through your browser
+
+Instead of an API key, people can sign in once from the command line:
+
+```sh
+epoch login     # opens your browser; --no-browser prints the link instead
+epoch logout    # revokes the sign-in and removes it from this computer
+```
+
+`epoch login` uses the API in `EPOCH_API_URL` (or `--api-url`), and needs its
+sign-in domain and app client in `EPOCH_SIGN_IN_DOMAIN` and
+`EPOCH_SIGN_IN_CLIENT_ID` (or `--sign-in-domain` and `--client-id`). It keeps
+only the sign-in's refresh token: in your system keychain with the `keychain`
+extra installed (`pip install "epoch-sdk[keychain]"`), otherwise in
+`~/.config/epoch/credentials.json`, which only you can read. Set
+`EPOCH_CREDENTIAL_STORE=file` to always use the file. No token is printed.
+
+Afterwards `Epoch()` with no API key uses the sign-in. It gets short-lived Epoch
+access tokens for the v1 API and renews them as they expire. When the sign-in
+ends, run `epoch login` again. The direct `EpochClient` still takes a token; it
+gains the sign-in when it moves onto v1 (ENG-2520).
+
 ## One research session
 
 Install the `notebook` or `terminal` presentation extra and use:
