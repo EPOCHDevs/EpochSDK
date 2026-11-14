@@ -25,6 +25,7 @@ clients = ["langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1"]
 terminal = ["rich>=14,<15", "prompt-toolkit>=3,<4", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 notebook = ["ipywidgets>=8,<9", "ipython>=9,<10", "markdown-it-py>=4,<5", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 results = ["pyarrow>=26,<27"]
+keychain = ["keyring>=25,<26"]
 mcp = ["mcp>=2.3,<3", "langgraph-sdk>=0.4.4,<0.5", "httpx>=0.28,<1", "pyarrow>=26,<27"]
 test = ["pytest>=8,<10"]
 

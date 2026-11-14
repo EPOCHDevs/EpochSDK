@@ -1,4 +1,4 @@
-"""Interactive research CLI over the ordinary Epoch SDK session."""
+"""Interactive research CLI over the ordinary Epoch SDK session, and browser sign-in."""
 
 from __future__ import annotations
 
@@ -7,11 +7,34 @@ import asyncio
 import json
 import os
 import sys
+import webbrowser
 from pathlib import Path
 
 from .contracts import Contract, ErrorResponse, RunRequest
 from .errors import EpochError
 from .research import EpochClient, ResearchCompleted, ResearchError
+from .sign_in import SignInError, SignInSettings, default_store, login, logout
+
+
+def _login(args: argparse.Namespace) -> int:
+    settings = SignInSettings.resolve(args.api_url, args.sign_in_domain, args.client_id)
+    store = default_store()
+    login(settings, store=store, open_browser=(lambda _url: None) if args.no_browser else webbrowser.open)
+    print(f"Signed in to {settings.api_url}. Your sign-in is kept in {store.description}.")
+    return 0
+
+
+def _logout(args: argparse.Namespace) -> int:
+    store = default_store()
+    signed_in, revoked = logout(args.api_url, store=store)
+    if not signed_in:
+        print("You weren't signed in.")
+    elif revoked:
+        print("Signed out. Your sign-in was revoked and removed from this computer.")
+    else:
+        print("Signed out on this computer. The sign-in service couldn't be reached to revoke "
+              "the session, which ends when it expires.")
+    return 0
 
 
 async def _research(args: argparse.Namespace) -> int:
@@ -64,7 +87,23 @@ def main() -> int:
     )
     research.add_argument("--thread-id", help="Existing conversation for a new request")
     research.add_argument("--json", action="store_true", help="Structured result, without prompts")
+    sign_in = commands.add_parser("login", help="Sign in through your browser")
+    sign_in.add_argument("--api-url", help="The Epoch API (default: EPOCH_API_URL, then api.epoch.trade)")
+    sign_in.add_argument("--sign-in-domain", help="Managed login domain (default: EPOCH_SIGN_IN_DOMAIN)")
+    sign_in.add_argument("--client-id", help="Sign-in app client (default: EPOCH_SIGN_IN_CLIENT_ID)")
+    sign_in.add_argument("--no-browser", action="store_true", help="Print the sign-in link instead")
+    sign_out = commands.add_parser("logout", help="Sign out and forget the stored sign-in")
+    sign_out.add_argument("--api-url", help="The Epoch API (default: EPOCH_API_URL, then api.epoch.trade)")
     args = parser.parse_args()
+    if args.command in {"login", "logout"}:
+        try:
+            return _login(args) if args.command == "login" else _logout(args)
+        except SignInError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        except KeyboardInterrupt:
+            print("Sign-in cancelled.", file=sys.stderr)
+            return 130
     try:
         return asyncio.run(_research(args))
     except EpochError as error:

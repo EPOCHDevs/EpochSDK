@@ -50,8 +50,11 @@ def test_the_key_and_url_come_from_the_environment(monkeypatch):
     assert KEY not in repr(epoch)
 
 
-def test_a_key_is_required(monkeypatch):
+def test_a_key_is_required(monkeypatch, tmp_path):
     monkeypatch.delenv("EPOCH_API_KEY", raising=False)
+    # Without a key the client looks for a browser sign-in; keep that lookup off the real home.
+    monkeypatch.setenv("EPOCH_CREDENTIAL_STORE", "file")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
     with pytest.raises(ValueError, match="EPOCH_API_KEY"):
         Epoch()
 
