@@ -2972,6 +2972,63 @@
         }
       }
     },
+    "/.well-known/oauth-protected-resource": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Find where to sign in",
+        "description": "OAuth 2.0 protected resource metadata (RFC 9728). It names this environment's sign-in issuer and the public PKCE client that browser sign-in (epoch login) uses; the issuer's /.well-known/openid-configuration lists its endpoints. 404 when this server offers no browser sign-in.",
+        "operationId": "getProtectedResourceMetadata",
+        "responses": {
+          "200": {
+            "description": "Where to sign in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedResourceMetadata"
+                },
+                "examples": {
+                  "metadata": {
+                    "value": {
+                      "resource": "https://api.epoch.trade",
+                      "authorization_servers": [
+                        "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_EXAMPLE"
+                      ],
+                      "scopes_supported": [
+                        "openid",
+                        "email"
+                      ],
+                      "bearer_methods_supported": [
+                        "header"
+                      ],
+                      "epoch_sign_in_client_id": "1example2client3id4"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found for this user.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "x-epoch-scopes": [],
+        "x-epoch-reuses": {
+          "native": [],
+          "gaps": [
+            "Served by the v1 host from its own configuration (ENG-2510)."
+          ]
+        }
+      }
+    },
     "/v1/health": {
       "get": {
         "tags": [
@@ -7192,6 +7249,54 @@
         ],
         "title": "Progress",
         "description": "A stable step of the research, unlike ui events, which follow the Terminal and can change."
+      },
+      "ProtectedResourceMetadata": {
+        "properties": {
+          "resource": {
+            "type": "string",
+            "title": "Resource",
+            "description": "This API's URL; a client uses the metadata only when it matches."
+          },
+          "authorization_servers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authorization Servers",
+            "description": "The issuer of this environment's sign-in. Read its endpoints from {issuer}/.well-known/openid-configuration."
+          },
+          "scopes_supported": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes Supported"
+          },
+          "bearer_methods_supported": {
+            "items": {
+              "type": "string",
+              "const": "header"
+            },
+            "type": "array",
+            "title": "Bearer Methods Supported"
+          },
+          "epoch_sign_in_client_id": {
+            "type": "string",
+            "title": "Epoch Sign In Client Id",
+            "description": "The public PKCE client for browser sign-in (epoch login). It has no secret."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resource",
+          "authorization_servers",
+          "scopes_supported",
+          "bearer_methods_supported",
+          "epoch_sign_in_client_id"
+        ],
+        "title": "ProtectedResourceMetadata",
+        "description": "OAuth 2.0 protected resource metadata (RFC 9728): where callers sign in for this API."
       },
       "Question": {
         "properties": {

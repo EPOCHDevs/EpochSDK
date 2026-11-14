@@ -116,5 +116,6 @@ Generated from each operation's `x-epoch-reuses` with
 | `POST /v1/api-keys/{key_id}/revoke`<br>Revoke an API key | – | Backend POST /api/v1/auth/api-keys/{keyId}/revoke (revoke_api_key) | – |
 | `POST /v1/auth/token`<br>Exchange a sign-in for Epoch tokens | – | Backend POST /api/v1/auth/token (exchange_epoch_token) | – |
 | `GET /.well-known/jwks.json`<br>Read token signing keys | – | Backend GET /api/v1/auth/jwks (get_epoch_jwks) | – |
+| `GET /.well-known/oauth-protected-resource`<br>Find where to sign in | – | – | Served by the v1 host from its own configuration (ENG-2510). |
 | `GET /v1/health`<br>Check the API | – | – | Served by the v1 host (ENG-2512). |
 <!-- endpoint-map:end -->
