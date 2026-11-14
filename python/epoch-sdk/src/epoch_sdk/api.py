@@ -453,9 +453,12 @@ class Epoch:
             self._token: Callable[[], str] = lambda: key
         else:
             # Without a key, the browser sign-in from `epoch login` renews short-lived tokens.
-            from .sign_in import stored_session
+            from .sign_in import SignInError, stored_session
 
-            session = stored_session(self.api_url)
+            try:
+                session = stored_session(self.api_url)
+            except SignInError as error:
+                raise ValueError(str(error)) from error
             if session is None:
                 raise ValueError("Pass api_key, set EPOCH_API_KEY, or sign in with `epoch login`")
             self._token = session
@@ -469,13 +472,27 @@ class Epoch:
         self.datasets = DatasetsApi(self)
 
     def _authorization(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self._token()}"}
+        from .sign_in import SignInError, SignInUnavailable
+
+        try:
+            token = self._token()
+        except SignInError as error:
+            # Report sign-in failures as the client's own errors; an unreachable service is retryable.
+            unavailable = isinstance(error, SignInUnavailable)
+            raise EpochApiError(Problem(
+                title=str(error), status=503 if unavailable else 401,
+                code="TEMPORARILY_UNAVAILABLE" if unavailable else "UNAUTHENTICATED",
+                retryable=unavailable)) from error
+        return {"Authorization": f"Bearer {token}"}
 
     def __repr__(self) -> str:  # Never shows the key.
         return f"Epoch(api_url={self.api_url!r})"
 
     def close(self) -> None:
         self._http.close()
+        close = getattr(self._token, "close", None)  # a signed-in session's own client
+        if callable(close):
+            close()
 
     def __enter__(self) -> Self:
         return self

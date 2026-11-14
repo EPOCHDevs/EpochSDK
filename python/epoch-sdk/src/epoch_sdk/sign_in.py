@@ -57,6 +57,10 @@ class SignInRequired(SignInError):
     """There is no stored sign-in for this API, or its session has ended."""
 
 
+class SignInUnavailable(SignInError):
+    """The sign-in service or the Epoch API could not be reached. Trying again later may work."""
+
+
 class StoredSignIn(BaseModel):
     """What the credential store keeps: the sign-in settings and the Cognito refresh token."""
 
@@ -122,18 +126,30 @@ class KeyringStore:
         self.description = "your system keychain"
 
     def load(self, api_url: str) -> StoredSignIn | None:
-        raw = self._keyring.get_password(self.SERVICE, api_url)  # type: ignore[attr-defined]
+        try:
+            raw = self._keyring.get_password(self.SERVICE, api_url)  # type: ignore[attr-defined]
+        except Exception as error:
+            raise _keychain_failure(error) from error
         return None if raw is None else _record(raw)
 
     def save(self, record: StoredSignIn) -> None:
-        self._keyring.set_password(self.SERVICE, record.api_url, record.model_dump_json())  # type: ignore[attr-defined]
+        try:
+            self._keyring.set_password(self.SERVICE, record.api_url, record.model_dump_json())  # type: ignore[attr-defined]
+        except Exception as error:
+            raise _keychain_failure(error) from error
 
     def delete(self, api_url: str) -> None:
         try:
             self._keyring.delete_password(self.SERVICE, api_url)  # type: ignore[attr-defined]
-        except Exception as error:  # keyring.errors.PasswordDeleteError: nothing was stored
-            if type(error).__name__ != "PasswordDeleteError":
-                raise
+        except Exception as error:
+            if type(error).__name__ != "PasswordDeleteError":  # PasswordDeleteError: nothing stored
+                raise _keychain_failure(error) from error
+
+
+def _keychain_failure(error: Exception) -> SignInError:
+    # A keychain can be installed but unusable (no unlocked Secret Service over SSH, say).
+    return SignInError(f"Your system keychain couldn't be used ({type(error).__name__}). "
+                       "Set EPOCH_CREDENTIAL_STORE=file to keep the sign-in in a private file instead.")
 
 
 class FileStore:
@@ -155,13 +171,19 @@ class FileStore:
             )
         try:
             data = json.loads(self.path.read_text())
-        except ValueError as error:
+        except (OSError, ValueError) as error:
             raise SignInError(f"{self.path} is not a readable credential file") from error
         if not isinstance(data, dict):
             raise SignInError(f"{self.path} is not a readable credential file")
         return data
 
     def _write(self, data: dict[str, object]) -> None:
+        try:
+            self._replace(data)
+        except OSError as error:
+            raise SignInError(f"{self.path} couldn't be written ({error.strerror})") from error
+
+    def _replace(self, data: dict[str, object]) -> None:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Created private, then renamed over the old file, so it is never briefly readable.
         handle, temporary = tempfile.mkstemp(dir=self.path.parent, prefix=".credentials-")
@@ -236,7 +258,7 @@ def _oauth(http: httpx.Client, url: str, form: dict[str, str]) -> dict[str, obje
     try:
         response = http.post(url, data=form)
     except httpx.HTTPError as error:
-        raise SignInError("The sign-in service could not be reached") from error
+        raise SignInUnavailable("The sign-in service could not be reached") from error
     if response.status_code == 200:
         try:
             body = response.json()
@@ -282,6 +304,9 @@ class SignedInSession:
         self._lock = threading.Lock()
         self._id_token = id_token
         self._id_expires = _expiry(id_token) if id_token else 0.0
+        # An ID token handed over by login was issued moments ago.
+        self._fresh_id = id_token is not None
+        self._owns_http = http is None
         self._access: str | None = None
         self._access_expires = 0.0
 
@@ -291,6 +316,10 @@ class SignedInSession:
     def __call__(self) -> str:
         return self.access_token()
 
+    def close(self) -> None:
+        if self._owns_http:
+            self._http.close()
+
     async def aaccess_token(self) -> str:
         return await asyncio.to_thread(self.access_token)
 
@@ -299,9 +328,12 @@ class SignedInSession:
             now = time.time()
             if self._access is not None and self._access_expires - EXPIRY_MARGIN > now:
                 return self._access
+            fresh = False
             if self._id_token is None or self._id_expires - EXPIRY_MARGIN <= now:
                 self._refresh()
-            if not self._exchange(retry=True):
+                fresh = True
+            # Retry only an ID token that may have lapsed early; a fresh one refused is final.
+            if not self._exchange(retry=not self._fresh_id and not fresh):
                 self._refresh()
                 self._exchange(retry=False)
             assert self._access is not None
@@ -331,7 +363,7 @@ class SignedInSession:
                 "subject_token_type": ID_TOKEN_TYPE,
             })
         except httpx.HTTPError as error:
-            raise SignInError("The Epoch API could not be reached") from error
+            raise SignInUnavailable("The Epoch API could not be reached") from error
         if response.status_code == 401 and retry:
             return False  # The ID token lapsed early: refresh it once and try again.
         if response.status_code != 200:
@@ -340,7 +372,9 @@ class SignedInSession:
             except (ValueError, AttributeError):
                 detail = None
             if response.status_code == 401:
-                raise SignInRequired("Epoch refused this sign-in. Sign in again with `epoch login`.")
+                raise SignInError(
+                    f"Epoch refused this sign-in ({detail or 'unauthorized'}). If it keeps happening, "
+                    "this sign-in client may not be enabled for this API yet.")
             raise SignInError(f"Epoch refused the sign-in ({detail or response.status_code})")
         try:
             body = response.json()
@@ -353,6 +387,7 @@ class SignedInSession:
         if not isinstance(lifetime, int) or lifetime < 1:
             raise SignInError("The Epoch API returned a token without a lifetime")
         self._access_expires = time.time() + lifetime
+        self._fresh_id = False
         return True
 
 
@@ -387,7 +422,8 @@ class _Callback(BaseHTTPRequestHandler):
             self.send_error(404)
             return
         params = {key: values[0] for key, values in parse_qs(url.query).items() if values}
-        if not secrets.compare_digest(params.get("state", ""), server.expected_state):
+        state = params.get("state", "").encode("utf-8")
+        if not secrets.compare_digest(state, server.expected_state.encode("utf-8")):
             # Not this sign-in's redirect: refuse it and keep waiting for the real one.
             self._page(400, "This sign-in link doesn't match. Return to your terminal.")
             return

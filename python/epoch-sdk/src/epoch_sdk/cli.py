@@ -16,10 +16,19 @@ from .research import EpochClient, ResearchCompleted, ResearchError
 from .sign_in import SignInError, SignInSettings, default_store, login, logout
 
 
+def _has_display() -> bool:
+    """Whether a graphical browser can open. Without one, Python's webbrowser may start a text
+    browser (lynx, w3m) that takes over this terminal, so only the link is printed."""
+    if not sys.platform.startswith("linux"):
+        return True
+    return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY") or os.environ.get("BROWSER"))
+
+
 def _login(args: argparse.Namespace) -> int:
     settings = SignInSettings.resolve(args.api_url, args.sign_in_domain, args.client_id)
     store = default_store()
-    login(settings, store=store, open_browser=(lambda _url: None) if args.no_browser else webbrowser.open)
+    browse = not args.no_browser and _has_display()
+    login(settings, store=store, open_browser=webbrowser.open if browse else (lambda _url: None))
     print(f"Signed in to {settings.api_url}. Your sign-in is kept in {store.description}.")
     return 0
 
