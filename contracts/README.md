@@ -10,7 +10,7 @@ under `tests/live` provide separate opt-in service/AWS evidence. SDK-owned paths
 retain complete inline wire-example coverage in `test_contracts.py`.
 
 `public-v1.openapi.json` is the draft public v1 API: research, saved-study execution, answers,
-files, datasets, Space, webhooks and API keys. EpochAI generates it from its v1 routes and models
+files, datasets, Space and webhooks. EpochAI generates it from its v1 routes and models
 (`tools/export_public_api.py`); copy it with `tools/sync_public_contract.py` and never edit it here.
 `tools/validate_public_contract.py` checks the copy. It replaces the illustrative `/v1` paths in
 `openapi.json` once approved; see [the review doc](../docs/public-api-v1.md).

@@ -38,8 +38,8 @@ method and native routes it reuses, or the work it still needs.
 - Answers: read, read table pages.
 - Your data: upload a file, prepare a dataset draft, save or reject it, place it in Space.
 - Webhooks: create, list, delete.
-- Credentials: create, list and revoke API keys; exchange a sign-in for a token; signing keys;
-  health.
+- Credentials: exchange a sign-in for a token; signing keys; health. API keys are created and
+  revoked in the Epoch Terminal (account menu, API keys), not through `/v1`.
 
 Everything else waits until a caller needs it, and is added within `/v1` because changes there are
 additive. That includes cancel, execution events, whole-table and provenance downloads, study lists,
@@ -75,7 +75,7 @@ The stream ends with `questions` (answer with `POST /v1/research/{id}/answers`, 
 | D7 | Status values | `queued`, `running`, `needs_input` (research only), `completed`, `failed`, `cancelled`. Research maps Backend's request phase (accepted → queued, active → running, needs_input, outputs_recorded → completed, failed). Executions map Backend's job status (pending or queued → queued, running, completed, failed, cancelled). |
 | D8 | Paging | Lists use `cursor`, `limit` and `next_cursor`. Answer tables keep the SDK's `offset`, `page_size` (at most 10,000 rows and 4 MiB) and `next_offset`. |
 | D9 | Errors | RFC 9457 problem+json with the SDK's `ErrorCode` and `retryable`. Request-validation failures are 400, not FastAPI's 422 (ENG-2512 installs the handler). A missing scope is 403. |
-| D10 | Authentication | `Authorization: Bearer` with an API key or an Epoch access token; raw Cognito tokens are refused. Scopes: `read`, `research`, `execute`, `files:write`, `space:write`, `webhooks:write`. API keys are managed only with a browser sign-in. A key reads `epk_<environment>_<id>_<secret>` and is shown once; Backend stores only its SHA-256 (EpochBackend `docs/contracts/epoch-tokens.md`). `POST /v1/auth/token` exchanges an unexpired Cognito ID token (RFC 8693). There are no Epoch refresh tokens: a signed-in SDK refreshes its Cognito session and exchanges again, and signing out revokes that session. Signing keys are at `/.well-known/jwks.json`. |
+| D10 | Authentication | `Authorization: Bearer` with an API key or an Epoch access token; raw Cognito tokens are refused. Scopes: `read`, `research`, `execute`, `files:write`, `space:write`, `webhooks:write`. API keys are created, listed and revoked in the Epoch Terminal, not through `/v1` (ENG-2509). A key reads `epk_<environment>_<id>_<secret>` and is shown once; Backend stores only its SHA-256 (EpochBackend `docs/contracts/epoch-tokens.md`). `POST /v1/auth/token` exchanges an unexpired Cognito ID token (RFC 8693). There are no Epoch refresh tokens: a signed-in SDK refreshes its Cognito session and exchanges again, and signing out revokes that session. Signing keys are at `/.well-known/jwks.json`. |
 | D11 | Webhooks | Events: `research.needs_input`, `research.completed`, `research.failed`, `execution.completed`, `execution.failed`, `execution.cancelled`, `dataset.ready`, `dataset.needs_review`. `Epoch-Signature: t=<unix>,v1=<hex>` is HMAC-SHA256 over `<t>.<raw body>`; reject timestamps older than 5 minutes. Delivery is at least once with a stable event id; endpoints answer 2xx within 10 seconds; repeated failures disable the endpoint. HTTPS only. |
 | D12 | Uploads | One request with the file's bytes, name, media type and SHA-256. The server splits it into Backend's upload parts; the same content returns the same file. |
 | D13 | Nulls | FastAPI drops nulls from the generated document, so nullable fields are optional rather than required. Responses still send `null`. |
@@ -111,9 +111,6 @@ Generated from each operation's `x-epoch-reuses` with
 | `POST /v1/webhooks`<br>Create a webhook endpoint | – | – | New Backend storage, outbox and delivery (ENG-2519). |
 | `GET /v1/webhooks`<br>List webhook endpoints | – | – | New Backend storage, outbox and delivery (ENG-2519). |
 | `DELETE /v1/webhooks/{webhook_id}`<br>Delete a webhook endpoint | – | – | New Backend storage, outbox and delivery (ENG-2519). |
-| `POST /v1/api-keys`<br>Create an API key | – | Backend POST /api/v1/auth/api-keys (create_api_key) | – |
-| `GET /v1/api-keys`<br>List API keys | – | Backend GET /api/v1/auth/api-keys (list_api_keys) | – |
-| `POST /v1/api-keys/{key_id}/revoke`<br>Revoke an API key | – | Backend POST /api/v1/auth/api-keys/{keyId}/revoke (revoke_api_key) | – |
 | `POST /v1/auth/token`<br>Exchange a sign-in for Epoch tokens | – | Backend POST /api/v1/auth/token (exchange_epoch_token) | – |
 | `GET /.well-known/jwks.json`<br>Read token signing keys | – | Backend GET /api/v1/auth/jwks (get_epoch_jwks) | – |
 | `GET /.well-known/oauth-protected-resource`<br>Find where to sign in | – | – | Served by the v1 host from its own configuration (ENG-2510). |
