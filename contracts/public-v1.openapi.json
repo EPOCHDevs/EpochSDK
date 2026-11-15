@@ -2588,7 +2588,7 @@
           "Auth"
         ],
         "summary": "Find where to sign in",
-        "description": "OAuth 2.0 protected resource metadata (RFC 9728). It names this environment's sign-in issuer and the public PKCE client that browser sign-in (epoch login) uses; the issuer's /.well-known/openid-configuration lists its endpoints. 404 when this server offers no browser sign-in.",
+        "description": "OAuth 2.0 protected resource metadata (RFC 9728). It names this environment's sign-in issuer: Epoch's sign-in service (ENG-2795), whose /.well-known/oauth-authorization-server lists its endpoints, or, until that is configured, Cognito with the public PKCE client epoch login uses. 404 when this server offers no browser sign-in.",
         "operationId": "getProtectedResourceMetadata",
         "responses": {
           "200": {
@@ -2603,16 +2603,19 @@
                     "value": {
                       "resource": "https://api.epoch.trade",
                       "authorization_servers": [
-                        "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_EXAMPLE"
+                        "https://api.epoch.trade"
                       ],
                       "scopes_supported": [
-                        "openid",
-                        "email"
+                        "read",
+                        "research",
+                        "execute",
+                        "files:write",
+                        "space:write",
+                        "webhooks:write"
                       ],
                       "bearer_methods_supported": [
                         "header"
-                      ],
-                      "epoch_sign_in_client_id": "1example2client3id4"
+                      ]
                     }
                   }
                 }
@@ -6696,7 +6699,7 @@
             },
             "type": "array",
             "title": "Authorization Servers",
-            "description": "The issuer of this environment's sign-in. Read its endpoints from {issuer}/.well-known/openid-configuration."
+            "description": "The issuer of this environment's sign-in. Epoch's sign-in service (ENG-2795) lists its endpoints at {issuer}/.well-known/oauth-authorization-server."
           },
           "scopes_supported": {
             "items": {
@@ -6714,9 +6717,16 @@
             "title": "Bearer Methods Supported"
           },
           "epoch_sign_in_client_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Epoch Sign In Client Id",
-            "description": "The public PKCE client for browser sign-in (epoch login). It has no secret."
+            "description": "Only while sign-in goes through Cognito: the public PKCE client epoch login uses. Absent once Epoch's own sign-in service is the issuer."
           }
         },
         "additionalProperties": false,
@@ -6725,8 +6735,7 @@
           "resource",
           "authorization_servers",
           "scopes_supported",
-          "bearer_methods_supported",
-          "epoch_sign_in_client_id"
+          "bearer_methods_supported"
         ],
         "title": "ProtectedResourceMetadata",
         "description": "OAuth 2.0 protected resource metadata (RFC 9728): where callers sign in for this API."

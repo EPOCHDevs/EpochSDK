@@ -529,3 +529,140 @@ def test_an_api_without_browser_sign_in_says_how_to_sign_in_anyway():
     http = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
     with pytest.raises(SignInError, match="--sign-in-domain"):
         module.discover(API, http=http)
+
+
+# ---------------------------------------------------------------- Epoch's sign-in service (ENG-2795)
+EPOCH_ISSUER = "https://api.test"
+EPOCH_SETTINGS = SignInSettings(API, EPOCH_ISSUER, "epoch-cli", "epoch")
+
+
+class FakeEpochSignIn:
+    """Epoch's sign-in service: authorize returns a code; tokens are Epoch tokens with rotation."""
+
+    def __init__(self, clock: Clock) -> None:
+        self.clock = clock
+        self.codes: dict[str, tuple[str, str]] = {}
+        self.current = "ert-1"
+        self.issued = 0
+        self.revoked: list[str] = []
+
+    def tokens(self) -> httpx.Response:
+        self.issued += 1
+        self.current = f"ert-{self.issued}"
+        return httpx.Response(200, json={"access_token": f"epoch-{self.issued}", "token_type": "Bearer",
+                                         "expires_in": 900, "refresh_token": self.current, "scope": "read"})
+
+    def handle(self, request: httpx.Request) -> httpx.Response:
+        form = {key: values[0] for key, values in parse_qs(request.content.decode()).items()}
+        if request.url.path == "/oauth/token":
+            assert form["client_id"] == "epoch-cli"
+            if form["grant_type"] == "authorization_code":
+                challenge, redirect = self.codes.pop(form["code"])
+                digest = hashlib.sha256(form["code_verifier"].encode()).digest()
+                assert base64.urlsafe_b64encode(digest).rstrip(b"=").decode() == challenge
+                assert form["redirect_uri"] == redirect
+                return self.tokens()
+            assert form["grant_type"] == "refresh_token"
+            if form["refresh_token"] != self.current:
+                return httpx.Response(400, json={"error": "invalid_grant"})
+            return self.tokens()
+        if request.url.path == "/oauth/revoke":
+            self.revoked.append(form["token"])
+            return httpx.Response(200, json={})
+        return httpx.Response(404)
+
+    def client(self) -> httpx.Client:
+        return httpx.Client(transport=httpx.MockTransport(self.handle))
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def epoch_browser(service: FakeEpochSignIn, *, iss: str = EPOCH_ISSUER):
+    """Plays the browser: the Terminal approves, and Epoch returns to the loopback with a code."""
+    seen: list[str] = []
+
+    def open_browser(url: str) -> None:
+        seen.append(url)
+        query = {key: values[0] for key, values in parse_qs(urlsplit(url).query).items()}
+        service.codes["esc-1"] = (query["code_challenge"], query["redirect_uri"])
+        callback = urlsplit(query["redirect_uri"])
+
+        def redirect() -> None:
+            target = (f"http://127.0.0.1:{callback.port}{callback.path}?code=esc-1&state={query['state']}"
+                      f"&iss={iss}")
+            try:
+                urllib.request.build_opener(NoRedirect).open(target, timeout=5)
+            except urllib.error.HTTPError as error:
+                # The CLI sends the browser on to the Terminal's result page.
+                seen.append(error.headers.get("Location", ""))
+
+        threading.Thread(target=redirect, daemon=True).start()
+
+    return open_browser, seen
+
+
+def test_the_api_can_name_epochs_own_sign_in_service(monkeypatch):
+    for name in ("EPOCH_SIGN_IN_DOMAIN", "EPOCH_SIGN_IN_CLIENT_ID"):
+        monkeypatch.delenv(name, raising=False)
+    metadata = {"resource": API, "authorization_servers": [EPOCH_ISSUER], "scopes_supported": ["read"],
+                "bearer_methods_supported": ["header"]}
+    config = {"issuer": EPOCH_ISSUER, "authorization_endpoint": f"{EPOCH_ISSUER}/oauth/authorize",
+              "token_endpoint": f"{EPOCH_ISSUER}/oauth/token", "revocation_endpoint": f"{EPOCH_ISSUER}/oauth/revoke",
+              "code_challenge_methods_supported": ["S256"]}
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/.well-known/oauth-protected-resource":
+            return httpx.Response(200, json=metadata)
+        if request.url.path == "/.well-known/oauth-authorization-server":
+            return httpx.Response(200, json=config)
+        return httpx.Response(404)
+
+    http = httpx.Client(transport=httpx.MockTransport(handle))
+    assert SignInSettings.resolve(API, http=http) == EPOCH_SETTINGS
+    config["token_endpoint"] = "https://elsewhere.test/oauth/token"
+    with pytest.raises(SignInError, match="isn't Epoch's sign-in service"):
+        module.discover(API, http=http)
+
+
+def test_signing_in_with_epochs_service_keeps_its_rotating_refresh_token(tmp_path, clock):
+    service = FakeEpochSignIn(clock)
+    store = FileStore(tmp_path / "credentials.json")
+    open_browser, seen = epoch_browser(service)
+    record = login(EPOCH_SETTINGS, store=store, open_browser=open_browser, announce=lambda _: None,
+                   ports=(free_port(),), timeout=10, http=service.client())
+    assert record == StoredSignIn(api_url=API, domain=EPOCH_ISSUER, client_id="epoch-cli", refresh_token="ert-1",
+                                  service="epoch")
+    authorize = {key: values[0] for key, values in parse_qs(urlsplit(seen[0]).query).items()}
+    assert seen[0].startswith(f"{EPOCH_ISSUER}/oauth/authorize?")
+    assert authorize["resource"] == API and "scope" not in authorize
+    # The browser's last hop finishes on its own thread, just after login returns.
+    deadline = module.time.monotonic() + 5
+    while len(seen) < 2 and module.time.monotonic() < deadline:
+        threading.Event().wait(0.02)
+    assert seen[1] == f"{EPOCH_ISSUER}/oauth/done?result=signed_in"
+    assert "epoch-1" not in store.path.read_text()
+
+    # Renewal uses the refresh token once and keeps the rotated one.
+    session = SignedInSession(record, store=store, http=service.client())
+    assert session() == "epoch-2"
+    assert session() == "epoch-2"
+    assert store.load(API).refresh_token == "ert-2"
+    clock.now += 900
+    assert session() == "epoch-3"
+    assert store.load(API).refresh_token == "ert-3"
+
+    assert logout(API, store=store, http=service.client()) == (True, True)
+    assert service.revoked == ["ert-3"] and store.load(API) is None
+
+
+def test_a_code_from_another_issuer_is_refused(tmp_path, clock):
+    service = FakeEpochSignIn(clock)
+    store = FileStore(tmp_path / "credentials.json")
+    open_browser, _ = epoch_browser(service, iss="https://evil.test")
+    with pytest.raises(SignInError, match="another issuer"):
+        login(EPOCH_SETTINGS, store=store, open_browser=open_browser, announce=lambda _: None,
+              ports=(free_port(),), timeout=10, http=service.client())
+    assert not store.path.exists()

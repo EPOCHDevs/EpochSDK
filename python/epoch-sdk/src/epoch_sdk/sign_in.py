@@ -1,11 +1,16 @@
-"""Browser sign-in for the SDK, CLI and notebooks (ENG-2510).
+"""Browser sign-in for the SDK, CLI and notebooks (ENG-2510, ENG-2795).
 
-``epoch login`` runs OAuth 2.0 authorization code with PKCE (S256) through Cognito's managed login,
-with a loopback redirect, and keeps only the Cognito refresh token: in the OS keychain when
-``keyring`` is installed, otherwise in a file only you can read. Epoch issues no refresh tokens, so a
-signed-in client refreshes its Cognito session and exchanges the new ID token at the v1 API's
-``POST /v1/auth/token`` (RFC 8693) for a short-lived Epoch access token. ``epoch logout`` revokes the
-refresh token and forgets it.
+``epoch login`` runs OAuth 2.0 authorization code with PKCE (S256) with a loopback redirect, and keeps
+only the refresh token: in the OS keychain when ``keyring`` is installed, otherwise in a file only you
+can read. ``epoch logout`` revokes the refresh token and forgets it.
+
+The API's protected resource metadata decides where to sign in:
+
+* **Epoch's sign-in service** (ENG-2795): the person signs in and approves the CLI on the Terminal's
+  login page. Its tokens are Epoch access tokens, renewed with a rotating refresh token.
+* **Cognito's managed login** (ENG-2510, until an environment moves to Epoch's service): a signed-in
+  client refreshes its Cognito session and exchanges the new ID token at the v1 API's
+  ``POST /v1/auth/token`` (RFC 8693) for a short-lived Epoch access token.
 
 No token is printed, logged or written anywhere but the credential store.
 """
@@ -31,7 +36,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 import httpx
@@ -43,6 +48,10 @@ from .api import DEFAULT_API_URL
 # Cognito matches callback URLs exactly, so an ephemeral port would be refused.
 DEFAULT_PORTS = (53682, 53683, 53684)
 SCOPES = "openid email"
+# Epoch's sign-in service knows the CLI as this built-in public client.
+EPOCH_CLI_CLIENT_ID = "epoch-cli"
+COGNITO = "cognito"
+EPOCH = "epoch"
 # Renew a token this long before it expires, so a request never carries one about to lapse.
 EXPIRY_MARGIN = 60.0
 TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
@@ -66,18 +75,25 @@ class StoredSignIn(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     api_url: str
-    domain: str
+    domain: str  # Cognito's managed login domain, or Epoch's sign-in issuer
     client_id: str
     refresh_token: str
+    service: Literal["cognito", "epoch"] = COGNITO
 
 
 @dataclass(frozen=True)
 class SignInSettings:
-    """Where to sign in: the v1 API, and its Cognito managed login domain and public app client."""
+    """Where to sign in: the v1 API, its sign-in domain (Cognito's managed login, or Epoch's sign-in
+    issuer) and the public client."""
 
     api_url: str
     domain: str
     client_id: str
+    service: Literal["cognito", "epoch"] = COGNITO
+
+    @property
+    def endpoints(self) -> Endpoints:
+        return _endpoints(self.domain, self.service)
 
     @classmethod
     def resolve(
@@ -102,11 +118,26 @@ class SignInSettings:
             return discover(api, http=owned)
 
 
+@dataclass(frozen=True)
+class Endpoints:
+    authorize: str
+    token: str
+    revoke: str
+
+
+def _endpoints(domain: str, service: str) -> Endpoints:
+    # Cognito managed login serves /oauth2/*; Epoch's sign-in service serves /oauth/*.
+    prefix = "/oauth" if service == EPOCH else "/oauth2"
+    return Endpoints(f"{domain}{prefix}/authorize", f"{domain}{prefix}/token", f"{domain}{prefix}/revoke")
+
+
 def discover(api_url: str, *, http: httpx.Client) -> SignInSettings:
     """Where to sign in for an API: its protected resource metadata (RFC 9728) names its sign-in
-    issuer and public client, and the issuer's OpenID discovery gives the endpoints.
+    issuer, and the issuer's discovery document gives the endpoints.
 
-    Each environment's API names its own user pool, so the API URL alone decides where to sign in.
+    Metadata without ``epoch_sign_in_client_id`` names Epoch's own sign-in service (ENG-2795), which
+    knows the CLI as a built-in client. Otherwise it names Cognito's managed login and the public app
+    client. Each environment's API names its own, so the API URL alone decides where to sign in.
     """
     api = _base_url(api_url, "API URL")
     metadata = _discovery(http, f"{api}/.well-known/oauth-protected-resource",
@@ -116,12 +147,14 @@ def discover(api_url: str, *, http: httpx.Client) -> SignInSettings:
     if not isinstance(resource, str) or resource.rstrip("/") != api:
         raise SignInError(f"The sign-in settings at {api} are for another address")
     servers = metadata.get("authorization_servers")
-    client_id = metadata.get("epoch_sign_in_client_id")
     if not isinstance(servers, list) or not servers or not isinstance(servers[0], str):
         raise SignInError("The API's sign-in settings name no sign-in issuer")
+    issuer = _base_url(servers[0], "sign-in issuer")
+    if "epoch_sign_in_client_id" not in metadata:
+        return _discover_epoch(api, issuer, http)
+    client_id = metadata.get("epoch_sign_in_client_id")
     if not isinstance(client_id, str) or not client_id:
         raise SignInError("The API's sign-in settings name no sign-in client")
-    issuer = _base_url(servers[0], "sign-in issuer")
     config = _discovery(http, f"{issuer}/.well-known/openid-configuration",
                         "The sign-in issuer publishes no discovery document")
     if config.get("issuer") != issuer:
@@ -140,6 +173,22 @@ def discover(api_url: str, *, http: httpx.Client) -> SignInSettings:
     if isinstance(methods, list) and "S256" not in methods:
         raise SignInError("The sign-in issuer doesn't support PKCE (S256)")
     return SignInSettings(api, domain, client_id)
+
+
+def _discover_epoch(api: str, issuer: str, http: httpx.Client) -> SignInSettings:
+    """Epoch's sign-in service: RFC 8414 metadata with the endpoints under the issuer."""
+    config = _discovery(http, f"{issuer}/.well-known/oauth-authorization-server",
+                        "The sign-in issuer publishes no authorization server metadata")
+    if config.get("issuer") != issuer:
+        raise SignInError("The sign-in issuer's metadata names another issuer")
+    expected = _endpoints(issuer, EPOCH)
+    if (config.get("authorization_endpoint"), config.get("token_endpoint"),
+            config.get("revocation_endpoint")) != (expected.authorize, expected.token, expected.revoke):
+        raise SignInError("The sign-in issuer isn't Epoch's sign-in service")
+    methods = config.get("code_challenge_methods_supported")
+    if not isinstance(methods, list) or "S256" not in methods:
+        raise SignInError("The sign-in issuer doesn't support PKCE (S256)")
+    return SignInSettings(api, issuer, EPOCH_CLI_CLIENT_ID, EPOCH)
 
 
 def _discovery(http: httpx.Client, url: str, missing: str) -> dict[str, object]:
@@ -394,6 +443,10 @@ class SignedInSession:
             now = time.time()
             if self._access is not None and self._access_expires - EXPIRY_MARGIN > now:
                 return self._access
+            if self.record.service == EPOCH:
+                self._renew_epoch()
+                assert self._access is not None
+                return self._access
             fresh = False
             if self._id_token is None or self._id_expires - EXPIRY_MARGIN <= now:
                 self._refresh()
@@ -404,6 +457,27 @@ class SignedInSession:
                 self._exchange(retry=False)
             assert self._access is not None
             return self._access
+
+    def accept(self, tokens: dict[str, object]) -> None:
+        """Keep an Epoch access token from Epoch's sign-in service, and its rotated refresh token."""
+        self._access = _text(tokens, "access_token")
+        lifetime = tokens.get("expires_in")
+        if not isinstance(lifetime, int) or lifetime < 1:
+            raise SignInError("The sign-in service returned a token without a lifetime")
+        self._access_expires = time.time() + lifetime
+        rotated = tokens.get("refresh_token")
+        if isinstance(rotated, str) and rotated and rotated != self.record.refresh_token:
+            self.record = self.record.model_copy(update={"refresh_token": rotated})
+            if self._store is not None:
+                self._store.save(self.record)
+
+    def _renew_epoch(self) -> None:
+        # Epoch's service rotates the refresh token on every use; accept() stores the new one.
+        self.accept(_oauth(self._http, _endpoints(self.record.domain, EPOCH).token, {
+            "grant_type": "refresh_token",
+            "client_id": self.record.client_id,
+            "refresh_token": self.record.refresh_token,
+        }))
 
     def _refresh(self) -> None:
         tokens = _oauth(self._http, f"{self.record.domain}/oauth2/token", {
@@ -471,6 +545,8 @@ def stored_session(
 class _CallbackServer(HTTPServer):
     result: dict[str, str] | None = None
     expected_state: str = ""
+    # Epoch's sign-in service shows its own result page: the browser goes there instead (ENG-2795).
+    done_url: str = ""
 
 
 class _CallbackServer6(_CallbackServer):
@@ -494,10 +570,19 @@ class _Callback(BaseHTTPRequestHandler):
             self._page(400, "This sign-in link doesn't match. Return to your terminal.")
             return
         server.result = params
-        if "error" in params:
+        if server.done_url:
+            self._redirect(f"{server.done_url}?result={'cancelled' if 'error' in params else 'signed_in'}")
+        elif "error" in params:
             self._page(200, "Sign-in was not completed. Return to your terminal.")
         else:
             self._page(200, "You're signed in to Epoch. You can close this tab.")
+
+    def _redirect(self, location: str) -> None:
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
 
     def _page(self, status: int, message: str) -> None:
         body = f"<!doctype html><meta charset=utf-8><title>Epoch</title><p>{message}</p>".encode()
@@ -535,9 +620,10 @@ class _Loopback:
             return
         raise SignInError(f"None of the sign-in ports ({', '.join(map(str, ports))}) is free")
 
-    def wait(self, state: str, timeout: float) -> dict[str, str]:
+    def wait(self, state: str, timeout: float, done_url: str = "") -> dict[str, str]:
         for server in self.servers:
             server.expected_state = state
+            server.done_url = done_url
         deadline = time.monotonic() + timeout
         while True:
             remaining = deadline - time.monotonic()
@@ -594,18 +680,24 @@ def _login(
     loopback = _Loopback(ports)
     try:
         redirect_uri = f"http://localhost:{loopback.port}/callback"
-        url = f"{settings.domain}/oauth2/authorize?" + urlencode({
+        query = {
             "response_type": "code",
             "client_id": settings.client_id,
             "redirect_uri": redirect_uri,
-            "scope": SCOPES,
             "state": state,
             "code_challenge": challenge,
             "code_challenge_method": "S256",
-        })
+        }
+        if settings.service == EPOCH:
+            # No scope: Epoch grants every public scope, as for a default API key.
+            query["resource"] = settings.api_url
+        else:
+            query["scope"] = SCOPES
+        url = f"{settings.endpoints.authorize}?" + urlencode(query)
         announce(f"Opening your browser to sign in to Epoch. If it doesn't open, visit:\n{url}")
         open_browser(url)
-        params = loopback.wait(state, timeout)
+        done = f"{settings.domain}/oauth/done" if settings.service == EPOCH else ""
+        params = loopback.wait(state, timeout, done)
     finally:
         loopback.close()
     if "error" in params:
@@ -613,17 +705,24 @@ def _login(
     code = params.get("code")
     if not code:
         raise SignInError("The sign-in redirect carried no authorization code")
-    tokens = _oauth(http, f"{settings.domain}/oauth2/token", {
+    if settings.service == EPOCH and params.get("iss", settings.domain) != settings.domain:
+        # RFC 9207: the code must come back from the issuer the sign-in started with.
+        raise SignInError("The sign-in redirect came from another issuer")
+    tokens = _oauth(http, settings.endpoints.token, {
         "grant_type": "authorization_code",
         "client_id": settings.client_id,
         "code": code,
         "redirect_uri": redirect_uri,
         "code_verifier": verifier,
     })
-    record = StoredSignIn(api_url=settings.api_url, domain=settings.domain,
-                          client_id=settings.client_id, refresh_token=_text(tokens, "refresh_token"))
-    # Epoch must accept this sign-in before it is kept.
-    SignedInSession(record, http=http, id_token=_text(tokens, "id_token")).access_token()
+    record = StoredSignIn(api_url=settings.api_url, domain=settings.domain, client_id=settings.client_id,
+                          refresh_token=_text(tokens, "refresh_token"), service=settings.service)
+    if settings.service == EPOCH:
+        # Epoch's own service issued an Epoch access token: the sign-in is already accepted.
+        SignedInSession(record, http=http).accept(tokens)
+    else:
+        # Epoch must accept this sign-in before it is kept.
+        SignedInSession(record, http=http, id_token=_text(tokens, "id_token")).access_token()
     store.save(record)
     return record
 
@@ -640,7 +739,7 @@ def logout(
     owned = http is None
     http = http or httpx.Client(timeout=30.0)
     try:
-        response = http.post(f"{record.domain}/oauth2/revoke",
+        response = http.post(_endpoints(record.domain, record.service).revoke,
                              data={"token": record.refresh_token, "client_id": record.client_id})
         revoked = response.status_code == 200
     except httpx.HTTPError:
