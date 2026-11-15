@@ -545,6 +545,8 @@ def stored_session(
 class _CallbackServer(HTTPServer):
     result: dict[str, str] | None = None
     expected_state: str = ""
+    # Epoch's sign-in service shows its own result page: the browser goes there instead (ENG-2795).
+    done_url: str = ""
 
 
 class _CallbackServer6(_CallbackServer):
@@ -568,10 +570,19 @@ class _Callback(BaseHTTPRequestHandler):
             self._page(400, "This sign-in link doesn't match. Return to your terminal.")
             return
         server.result = params
-        if "error" in params:
+        if server.done_url:
+            self._redirect(f"{server.done_url}?result={'cancelled' if 'error' in params else 'signed_in'}")
+        elif "error" in params:
             self._page(200, "Sign-in was not completed. Return to your terminal.")
         else:
             self._page(200, "You're signed in to Epoch. You can close this tab.")
+
+    def _redirect(self, location: str) -> None:
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
 
     def _page(self, status: int, message: str) -> None:
         body = f"<!doctype html><meta charset=utf-8><title>Epoch</title><p>{message}</p>".encode()
@@ -609,9 +620,10 @@ class _Loopback:
             return
         raise SignInError(f"None of the sign-in ports ({', '.join(map(str, ports))}) is free")
 
-    def wait(self, state: str, timeout: float) -> dict[str, str]:
+    def wait(self, state: str, timeout: float, done_url: str = "") -> dict[str, str]:
         for server in self.servers:
             server.expected_state = state
+            server.done_url = done_url
         deadline = time.monotonic() + timeout
         while True:
             remaining = deadline - time.monotonic()
@@ -684,7 +696,8 @@ def _login(
         url = f"{settings.endpoints.authorize}?" + urlencode(query)
         announce(f"Opening your browser to sign in to Epoch. If it doesn't open, visit:\n{url}")
         open_browser(url)
-        params = loopback.wait(state, timeout)
+        done = f"{settings.domain}/oauth/done" if settings.service == EPOCH else ""
+        params = loopback.wait(state, timeout, done)
     finally:
         loopback.close()
     if "error" in params:

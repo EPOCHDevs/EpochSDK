@@ -575,6 +575,11 @@ class FakeEpochSignIn:
         return httpx.Client(transport=httpx.MockTransport(self.handle))
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
 def epoch_browser(service: FakeEpochSignIn, *, iss: str = EPOCH_ISSUER):
     """Plays the browser: the Terminal approves, and Epoch returns to the loopback with a code."""
     seen: list[str] = []
@@ -588,7 +593,11 @@ def epoch_browser(service: FakeEpochSignIn, *, iss: str = EPOCH_ISSUER):
         def redirect() -> None:
             target = (f"http://127.0.0.1:{callback.port}{callback.path}?code=esc-1&state={query['state']}"
                       f"&iss={iss}")
-            urllib.request.urlopen(target, timeout=5).read()
+            try:
+                urllib.request.build_opener(NoRedirect).open(target, timeout=5)
+            except urllib.error.HTTPError as error:
+                # The CLI sends the browser on to the Terminal's result page.
+                seen.append(error.headers.get("Location", ""))
 
         threading.Thread(target=redirect, daemon=True).start()
 
@@ -629,6 +638,11 @@ def test_signing_in_with_epochs_service_keeps_its_rotating_refresh_token(tmp_pat
     authorize = {key: values[0] for key, values in parse_qs(urlsplit(seen[0]).query).items()}
     assert seen[0].startswith(f"{EPOCH_ISSUER}/oauth/authorize?")
     assert authorize["resource"] == API and "scope" not in authorize
+    # The browser's last hop finishes on its own thread, just after login returns.
+    deadline = module.time.monotonic() + 5
+    while len(seen) < 2 and module.time.monotonic() < deadline:
+        threading.Event().wait(0.02)
+    assert seen[1] == f"{EPOCH_ISSUER}/oauth/done?result=signed_in"
     assert "epoch-1" not in store.path.read_text()
 
     # Renewal uses the refresh token once and keeps the rotated one.
