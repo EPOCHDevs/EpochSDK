@@ -61,8 +61,8 @@ the same thread, executing a saved study directly through Backend, or reading
 validated values from an explicit saved output mapping. See the
 [SDK workflow example](docs/supervisor-workflow.md) and its current limits. The supplied-data research flow passed through actual SDK and workflow-MCP services,
 including saved-answer reads and readable-ID reconnect.
-Package registry publication is separate; this is public source, not a released
-PyPI package.
+`epoch-sdk` is released to PyPI by the manually started
+[publish workflow](.github/workflows/publish-pypi.yml) for an exact commit on `dev`.
 
 Computed research answers use native report outputs. Run the original study
 first when needed, then build a saved-input report over its exact completed

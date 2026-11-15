@@ -573,7 +573,7 @@ class SupervisorClient:
         ):
             raise ValueError("Provide a UI URL without embedded credentials")
         query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        query["threadId"] = thread_id  # EpochPortal's existing route parameter.
+        query["thread"] = thread_id  # The Terminal opens a conversation from ?thread=.
         return urlunsplit(
             (parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment)
         )
