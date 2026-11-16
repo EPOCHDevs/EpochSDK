@@ -68,4 +68,6 @@ jobs:
         with:
           name: epoch-sdk-npm
           path: dist/
-      - run: npm publish dist/*.tgz --access public
+      # npm 11 refuses a prerelease without --tag. While every version is an alpha, each one is what
+      # `npm install @epochdevs/epoch-sdk` should get, so it takes latest; revisit at the first stable.
+      - run: npm publish dist/*.tgz --access public --tag latest
