@@ -7,7 +7,7 @@ Selecting an engine execution is separate from validating its requested outputs.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable, Mapping
-from typing import Literal, NotRequired, Protocol, TypedDict, cast
+from typing import Annotated, Literal, NotRequired, Protocol, TypedDict, cast
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -15,7 +15,15 @@ import httpx
 from epoch_sources.client import AsyncSourcesClient
 from langgraph_sdk.client import LangGraphClient
 from langgraph_sdk.schema import Command, Run, RunCreateMetadata, StreamMode
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    WithJsonSchema,
+    field_validator,
+    model_validator,
+)
 from stratifyx import (
     AsyncStratifyX,
     DatePeriodConfig,
@@ -53,9 +61,14 @@ class Closed(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
+# Optional in the supervisor's wire (NotRequired): absent there, None here.
+OptionalText = Annotated[str | None, WithJsonSchema({"type": "string"})]
+
+
 class QuestionOption(Closed):
     label: str
     recommended: bool
+    description: OptionalText = None
 
 
 class Question(Closed):
@@ -69,6 +82,8 @@ class AskUser(Closed):
     """Source wire: EpochAI agent_src/common/ask_user.py::AskUserInterruptPayload."""
 
     type: Literal["ask_user"]
+    title: OptionalText = None
+    briefing: OptionalText = None
     questions: list[Question]
     tool_call_id: str
 

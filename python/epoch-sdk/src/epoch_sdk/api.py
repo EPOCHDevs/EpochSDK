@@ -136,6 +136,7 @@ class ResearchResult(_Reply):
 class Option(_Reply):
     label: str
     recommended: bool = False
+    description: str | None = None
 
 
 class Question(_Reply):
@@ -150,6 +151,8 @@ class PendingQuestion(_Reply):
 
     id: str
     kind: Literal["ask_user", "dataset_review"]
+    title: str | None = None
+    briefing: str | None = None
     questions: list[Question] = Field(default_factory=list[Question])
     review: dict[str, Any] | None = None
 

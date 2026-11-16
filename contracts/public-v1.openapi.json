@@ -304,6 +304,8 @@
                         {
                           "id": "c1f0f4d2-interrupt",
                           "kind": "ask_user",
+                          "title": "Comparison window",
+                          "briefing": "Microsoft and Apple close their fiscal years in different months.",
                           "questions": [
                             {
                               "question": "Which fiscal periods should the comparison cover?",
@@ -311,7 +313,8 @@
                               "options": [
                                 {
                                   "label": "Last 8 fiscal quarters",
-                                  "recommended": true
+                                  "recommended": true,
+                                  "description": "Each company's own quarters, aligned by end date."
                                 },
                                 {
                                   "label": "Last 5 fiscal years",
@@ -593,6 +596,8 @@
                     {
                       "id": "c1f0f4d2-interrupt",
                       "kind": "ask_user",
+                      "title": "Comparison window",
+                      "briefing": "Microsoft and Apple close their fiscal years in different months.",
                       "questions": [
                         {
                           "question": "Which fiscal periods should the comparison cover?",
@@ -600,7 +605,8 @@
                           "options": [
                             {
                               "label": "Last 8 fiscal quarters",
-                              "recommended": true
+                              "recommended": true,
+                              "description": "Each company's own quarters, aligned by end date."
                             },
                             {
                               "label": "Last 5 fiscal years",
@@ -2991,6 +2997,30 @@
             "type": "string",
             "const": "ask_user",
             "title": "Kind"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "A heading for this round of questions, when given."
+          },
+          "briefing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Briefing",
+            "description": "Context shared by the round's questions, when given."
           },
           "questions": {
             "items": {
@@ -6916,18 +6946,21 @@
           },
           "description": {
             "type": "string",
-            "title": "Description"
+            "title": "Description",
+            "description": "Why the choice matters."
           },
           "options": {
             "items": {
               "$ref": "#/components/schemas/QuestionOption"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Options"
           },
           "multi_select": {
             "type": "boolean",
-            "title": "Multi Select"
+            "title": "Multi Select",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -6935,10 +6968,10 @@
         "required": [
           "question",
           "description",
-          "options",
-          "multi_select"
+          "options"
         ],
-        "title": "Question"
+        "title": "Question",
+        "description": "One decision, as the agent asks it (agent_src/common/ask_user.py's interrupt payload)."
       },
       "QuestionOption": {
         "properties": {
@@ -6948,14 +6981,26 @@
           },
           "recommended": {
             "type": "boolean",
-            "title": "Recommended"
+            "title": "Recommended",
+            "default": false
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "What choosing it changes, when the agent says."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "label",
-          "recommended"
+          "label"
         ],
         "title": "QuestionOption"
       },

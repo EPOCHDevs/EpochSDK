@@ -278,6 +278,30 @@ def test_research_reads_its_request_and_its_links():
     assert research.links.conversation == links["conversation"]
 
 
+def test_a_pending_question_reads_its_round_and_option_details():
+    question = {
+        "id": "int-2",
+        "kind": "ask_user",
+        "title": "Feature history",
+        "briefing": "History and lookbacks are separate settings.",
+        "questions": [
+            {
+                "question": "Which history should the features cover?",
+                "description": "Longer history gives more training rows.",
+                "options": [
+                    {"label": "Five years", "recommended": True, "description": "1,250 days."},
+                    {"label": "One year", "recommended": False, "description": None},
+                ],
+                "multi_select": False,
+            }
+        ],
+    }
+    reply = {**RESEARCH, "status": "needs_input", "questions": [question]}
+    [pending] = client(lambda _: httpx.Response(200, json=reply)).research.get("req_1").questions
+    assert (pending.title, pending.briefing) == (question["title"], question["briefing"])
+    assert [o.description for o in pending.questions[0].options] == ["1,250 days.", None]
+
+
 def test_a_request_or_period_this_client_cannot_read_is_left_out():
     # A newer server can send shapes an older client doesn't know; the rest of the reply still reads.
     reply = {**RESEARCH, "request": {"task": "Ask.", "outputs": [OUTPUT], "newer": True}}
