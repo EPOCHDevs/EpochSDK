@@ -1,6 +1,6 @@
 {
   "name": "@epochdevs/epoch-sdk",
-  "version": "0.1.0-alpha.7",
+  "version": "0.1.0-alpha.8",
   "description": "Typed Epoch research workflows over the native StratifyX and LangGraph clients",
   "type": "module",
   "main": "index.js",
@@ -35,5 +35,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/EPOCHDevs/EpochSDK"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
