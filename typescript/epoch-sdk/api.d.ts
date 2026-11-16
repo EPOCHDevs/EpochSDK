@@ -28,8 +28,10 @@ export declare class EpochApiError extends Error {
 export interface Links {
   self: string
   events?: string | null
-  /** Opens the same work in the Epoch Terminal. */
+  /** Opens the research in the Epoch API Playground: its log, its answer, and runs for other dates. */
   app?: string | null
+  /** Opens the research's conversation in the Epoch Terminal, where questions the API cannot describe are answered. */
+  conversation?: string | null
   response?: string | null
 }
 export interface ResponseRef {
@@ -71,6 +73,8 @@ export interface Research {
   status: Status
   operation_id: string
   thread_id?: string | null
+  /** The request as it was accepted. */
+  request?: { task: string; context?: string[]; outputs: Output[]; [field: string]: unknown } | null
   created_at: string
   updated_at: string
   questions: PendingQuestion[]
@@ -100,6 +104,8 @@ export interface Execution {
   operation_id?: string | null
   study_id: string
   parent_execution_id?: string | null
+  /** The dates the run covers, as YYYY-MM-DD. */
+  period?: { start?: string; end?: string } | null
   created_at: string
   progress?: { phase?: string | null; percent?: number | null; current?: number | null; total?: number | null; unit?: string | null } | null
   /** The declared answer; the run is running until it settles, so completed means delivered. */
