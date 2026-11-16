@@ -86,10 +86,10 @@ resubmit the task or clear discovery. Another clarification returns another
 `NeedsInput` value. Unsupported custom interrupt payloads remain visible in the
 result; this helper decodes only Epoch's native `ask_user` shape.
 
-The UI link uses EpochPortal's existing `threadId` query parameter. The route
-has been inspected; opening the thread and preserving it across a sign-in
-redirect still need live UI verification. An answer submitted in the UI resumes
-that conversation there. Read its state using the saved handle:
+The UI link uses the Terminal's `thread` query parameter. Opened while signed
+in, it shows that conversation in the research panel; keeping it across a
+sign-in redirect is not verified. An answer submitted in the UI resumes that
+conversation there. Read its state using the saved handle:
 
 ```python
 result = await client.status(waiting.handle)

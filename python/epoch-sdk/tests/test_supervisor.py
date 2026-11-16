@@ -92,7 +92,7 @@ def test_feedback_includes_the_question_context_options_and_conversation_link() 
             assert waiting.feedback() == (
                 "The workflow is waiting for input.\nWhich period?\n"
                 "Choose the analysis window.\n1. 2024 (recommended)\n2. 2025\n"
-                f"Continue: https://epoch.invalid/?tab=chat&threadId={THREAD}"
+                f"Continue: https://epoch.invalid/?tab=chat&thread={THREAD}"
             )
 
     asyncio.run(scenario())
@@ -257,7 +257,7 @@ def test_interrupt_answers_resume_the_same_thread_without_repeating_the_task() -
             waiting = await client.run("Compare sales", thread_id=THREAD)
             assert isinstance(waiting, NeedsInput)
             assert waiting.handle.run_id == RUN
-            assert waiting.conversation_url == f"https://epoch.invalid/?tab=chat&threadId={THREAD}"
+            assert waiting.conversation_url == f"https://epoch.invalid/?tab=chat&thread={THREAD}"
             assert backend_calls == []
             assert waiting.interrupts[0].ask_user().questions[0].options[0].recommended
             final = await client.resume(

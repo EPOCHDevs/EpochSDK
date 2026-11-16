@@ -25,11 +25,9 @@ plus `wait` and `rows`, which repeat reads for you. Calls that start work send a
 Answering questions and saving a dataset are sent once, because the server does
 not deduplicate them: if a reply is lost, read the research or dataset again.
 
-It is published to Epoch's private CodeArtifact `epoch/python` registry, from
-0.1.0a38 onwards, with its StratifyX dependency:
+Install it from PyPI. Its StratifyX and source-connection dependencies come with it:
 
 ```sh
-aws codeartifact login --tool pip --domain epoch --domain-owner 549243453713 --repository python --region us-east-1
 pip install "epoch-sdk>=0.1.0a38"
 ```
 
