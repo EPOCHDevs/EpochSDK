@@ -217,6 +217,19 @@ export declare class Epoch {
     get(executionId: string): Promise<Execution>
     wait(executionId: string, options?: Wait): Promise<Execution>
   }
+  readonly outputs: {
+    /**
+     * Drafts what you get back for a question, or with `part`, one part's columns or fields. One
+     * model call; nothing is started or saved. Review what comes back before research.create.
+     */
+    suggest(request: {
+      task: string
+      context?: string[]
+      /** Parts already chosen; suggestions leave them out. */
+      outputs?: Output[]
+      part?: { type: "table" | "json"; name: string; description?: string }
+    }): Promise<{ outputs: Output[] }>
+  }
   readonly responses: {
     get(responseId: string, options?: { version?: number }): Promise<SavedAnswer>
     table(responseId: string, name: string, options?: { version?: number; offset?: number; pageSize?: number }): Promise<TablePage>

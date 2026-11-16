@@ -449,6 +449,42 @@ class ExecutionsApi(_Resource):
             time.sleep(_pause(poll_interval, deadline, f"Run {execution_id} is still {state}"))
 
 
+class _Suggested(_Reply):
+    # A part in a shape this client can't read is left out, so the others still arrive.
+    outputs: list[Annotated[OutputRequest | None, WrapValidator(_or_none)]] = Field(
+        default_factory=list[OutputRequest | None]
+    )
+
+
+class OutputsApi(_Resource):
+    def suggest(
+        self,
+        task: str,
+        *,
+        context: Sequence[str] = (),
+        outputs: Sequence[OutputRequest | Mapping[str, Any]] = (),
+        part: Mapping[str, str] | None = None,
+    ) -> list[OutputRequest]:
+        """Drafts what you get back for a question: written answers, tables and structured data.
+
+        With part={"type": "table" | "json", "name": ...}, drafts that one part's columns or fields
+        instead. One model call; nothing is started or saved. Review and edit what comes back
+        before passing it to research.create(outputs=...). Parts in `outputs` are left out.
+        """
+        body: dict[str, Any] = {
+            "task": task,
+            "context": list(context),
+            "outputs": [
+                o.to_wire() if isinstance(o, BaseModel) else dict(o) for o in outputs
+            ],  # type: ignore[union-attr]
+        }
+        if part is not None:
+            body["part"] = dict(part)
+        # Drafting starts nothing, so a retry after an outage is safe.
+        reply = self._client.request("POST", "/v1/outputs/suggestions", json=body)
+        return [o for o in _Suggested.model_validate(reply).outputs if o is not None]
+
+
 class ResponsesApi(_Resource):
     def get(self, response_id: str, *, version: int | None = None) -> SavedResearchResponse:
         """A saved answer; the latest version unless you pin one."""
@@ -584,6 +620,7 @@ class Epoch:
         self.research = ResearchApi(self)
         self.executions = ExecutionsApi(self)
         self.responses = ResponsesApi(self)
+        self.outputs = OutputsApi(self)
         self.files = FilesApi(self)
         self.datasets = DatasetsApi(self)
 

@@ -168,6 +168,17 @@ export class Epoch {
         }
       },
     }
+    this.outputs = {
+      /**
+       * Drafts what you get back for a question: written answers, tables and structured data. With
+       * part {type: "table" | "json", name}, drafts that one part's columns or fields instead. One
+       * model call; nothing is started or saved. Review what comes back before research.create.
+       */
+      suggest: ({ task, context = [], outputs = [], part }) =>
+        this.request("POST", "/v1/outputs/suggestions", {
+          json: { task, context, outputs, ...(part ? { part } : {}) },
+        }),
+    }
     this.responses = {
       /** A saved answer; the latest version unless you pin one. */
       get: (responseId, { version } = {}) => this.request("GET", `/v1/responses/${path(responseId)}${query({ version })}`),
