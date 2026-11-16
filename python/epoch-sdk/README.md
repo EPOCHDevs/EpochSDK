@@ -28,7 +28,7 @@ not deduplicate them: if a reply is lost, read the research or dataset again.
 Install it from PyPI. Its StratifyX and source-connection dependencies come with it:
 
 ```sh
-pip install "epoch-sdk>=0.1.0a38"
+pip install "epoch-sdk>=0.1.0a40"
 ```
 
 ```python
@@ -44,6 +44,26 @@ if research.status == "completed":
     ref = research.result.response
     answer = epoch.responses.get(ref.id, version=ref.version)
 ```
+
+In a terminal or a notebook, `wait` prints the research's log as it works: a line
+for each finished step, with the step in progress as the last line and a running
+timer. These are the same lines the API Playground shows and the `epoch` CLI
+prints. In a terminal they go to stderr, so your own output stays clean:
+
+```text
+research · req_7b375f4da93c9b5bcb14b6c874832fc4
+00:00  ✓  Question received
+00:04  ✓  Search dataset
+00:50  ✓  Built MSFT and SPY volatility in 2025                           38.0s
+01:12  ✓  Ran MSFT and SPY volatility in 2025                             18.1s
+01:14  ✓  Answer saved · rsp_cbf5d11e1eb4 · version 1
+          Finished in 1 min 15 s
+```
+
+`log=False` turns it off, `log=True` prints it anywhere (finished lines only, without
+colour, when nobody is watching) and a file object receives it instead. `NO_COLOR`
+is respected. `executions.wait` logs a run the same way, from reading it. See
+[the notebook](../../examples/notebooks/04_follow_research_log.ipynb).
 
 `research.events(id)` streams progress and resumes after the last event if the
 connection drops; stopping never cancels the research. `research.answer`,

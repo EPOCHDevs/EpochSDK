@@ -136,7 +136,7 @@ def test_terminal_uses_async_coding_agent_choices_and_native_answer_indices():
                 try:
                     responses = await view.ask(pending())
                 finally:
-                    view.live.stop()
+                    view.log.close()
             assert responses[INTERRUPT["id"]].answers[0].selected_indices == [0]
             assert pending().interrupts[0].ask_user().questions[0].question in output.getvalue()
             assert service.submissions == service.resumes == 0

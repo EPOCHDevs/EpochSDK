@@ -36,6 +36,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .contracts import DomainError, OutputRequest, RunRequest
 from .errors import EpochError
+from .research_log import LogTarget, ResearchLog, research_log
 from .responses import ResponseTablePage, SavedResearchResponse
 
 DEFAULT_API_URL = "https://api.epoch.trade"
@@ -229,13 +230,55 @@ class ResearchApi(_Resource):
         return Research.model_validate(reply)
 
     def wait(
-        self, research_id: str, *, poll_interval: float = 10.0, timeout: float | None = None
+        self,
+        research_id: str,
+        *,
+        poll_interval: float = 10.0,
+        timeout: float | None = None,
+        log: LogTarget = None,
     ) -> Research:
-        """Reads the research until it finishes, stops, or asks a question."""
+        """Reads the research until it finishes, stops, or asks a question.
+
+        In a terminal or a notebook it also prints the research's log as it goes: a line for each
+        finished step, to stderr in a terminal and to the cell's output in a notebook. log=False
+        turns it off, log=True prints it anywhere, and a file object receives it instead. While
+        it logs, it follows the research's events rather than reading it every poll_interval.
+        """
         deadline = None if timeout is None else time.monotonic() + timeout
+        out = research_log(log)
+        if out is None:
+            return self._poll(research_id, poll_interval, deadline, None)
+        with out:
+            research = self._client.retrying(lambda: self.get(research_id))
+            out.begin_research(research_id, link=research.links.app if research else None)
+            if research is not None and research.status in FINISHED:
+                out.research_settled(research.model_dump(mode="json", by_alias=True))
+                return research
+            try:
+                for event in self._events(research_id, None, deadline):
+                    out.research_event(event)
+                    if event.get("event") in FINAL_EVENTS:
+                        return Research.model_validate(event["research"])
+            except EpochApiError as error:
+                if not error.retryable:
+                    raise
+            # The event stream kept dropping: read the research instead, as without a log.
+            return self._poll(research_id, poll_interval, deadline, out)
+
+    def _poll(
+        self,
+        research_id: str,
+        poll_interval: float,
+        deadline: float | None,
+        out: ResearchLog | None,
+    ) -> Research:
         while True:
             research = self._client.retrying(lambda: self.get(research_id))
+            if research is not None and out is not None:
+                out.status(research.status)
             if research is not None and research.status in FINISHED:
+                if out is not None:
+                    out.research_settled(research.model_dump(mode="json", by_alias=True))
                 return research
             state = research.status if research else "unread"
             time.sleep(_pause(poll_interval, deadline, f"Research {research_id} is still {state}"))
@@ -248,13 +291,21 @@ class ResearchApi(_Resource):
         A dropped, quiet or briefly unavailable stream reconnects after the last event received.
         Stopping early never cancels the research.
         """
+        return self._events(research_id, last_event_id, None)
+
+    def _events(
+        self, research_id: str, last_event_id: str | None, deadline: float | None
+    ) -> Iterator[dict[str, Any]]:
         last = last_event_id
         attempt = 0
         while True:
             wait: float | None = None
             try:
                 for event_id, data in self._client.stream(
-                    f"/v1/research/{_path(research_id)}/events", last
+                    f"/v1/research/{_path(research_id)}/events",
+                    last,
+                    deadline=deadline,
+                    waiting=f"Research {research_id} is still running",
                 ):
                     attempt = 0
                     if event_id:
@@ -315,12 +366,42 @@ class ExecutionsApi(_Resource):
         )
 
     def wait(
-        self, execution_id: str, *, poll_interval: float = 10.0, timeout: float | None = None
+        self,
+        execution_id: str,
+        *,
+        poll_interval: float | None = None,
+        timeout: float | None = None,
+        log: LogTarget = None,
     ) -> Execution:
-        """Reads the run until it finishes and its answer is saved, or it stops."""
+        """Reads the run until it finishes and its answer is saved, or it stops.
+
+        Like research.wait, it prints the run's log in a terminal or a notebook; log=False turns
+        it off. A run has no event stream, so the log comes from reading it: every 2 seconds
+        while it logs and every 10 seconds otherwise, unless you set poll_interval.
+        """
         deadline = None if timeout is None else time.monotonic() + timeout
+        out = research_log(log)
+        interval = poll_interval if poll_interval is not None else (2.0 if out else 10.0)
+        if out is None:
+            return self._poll(execution_id, interval, deadline, None)
+        with out:
+            return self._poll(execution_id, interval, deadline, out)
+
+    def _poll(
+        self,
+        execution_id: str,
+        poll_interval: float,
+        deadline: float | None,
+        out: ResearchLog | None,
+    ) -> Execution:
+        begun = False
         while True:
             execution = self._client.retrying(lambda: self.get(execution_id))
+            if execution is not None and out is not None:
+                if not begun:
+                    out.begin_run(execution_id, link=execution.links.app)
+                    begun = True
+                out.run_read(execution.model_dump(mode="json"))
             writing = (
                 execution is not None
                 and execution.status == "completed"
@@ -560,7 +641,12 @@ class Epoch:
             return None
 
     def stream(
-        self, path: str, last_event_id: str | None
+        self,
+        path: str,
+        last_event_id: str | None,
+        *,
+        deadline: float | None = None,
+        waiting: str = "The stream is still open",
     ) -> Iterator[tuple[str | None, dict[str, Any]]]:
         headers = {**self._headers, **self._authorization(), "Accept": "text/event-stream"}
         if last_event_id:
@@ -575,6 +661,9 @@ class Epoch:
             event_id: str | None = None
             data: list[str] = []
             for line in response.iter_lines():
+                # Keep-alive comments arrive every 15 seconds, so a deadline is noticed in time.
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise TimeoutError(waiting)
                 if not line:
                     if data:
                         yield event_id, json.loads("\n".join(data))
