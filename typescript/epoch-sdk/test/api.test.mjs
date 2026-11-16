@@ -218,3 +218,15 @@ test("a dataset keeps the file's own columns unless you name them", async () => 
   await epoch.datasets.prepare({ fileRef: "file:abc", name: "Sales" })
   assert.deepEqual(JSON.parse(calls[0].body).options.columns, [])
 })
+
+test("suggesting what you get back sends the question and the parts already chosen", async () => {
+  const table = { name: "features", type: "table", schema: [{ name: "date", type: "date" }] }
+  const { epoch, calls } = client(() => json(200, { outputs: [table] }))
+  const chosen = [{ name: "summary", type: "text", instructions: "Explain it." }]
+  const { outputs } = await epoch.outputs.suggest({ task: "Build ML features.", context: ["Daily."], outputs: chosen })
+  assert.deepEqual(outputs, [table])
+  assert.equal(calls[0].url, "https://api.test.epoch.trade/v1/outputs/suggestions")
+  assert.deepEqual(JSON.parse(calls[0].body), { task: "Build ML features.", context: ["Daily."], outputs: chosen })
+  await epoch.outputs.suggest({ task: "Build ML features.", part: { type: "table", name: "features" } })
+  assert.deepEqual(JSON.parse(calls[1].body).part, { type: "table", name: "features" })
+})

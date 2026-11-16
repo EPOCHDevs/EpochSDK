@@ -324,6 +324,25 @@ def test_a_request_or_period_this_client_cannot_read_is_left_out():
     )
 
 
+def test_suggested_parts_arrive_as_output_requests_and_unreadable_ones_are_left_out():
+    sent: list[dict] = []
+    table = {"name": "features", "type": "table", "schema": [{"name": "date", "type": "date"}]}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/outputs/suggestions"
+        sent.append(json.loads(request.content))
+        newer = {"name": "chart", "type": "chart", "kind": "line"}
+        return httpx.Response(200, json={"outputs": [OUTPUT, table, newer]})
+
+    suggested = client(handler).outputs.suggest(
+        "Build ML features.", context=["Daily."], outputs=[OUTPUT], part=None
+    )
+    assert [o.name for o in suggested] == ["summary", "features"]
+    assert sent == [{"task": "Build ML features.", "context": ["Daily."], "outputs": [OUTPUT]}]
+    client(handler).outputs.suggest("Build ML features.", part={"type": "table", "name": "features"})
+    assert sent[-1]["part"] == {"type": "table", "name": "features"}
+
+
 def test_upload_sends_the_exact_bytes_and_their_digest(tmp_path):
     path = tmp_path / "q3-sales.csv"
     path.write_bytes(b"date,revenue\n2026-07-01,1\n")

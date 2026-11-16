@@ -22,6 +22,207 @@
     }
   ],
   "paths": {
+    "/v1/outputs/suggestions": {
+      "post": {
+        "tags": [
+          "Research"
+        ],
+        "summary": "Suggest what you get back",
+        "description": "Draft the parts of an answer for a question (written answers, tables with columns, structured data with fields), or with `part`, one part's columns or fields. One model call; nothing is started or saved. Review and edit what comes back before using it in a research request.",
+        "operationId": "suggestOutputs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutputSuggestionCreate"
+              },
+              "examples": {
+                "parts": {
+                  "value": {
+                    "task": "Build ML features for the MAG7: short and long momentum, trend and volatility signals.",
+                    "context": [
+                      "Use daily data aligned to each close, with no look-ahead."
+                    ]
+                  }
+                },
+                "columns": {
+                  "value": {
+                    "task": "Build ML features for the MAG7: short and long momentum, trend and volatility signals.",
+                    "context": [
+                      "Use daily data aligned to each close, with no look-ahead."
+                    ],
+                    "part": {
+                      "type": "table",
+                      "name": "features"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Suggested parts; empty when there's nothing to suggest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputSuggestions"
+                },
+                "examples": {
+                  "parts": {
+                    "value": {
+                      "outputs": [
+                        {
+                          "name": "summary",
+                          "type": "text",
+                          "format": "markdown",
+                          "instructions": "Explain the features and how each is computed, in a short paragraph."
+                        },
+                        {
+                          "name": "features",
+                          "type": "table",
+                          "schema": [
+                            {
+                              "name": "date",
+                              "type": "date",
+                              "description": "Trading day of the close."
+                            },
+                            {
+                              "name": "symbol",
+                              "type": "string"
+                            },
+                            {
+                              "name": "momentum_21d",
+                              "type": "float64",
+                              "description": "21-session price change, as a fraction."
+                            }
+                          ]
+                        },
+                        {
+                          "name": "feature_notes",
+                          "type": "json",
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "lookbacks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "number"
+                                },
+                                "description": "Lookbacks in sessions."
+                              },
+                              "notes": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "lookbacks",
+                              "notes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "columns": {
+                    "value": {
+                      "outputs": [
+                        {
+                          "name": "features",
+                          "type": "table",
+                          "schema": [
+                            {
+                              "name": "date",
+                              "type": "date",
+                              "description": "Trading day of the close."
+                            },
+                            {
+                              "name": "symbol",
+                              "type": "string"
+                            },
+                            {
+                              "name": "momentum_21d",
+                              "type": "float64",
+                              "description": "21-session price change, as a fraction."
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked credential.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The credential lacks the required scope.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests for this credential; see Retry-After.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependent service is unavailable; see Retry-After.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "epoch": []
+          }
+        ],
+        "x-epoch-scopes": [
+          "research"
+        ],
+        "x-epoch-reuses": {
+          "native": [
+            "EpochAI's structure-suggestion model role (agent_src/document_preparation/schema_suggestions.py)"
+          ]
+        }
+      }
+    },
     "/v1/research": {
       "post": {
         "tags": [
@@ -6744,6 +6945,144 @@
         ],
         "title": "OperationStatus",
         "description": "Research maps Backend's request phase; executions map Backend's job status."
+      },
+      "OutputPart": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "table",
+              "json"
+            ],
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 400
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "name"
+        ],
+        "title": "OutputPart"
+      },
+      "OutputSuggestionCreate": {
+        "properties": {
+          "task": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "description": "The research question."
+          },
+          "context": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Context",
+            "description": "Guidance, as in a research request."
+          },
+          "outputs": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                }
+              }
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Outputs",
+            "description": "Parts already chosen; suggestions leave them out."
+          },
+          "part": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutputPart"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Suggest this one part's columns (a table) or fields (structured data) instead of the answer's parts."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task"
+        ],
+        "title": "OutputSuggestionCreate"
+      },
+      "OutputSuggestions": {
+        "properties": {
+          "outputs": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Outputs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "outputs"
+        ],
+        "title": "OutputSuggestions",
+        "description": "Suggested parts to review and edit before using them; empty when there's nothing to suggest."
       },
       "OutputValue": {
         "oneOf": [
