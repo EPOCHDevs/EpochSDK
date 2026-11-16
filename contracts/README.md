@@ -26,7 +26,7 @@ direction before they can define the full analysis adapter.
 interrupt/answer wire without importing or running its application. It is an
 interoperability input for language wrappers, not a second agent protocol.
 Regenerate/check it with `tools/snapshot_supervisor_wire.py --epoch-ai PATH
-[--check]` against a reviewed EpochAI checkout. The source commit and file hash
+[--check]` against a reviewed EpochAI checkout. The source commit and each file's hash
 are recorded; ordinary component tests require only the checked-in snapshot.
 
 `native-parameters.json` is the projection of the native Backend parameter

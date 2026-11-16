@@ -2,9 +2,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "source": {
     "repository": "EPOCHDevs/EpochAI",
-    "path": "agent_src/common/ask_user.py",
-    "commit": "74e3764a445c33ec164e654cb646e0cc3c6c0a8d",
-    "sha256": "dd3e237c77691997c7fab1232b07f57005c8fdb4bf6c282719c57a849c9840c9"
+    "commit": "02444690d4daaa0de08ba94a337bbf8fb184b4f0",
+    "files": [
+      {
+        "path": "agent_src/presentation/questions.py",
+        "sha256": "e09c41aaad1f0a1f0f9de259e942db3cd0c9faa96e6132cb6aee338ba42ba323"
+      },
+      {
+        "path": "agent_src/common/ask_user.py",
+        "sha256": "f2d9e9283c251f5f46d107dd8d7fb81830d5f1da1c15c3c6060ad8c16095d304"
+      }
+    ]
   },
   "schemas": {
     "AskUser": {
@@ -18,6 +26,10 @@
             "recommended": {
               "title": "Recommended",
               "type": "boolean"
+            },
+            "description": {
+              "title": "Description",
+              "type": "string"
             }
           },
           "required": [
@@ -60,6 +72,14 @@
         }
       },
       "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "briefing": {
+          "title": "Briefing",
+          "type": "string"
+        },
         "type": {
           "const": "ask_user",
           "title": "Type",

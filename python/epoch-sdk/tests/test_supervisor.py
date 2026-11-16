@@ -75,7 +75,8 @@ def test_sdk_interrupt_and_answer_models_agree_with_the_supervisors_owned_wire()
         local = model.model_json_schema()
         assert shape(local, local) == shape(owned, owned)
     Draft202012Validator(snapshot["schemas"]["AskUser"]).validate(
-        AskUser.model_validate(INTERRUPT["value"]).model_dump(mode="json")
+        # The wire leaves optional fields out rather than sending null.
+        AskUser.model_validate(INTERRUPT["value"]).model_dump(mode="json", exclude_none=True)
     )
     Draft202012Validator(snapshot["schemas"]["Answers"]).validate(
         Answers(answers=[Answer(question_index=0, free_form_input="Use 2025")]).model_dump(
@@ -674,3 +675,32 @@ def test_previous_turn_and_tool_call_prose_are_not_a_current_contextual_answer()
             assert isinstance(result, NoExecution) and result.publication_failed
             assert not result.reply and not backend_calls
     asyncio.run(scenario())
+
+
+def test_a_question_with_a_title_briefing_and_option_descriptions_reads() -> None:
+    # As the supervisor asks today (agent_src/presentation/questions.py): all three are optional.
+    value = {
+        **INTERRUPT["value"],
+        "title": "Feature history",
+        "briefing": "History and lookbacks are separate settings.",
+        "questions": [
+            {
+                **INTERRUPT["value"]["questions"][0],
+                "options": [
+                    {"label": "2024", "recommended": True, "description": "One calendar year."},
+                    {"label": "2025", "recommended": False},
+                ],
+            }
+        ],
+    }
+    asked = AskUser.model_validate(value)
+    assert asked.title == "Feature history"
+    assert asked.briefing == "History and lookbacks are separate settings."
+    assert [option.description for option in asked.questions[0].options] == [
+        "One calendar year.",
+        None,
+    ]
+    snapshot = json.loads((ROOT / "contracts/supervisor-native.schema.json").read_text())
+    Draft202012Validator(snapshot["schemas"]["AskUser"]).validate(
+        asked.model_dump(mode="json", exclude_none=True)
+    )

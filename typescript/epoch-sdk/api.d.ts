@@ -59,10 +59,15 @@ export type Output =
 export interface PendingQuestion {
   id: string
   kind: "ask_user" | "dataset_review"
+  /** A heading for this round of questions, when given. */
+  title?: string | null
+  /** Context shared by the round's questions, when given. */
+  briefing?: string | null
   questions?: {
     question: string
     description: string
-    options: { label: string; recommended: boolean }[]
+    /** `description` says what choosing the option changes, when the agent says. */
+    options: { label: string; recommended: boolean; description?: string | null }[]
     multi_select: boolean
   }[]
   review?: Record<string, unknown>

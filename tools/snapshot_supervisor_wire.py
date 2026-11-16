@@ -12,7 +12,7 @@ import hashlib
 import json
 import subprocess
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NotRequired
 
 from pydantic import (
     BaseModel,
@@ -26,31 +26,24 @@ from typing_extensions import TypedDict
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "contracts/supervisor-native.schema.json"
-NAMES = {
-    "QuestionOptionWire",
-    "QuestionWire",
-    "AskUserInterruptPayload",
-    "UserAnswer",
-    "AskUserResponse",
+# Each source file and the declarations it owns. The interrupt's wire moved to the presentation
+# module; the answer models stayed with the ask_user tool.
+SOURCES = {
+    "agent_src/presentation/questions.py": [
+        "QuestionOptionWire",
+        "QuestionWire",
+        "AskUserPresentationWire",
+        "AskUserInterruptPayload",
+    ],
+    "agent_src/common/ask_user.py": ["UserAnswer", "AskUserResponse"],
 }
 
 
 def snapshot(source_root: Path) -> dict:
-    path = source_root / "agent_src/common/ask_user.py"
-    raw = path.read_bytes()
-    parsed = ast.parse(raw)
-    classes = [
-        node
-        for node in parsed.body
-        if isinstance(node, ast.ClassDef) and node.name in NAMES
-    ]
-    if {node.name for node in classes} != NAMES:
-        raise ValueError(
-            "The supervisor wire declarations changed; review the source contract"
-        )
     namespace = {
         "__name__": "_epoch_supervisor_wire",
         "TypedDict": TypedDict,
+        "NotRequired": NotRequired,
         "Literal": Literal,
         "BaseModel": BaseModel,
         "ConfigDict": ConfigDict,
@@ -58,24 +51,37 @@ def snapshot(source_root: Path) -> dict:
         "StrictInt": StrictInt,
         "field_validator": field_validator,
     }
-    exec(  # noqa: S102 -- Execute only the reviewed schema classes, never application startup.
-        compile(
-            ast.Module(body=classes, type_ignores=[]),
-            str(path),
-            "exec",
-            dont_inherit=True,
-        ),
-        namespace,
-    )
+    sources = []
+    for relative, names in SOURCES.items():
+        path = source_root / relative
+        raw = path.read_bytes()
+        by_name = {
+            node.name: node
+            for node in ast.parse(raw).body
+            if isinstance(node, ast.ClassDef) and node.name in names
+        }
+        if set(by_name) != set(names):
+            raise ValueError(
+                f"The supervisor wire declarations in {relative} changed; review the source contract"
+            )
+        exec(  # noqa: S102 -- Execute only the reviewed schema classes, never application startup.
+            compile(
+                ast.Module(body=[by_name[name] for name in names], type_ignores=[]),
+                str(path),
+                "exec",
+                dont_inherit=True,
+            ),
+            namespace,
+        )
+        sources.append({"path": relative, "sha256": hashlib.sha256(raw).hexdigest()})
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "source": {
             "repository": "EPOCHDevs/EpochAI",
-            "path": "agent_src/common/ask_user.py",
             "commit": subprocess.check_output(
                 ["git", "-C", str(source_root), "rev-parse", "HEAD"], text=True
             ).strip(),
-            "sha256": hashlib.sha256(raw).hexdigest(),
+            "files": sources,
         },
         "schemas": {
             "AskUser": TypeAdapter(namespace["AskUserInterruptPayload"]).json_schema(),
