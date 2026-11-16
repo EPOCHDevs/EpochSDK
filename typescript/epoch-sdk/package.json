@@ -34,7 +34,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/EPOCHDevs/EpochSDK"
+    "url": "git+https://github.com/EPOCHDevs/EpochSDK.git",
+    "directory": "typescript/epoch-sdk"
   },
   "publishConfig": {
     "access": "public",
