@@ -1,0 +1,71 @@
+name: Publish @epochdevs/epoch-sdk to npm
+# Runs when a tag epoch-sdk-js-v<version> is pushed on a commit that is on dev; <version> must be that
+# commit's typescript/epoch-sdk/package.json version. The upload waits in the npm-epoch-sdk
+# environment, which accepts only these tags, for the maintainer's approval. npm trusts this workflow
+# (trusted publishing), so no token is stored, and it adds provenance because the repository is
+# public. The package's first version was published by hand: npm sets up a trusted publisher only for
+# a package that exists.
+on:
+  push:
+    tags: ['epoch-sdk-js-v*']
+permissions:
+  contents: read
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: version
+        name: Require a dev commit whose version is the tag's, and one npm doesn't have
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --no-tags origin dev
+          if ! git merge-base --is-ancestor HEAD origin/dev; then echo "$TAG is not on dev" >&2; exit 1; fi
+          version=$(node -p "require('./typescript/epoch-sdk/package.json').version")
+          if [ "$TAG" != "epoch-sdk-js-v$version" ]; then echo "$TAG does not name the commit's version $version" >&2; exit 1; fi
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/@epochdevs%2fepoch-sdk/$version")
+          if [ "$status" = 200 ]; then echo "@epochdevs/epoch-sdk $version is already on npm" >&2; exit 1; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Pack
+        run: |
+          mkdir dist
+          npm pack ./typescript/epoch-sdk --pack-destination dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: epoch-sdk-npm
+          path: dist/
+          if-no-files-found: error
+  publish:
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: npm-epoch-sdk
+      url: https://www.npmjs.com/package/@epochdevs/epoch-sdk/v/${{ needs.pack.outputs.version }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@^11.5.1
+      - uses: actions/download-artifact@v4
+        with:
+          name: epoch-sdk-npm
+          path: dist/
+      - run: npm publish dist/*.tgz --access public

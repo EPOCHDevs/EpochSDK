@@ -9,22 +9,23 @@ Backend persistence. It is not a full port of the Python data/MCP interfaces.
 
 `@epochdevs/epoch-sdk/api` calls Epoch's public v1 API with only `fetch`: no
 StratifyX or LangGraph client. It reads `EPOCH_API_KEY` (and `EPOCH_API_URL`).
-Install it from GitHub Packages (`@epochdevs:registry=https://npm.pkg.github.com`,
-with a token that has `read:packages`):
+Install it from npm:
 
 ```sh
 npm install @epochdevs/epoch-sdk
 ```
 
 The workflow entry (`@epochdevs/epoch-sdk`) also needs StratifyX, under its
-`@epoch/stratifyx` alias, and the LangGraph SDK. Install them alongside it:
+`@epoch/stratifyx` alias, and the LangGraph SDK. StratifyX is on GitHub Packages
+for now (`@epochdevs:registry=https://npm.pkg.github.com`, with a token that has
+`read:packages`), so add it there alongside this package:
 
 ```sh
 npm install @epoch/stratifyx@npm:@epochdevs/stratifyx@^3.3.0-rc.57 @langchain/langgraph-sdk@^1.12.1
 ```
 
-They aren't declared as peers, because GitHub Packages drops `peerDependenciesMeta`
-and npm would then try to install the alias, which no registry serves.
+They aren't declared as peers, because npm would then try to install the alias
+from a registry that doesn't serve it. The v1 client above needs neither.
 
 ```ts
 import { Epoch } from "@epochdevs/epoch-sdk/api"
