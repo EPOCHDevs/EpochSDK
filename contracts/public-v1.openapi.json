@@ -3,13 +3,13 @@
   "info": {
     "title": "Epoch API",
     "summary": "Public v1 API: research, saved-study execution, answers, files, datasets, Space and webhooks.",
-    "description": "Accepted for implementation (ENG-2504); not served until ENG-2512 mounts it. One host per environment serves only /v1/* and /.well-known/*. The service runs the Epoch SDK core server-side; callers never use the LangGraph protocol. Each operation's x-epoch-reuses names the SDK method and native routes it reuses, and any gap that needs new work. Generated from agent_src/public_api; do not edit by hand.",
+    "description": "One host per environment serves only /v1/* and /.well-known/*. The service runs the Epoch SDK core server-side; callers never use the LangGraph protocol. Each operation's x-epoch-reuses names the SDK method and native routes it reuses, and any gap that needs new work. Generated from agent_src/public_api; do not edit by hand.",
     "version": "1.0.0-draft"
   },
   "servers": [
     {
       "url": "https://api.{environment}.epoch.trade",
-      "description": "Host names are set by ENG-2521.",
+      "description": "One host per environment.",
       "variables": {
         "environment": {
           "enum": [
@@ -103,13 +103,28 @@
                       "status": "queued",
                       "operation_id": "msft-gross-margin-2026-11",
                       "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                      "request": {
+                        "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                        "context": [
+                          "Use reported quarterly income statements."
+                        ],
+                        "outputs": [
+                          {
+                            "name": "summary",
+                            "type": "text",
+                            "format": "markdown",
+                            "instructions": "Explain the comparison in three sentences."
+                          }
+                        ]
+                      },
                       "created_at": "2026-11-08T19:20:00Z",
                       "updated_at": "2026-11-08T19:20:00Z",
                       "questions": [],
                       "links": {
                         "self": "/v1/research/req_7f9c2d41",
                         "events": "/v1/research/req_7f9c2d41/events",
-                        "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                        "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                        "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                       }
                     }
                   }
@@ -237,13 +252,28 @@
                       "status": "running",
                       "operation_id": "msft-gross-margin-2026-11",
                       "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                      "request": {
+                        "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                        "context": [
+                          "Use reported quarterly income statements."
+                        ],
+                        "outputs": [
+                          {
+                            "name": "summary",
+                            "type": "text",
+                            "format": "markdown",
+                            "instructions": "Explain the comparison in three sentences."
+                          }
+                        ]
+                      },
                       "created_at": "2026-11-08T19:20:00Z",
                       "updated_at": "2026-11-08T19:20:04Z",
                       "questions": [],
                       "links": {
                         "self": "/v1/research/req_7f9c2d41",
                         "events": "/v1/research/req_7f9c2d41/events",
-                        "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                        "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                        "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                       }
                     }
                   },
@@ -254,6 +284,20 @@
                       "status": "needs_input",
                       "operation_id": "msft-gross-margin-2026-11",
                       "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                      "request": {
+                        "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                        "context": [
+                          "Use reported quarterly income statements."
+                        ],
+                        "outputs": [
+                          {
+                            "name": "summary",
+                            "type": "text",
+                            "format": "markdown",
+                            "instructions": "Explain the comparison in three sentences."
+                          }
+                        ]
+                      },
                       "created_at": "2026-11-08T19:20:00Z",
                       "updated_at": "2026-11-08T19:20:31Z",
                       "questions": [
@@ -282,7 +326,8 @@
                       "links": {
                         "self": "/v1/research/req_7f9c2d41",
                         "events": "/v1/research/req_7f9c2d41/events",
-                        "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                        "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                        "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                       }
                     }
                   },
@@ -293,6 +338,20 @@
                       "status": "completed",
                       "operation_id": "msft-gross-margin-2026-11",
                       "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                      "request": {
+                        "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                        "context": [
+                          "Use reported quarterly income statements."
+                        ],
+                        "outputs": [
+                          {
+                            "name": "summary",
+                            "type": "text",
+                            "format": "markdown",
+                            "instructions": "Explain the comparison in three sentences."
+                          }
+                        ]
+                      },
                       "created_at": "2026-11-08T19:20:00Z",
                       "updated_at": "2026-11-08T19:24:12Z",
                       "questions": [],
@@ -311,7 +370,8 @@
                       "links": {
                         "self": "/v1/research/req_7f9c2d41",
                         "events": "/v1/research/req_7f9c2d41/events",
-                        "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb",
+                        "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                        "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb",
                         "response": "/v1/responses/rsp_1111111111111111111111111111111111111111111111111111111111111111?version=1"
                       }
                     }
@@ -513,6 +573,20 @@
                   "status": "needs_input",
                   "operation_id": "msft-gross-margin-2026-11",
                   "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                  "request": {
+                    "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                    "context": [
+                      "Use reported quarterly income statements."
+                    ],
+                    "outputs": [
+                      {
+                        "name": "summary",
+                        "type": "text",
+                        "format": "markdown",
+                        "instructions": "Explain the comparison in three sentences."
+                      }
+                    ]
+                  },
                   "created_at": "2026-11-08T19:20:00Z",
                   "updated_at": "2026-11-08T19:20:31Z",
                   "questions": [
@@ -541,7 +615,8 @@
                   "links": {
                     "self": "/v1/research/req_7f9c2d41",
                     "events": "/v1/research/req_7f9c2d41/events",
-                    "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                    "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                    "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                   }
                 }
               },
@@ -553,6 +628,20 @@
                   "status": "completed",
                   "operation_id": "msft-gross-margin-2026-11",
                   "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                  "request": {
+                    "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                    "context": [
+                      "Use reported quarterly income statements."
+                    ],
+                    "outputs": [
+                      {
+                        "name": "summary",
+                        "type": "text",
+                        "format": "markdown",
+                        "instructions": "Explain the comparison in three sentences."
+                      }
+                    ]
+                  },
                   "created_at": "2026-11-08T19:20:00Z",
                   "updated_at": "2026-11-08T19:24:12Z",
                   "questions": [],
@@ -571,7 +660,8 @@
                   "links": {
                     "self": "/v1/research/req_7f9c2d41",
                     "events": "/v1/research/req_7f9c2d41/events",
-                    "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb",
+                    "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                    "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb",
                     "response": "/v1/responses/rsp_1111111111111111111111111111111111111111111111111111111111111111?version=1"
                   }
                 }
@@ -584,6 +674,20 @@
                   "status": "failed",
                   "operation_id": "msft-gross-margin-2026-11",
                   "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                  "request": {
+                    "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                    "context": [
+                      "Use reported quarterly income statements."
+                    ],
+                    "outputs": [
+                      {
+                        "name": "summary",
+                        "type": "text",
+                        "format": "markdown",
+                        "instructions": "Explain the comparison in three sentences."
+                      }
+                    ]
+                  },
                   "created_at": "2026-11-08T19:20:00Z",
                   "updated_at": "2026-11-08T19:20:04Z",
                   "questions": [],
@@ -597,7 +701,8 @@
                   "links": {
                     "self": "/v1/research/req_7f9c2d41",
                     "events": "/v1/research/req_7f9c2d41/events",
-                    "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                    "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                    "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                   }
                 }
               }
@@ -739,13 +844,28 @@
                       "status": "running",
                       "operation_id": "msft-gross-margin-2026-11",
                       "thread_id": "01a1b98d-4c63-7442-b53f-97e1736465fb",
+                      "request": {
+                        "task": "Compare Microsoft's quarterly gross margin with Apple's over the last two years.",
+                        "context": [
+                          "Use reported quarterly income statements."
+                        ],
+                        "outputs": [
+                          {
+                            "name": "summary",
+                            "type": "text",
+                            "format": "markdown",
+                            "instructions": "Explain the comparison in three sentences."
+                          }
+                        ]
+                      },
                       "created_at": "2026-11-08T19:20:00Z",
                       "updated_at": "2026-11-08T19:20:04Z",
                       "questions": [],
                       "links": {
                         "self": "/v1/research/req_7f9c2d41",
                         "events": "/v1/research/req_7f9c2d41/events",
-                        "app": "https://app.epoch.trade/markets?threadId=01a1b98d-4c63-7442-b53f-97e1736465fb"
+                        "app": "https://app.epoch.trade/api-playground/research/req_7f9c2d41",
+                        "conversation": "https://app.epoch.trade/markets?thread=01a1b98d-4c63-7442-b53f-97e1736465fb"
                       }
                     }
                   }
@@ -925,6 +1045,10 @@
                       "status": "queued",
                       "operation_id": "refresh-msft-2025",
                       "study_id": "std_2b7e11aa",
+                      "period": {
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                      },
                       "created_at": "2026-11-08T19:30:00Z",
                       "links": {
                         "self": "/v1/executions/job_5a1e90c3"
@@ -1070,6 +1194,10 @@
                       "status": "running",
                       "operation_id": "refresh-msft-2025",
                       "study_id": "std_2b7e11aa",
+                      "period": {
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                      },
                       "created_at": "2026-11-08T19:30:00Z",
                       "progress": {
                         "phase": "simulating",
@@ -1087,6 +1215,10 @@
                       "status": "completed",
                       "operation_id": "refresh-msft-2025",
                       "study_id": "std_2b7e11aa",
+                      "period": {
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                      },
                       "created_at": "2026-11-08T19:30:00Z",
                       "answer": {
                         "status": "completed",
@@ -2070,7 +2202,7 @@
           "Webhooks"
         ],
         "summary": "Create a webhook endpoint",
-        "description": "Register an HTTPS endpoint. The signing secret is returned once.",
+        "description": "Register an HTTPS endpoint. The signing secret is returned once. Not available yet: this operation is documented ahead of its release and answers 501.",
         "operationId": "createWebhook",
         "security": [
           {
@@ -2207,6 +2339,7 @@
           "Webhooks"
         ],
         "summary": "List webhook endpoints",
+        "description": "Not available yet: this operation is documented ahead of its release and answers 501.",
         "operationId": "listWebhooks",
         "security": [
           {
@@ -2342,6 +2475,7 @@
           "Webhooks"
         ],
         "summary": "Delete a webhook endpoint",
+        "description": "Not available yet: this operation is documented ahead of its release and answers 501.",
         "operationId": "deleteWebhook",
         "security": [
           {
@@ -2588,7 +2722,7 @@
           "Auth"
         ],
         "summary": "Find where to sign in",
-        "description": "OAuth 2.0 protected resource metadata (RFC 9728). It names this environment's sign-in issuer: Epoch's sign-in service (ENG-2795), whose /.well-known/oauth-authorization-server lists its endpoints, or, until that is configured, Cognito with the public PKCE client epoch login uses. 404 when this server offers no browser sign-in.",
+        "description": "OAuth 2.0 protected resource metadata (RFC 9728). It names this environment's sign-in issuer: Epoch's sign-in service, whose /.well-known/oauth-authorization-server lists its endpoints, or, until that is configured, Cognito with the public PKCE client epoch login uses. 404 when this server offers no browser sign-in.",
         "operationId": "getProtectedResourceMetadata",
         "responses": {
           "200": {
@@ -5539,6 +5673,28 @@
             ],
             "title": "Parent Execution Id"
           },
+          "period": {
+            "anyOf": [
+              {
+                "properties": {
+                  "end": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The dates the run covers."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -6445,7 +6601,19 @@
               }
             ],
             "title": "App",
-            "description": "Opens the same work in the Epoch Terminal."
+            "description": "Opens the research in the Epoch API Playground: its log, its answer, and runs for other dates."
+          },
+          "conversation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation",
+            "description": "Opens the research's conversation in the Epoch Terminal, where questions the API cannot describe are answered."
           },
           "response": {
             "anyOf": [
@@ -6699,7 +6867,7 @@
             },
             "type": "array",
             "title": "Authorization Servers",
-            "description": "The issuer of this environment's sign-in. Epoch's sign-in service (ENG-2795) lists its endpoints at {issuer}/.well-known/oauth-authorization-server."
+            "description": "The issuer of this environment's sign-in. Epoch's sign-in service lists its endpoints at {issuer}/.well-known/oauth-authorization-server."
           },
           "scopes_supported": {
             "items": {
@@ -6822,6 +6990,17 @@
               }
             ],
             "title": "Thread Id"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The request as it was accepted."
           },
           "created_at": {
             "type": "string",

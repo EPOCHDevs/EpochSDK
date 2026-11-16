@@ -264,6 +264,42 @@ def test_a_run_needs_exactly_one_source_and_sends_its_dates():
         epoch.executions.create()
 
 
+def test_research_reads_its_request_and_its_links():
+    request = {"task": "Compare MSFT and SPY volatility in 2025.", "outputs": [OUTPUT]}
+    links = {
+        **RESEARCH["links"],
+        "app": "https://app.epoch.trade/api-playground/research/req_1",
+        "conversation": "https://app.epoch.trade/markets?thread=thread-1",
+    }
+    reply = {**RESEARCH, "request": request, "links": links}
+    research = client(lambda _: httpx.Response(200, json=reply)).research.get("req_1")
+    assert research.request is not None and research.request.to_wire() == request
+    assert research.links.app == links["app"]
+    assert research.links.conversation == links["conversation"]
+
+
+def test_a_request_or_period_this_client_cannot_read_is_left_out():
+    # A newer server can send shapes an older client doesn't know; the rest of the reply still reads.
+    reply = {**RESEARCH, "request": {"task": "Ask.", "outputs": [OUTPUT], "newer": True}}
+    assert client(lambda _: httpx.Response(200, json=reply)).research.get("req_1").request is None
+    assert api_module.Research.model_validate(RESEARCH).request is None
+    run = {
+        "id": "job_1",
+        "status": "running",
+        "study_id": "std_1",
+        "created_at": "2026-11-11T10:00:00Z",
+        "links": {"self": "/v1/executions/job_1"},
+    }
+    assert api_module.Execution.model_validate({**run, "period": {"start": "soon"}}).period is None
+    period = api_module.Execution.model_validate(
+        {**run, "period": {"start": "2026-01-01", "end": "2026-11-15"}}
+    ).period
+    assert period is not None and (str(period.start), str(period.end)) == (
+        "2026-01-01",
+        "2026-11-15",
+    )
+
+
 def test_upload_sends_the_exact_bytes_and_their_digest(tmp_path):
     path = tmp_path / "q3-sales.csv"
     path.write_bytes(b"date,revenue\n2026-07-01,1\n")

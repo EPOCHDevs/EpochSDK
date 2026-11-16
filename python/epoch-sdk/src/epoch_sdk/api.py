@@ -28,14 +28,22 @@ import uuid
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self
 from urllib.parse import quote
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
+)
 
 from .contracts import DomainError, OutputRequest, RunRequest
 from .errors import EpochError
+from .native_parameters import NativePeriod
 from .research_log import LogTarget, ResearchLog, research_log
 from .responses import ResponseTablePage, SavedResearchResponse
 
@@ -72,6 +80,14 @@ class _Reply(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 
+def _or_none(value: Any, handler: ValidatorFunctionWrapHandler) -> Any:
+    # A field in a shape this client can't read is left out; the rest of the reply still reads.
+    try:
+        return handler(value)
+    except ValidationError:
+        return None
+
+
 class Problem(_Reply):
     title: str
     status: int
@@ -89,7 +105,16 @@ class ResponseRef(_Reply):
 class Links(_Reply):
     self_: str = Field(alias="self")
     events: str | None = None
-    app: str | None = Field(default=None, description="Opens the same work in the Epoch Terminal.")
+    app: str | None = Field(
+        default=None,
+        description="Opens the research in the Epoch API Playground: its log, its answer, and runs "
+        "for other dates.",
+    )
+    conversation: str | None = Field(
+        default=None,
+        description="Opens the research's conversation in the Epoch Terminal, where questions the "
+        "API cannot describe are answered.",
+    )
     response: str | None = None
 
 
@@ -134,6 +159,10 @@ class Research(_Reply):
     status: Status
     operation_id: str
     thread_id: str | None = None
+    request: Annotated[RunRequest | None, WrapValidator(_or_none)] = Field(
+        default=None,
+        description="The request as it was accepted. Pass it to research.create to ask again.",
+    )
     created_at: datetime
     updated_at: datetime
     questions: list[PendingQuestion] = Field(default_factory=list[PendingQuestion])
@@ -164,6 +193,9 @@ class Execution(_Reply):
     operation_id: str | None = None
     study_id: str
     parent_execution_id: str | None = None
+    period: Annotated[NativePeriod | None, WrapValidator(_or_none)] = Field(
+        default=None, description="The dates the run covers."
+    )
     created_at: datetime
     progress: ExecutionProgress | None = None
     answer: ExecutionAnswer | None = None
