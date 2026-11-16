@@ -1,4 +1,4 @@
-"""Rich progress and prompt_toolkit input over the shared session core."""
+"""The research log, rich answers and prompt_toolkit input over the shared session core."""
 
 from __future__ import annotations
 
@@ -6,8 +6,7 @@ import json
 
 from prompt_toolkit import PromptSession
 from pydantic import JsonValue, TypeAdapter
-from rich.console import Console, Group
-from rich.live import Live
+from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
@@ -16,12 +15,12 @@ from stratifyx.types import DatasetBuildRequest, DatasetSchemaChoice_Provided
 
 from .dataset_reviews import DatasetConfigureInterrupt, DatasetWorkflowInterrupt, dataset_response
 from .output_validation import JsonValueOutput, TextValue
-from .presentation import question_answer, ui_text
+from .presentation import question_answer
 from .research import ResearchCompleted
+from .research_log import ResearchLog
 from .session import (
     EventHandler,
     ResearchSession,
-    SessionCompleted,
     SessionEvent,
     SessionProgress,
     SessionQuestions,
@@ -33,38 +32,46 @@ from .supervisor import Answer, Answers, InterruptResponse, NeedsInput
 
 
 class TerminalView:
-    def __init__(self, session: ResearchSession, *, console: Console | None = None) -> None:
+    def __init__(
+        self,
+        session: ResearchSession,
+        *,
+        console: Console | None = None,
+        log: ResearchLog | None = None,
+    ) -> None:
         self.session = session
         self.console = console or Console()
-        self.rows: dict[str, str] = {}
         self.status = "Connecting"
-        self.live = Live(console=self.console, auto_refresh=False, vertical_overflow="visible")
-
-    def _refresh(self) -> None:
-        lines = [Text(self.status, style="bold cyan")]
-        lines.extend(Text(value) for value in self.rows.values())
-        self.live.update(
-            Panel(Group(*lines), title="Epoch · " + self.session.operation_id), refresh=True
+        # The same lines epoch.research.wait() prints, on the console's own output.
+        self.log = log or ResearchLog(
+            self.console.file,
+            live=self.console.is_terminal,
+            color=self.console.is_terminal and not self.console.no_color,
         )
+        self.log.reattach = "run the same command to follow it."
+        self._begun = False
 
     async def update(self, event: SessionEvent) -> None:
+        if not self._begun:
+            self._begun = True
+            self.log.begin_research(self.session.operation_id)
         if isinstance(event, SessionStatus):
             self.status = "Research in progress" if event.status == "in_progress" else "Accepted"
+            self.log.status("running" if event.status == "in_progress" else "queued")
         elif isinstance(event, SessionUI):
-            text = ui_text(event.message)
-            if text:
-                self.rows[event.message.id] = text
-            else:
-                self.rows.pop(event.message.id, None)
+            self.log.ui(event.message.name, event.message.id, event.message.props)
         elif isinstance(event, SessionUIRemoved):
-            self.rows.pop(event.id, None)
+            self.log.ui_removed(event.id)
+        elif isinstance(event, SessionProgress):
+            self.log.progress(event.progress.model_dump())
         elif isinstance(event, SessionQuestions):
             self.status = "Waiting for your reply"
-        elif isinstance(event, SessionCompleted):
+            asked, reviews = _asked(event.waiting)
+            self.log.questions(asked, reviews=reviews)
+        else:  # SessionCompleted
             self.status = "Answer published"
-        elif isinstance(event, SessionProgress):
-            return  # The UI rows already show each step; progress carries ids for API callers.
-        self._refresh()
+            saved = event.result.response
+            self.log.answer_saved(saved.response_id, saved.version)
 
     async def _dataset_reply(
         self, payload: DatasetWorkflowInterrupt, prompt: PromptSession[str]
@@ -205,7 +212,7 @@ class TerminalView:
             )
 
     async def ask(self, waiting: NeedsInput) -> dict[str, InterruptResponse] | None:
-        self.live.stop()
+        self.log.pause()
         prompt = PromptSession[str]()
         replies: dict[str, InterruptResponse] = {}
         try:
@@ -261,12 +268,11 @@ class TerminalView:
         except (EOFError, KeyboardInterrupt):
             return None
         finally:
-            self.live.start()
+            self.log.resume()
         return replies
 
     async def _answer(self, result: ResearchCompleted) -> None:
-        saved = result.response
-        self.console.print(Text(f"Saved answer · revision {saved.version}", style="bold green"))
+        saved = result.response  # The log has already said it was saved, and which version.
         for qualification in saved.content.qualifications:
             self.console.print(
                 Panel(
@@ -315,11 +321,8 @@ class TerminalView:
             if on_event is not None:
                 await on_event(event)
 
-        self.live.start()
-        try:
+        with self.log:
             result = await self.session.run(on_event=update, on_question=self.ask)
-        finally:
-            self.live.stop()
         if isinstance(result, ResearchCompleted):
             await self._answer(result)
         else:
@@ -327,3 +330,16 @@ class TerminalView:
                 Text("Waiting on the server. Reuse this operation ID to continue.", style="yellow")
             )
         return result
+
+
+def _asked(waiting: NeedsInput) -> tuple[list[str], int]:
+    """The questions Epoch asks, in order, and how many datasets it asks you to review."""
+    asked: list[str] = []
+    reviews = 0
+    for interrupt in waiting.interrupts:
+        kind = interrupt.value.get("type") if isinstance(interrupt.value, dict) else None
+        if kind == "dataset_review":
+            reviews += 1
+        elif kind == "ask_user":
+            asked.extend(question.question for question in interrupt.ask_user().questions)
+    return asked, reviews

@@ -53,6 +53,10 @@ which distinguishes saved-answer reattachment, fresh research and plan replay.
    original operation, supplies its exact saved identities, attaches to its
    thread, and checks that the answer uses the same execution. It does not start
    the prerequisite case automatically.
+4. **04_follow_research_log.ipynb**: the public v1 client (`Epoch()`, with
+   `EPOCH_API_KEY`). It asks one question, shows the log `wait()` prints in the
+   cell while research works, reads the answer and runs the same study again for
+   new dates. It needs none of the helpers or cases above.
 
 Each cell explains what it does. `epoch = connect()` prepares the normal SDK
 client from the environment; `await check_services()` prints package versions
