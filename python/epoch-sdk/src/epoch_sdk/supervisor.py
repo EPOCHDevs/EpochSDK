@@ -34,9 +34,8 @@ from stratifyx import (
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
-from .contracts import DomainError
+from .contracts import Contract, DomainError, NonBlank, ResetTime
 from .credentials import Token, http_clients
-from .platform_files import PlatformFilesClient
 from .dataset_reviews import (
     DatasetConfigureInterrupt,
     DatasetConfigureResponse,
@@ -45,6 +44,7 @@ from .dataset_reviews import (
     DatasetWorkflowInterrupt,
     interrupt_adapter,
 )
+from .platform_files import PlatformFilesClient
 from .responses import (
     ResearchResponseContent,
     ResponsePlanReference,
@@ -283,6 +283,13 @@ class _Message(BaseModel):
     tool_calls: list[_MessageToolCall] = Field(default_factory=list[_MessageToolCall])
 
 
+class _UsageLimit(Contract):
+    meter: Literal["assistant"]
+    state: Literal["reached"]
+    resets_at: ResetTime
+    question_message_id: NonBlank | None = None
+
+
 class _State(BaseModel):
     """Finite consumer projection; unused native state is never rewritten."""
 
@@ -293,6 +300,7 @@ class _State(BaseModel):
     published_response: ResponseReference | None = None
     publication_error: DomainError | None = None
     authority_turn_id: str | None = None
+    usage_limit: _UsageLimit | None = None
     interrupts: list[GraphInterrupt] = Field(
         default_factory=list[GraphInterrupt], alias="__interrupt__"
     )
@@ -309,7 +317,7 @@ class _State(BaseModel):
             value = {
                 key: item
                 for key, item in raw.items()
-                if key not in {"primary_execution_id", "study_id"} or item is not None
+                if key not in {"primary_execution_id", "study_id", "ai_text"} or item is not None
             }
         return ResponseReference.model_validate(value)
 
@@ -1131,6 +1139,14 @@ class SupervisorClient:
         native = await self._native_research_outcome(handle)
         if native is not None:
             return native
+        if state.usage_limit is not None:
+            from .api import Problem, UsageLimitReached
+            marker = state.usage_limit
+            if marker.question_message_id not in {None, handle.request_id}:
+                raise ValueError("The usage notice belongs to another research request")
+            raise UsageLimitReached(Problem(title="Weekly allowance reached", status=403,
+                code="USAGE_LIMIT_REACHED", retryable=False, meter=marker.meter,
+                resets_at=marker.resets_at))
         self._check_request(handle, state)
         if state.interrupts:
             return NeedsInput(

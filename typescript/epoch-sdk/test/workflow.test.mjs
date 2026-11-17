@@ -84,7 +84,8 @@ function harness() {
       getHistory: async (id, options) => {
         graphCalls.push(["history", id, options])
         return [{ values: { authority_turn_id: `user-turn:${state.record.request_id}`,
-          ...(state.published ? { published_response: state.published } : {}) }, interrupts: copy(state.interrupts) }]
+          ...(state.published ? { published_response: state.published } : {}),
+          ...(state.usageLimit ? { usage_limit: state.usageLimit } : {}) }, interrupts: copy(state.interrupts) }]
       },
     },
     runs: {
@@ -372,4 +373,17 @@ test("expired dataset reviews remain observable and continue without another nat
   assert.equal(current.interrupts[0].value.operation.state, "expired")
   await h.client.resume(current, { "dataset-one": resultDecision(h.state.datasetBuild, "continue") }, { wait: false })
   assert.equal(h.calls.filter(c => c.path.endsWith("/actions")).length, 0)
+})
+
+
+test("a normally ended quota turn raises guidance without a native failure write", async () => {
+  const { UsageLimitReached } = await import("../api.js")
+  const h = harness()
+  await h.client.run(request(), { operationId: "quota", wait: false })
+  h.state.runStatus = "success"
+  h.state.usageLimit = { meter: "assistant", state: "reached", resets_at: "2099-11-23T00:00:00Z", question_message_id: h.state.record.request_id }
+  const before = h.calls.length
+  await assert.rejects(h.client.status("quota"), error => error instanceof UsageLimitReached && !error.retryable && error.meter === "assistant")
+  assert.ok(h.calls.slice(before).every(call => call.method === "GET"))
+  assert.equal(h.graphCalls.filter(call => call[0] === "runs.create").length, 1)
 })
