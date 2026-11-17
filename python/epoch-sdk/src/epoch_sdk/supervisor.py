@@ -259,7 +259,8 @@ class _Outcome(BaseModel):
     tool_name: Literal["build_study", "run_study", "run_monte_carlo", "tune_study"]
     subject: str | None
     status: Literal[
-        "saved", "completed", "failed", "cancelled", "not_started", "infeasible", "unknown"
+        "saved", "source_catalogue", "completed", "failed", "cancelled",
+        "not_started", "infeasible", "unknown"
     ]
     detail: str
     execution_id: str | None = None
