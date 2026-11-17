@@ -30,7 +30,7 @@ finally:
 
 Selection returns the exact native constructor, arguments, registry version and available metadata. Preserve that binding; do not reconstruct it from a display name. TE economic IDs and colon-delimited market symbols are different inputs. An approved proxy has an explicit qualification. Vendor-advertised coverage and accepted cached coverage are separate fields; neither proves every requested observation is present.
 
-Search is a bounded candidate operation. `needs_detail`, `incomplete`, `no_match`, provider failures and continuation cursors are meaningful states. Semantic scores remain internal. Exact lookup and ordinary browse do not invoke the embedding model or reranker.
+Search is a bounded candidate operation. `needs_detail`, `incomplete`, `no_match`, provider failures and continuation cursors are meaningful states. Long company descriptions in search are original-text excerpts of at most 480 characters plus an ellipsis; `details` returns the full original text. Semantic scores remain internal. Exact lookup and ordinary browse do not invoke the embedding model or reranker.
 
 ## Complete asset universes
 
