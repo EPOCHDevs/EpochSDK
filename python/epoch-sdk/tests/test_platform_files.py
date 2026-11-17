@@ -212,3 +212,89 @@ def test_image_pages_are_validated_and_do_not_change_the_pdf_preview_contract():
                     pass
 
     asyncio.run(scenario())
+
+
+def test_native_document_contract_keeps_positions_headings_and_identity():
+    read = json.loads((FIXTURES / "document_read.json").read_text())
+    page = json.loads((FIXTURES / "document_page.json").read_text())
+    passage = json.loads((FIXTURES / "document_passage.json").read_text())
+    original = (FIXTURES / "document-original.txt").read_bytes()
+
+    async def scenario():
+        calls = []
+
+        def transport(request):
+            calls.append(request)
+            if request.url.path.endswith("/reads"):
+                assert json.loads(request.content) == {"file_ref": read["source"]["file_ref"]}
+                body = read
+            elif "/reads/" in request.url.path:
+                body = read
+            elif request.url.path.endswith("/blocks"):
+                assert request.url.params["max_bytes"] == "32768"
+                body = page
+            else:
+                body = passage
+            return httpx.Response(200, json=body)
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            result = await client.begin_document_read(read["source"]["file_ref"])
+            assert result.outline and result.outline[0].text == "Résumé"
+            assert (await client.document_read(read["read_ref"])).read_ref == read["read_ref"]
+            content = await client.document_content(page["document_version_ref"])
+            block = (
+                await client.document_passage(
+                    page["document_version_ref"], content.blocks[0].block_ref
+                )
+            ).block
+            assert block.start_byte is not None and block.length is not None
+            assert (
+                original[block.start_byte : block.start_byte + block.length].decode() == block.text
+            )
+            assert len(calls) == 4
+
+    asyncio.run(scenario())
+
+
+def test_document_positions_and_page_identity_cannot_be_fabricated():
+    page = json.loads((FIXTURES / "document_page.json").read_text())
+
+    async def scenario():
+        for change in [
+            lambda p: p.update(offset=1),
+            lambda p: p["blocks"][0].update(length=1),
+            lambda p: p["blocks"][0].pop("length"),
+        ]:
+            invalid = copy.deepcopy(page)
+            change(invalid)
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(
+                    lambda _, value=invalid: httpx.Response(200, json=value)
+                )
+            ) as http:
+                client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+                with pytest.raises(ValueError, match="inconsistent"):
+                    await client.document_content(page["document_version_ref"])
+
+    asyncio.run(scenario())
+
+
+def test_invalid_document_references_and_bounds_fail_before_authentication():
+    async def scenario():
+        def forbidden():
+            pytest.fail("Authentication must not run for an invalid request")
+
+        client = PlatformFilesClient("https://api.test", token=forbidden)
+        try:
+            for ref in ["document:invalid", "document:" + "b" * 64 + "\n"]:
+                with pytest.raises(ValueError):
+                    await client.document_content(ref)
+            with pytest.raises(ValueError):
+                await client.document_content("document:" + "b" * 64, offset=True)
+            with pytest.raises(ValueError):
+                await client.document_passage("document:" + "b" * 64, "block:" + "c" * 64 + "\n")
+        finally:
+            await client.aclose()
+
+    asyncio.run(scenario())

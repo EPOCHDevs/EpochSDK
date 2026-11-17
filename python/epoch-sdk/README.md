@@ -433,3 +433,5 @@ PNG pages, with dimensions, size and SHA-256 for each. Read one with
 `async with files.content(ref, image_page=2) as result`. The existing PDF
 `preview` contract is unchanged. Conversion starts on explicit preview access,
 never on upload, and starts no AI.
+
+`PlatformFilesClient` also provides explicit native source reads through `begin_document_read`, `document_read`, `document_content` and `document_passage`. Closed Platform-owned models preserve heading/attachment metadata and optional exact original-byte positions. A position is omitted when decoded HTML or MIME text cannot map to one source span; the block citation remains valid. Reading is an explicit operation, with no automatic request retries.

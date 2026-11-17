@@ -1,0 +1,23 @@
+{
+  "document_version_ref": "document:baea52cfc922132f5842d9100ee375675f4ee9114b62b872872c2df93fb2388b",
+  "source": {
+    "file_ref": "file:cd61c7e3534b013fae818065308c58d4876759cfc809df5d3aac4afa880a1670",
+    "name": "report.md",
+    "media_type": "application/octet-stream",
+    "size_bytes": 26,
+    "status": "uploaded",
+    "created_at": "2026-11-17T14:46:25Z",
+    "content_sha256": "cd61c7e3534b013fae818065308c58d4876759cfc809df5d3aac4afa880a1670",
+    "detected_media_type": "text/markdown",
+    "category": "document"
+  },
+  "content_sha256": "ddbc7c16cf4089db5bf5671f080bc59add4a22216b0c96c7d969b29929a4f186",
+  "block": {
+    "block_ref": "block:23e902ef3f68cb2d1176b46e456016e6a6c8476f02563b18b07f252951472c17",
+    "kind": "text",
+    "text": "# Résumé\n\nRevenue grew.\n",
+    "start_byte": 0,
+    "length": 26,
+    "layer": "primary"
+  }
+}
