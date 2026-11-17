@@ -38,6 +38,38 @@ def test_sdk_manifest_reader_keeps_native_values_without_a_graph_call():
     asyncio.run(scenario())
 
 
+def test_specialist_refusal_preserves_its_terminal_payload_and_is_an_mcp_error():
+    from epoch_sdk.agent_tools import AgentToolOperation
+    from epoch_sdk.agent_tools_contract import AgentToolHandle
+    from epoch_sdk.mcp import _value
+
+    problem = {"code": "USAGE_LIMIT_REACHED", "retryable": False,
+               "meter": "assistant", "resets_at": "2099-11-23T00:00:00Z"}
+    operation = AgentToolOperation(
+        status="failed", native_status="success", tool_status="error",
+        handle=AgentToolHandle(workspace_id="workspace", run_id="run", tool_call_id="call",
+                               tool="build_study"), output=problem,
+    )
+    result = _value(operation)
+    assert result.is_error
+    assert result.structured_content["output"] == problem
+    assert result.structured_content["handle"]["run_id"] == "run"
+
+
+def test_workflow_refusal_is_an_mcp_error_with_reset_guidance():
+    from epoch_sdk.api import Problem, UsageLimitReached
+    from epoch_sdk.workflow_mcp import _error
+
+    result = _error(UsageLimitReached(Problem(
+        title="Weekly usage limit reached", status=403, code="USAGE_LIMIT_REACHED",
+        meter="assistant", resets_at="2099-11-23T00:00:00Z",
+    )))
+    assert result.is_error
+    assert result.structured_content["error"]["code"] == "USAGE_LIMIT_REACHED"
+    assert result.structured_content["error"]["retryable"] is False
+    assert result.structured_content["error"]["resets_at"] == "2099-11-23T00:00:00Z"
+
+
 def test_sdk_manifest_failure_retains_execution_identity():
     async def scenario():
         schema = dashboard()

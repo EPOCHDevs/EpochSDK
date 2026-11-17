@@ -2,6 +2,7 @@ import { EpochError, canonical, invariant, normalizedDeclarations, operationId, 
   requestToWire, responseToWire, statusCode, throwNativeError } from "./contract.js"
 import { datasetInterrupt, validateDatasetResponse, refreshDatasetInterrupts,
   confirmDatasetDecisions, interruptionIdentity } from "./dataset-review.js"
+import { UsageLimitReached } from "./api.js"
 
 const opts = signal => ({ maxRetries: 0, abortSignal: signal })
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value)
@@ -211,6 +212,15 @@ export async function researchStatus(client, op, { signal } = {}) {
   invariant(history.length, "The run ended without a saved result checkpoint.")
   const snapshot = history[0]
   const state = snapshot.values ?? {}
+  if (state.usage_limit != null) {
+    const notice = state.usage_limit
+    invariant(object(notice) && notice.meter === "assistant" && notice.state === "reached"
+      && typeof notice.resets_at === "string" && Number.isFinite(Date.parse(notice.resets_at))
+      && (notice.question_message_id === undefined || notice.question_message_id === record.requestId),
+      "The usage notice is invalid or belongs to another research request.", "OUTPUT_VALIDATION_FAILED")
+    throw new UsageLimitReached({ title: "Weekly allowance reached", status: 403,
+      code: "USAGE_LIMIT_REACHED", retryable: false, meter: "assistant", resets_at: notice.resets_at })
+  }
   invariant(!state.authority_turn_id || state.authority_turn_id === `user-turn:${record.requestId}`,
     "The checkpoint belongs to another research request.")
   const interrupts = snapshot.interrupts?.length ? snapshot.interrupts : state.__interrupt__ ?? []

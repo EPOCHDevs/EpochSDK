@@ -112,8 +112,13 @@ type ResearchResult = ResearchAccepted | ResearchCompleted | NeedsInput | InProg
 @asynccontextmanager
 async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
     """Preserve request identity on failure; never retry or resubmit unknown work."""
+    from .api import UsageLimitReached
     try:
         yield
+    except UsageLimitReached:
+        # A normal ended graph turn is not a failed Backend publication. Keep
+        # its typed terminal guidance without writing a synthetic native error.
+        raise
     except ResearchError:
         raise
     except (EpochError, ApiError, httpx.HTTPError, ValueError) as error:

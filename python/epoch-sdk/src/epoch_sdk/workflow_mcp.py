@@ -106,6 +106,7 @@ def _error(error: EpochError) -> CallToolResult:
         )
     )
     return CallToolResult(
+        is_error=error.error.code == "USAGE_LIMIT_REACHED",
         content=[TextContent(type="text", text=str(error))],
         structured_content=response.to_wire(),
     )
