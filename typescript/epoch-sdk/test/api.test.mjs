@@ -230,3 +230,27 @@ test("suggesting what you get back sends the question and the parts already chos
   await epoch.outputs.suggest({ task: "Build ML features.", part: { type: "table", name: "features" } })
   assert.deepEqual(JSON.parse(calls[1].body).part, { type: "table", name: "features" })
 })
+
+for (const operation of ["create", "wait", "executionWait", "events"]) {
+  test(`weekly allowance refusal is specific and terminal in ${operation}`, async () => {
+    const { UsageLimitReached } = await import("../api.js")
+    const { epoch, calls } = client(() => json(403, { title: "Weekly limit reached", status: 403,
+      code: "USAGE_LIMIT_REACHED", retryable: true, meter: "assistant", resets_at: "2026-11-23T00:00:00Z" }, { "Retry-After": "900" }))
+    const invoke = async () => {
+      if (operation === "create") return epoch.research.create({ task: "Task", outputs: [] })
+      if (operation === "wait") return epoch.research.wait("req_1")
+      if (operation === "executionWait") return epoch.executions.wait("job_1")
+      for await (const event of epoch.research.events("req_1")) assert.fail(`unexpected event ${event}`)
+    }
+    await assert.rejects(invoke, error => error instanceof UsageLimitReached && error instanceof EpochApiError
+      && error.status === 403 && !error.retryable && error.retryAfter === null
+      && error.meter === "assistant" && error.resetsAt === "2026-11-23T00:00:00Z" && /23 Nov.*00:00.*UTC/.test(error.message))
+    assert.equal(calls.length, 1)
+  })
+}
+
+test("new answer readers declare support for skipped text", async () => {
+  const { epoch, calls } = client(() => json(200, {}))
+  await epoch.responses.get("rsp_1")
+  assert.equal(calls[0].headers["Epoch-Features"], "ai-text-skipped-v1")
+})

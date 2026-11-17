@@ -12,6 +12,8 @@ export interface Problem {
   code: string
   retryable: boolean
   request_id?: string | null
+  meter?: "assistant" | "study_ai" | null
+  resets_at?: string | null
 }
 
 export declare class EpochApiError extends Error {
@@ -23,6 +25,18 @@ export declare class EpochApiError extends Error {
   /** Seconds the server asked you to wait, when it said. */
   readonly retryAfter: number | null
   constructor(problem: Problem, options?: { retryAfter?: number | null })
+}
+
+export declare class UsageLimitReached extends EpochApiError {
+  readonly meter: "assistant" | "study_ai" | null
+  readonly resetsAt: string | null
+  constructor(problem: Problem)
+}
+
+export interface AiTextSkipped {
+  status: "skipped"
+  reason: "usage_limit"
+  resets_at: string
 }
 
 export interface Links {
@@ -127,10 +141,11 @@ export interface SavedAnswer {
   version: number
   study_id?: string | null
   published_at_ms: number
+  ai_text?: AiTextSkipped
   content: {
     declarations: Output[]
     outputs: (
-      | { name: string; type: "text"; format: "plain" | "markdown"; value: string }
+      | { name: string; type: "text"; format: "plain" | "markdown"; value: string; ai_text?: AiTextSkipped }
       | { name: string; type: "table"; schema: Column[]; rows?: unknown[][] | null; source?: unknown }
       | { name: string; type: "json"; value: unknown }
     )[]

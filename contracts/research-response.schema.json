@@ -1,5 +1,34 @@
 {
   "$defs": {
+    "AiTextSkipped": {
+      "additionalProperties": false,
+      "description": "Completed computation whose new AI text was omitted without a model call.",
+      "properties": {
+        "reason": {
+          "const": "usage_limit",
+          "title": "Reason",
+          "type": "string"
+        },
+        "resets_at": {
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+          "title": "Resets At",
+          "type": "string"
+        },
+        "status": {
+          "const": "skipped",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "resets_at"
+      ],
+      "title": "AiTextSkipped",
+      "type": "object"
+    },
     "Cell": {
       "anyOf": [
         {
@@ -330,7 +359,28 @@
     },
     "TextValue": {
       "additionalProperties": false,
+      "if": {
+        "properties": {
+          "ai_text": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "ai_text"
+        ]
+      },
       "properties": {
+        "ai_text": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AiTextSkipped"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "format": {
           "enum": [
             "plain",
@@ -361,6 +411,13 @@
         "format",
         "value"
       ],
+      "then": {
+        "properties": {
+          "value": {
+            "const": ""
+          }
+        }
+      },
       "title": "TextValue",
       "type": "object"
     }
@@ -371,6 +428,9 @@
   "properties": {
     "acquisition_provenance": {
       "$ref": "openapi.json#/components/schemas/Native_AcquisitionProvenanceReference"
+    },
+    "ai_text": {
+      "$ref": "#/$defs/AiTextSkipped"
     },
     "content": {
       "$ref": "#/$defs/ResearchResponseContent"

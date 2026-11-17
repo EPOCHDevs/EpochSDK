@@ -435,3 +435,15 @@ PNG pages, with dimensions, size and SHA-256 for each. Read one with
 never on upload, and starts no AI.
 
 `PlatformFilesClient` also provides explicit native source reads through `begin_document_read`, `document_read`, `document_content` and `document_passage`. Closed Platform-owned models preserve heading/attachment metadata and optional exact original-byte positions. A position is omitted when decoded HTML or MIME text cannot map to one source span; the block citation remains valid. Reading is an explicit operation, with no automatic request retries.
+
+Weekly allowance refusals use HTTP 403 and `USAGE_LIMIT_REACHED`. Catch
+`epoch_sdk.UsageLimitReached` to read `meter` and `resets_at`; the SDK stops
+retries, event streams and wait loops for this outcome. The CLI prints the reset
+time, or preserves the structured error with `--json`.
+
+A study still completes when its new AI text is skipped. Its existing text
+value is empty and optional `ai_text` metadata records `status: skipped`,
+`reason: usage_limit` and `resets_at`. Tables, JSON and charts remain available.
+New v1 readers send `Epoch-Features: ai-text-skipped-v1`. Clients without that
+capability receive the empty text without new members, preserving older strict
+answer models. Cached real text can still be reused at the limit.
