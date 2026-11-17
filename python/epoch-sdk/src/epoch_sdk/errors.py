@@ -1,6 +1,20 @@
 """A domain failure is separate from HTTP/graph transport completion."""
 
+from datetime import UTC, datetime
+
 from .contracts import DomainError, ErrorResponse
+
+
+def usage_limit_message(meter: str | None, resets_at: str | None) -> str:
+    label = "Study AI" if meter == "study_ai" else "Assistant"
+    message = f"You've reached this week's {label} limit."
+    if resets_at:
+        try:
+            reset = datetime.fromisoformat(resets_at).astimezone(UTC)
+            message += f" It resets {reset:%a %d %b, %H:%M} UTC."
+        except ValueError:
+            pass
+    return message
 
 
 class EpochError(Exception):

@@ -169,3 +169,12 @@ TIFF. A ready manifest lists each page's number, dimensions, byte size and SHA-2
 retains its existing response contract. No conversion is requested at upload.
 
 Native source reads are available on `PlatformFilesClient` from `@epochdevs/epoch-sdk/files`: call `beginDocumentRead(fileRef)` only for an explicit read request, then `documentRead(readRef)`, `documentContent(documentVersionRef)` or `documentPassage(documentVersionRef, blockRef)`. The response types preserve optional exact original-byte positions and heading/attachment metadata. Decoded HTML and email blocks may omit byte positions; their block citations still resolve. These methods validate response identities and positions and do not retry requests automatically.
+
+Weekly allowance refusals use HTTP 403, code `USAGE_LIMIT_REACHED`, and are never
+retried. Catch `UsageLimitReached` from `@epochdevs/epoch-sdk/api` to read `meter`
+and `resetsAt`. Wait loops and event streams stop on that exception.
+
+Completed studies may have empty text with optional `ai_text` metadata:
+`{ status: "skipped", reason: "usage_limit", resets_at: "..." }`. Their computed
+results remain available. New v1 readers declare `Epoch-Features:
+ai-text-skipped-v1`; older clients receive empty text without the new members.

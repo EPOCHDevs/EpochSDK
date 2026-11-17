@@ -21,6 +21,7 @@ from pydantic import (
 from referencing import Registry
 
 from .contracts import (
+    AiTextSkipped,
     Column,
     Contract,
     DomainError,
@@ -118,9 +119,20 @@ class JsonValueOutput(MaterializedOutput):
 
 
 class TextValue(MaterializedOutput):
+    model_config = ConfigDict(json_schema_extra={
+        "if": {"required": ["ai_text"], "properties": {"ai_text": {"type": "object"}}},
+        "then": {"properties": {"value": {"const": ""}}},
+    })
     type: Literal["text"]
     format: Literal["plain", "markdown"]
     value: str
+    ai_text: AiTextSkipped | None = None
+
+    @model_validator(mode="after")
+    def skipped_is_empty(self) -> TextValue:
+        if self.ai_text is not None and self.value != "":
+            raise ValueError("Skipped AI text must be empty")
+        return self
 
 
 type OutputValue = Annotated[TableValue | JsonValueOutput | TextValue, Field(discriminator="type")]

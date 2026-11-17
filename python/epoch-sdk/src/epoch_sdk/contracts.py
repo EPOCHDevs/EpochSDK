@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Annotated, Literal, Self
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -25,6 +27,22 @@ from .native_parameters import NativeExecutionOptions, NativePeriod
 NonBlank = Annotated[str, StringConstraints(min_length=1, pattern=r"\S")]
 OutputName = Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9_]*$", max_length=100)]
 ExecutionId = Annotated[str, StringConstraints(min_length=1, pattern=r"\S")]
+
+
+def _reset_time(value: str) -> str:
+    parsed = datetime.fromisoformat(value)
+    if "T" not in value or parsed.tzinfo is None:
+        raise ValueError("resets_at must be an ISO date-time with a timezone")
+    return value
+
+
+ResetTime = Annotated[
+    str,
+    StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"),
+    Field(json_schema_extra={"format": "date-time"}),
+    AfterValidator(_reset_time),
+]
+UsageMeter = Literal["assistant", "study_ai"]
 
 
 class Contract(BaseModel):
@@ -66,6 +84,14 @@ class Contract(BaseModel):
     def to_wire(self) -> dict[str, JsonValue]:
         # A serialization boundary only. Shapes stay closed in all model fields.
         return self.model_dump(mode="json", by_alias=True, exclude_unset=True)
+
+
+class AiTextSkipped(Contract):
+    """Completed computation whose new AI text was omitted without a model call."""
+
+    status: Literal["skipped"]
+    reason: Literal["usage_limit"]
+    resets_at: ResetTime
 
 
 class Column(Contract):
@@ -277,6 +303,7 @@ type ErrorCode = Literal[
     "FETCH_CURSOR_EXPIRED",
     "FETCH_LIMIT_EXCEEDED",
     "RATE_LIMITED",
+    "USAGE_LIMIT_REACHED",
     "TEMPORARILY_UNAVAILABLE",
     "UPSTREAM_TIMEOUT",
 ]
@@ -310,6 +337,10 @@ class DomainError(Contract):
                     },
                     "then": {"required": ["access_requirements"]},
                 },
+                {
+                    "if": {"properties": {"code": {"const": "USAGE_LIMIT_REACHED"}}, "required": ["code"]},
+                    "then": {"required": ["meter", "resets_at"], "properties": {"retryable": {"const": False}}},
+                },
             ]
         }
     )
@@ -321,6 +352,8 @@ class DomainError(Contract):
     recommended_task: NonBlank | None = None
     data_requirements: Annotated[list[DataRequirement], Field(min_length=1)] | None = None
     access_requirements: Annotated[list[AccessRequirement], Field(min_length=1)] | None = None
+    meter: UsageMeter | None = None
+    resets_at: ResetTime | None = None
 
     @model_validator(mode="after")
     def required_guidance(self) -> Self:
@@ -334,6 +367,8 @@ class DomainError(Contract):
             raise ValueError("DATA_REQUIRED needs data_requirements")
         if self.code == "ACCESS_REQUIRED" and not self.access_requirements:
             raise ValueError("ACCESS_REQUIRED needs access_requirements")
+        if self.code == "USAGE_LIMIT_REACHED" and (self.retryable or not self.meter or not self.resets_at):
+            raise ValueError("USAGE_LIMIT_REACHED is terminal and needs meter and resets_at")
         return self
 
 

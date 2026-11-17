@@ -41,8 +41,8 @@ from pydantic import (
     WrapValidator,
 )
 
-from .contracts import DomainError, OutputRequest, RunRequest
-from .errors import EpochError
+from .contracts import DomainError, OutputRequest, ResetTime, RunRequest, UsageMeter
+from .errors import EpochError, usage_limit_message
 from .native_parameters import NativePeriod
 from .research_log import LogTarget, ResearchLog, research_log
 from .responses import ResponseTablePage, SavedResearchResponse
@@ -68,11 +68,14 @@ class EpochApiError(EpochError):
         self.retry_after = retry_after
         message = problem.detail or problem.title or f"HTTP {problem.status}"
         # The API's own code, including codes newer than this client: never remapped.
-        super().__init__(
-            DomainError.model_construct(
-                code=problem.code, message=message, retryable=problem.retryable
-            )
-        )
+        guidance = {}
+        if problem.meter is not None:
+            guidance["meter"] = problem.meter
+        if problem.resets_at is not None:
+            guidance["resets_at"] = problem.resets_at
+        super().__init__(DomainError.model_construct(
+            code=problem.code, message=message, retryable=problem.retryable, **guidance
+        ))
 
 
 class _Reply(BaseModel):
@@ -95,6 +98,24 @@ class Problem(_Reply):
     retryable: bool = False
     detail: str | None = None
     request_id: str | None = None
+    meter: UsageMeter | None = None
+    resets_at: ResetTime | None = None
+
+
+class UsageLimitReached(EpochApiError):
+    """A weekly allowance refusal. It is terminal, never a retryable rate limit."""
+
+    def __init__(self, problem: Problem, *, retry_after: float | None = None) -> None:
+        super().__init__(problem.model_copy(update={"retryable": False}), retry_after=None)
+        self.meter = problem.meter
+        self.resets_at = problem.resets_at
+        self.args = (usage_limit_message(self.meter, self.resets_at),)
+
+
+def _api_error(problem: Problem, *, retry_after: float | None = None) -> EpochApiError:
+    if problem.status == 403 and problem.code == "USAGE_LIMIT_REACHED":
+        return UsageLimitReached(problem)
+    return EpochApiError(problem, retry_after=retry_after)
 
 
 class ResponseRef(_Reply):
@@ -616,7 +637,7 @@ class Epoch:
             self._token = session
         self.max_retries = max_retries
         self._http = http or httpx.Client(timeout=timeout)
-        self._headers = {"User-Agent": "epoch-sdk-python"}
+        self._headers = {"User-Agent": "epoch-sdk-python", "Epoch-Features": "ai-text-skipped-v1"}
         self.research = ResearchApi(self)
         self.executions = ExecutionsApi(self)
         self.responses = ResponsesApi(self)
@@ -698,7 +719,7 @@ class Epoch:
             if not last and problem.retryable and (deduplicated or response.status_code == 429):
                 time.sleep(_retry_after(response, attempt))
                 continue
-            raise EpochApiError(problem, retry_after=_header_seconds(response))
+            raise _api_error(problem, retry_after=_header_seconds(response))
         raise AssertionError("unreachable")
 
     def retrying[T](self, read: Callable[[], T]) -> T | None:
@@ -729,7 +750,7 @@ class Epoch:
         ) as response:
             if not response.is_success:
                 response.read()
-                raise EpochApiError(_problem(response), retry_after=_header_seconds(response))
+                raise _api_error(_problem(response), retry_after=_header_seconds(response))
             event_id: str | None = None
             data: list[str] = []
             for line in response.iter_lines():
@@ -788,7 +809,10 @@ def _pause(poll_interval: float, deadline: float | None, waiting: str) -> float:
 
 def _problem(response: httpx.Response) -> Problem:
     try:
-        return Problem.model_validate(response.json())
+        problem = Problem.model_validate(response.json())
+        if response.status_code == 403 and problem.code == "USAGE_LIMIT_REACHED":
+            return problem.model_copy(update={"status": 403, "retryable": False})
+        return problem
     except (ValueError, ValidationError):
         return Problem(
             title=response.reason_phrase or "Request failed",

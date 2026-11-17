@@ -169,6 +169,7 @@ def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limi
             assert calls[0] == calls[3]
             query_wire = deepcopy(query)
             query_wire['subjects'][0]['geographies'] = []
+            query_wire['subjects'][0]['providers'] = []
             query_wire['datasets'][0]['fields'] = []
             query_wire['datasets'][0]['categories'] = []
             assert calls[0][1]['requests'] == [query_wire]

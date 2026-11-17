@@ -178,7 +178,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -354,7 +354,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -595,7 +595,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -926,7 +926,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1101,7 +1101,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1287,7 +1287,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1460,7 +1460,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1519,7 +1519,7 @@
           "Responses"
         ],
         "summary": "Read a saved answer",
-        "description": "A saved answer revision. Pin version for stable reads.",
+        "description": "A saved answer revision. Pin version for stable reads. Computation still completes when AI text is skipped. Opt in to the optional ai_text reason with Epoch-Features: ai-text-skipped-v1; otherwise skipped text remains an empty string without new members.",
         "operationId": "getResponse",
         "security": [
           {
@@ -1560,6 +1560,24 @@
               "title": "Version"
             },
             "description": "Saved answer revision; the latest when omitted."
+          },
+          {
+            "name": "Epoch-Features",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Include ai-text-skipped-v1 to receive optional skipped-text metadata; older strict clients omit it.",
+              "title": "Epoch-Features"
+            },
+            "description": "Include ai-text-skipped-v1 to receive optional skipped-text metadata; older strict clients omit it."
           }
         ],
         "responses": {
@@ -1584,7 +1602,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1755,7 +1773,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1916,7 +1934,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2071,7 +2089,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2210,7 +2228,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2337,7 +2355,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2491,7 +2509,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2635,7 +2653,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2720,7 +2738,7 @@
             }
           },
           "403": {
-            "description": "The credential lacks the required scope.",
+            "description": "The credential lacks the required scope, or an enforced weekly allowance was reached (USAGE_LIMIT_REACHED, retryable false, meter and resets_at).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3136,6 +3154,35 @@
           "sha256"
         ],
         "title": "AcquisitionProvenanceReference"
+      },
+      "AiTextSkipped": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "skipped",
+            "title": "Status"
+          },
+          "reason": {
+            "type": "string",
+            "const": "usage_limit",
+            "title": "Reason"
+          },
+          "resets_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "format": "date-time",
+            "title": "Resets At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "title": "AiTextSkipped",
+        "description": "Completed computation whose new AI text was omitted without a model call."
       },
       "Answer": {
         "properties": {
@@ -5858,6 +5905,7 @@
           "FETCH_CURSOR_EXPIRED",
           "FETCH_LIMIT_EXCEEDED",
           "RATE_LIMITED",
+          "USAGE_LIMIT_REACHED",
           "TEMPORARILY_UNAVAILABLE",
           "UPSTREAM_TIMEOUT"
         ]
@@ -7150,6 +7198,34 @@
               }
             ],
             "title": "Request Id"
+          },
+          "meter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "assistant",
+                  "study_ai"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meter"
+          },
+          "resets_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resets At"
           }
         },
         "additionalProperties": false,
@@ -8719,6 +8795,9 @@
           "acquisition_provenance": {
             "$ref": "#/components/schemas/AcquisitionProvenanceReference"
           },
+          "ai_text": {
+            "$ref": "#/components/schemas/AiTextSkipped"
+          },
           "published_at_ms": {
             "type": "integer",
             "minimum": 0.0,
@@ -9394,6 +9473,23 @@
         "title": "TextOutputRequest"
       },
       "TextValue": {
+        "if": {
+          "properties": {
+            "ai_text": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ai_text"
+          ]
+        },
+        "then": {
+          "properties": {
+            "value": {
+              "const": ""
+            }
+          }
+        },
         "properties": {
           "name": {
             "type": "string",
@@ -9417,6 +9513,16 @@
           "value": {
             "type": "string",
             "title": "Value"
+          },
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

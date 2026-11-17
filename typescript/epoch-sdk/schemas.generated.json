@@ -1084,6 +1084,35 @@
   },
   "response": {
     "$defs": {
+      "AiTextSkipped": {
+        "additionalProperties": false,
+        "description": "Completed computation whose new AI text was omitted without a model call.",
+        "properties": {
+          "reason": {
+            "const": "usage_limit",
+            "title": "Reason",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "status": {
+            "const": "skipped",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "title": "AiTextSkipped",
+        "type": "object"
+      },
       "Cell": {
         "anyOf": [
           {
@@ -1414,7 +1443,28 @@
       },
       "TextValue": {
         "additionalProperties": false,
+        "if": {
+          "properties": {
+            "ai_text": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ai_text"
+          ]
+        },
         "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "format": {
             "enum": [
               "plain",
@@ -1445,6 +1495,13 @@
           "format",
           "value"
         ],
+        "then": {
+          "properties": {
+            "value": {
+              "const": ""
+            }
+          }
+        },
         "title": "TextValue",
         "type": "object"
       }
@@ -1456,6 +1513,9 @@
     "properties": {
       "acquisition_provenance": {
         "$ref": "openapi.json#/components/schemas/Native_AcquisitionProvenanceReference"
+      },
+      "ai_text": {
+        "$ref": "#/$defs/AiTextSkipped"
       },
       "content": {
         "$ref": "#/$defs/ResearchResponseContent"
@@ -1519,7 +1579,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "92389fe48c9c25a983c92a4133c036b2a35006b41bae3143e7c0dac53ad64273",
-    "research-response.schema.json": "3ff82b80f36c90b0457c5d304e23744f883d0d0a0449dd3bbc73ea00d3a73c71"
+    "openapi.json": "b0d25c9d512d6cfb1e98f9563fb1af6417d3854adad19f9869afe18e9ed10b45",
+    "research-response.schema.json": "0134d566fe313d57f8ba6b20cd6940e6ce8498bcecb9e7107ed3dd83bebc484d"
   }
 }
