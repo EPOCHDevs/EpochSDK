@@ -1019,6 +1019,125 @@
         ],
         "additionalProperties": false
       },
+      "FileImagePreview": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "none"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "pending"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "failed"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "ready"
+              },
+              "media_type": {
+                "type": "string",
+                "const": "image/png"
+              },
+              "converter_version": {
+                "type": "string"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "pages": {
+                "minItems": 1,
+                "maxItems": 1000,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "size_bytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "content_sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "width",
+                    "height",
+                    "size_bytes",
+                    "content_sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "state",
+              "media_type",
+              "converter_version",
+              "size_bytes",
+              "pages"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "FilePreview": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "oneOf": [
@@ -1522,6 +1641,344 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/files/{file_ref}/image-preview": {
+      "get": {
+        "operationId": "getFileImagePreview",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+            },
+            "description": "An original file or a pinned saved version."
+          }
+        ],
+        "description": "On-demand PNG image previews for HEIC/HEIF and TIFF. Each TIFF page remains separately available. No AI work is started. The existing PDF preview endpoint is unchanged.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileImagePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/{file_ref}/image-preview/{page}/content": {
+      "get": {
+        "operationId": "downloadFileImagePreview",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+            },
+            "description": "An original file or a pinned saved version."
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Range",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed complete content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Accept-Ranges": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Streamed byte range",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Accept-Ranges": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stream one PNG preview page, using the ready manifest page SHA-256 as its strong ETag."
       }
     },
     "/api/v1/files/{file_ref}/preview": {

@@ -23,13 +23,14 @@ export interface FileEditGrid { schema_version: 1; file_ref: string; source_sha2
 export type FilePreview = { state: 'none' | 'pending' } | { state: 'failed'; reason: string } | { state: 'ready'; media_type: 'application/pdf'; size_bytes: number; converter_version: string }
 export interface RequestOptions { signal?: AbortSignal }
 export interface HistoryOptions extends RequestOptions { before?: number; limit?: number }
-export interface ContentOptions extends RequestOptions { preview?: boolean; byteRange?: string; ifRange?: string }
+export interface ContentOptions extends RequestOptions { preview?: boolean; imagePage?: number; byteRange?: string; ifRange?: string }
 export interface PlatformFilesOptions { apiUrl: string; token?: string | (() => string | Promise<string>); fetch?: typeof globalThis.fetch }
 export class PlatformFileError extends Error { status: number; code: string; retryAfter?: string; constructor(status: number, code: string, message: string, retryAfter?: string) }
 /** No implicit mutation retries. Retain the exact save body/request_id after an uncertain result. */
 export class PlatformFilesClient {
   constructor(options: PlatformFilesOptions)
   preview(ref: string, options?: RequestOptions): Promise<FilePreview>
+  imagePreview(ref: string, options?: RequestOptions): Promise<FileImagePreview>
   editOptions(original: string, options?: RequestOptions): Promise<FileEditOptions>
   latest(original: string, options?: RequestOptions): Promise<FileVersion>
   history(original: string, options?: HistoryOptions): Promise<FileVersionPage>
@@ -38,3 +39,6 @@ export class PlatformFilesClient {
   /** The caller streams response.body; this method does not buffer a complete file. */
   content(pin: string, options?: ContentOptions): Promise<Response>
 }
+
+export interface ImagePreviewPage { page: number; width: number; height: number; size_bytes: number; content_sha256: string }
+export type FileImagePreview = { state: 'none' | 'pending' } | { state: 'failed'; reason: string } | { state: 'ready'; media_type: 'image/png'; converter_version: string; size_bytes: number; pages: ImagePreviewPage[] }

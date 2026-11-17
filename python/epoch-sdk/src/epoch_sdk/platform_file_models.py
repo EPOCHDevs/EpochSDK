@@ -206,3 +206,24 @@ class PreviewReady(FileModel):
 type FilePreview = Annotated[
     PreviewNone | PreviewPending | PreviewFailed | PreviewReady, Field(discriminator="state")
 ]
+
+
+class ImagePreviewPage(FileModel):
+    page: int
+    width: int
+    height: int
+    size_bytes: int
+    content_sha256: Digest
+
+
+class ImagePreviewReady(FileModel):
+    state: Literal["ready"]
+    media_type: Literal["image/png"]
+    converter_version: str
+    size_bytes: int
+    pages: list[ImagePreviewPage]
+
+
+type FileImagePreview = Annotated[
+    PreviewNone | PreviewPending | PreviewFailed | ImagePreviewReady, Field(discriminator="state")
+]
