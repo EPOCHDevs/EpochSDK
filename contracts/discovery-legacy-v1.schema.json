@@ -1,0 +1,1462 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "DiscoveryMetadataRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {
+          "$ref": "#/definitions/DiscoveryAvailability"
+        },
+        "binding_ref": {
+          "type": "string"
+        },
+        "coverage_basis": {
+          "$ref": "#/definitions/DiscoveryCoverageBasis"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/definitions/DiscoveryMetadataError"
+        },
+        "identity": {
+          "$ref": "#/definitions/DiscoverySourceAddress"
+        },
+        "issuer": {
+          "$ref": "#/definitions/CompanySearchCandidate"
+        },
+        "loader": {
+          "$ref": "#/definitions/DiscoveryLoaderBinding"
+        },
+        "metadata": {
+          "$ref": "#/definitions/DataExtentDTO"
+        },
+        "qualifications": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ranked_from": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "record_ref": {
+          "pattern": "^discovery-record:v1:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "relevance": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "request_item_id": {
+          "type": "string"
+        },
+        "requested_dataset": {
+          "$ref": "#/definitions/DiscoveryDatasetRequest"
+        },
+        "source_search_completeness": {
+          "$ref": "#/definitions/ExtentCompleteness"
+        },
+        "status": {
+          "$ref": "#/definitions/DiscoveryItemStatus"
+        },
+        "vendor": {
+          "$ref": "#/definitions/DataVendor"
+        }
+      },
+      "required": [
+        "record_ref",
+        "request_id",
+        "request_item_id",
+        "status",
+        "availability",
+        "coverage_basis",
+        "qualifications"
+      ],
+      "type": "object"
+    },
+    "DiscoveryAvailability": {
+      "type": "string",
+      "enum": [
+        "available",
+        "unavailable",
+        "unknown"
+      ]
+    },
+    "DiscoveryCoverageBasis": {
+      "type": "string",
+      "enum": [
+        "observation",
+        "publication",
+        "forecast_horizon",
+        "snapshot",
+        "unknown"
+      ]
+    },
+    "DiscoveryMetadataError": {
+      "additionalProperties": false,
+      "properties": {
+        "error_class": {
+          "$ref": "#/definitions/FetchErrorClass"
+        },
+        "error_kind": {
+          "$ref": "#/definitions/FetchErrorKind"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "error_class",
+        "message"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "FetchErrorClass": {
+      "type": "string",
+      "enum": [
+        "Transient",
+        "RequestShape",
+        "EntityTerminal",
+        "AccessDenied"
+      ]
+    },
+    "FetchErrorKind": {
+      "type": "string",
+      "enum": [
+        "Transient",
+        "NotFound",
+        "Gone",
+        "NotEntitled",
+        "RateLimited",
+        "BadRequest",
+        "Cancelled",
+        "Unknown",
+        "Unusable"
+      ]
+    },
+    "DiscoverySourceAddress": {
+      "discriminator": {
+        "mapping": {
+          "asset": "#/definitions/DiscoverySourceAddress_asset",
+          "global_source": "#/definitions/DiscoverySourceAddress_global_source",
+          "mb_release": "#/definitions/DiscoverySourceAddress_mb_release",
+          "series": "#/definitions/DiscoverySourceAddress_series",
+          "te_indicator": "#/definitions/DiscoverySourceAddress_te_indicator",
+          "te_market": "#/definitions/DiscoverySourceAddress_te_market",
+          "te_ratings": "#/definitions/DiscoverySourceAddress_te_ratings"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_asset"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_series"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_te_indicator"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_te_market"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_te_ratings"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_mb_release"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySourceAddress_global_source"
+        }
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "DiscoverySourceAddress_asset": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "type": "string"
+        },
+        "asset_type": {
+          "$ref": "#/definitions/AssetType"
+        },
+        "kind": {
+          "const": "asset"
+        },
+        "ticker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticker",
+        "asset_type",
+        "kind"
+      ],
+      "title": "asset",
+      "type": "object"
+    },
+    "AssetType": {
+      "type": "string",
+      "enum": [
+        "Stocks",
+        "Futures",
+        "FX",
+        "Crypto"
+      ]
+    },
+    "DiscoverySourceAddress_global_source": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "global_source"
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "kind"
+      ],
+      "title": "global_source",
+      "type": "object"
+    },
+    "DiscoverySourceAddress_mb_release": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "mb_release"
+        },
+        "release_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "kind"
+      ],
+      "title": "mb_release",
+      "type": "object"
+    },
+    "DiscoverySourceAddress_series": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "series"
+        },
+        "series_id": {
+          "type": "string"
+        },
+        "vendor": {
+          "$ref": "#/definitions/ResolvableVendor"
+        }
+      },
+      "required": [
+        "vendor",
+        "series_id",
+        "kind"
+      ],
+      "title": "series",
+      "type": "object"
+    },
+    "ResolvableVendor": {
+      "type": "string",
+      "enum": [
+        "macrobond",
+        "trading_economics"
+      ]
+    },
+    "DiscoverySourceAddress_te_indicator": {
+      "additionalProperties": false,
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "indicator": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "te_indicator"
+        }
+      },
+      "required": [
+        "country",
+        "indicator",
+        "kind"
+      ],
+      "title": "te_indicator",
+      "type": "object"
+    },
+    "DiscoverySourceAddress_te_market": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "te_market"
+        },
+        "symbol": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol",
+        "kind"
+      ],
+      "title": "te_market",
+      "type": "object"
+    },
+    "DiscoverySourceAddress_te_ratings": {
+      "additionalProperties": false,
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "kind": {
+          "const": "te_ratings"
+        }
+      },
+      "required": [
+        "country",
+        "kind"
+      ],
+      "title": "te_ratings",
+      "type": "object"
+    },
+    "CompanySearchCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "cik": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "cusip": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "exchange_full_name": {
+          "type": "string"
+        },
+        "industry": {
+          "type": "string"
+        },
+        "ipo_date": {
+          "type": "string"
+        },
+        "is_actively_trading": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "is_etf": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "is_fund": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "isin": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "profile_error": {
+          "type": "string"
+        },
+        "profile_error_class": {
+          "$ref": "#/definitions/FetchErrorClass"
+        },
+        "profile_name": {
+          "type": "string"
+        },
+        "profile_symbol": {
+          "type": "string"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol"
+      ],
+      "title": "epoch_stratifyx::openapi::CompanySearchCandidate",
+      "type": "object"
+    },
+    "optional_bool": {
+      "type": "boolean"
+    },
+    "DiscoveryLoaderBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/definitions/DataCategory"
+        },
+        "registry_version": {
+          "type": "string"
+        },
+        "schema_ref": {
+          "type": "string"
+        },
+        "selectors": {
+          "$ref": "#/definitions/DiscoverySelectors"
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "category",
+        "schema_ref",
+        "registry_version"
+      ],
+      "title": "epoch_stratifyx::openapi::DiscoveryLoaderBinding",
+      "type": "object"
+    },
+    "DataCategory": {
+      "type": "string",
+      "enum": [
+        "DailyBars",
+        "MinuteBars",
+        "OpenInterest",
+        "Dividends",
+        "Splits",
+        "Earnings",
+        "Events",
+        "BalanceSheets",
+        "CashFlowStatements",
+        "IncomeStatements",
+        "Ratios",
+        "KeyMetrics",
+        "EnterpriseValues",
+        "OwnerEarnings",
+        "BalanceSheetGrowth",
+        "IncomeStatementGrowth",
+        "CashFlowGrowth",
+        "FinancialGrowth",
+        "RevenueProductSegmentation",
+        "RevenueGeographicSegmentation",
+        "Ipos",
+        "MacrobondData",
+        "MacrobondVintageData",
+        "MacrobondRevisionInfo",
+        "MacrobondReleaseSchedule",
+        "TradingEconomicsHistorical",
+        "TradingEconomicsCalendar",
+        "TradingEconomicsMarkets",
+        "TradingEconomicsRatings",
+        "TradingEconomicsForecast",
+        "TradingEconomicsMarketForecast",
+        "ReferenceAgg",
+        "HistoricalMarketCap",
+        "IpoProspectus",
+        "EarningsCalendar",
+        "DividendsCalendar",
+        "SplitsCalendar",
+        "HistoricalEmployeeCount",
+        "EtfInformation",
+        "EtfHoldings",
+        "AssetCatalog"
+      ]
+    },
+    "DiscoverySelectors": {
+      "discriminator": {
+        "mapping": {
+          "financial": "#/definitions/DiscoverySelectors_financial",
+          "vintage": "#/definitions/DiscoverySelectors_vintage"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/DiscoverySelectors_financial"
+        },
+        {
+          "$ref": "#/definitions/DiscoverySelectors_vintage"
+        }
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "DiscoverySelectors_financial": {
+      "additionalProperties": false,
+      "properties": {
+        "index_by": {
+          "$ref": "#/definitions/FundamentalsIndexBy"
+        },
+        "kind": {
+          "const": "financial"
+        },
+        "period": {
+          "$ref": "#/definitions/FinancialsTimeframe"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "financial",
+      "type": "object"
+    },
+    "FundamentalsIndexBy": {
+      "type": "string",
+      "enum": [
+        "FilingDate",
+        "AcceptanceDate",
+        "ObservationDate"
+      ]
+    },
+    "FinancialsTimeframe": {
+      "type": "string",
+      "enum": [
+        "quarterly",
+        "annual",
+        "trailing_twelve_months"
+      ]
+    },
+    "DiscoverySelectors_vintage": {
+      "additionalProperties": false,
+      "properties": {
+        "full_tape": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "kind": {
+          "const": "vintage"
+        },
+        "nth": {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        "revision": {
+          "$ref": "#/definitions/VintageRevision"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "vintage",
+      "type": "object"
+    },
+    "VintageRevision": {
+      "type": "string",
+      "enum": [
+        "Last",
+        "First",
+        "NthFromLast"
+      ]
+    },
+    "DataExtentDTO": {
+      "additionalProperties": false,
+      "properties": {
+        "ask": {
+          "type": "string"
+        },
+        "asset_class": {
+          "type": "string"
+        },
+        "catalog_asset": {
+          "$ref": "#/definitions/AssetSpecification"
+        },
+        "catalog_exact_match": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "category": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "coverage_completeness": {
+          "$ref": "#/definitions/ExtentCompleteness"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "data_source_id": {
+          "type": "string"
+        },
+        "delisted_date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
+        "entity_state": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "error_class": {
+          "$ref": "#/definitions/FetchErrorClass"
+        },
+        "error_kind": {
+          "$ref": "#/definitions/FetchErrorKind"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "feedable": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "first_revision_time": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "has_revision_history": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "index_by": {
+          "$ref": "#/definitions/FundamentalsIndexBy"
+        },
+        "industry": {
+          "type": "string"
+        },
+        "ipo_date": {
+          "type": "string"
+        },
+        "last_observation": {
+          "type": "string"
+        },
+        "last_published_at": {
+          "type": "string"
+        },
+        "market_coverage_definition": {
+          "$ref": "#/definitions/MarketCoverageDefinitionDTO"
+        },
+        "metadata_end": {
+          "type": "string"
+        },
+        "metadata_end_exceeded": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "metadata_endpoint": {
+          "type": "string"
+        },
+        "min_tick": {
+          "type": "string"
+        },
+        "multiplier": {
+          "type": "string"
+        },
+        "period": {
+          "$ref": "#/definitions/FinancialsTimeframe"
+        },
+        "provider_endpoint": {
+          "type": "string"
+        },
+        "queried_at": {
+          "type": "string"
+        },
+        "resolution": {
+          "$ref": "#/definitions/HandleResolution"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "source_definition": {
+          "$ref": "#/definitions/extent__MacrobondSourceDefinition"
+        },
+        "start": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "data_source_id",
+        "vendor",
+        "queried_at",
+        "provider_endpoint"
+      ],
+      "title": "epoch_stratifyx::openapi::DataExtentDTO",
+      "type": "object"
+    },
+    "AssetSpecification": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_class": {
+          "$ref": "#/definitions/AssetClass"
+        },
+        "base": {
+          "$ref": "#/definitions/CurrencyIdentity"
+        },
+        "category": {
+          "type": "string"
+        },
+        "cik": {
+          "type": "string"
+        },
+        "counter": {
+          "$ref": "#/definitions/CurrencyIdentity"
+        },
+        "country": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "delisted_date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "description_source": {
+          "type": "string"
+        },
+        "disclosure_filings": {
+          "items": {
+            "$ref": "#/definitions/AssetDisclosure"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "eod_history_start": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "expiry_months": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "industry": {
+          "type": "string"
+        },
+        "ipo_date": {
+          "type": "string"
+        },
+        "ipo_market_cap": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_market_cap_at_listing_usd": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_market_cap_usd": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_max": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_min": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_range": {
+          "type": "string"
+        },
+        "ipo_shares": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "is_actively_trading": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "logo_url": {
+          "type": "string"
+        },
+        "min_tick": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "minute_history_start": {
+          "type": "string"
+        },
+        "multiplier": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "name_aliases": {
+          "items": {
+            "$ref": "#/definitions/AssetNameAlias"
+          },
+          "type": "array"
+        },
+        "prospectus_filings": {
+          "items": {
+            "$ref": "#/definitions/AssetProspectus"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "root_id": {
+          "type": "string"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "security_type": {
+          "type": "string"
+        },
+        "stock_profile": {
+          "$ref": "#/definitions/StockProfileIdentity"
+        },
+        "symbol_changes": {
+          "items": {
+            "$ref": "#/definitions/AssetSymbolChange"
+          },
+          "type": "array"
+        },
+        "ticker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name_aliases",
+        "symbol_changes"
+      ],
+      "title": "epoch_stratifyx::server::AssetSpecification",
+      "type": "object"
+    },
+    "AssetClass": {
+      "type": "string",
+      "enum": [
+        "Stocks",
+        "FX",
+        "Crypto",
+        "Futures"
+      ]
+    },
+    "CurrencyIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/IdentityCurrencyKind"
+        }
+      },
+      "required": [
+        "code",
+        "kind"
+      ],
+      "title": "epoch_stratifyx::server::CurrencyIdentity",
+      "type": "object"
+    },
+    "IdentityCurrencyKind": {
+      "type": "string",
+      "enum": [
+        "fiat",
+        "crypto"
+      ]
+    },
+    "AssetDisclosure": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_date": {
+          "type": "string"
+        },
+        "effectiveness_date": {
+          "type": "string"
+        },
+        "filing_date": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "title": "epoch_stratifyx::server::AssetDisclosure",
+      "type": "object"
+    },
+    "AssetNameAlias": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "source"
+      ],
+      "type": "object"
+    },
+    "AssetProspectus": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_date": {
+          "type": "string"
+        },
+        "discounts_and_commissions_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "discounts_and_commissions_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "filing_date": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "price_public_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "price_public_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "proceeds_before_expenses_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "proceeds_before_expenses_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "title": "epoch_stratifyx::server::AssetProspectus",
+      "type": "object"
+    },
+    "StockProfileIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "cik": {
+          "type": "string"
+        },
+        "cusip": {
+          "type": "string"
+        },
+        "is_adr": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "isin": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "test_classification": {
+          "$ref": "#/definitions/StockTestClassificationEvidence"
+        }
+      },
+      "required": [
+        "observed_at",
+        "source",
+        "symbol"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "StockTestClassificationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "is_etf": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "is_fund": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "state": {
+          "$ref": "#/definitions/StockTestClassificationState"
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "StockTestClassificationState": {
+      "type": "string",
+      "enum": [
+        "DeclaredTest",
+        "ConflictingRoles",
+        "Withdrawn"
+      ]
+    },
+    "AssetSymbolChange": {
+      "additionalProperties": false,
+      "properties": {
+        "company_name": {
+          "type": "string"
+        },
+        "effective_date": {
+          "type": "string"
+        },
+        "new_symbol": {
+          "type": "string"
+        },
+        "old_symbol": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "new_symbol",
+        "old_symbol",
+        "source"
+      ],
+      "type": "object"
+    },
+    "ExtentCompleteness": {
+      "type": "string",
+      "enum": [
+        "Unknown",
+        "ObservedRequest",
+        "AuthoritativeComplete"
+      ]
+    },
+    "MarketCoverageDefinitionDTO": {
+      "additionalProperties": false,
+      "properties": {
+        "earliest_history_verified": {
+          "type": "boolean"
+        },
+        "observed_start": {
+          "type": "string"
+        },
+        "relation": {
+          "type": "string"
+        },
+        "roll_convention": {
+          "type": "string"
+        },
+        "vendor_symbol": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "earliest_history_verified",
+        "relation",
+        "vendor_symbol"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "HandleResolution": {
+      "type": "string",
+      "enum": [
+        "Resolved",
+        "Unknown",
+        "AccessDenied",
+        "Transient",
+        "RequestShape"
+      ]
+    },
+    "extent__MacrobondSourceDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "discontinued_reason": {
+          "type": "string"
+        },
+        "discontinued_replacements": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "federal_reserve_code": {
+          "type": "string"
+        },
+        "release_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "replaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "revision_history_source": {
+          "type": "string"
+        },
+        "revision_history_source_cutoff": {
+          "type": "string"
+        },
+        "source_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "discontinued_replacements",
+        "release_ids",
+        "replaces",
+        "source_ids"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "DiscoveryDatasetRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/definitions/DataCategory"
+        },
+        "fields": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requested_window": {
+          "$ref": "#/definitions/DiscoveryRequestedWindow"
+        },
+        "selectors": {
+          "$ref": "#/definitions/DiscoverySelectors"
+        }
+      },
+      "required": [
+        "category"
+      ],
+      "title": "epoch_stratifyx::openapi::DiscoveryDatasetRequest",
+      "type": "object"
+    },
+    "DiscoveryRequestedWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "DiscoveryItemStatus": {
+      "type": "string",
+      "enum": [
+        "resolved",
+        "candidate",
+        "unavailable",
+        "unknown",
+        "error"
+      ]
+    },
+    "DataVendor": {
+      "type": "string",
+      "enum": [
+        "Macrobond",
+        "Barchart",
+        "FMP",
+        "TradingEconomics"
+      ]
+    },
+    "DiscoveryStoredQueryResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/DescribeColumn"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "type": "string"
+        },
+        "original_receipts": {
+          "items": {
+            "$ref": "#/definitions/DiscoveryResultReceipt"
+          },
+          "type": "array"
+        },
+        "query_ref": {
+          "description": "Opaque owner-scoped receipt for the exact delivered request and output page. It is comparison evidence, not a loader binding or retained source pool.",
+          "pattern": "^discovery-query:v1:[0-9a-f]{64}:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "receipts": {
+          "items": {
+            "$ref": "#/definitions/DiscoveryResultReceipt"
+          },
+          "type": "array"
+        },
+        "records": {
+          "items": {
+            "$ref": "#/definitions/DiscoveryMetadataRecord"
+          },
+          "type": "array"
+        },
+        "result_refs": {
+          "items": {
+            "pattern": "^(discovery-result:v1:[0-9]{1,20}:[0-9a-f]{64}|discovery-handoff:v1:[0-9a-f]{64})$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "retained_in_handoff": {
+          "description": "Current retained authority for this replayed query proof. Original result refs, receipts, expiry, total_stored, has_more and next_cursor are archival query facts; they are not live paging handles or an active retained source pool.",
+          "pattern": "^discovery-handoff:v1:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "returned": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "rows": {
+          "items": {
+            "items": {
+              "$ref": "#/definitions/variant_double_string_bool_nullptr_t"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "total_matching": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "total_stored": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "records",
+        "columns",
+        "rows",
+        "result_refs",
+        "receipts",
+        "original_receipts",
+        "total_stored",
+        "total_matching",
+        "returned",
+        "has_more"
+      ],
+      "title": "epoch_stratifyx::openapi::DiscoveryStoredQueryResponse",
+      "type": "object"
+    },
+    "DescribeColumn": {
+      "additionalProperties": false,
+      "properties": {
+        "approx_unique": {
+          "maximum": 9223372036854776000,
+          "minimum": -9223372036854776000,
+          "type": "integer"
+        },
+        "max_value": {
+          "type": "string"
+        },
+        "min_value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "null_percentage": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "only_in_tables": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unique_values": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "null_percentage",
+        "unique_values",
+        "approx_unique",
+        "only_in_tables"
+      ],
+      "title": "epoch_stratifyx::openapi::DescribeColumn",
+      "type": "object"
+    },
+    "DiscoveryResultReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "result_ref": {
+          "pattern": "^(discovery-result:v1:[0-9]{1,20}:[0-9a-f]{64}|discovery-handoff:v1:[0-9a-f]{64})$",
+          "type": "string"
+        },
+        "retained": {
+          "type": "boolean"
+        },
+        "source_completeness": {
+          "$ref": "#/definitions/ExtentCompleteness"
+        },
+        "stored_complete": {
+          "type": "boolean"
+        },
+        "table": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "result_ref",
+        "captured_at",
+        "retained",
+        "table",
+        "columns",
+        "source_completeness",
+        "stored_complete"
+      ],
+      "type": "object"
+    },
+    "variant_double_string_bool_nullptr_t": {
+      "oneOf": [
+        {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "title": "double",
+          "type": "number"
+        },
+        {
+          "title": "std::string",
+          "type": "string"
+        },
+        {
+          "title": "bool",
+          "type": "boolean"
+        },
+        {
+          "const": null,
+          "title": "std::nullptr_t",
+          "type": [
+            "null"
+          ]
+        }
+      ],
+      "type": [
+        "number",
+        "string",
+        "boolean",
+        "null"
+      ]
+    }
+  },
+  "$ref": "#/definitions/DiscoveryStoredQueryResponse"
+}

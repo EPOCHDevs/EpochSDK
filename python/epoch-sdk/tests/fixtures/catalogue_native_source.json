@@ -1,0 +1,139 @@
+{
+  "registry_version": "ebd6235527e9708:gds-native-directory-v1:b745a9e59b13f4e2a3ae72beb98ae279c225853286a362439f46fae835109fa6",
+  "loader_registry_version": "ebd6235527e9708",
+  "overview": "One source retained from the verified GDS/native directory fixture.",
+  "sources": [
+    {
+      "source": {
+        "source_id": "custom_data",
+        "name": "Saved dataset",
+        "constructor": "transform",
+        "impl_ids": [
+          "custom_data"
+        ],
+        "package": "core",
+        "backing": "stored_dataset",
+        "family": "dataset",
+        "data_categories": [],
+        "scope": "keyed",
+        "keys": [
+          {
+            "option": "source_ref",
+            "from": "options.source_ref"
+          }
+        ],
+        "requires_futures_root": false,
+        "window": "optional",
+        "options": [
+          {
+            "id": "source_ref",
+            "name": "Source reference",
+            "type": "String",
+            "element_type": "Numeric",
+            "values": [],
+            "required": true,
+            "step": 1e-06,
+            "description": "Exact source_ref of a saved study source in the authenticated user's library."
+          },
+          {
+            "id": "window",
+            "name": "Source Window",
+            "type": "SourceWindow",
+            "element_type": "Numeric",
+            "values": [],
+            "required": false,
+            "step": 1e-06,
+            "description": "Required for a dated table and refused for a table keyed by labels. Inclusive observation window of the time index: SourceWindow(start=..., end=...), with ISO dates, StudyAssetPeriodStart/End, DateBound(anchor=..., offset=<elapsed Duration>), or EarliestAvailable/LatestAvailable from the saved coverage."
+          },
+          {
+            "id": "include_previous_observation",
+            "name": "include_previous_observation",
+            "type": "Boolean",
+            "element_type": "Numeric",
+            "values": [],
+            "default_value": false,
+            "required": false,
+            "step": 1e-06,
+            "description": "Unsupported by the immutable saved-data reader; keep false. True is rejected during compilation and again at runtime. The source window remains inclusive and does not prepend an earlier timestamp."
+          }
+        ],
+        "endpoint_ids": [],
+        "outputs": [],
+        "signature": "custom_data(source_ref: String, window?: SourceWindow, include_previous_observation: Boolean = false)() \u2192 .result: Any",
+        "description": "Capability: Read one immutable, owner-authorized dataset from Files with the user's column metadata: a dated table by its time index, or a table keyed by labels as a static relation.\n\nRead one immutable, owner-authorized dataset published from Files. A dated table: custom_data(source_ref=..., window=SourceWindow(start=EarliestAvailable, end=LatestAvailable))(). The selected timestamp column is the native index; EarliestAvailable/LatestAvailable use the saved source coverage. This reader supports no predecessor selection; include_previous_observation remains false. A table keyed by labels (no dates): custom_data(source_ref=...)() with no window. It is a shared static relation of all its rows in saved order, like etf_holdings: not a time series. Name the key you join or display by explicitly, through relation(...) into sql_program or a table's key=. The exact value fields, descriptions, units and types are resolved from that saved source before compilation; field names retain the uploaded column names. Rows, duplicates and missing values are preserved without filling, resampling or implicit alignment. Original parsing and manual enrichment happen before publication, with no AI needed at compile or runtime."
+      },
+      "implementations": [
+        {
+          "id": "custom_data",
+          "signature": "custom_data(source_ref: String, window?: SourceWindow, include_previous_observation: Boolean = false)() \u2192 .result: Any",
+          "description": "Capability: Read one immutable, owner-authorized dataset from Files with the user's column metadata: a dated table by its time index, or a table keyed by labels as a static relation.\n\nRead one immutable, owner-authorized dataset published from Files. A dated table: custom_data(source_ref=..., window=SourceWindow(start=EarliestAvailable, end=LatestAvailable))(). The selected timestamp column is the native index; EarliestAvailable/LatestAvailable use the saved source coverage. This reader supports no predecessor selection; include_previous_observation remains false. A table keyed by labels (no dates): custom_data(source_ref=...)() with no window. It is a shared static relation of all its rows in saved order, like etf_holdings: not a time series. Name the key you join or display by explicitly, through relation(...) into sql_program or a table's key=. The exact value fields, descriptions, units and types are resolved from that saved source before compilation; field names retain the uploaded column names. Rows, duplicates and missing values are preserved without filling, resampling or implicit alignment. Original parsing and manual enrichment happen before publication, with no AI needed at compile or runtime.",
+          "options": [
+            {
+              "id": "source_ref",
+              "name": "Source reference",
+              "type": "String",
+              "element_type": "Numeric",
+              "values": [],
+              "required": true,
+              "step": 1e-06,
+              "description": "Exact source_ref of a saved study source in the authenticated user's library."
+            },
+            {
+              "id": "window",
+              "name": "Source Window",
+              "type": "SourceWindow",
+              "element_type": "Numeric",
+              "values": [],
+              "required": false,
+              "step": 1e-06,
+              "description": "Required for a dated table and refused for a table keyed by labels. Inclusive observation window of the time index: SourceWindow(start=..., end=...), with ISO dates, StudyAssetPeriodStart/End, DateBound(anchor=..., offset=<elapsed Duration>), or EarliestAvailable/LatestAvailable from the saved coverage."
+            },
+            {
+              "id": "include_previous_observation",
+              "name": "include_previous_observation",
+              "type": "Boolean",
+              "element_type": "Numeric",
+              "values": [],
+              "default_value": false,
+              "required": false,
+              "step": 1e-06,
+              "description": "Unsupported by the immutable saved-data reader; keep false. True is rejected during compilation and again at runtime. The source window remains inclusive and does not prepend an earlier timestamp."
+            }
+          ],
+          "outputs": [
+            {
+              "name": "result",
+              "type": "Any",
+              "description": "Private fields are resolved from source_ref; this placeholder is not an addressable output.",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "endpoints": {},
+      "documentation": "# custom_data\nCapability: Read one immutable, owner-authorized dataset from Files with the user's column metadata: a dated table by its time index, or a table keyed by labels as a static relation.\n\nRead one immutable, owner-authorized dataset published from Files. A dated table: custom_data(source_ref=..., window=SourceWindow(start=EarliestAvailable, end=LatestAvailable))(). The selected timestamp column is the native index; EarliestAvailable/LatestAvailable use the saved source coverage. This reader supports no predecessor selection; include_previous_observation remains false. A table keyed by labels (no dates): custom_data(source_ref=...)() with no window. It is a shared static relation of all its rows in saved order, like etf_holdings: not a time series. Name the key you join or display by explicitly, through relation(...) into sql_program or a table's key=. The exact value fields, descriptions, units and types are resolved from that saved source before compilation; field names retain the uploaded column names. Rows, duplicates and missing values are preserved without filling, resampling or implicit alignment. Original parsing and manual enrichment happen before publication, with no AI needed at compile or runtime.\n\nConstructor: custom_data(source_ref: String, window?: SourceWindow, include_previous_observation: Boolean = false)() \u2192 .result: Any\nScope: keyed; window: optional.\nIdentity inputs: [{\"from\":\"options.source_ref\",\"option\":\"source_ref\"}]\n\n## custom_data\nCapability: Read one immutable, owner-authorized dataset from Files with the user's column metadata: a dated table by its time index, or a table keyed by labels as a static relation.\n\nRead one immutable, owner-authorized dataset published from Files. A dated table: custom_data(source_ref=..., window=SourceWindow(start=EarliestAvailable, end=LatestAvailable))(). The selected timestamp column is the native index; EarliestAvailable/LatestAvailable use the saved source coverage. This reader supports no predecessor selection; include_previous_observation remains false. A table keyed by labels (no dates): custom_data(source_ref=...)() with no window. It is a shared static relation of all its rows in saved order, like etf_holdings: not a time series. Name the key you join or display by explicitly, through relation(...) into sql_program or a table's key=. The exact value fields, descriptions, units and types are resolved from that saved source before compilation; field names retain the uploaded column names. Rows, duplicates and missing values are preserved without filling, resampling or implicit alignment. Original parsing and manual enrichment happen before publication, with no AI needed at compile or runtime.\ncustom_data(source_ref: String, window?: SourceWindow, include_previous_observation: Boolean = false)() \u2192 .result: Any\n- source_ref: String; required; step=0.000001. Exact source_ref of a saved study source in the authenticated user's library.\n- window: SourceWindow; optional; step=0.000001. Required for a dated table and refused for a table keyed by labels. Inclusive observation window of the time index: SourceWindow(start=..., end=...), with ISO dates, StudyAssetPeriodStart/End, DateBound(anchor=..., offset=<elapsed Duration>), or EarliestAvailable/LatestAvailable from the saved coverage.\n- include_previous_observation: Boolean; optional; default=false; step=0.000001. Unsupported by the immutable saved-data reader; keep false. True is rejected during compilation and again at runtime. The source window remains inclusive and does not prepend an earlier timestamp.\nOutput result: Any. Private fields are resolved from source_ref; this placeholder is not an addressable output.\n"
+    }
+  ],
+  "summaries": [
+    {
+      "source_id": "custom_data",
+      "name": "Saved dataset",
+      "description": "Read one immutable, owner-authorized dataset from Files with the user's column metadata: a dated table by its time index, or a table keyed by labels as a static relation.",
+      "family": "dataset",
+      "data_categories": [],
+      "scope": "keyed",
+      "keys": [
+        {
+          "option": "source_ref",
+          "from": "options.source_ref"
+        }
+      ],
+      "requires_futures_root": false,
+      "window": "optional",
+      "browse_groups": [
+        "saved_data"
+      ],
+      "backing": "stored_dataset"
+    }
+  ]
+}

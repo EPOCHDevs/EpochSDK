@@ -9,32 +9,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from .catalogue import CatalogueClient
-from .discovery_types import DiscoveryQuery, DiscoveryResult, SelectedInputs, AssetUniverseResult
+from .discovery_types import DiscoveryQuery, DiscoveryResult, SelectedInputs, AssetUniverseResult, ScreenInput1, ScreenInput2
+from .catalogue_types import CatalogueRequest, CatalogueResult
+from .legacy_discovery_types import DiscoveryStoredQueryResponse
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import TypeAdapter
 from stratifyx import AsyncStratifyX
-from stratifyx.types import (
-    DatasetCatalogRequest,
-    DatasetCatalogResponse,
-    DiscoverySearchResponse,
-    DiscoveryStoredQueryResponse,
-    ScreenAssetsRequest,
-)
 
-_SCREEN_REQUEST = TypeAdapter(ScreenAssetsRequest)
-
-
-class DatasetSearchResult(BaseModel):
-    """Frozen legacy search envelope for historical client/checkpoint deliveries.
-
-    The original completeness/receipt still describes the full captured pool.
-    Page is retained only to decode historical client/checkpoint deliveries;
-    current search uses DiscoveryResult and Platform-owned source selections.
-    """
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-    result: DiscoverySearchResponse
-    page: DiscoveryStoredQueryResponse | None = None
+_SCREEN_REQUEST = TypeAdapter(ScreenInput1 | ScreenInput2)
 
 
 class DatasetClient:
@@ -51,13 +33,13 @@ class DatasetClient:
         include_saved: bool = True,
         saved_cursor: str | None = None,
         saved_limit: int = 100,
-    ) -> DatasetCatalogResponse:
+    ) -> CatalogueResult:
         """Read Platform's published constructor directory and private inventory.
 
         Select source_ids and include_details for constructor schemas, vintage
         and revision options. Saved entries remain scoped to the caller.
         """
-        request = DatasetCatalogRequest.model_validate({
+        request = CatalogueRequest.model_validate({
             "source_ids": source_ids, "include_details": include_details,
             "include_saved": include_saved, "saved_cursor": saved_cursor, "saved_limit": saved_limit,
         })
@@ -89,7 +71,7 @@ class DatasetClient:
             raise RuntimeError("Connect a Platform catalogue client before reopening discovery evidence")
         return await self.catalogue.read_retained(result_ref, cursor=cursor, limit=limit)
 
-    async def screen_assets(self, request: ScreenAssetsRequest) -> AssetUniverseResult:
+    async def screen_assets(self, request: ScreenInput1 | ScreenInput2) -> AssetUniverseResult:
         """Create/reuse a complete cohort, preserving its membership time basis.
 
         Carry the selected membership definition and qualifications into the

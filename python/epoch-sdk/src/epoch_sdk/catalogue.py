@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 
 import httpx
 from pydantic import TypeAdapter
-from stratifyx.types import AssetScreen as NativeAssetScreen, DatasetCatalogRequest, DatasetCatalogResponse, DiscoveryStoredQueryResponse
+from stratifyx.types import AssetScreen as NativeAssetScreen
+from .catalogue_types import CatalogueRequest, CatalogueResult, SavedInventory
+from .legacy_discovery_types import DiscoveryStoredQueryResponse
 
 from .credentials import BearerAuth, Token
 from .discovery_types import (DiscoveryInput, DiscoveryQuery, DiscoveryResult, SelectedInputs, DiscoveryDetails,
@@ -107,11 +109,21 @@ class CatalogueClient:
                                       {"session_id": session_id, "ids": list(candidate_ids)}, 1_048_576)
         return DiscoveryDetails.model_validate_json(content)
 
-    async def dataset_catalog(self, request: DatasetCatalogRequest) -> DatasetCatalogResponse:
+    async def dataset_catalog(self, request: CatalogueRequest) -> CatalogueResult:
         """Read the published constructor directory and caller-private inventory."""
         content = await self._request("POST", "/api/v1/discovery/catalog",
                                       request.model_dump(mode="json", by_alias=True, exclude_none=True), 16_777_216)
-        return DatasetCatalogResponse.model_validate_json(content)
+        return CatalogueResult.model_validate_json(content)
+
+    async def list_saved_datasets(self, *, query: str | None = None, cursor: str | None = None,
+                                  limit: int = 100) -> SavedInventory:
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("Dataset page limit must be an integer in 1..100")
+        parameters = {"limit": str(limit)}
+        if query is not None: parameters["query"] = query
+        if cursor is not None: parameters["cursor"] = cursor
+        content = await self._request("GET", "/api/v1/files/datasets?" + urlencode(parameters), None, 16_777_216)
+        return SavedInventory.model_validate_json(content)
 
     async def screen_assets(self, request: ScreenInput1 | ScreenInput2 | dict) -> AssetUniverseResult:
         value = _SCREEN.validate_python(request)

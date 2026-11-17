@@ -51,7 +51,7 @@ def malformed_inputs():
             }
             yield 'search', {'requests': [query]}
     for name, values in {
-        'ipo_shares_min': (True, 1.0, '2'), 'ipo_shares_max': (True, 1.0, '2'),
+        'ipo_shares_min': (True, 1.0, 2), 'ipo_shares_max': (True, 1.0, 2),
         'max_assets': (True, 1.0, '2'),
         'ipo_price_min': (True, '2', float('inf'), float('-inf'), float('nan')),
         'ipo_price_max': (True, '2', float('inf'), float('-inf'), float('nan')),

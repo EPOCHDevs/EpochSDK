@@ -2,6 +2,20 @@
 
 `CatalogueClient` talks to Platform. Native StratifyX remains the execution client. Configure the two origins independently for local testing; production uses the coordinated public routing release.
 
+Directory requests and responses use `epoch_sdk.catalogue_types.CatalogueRequest`
+and `CatalogueResult`. Their outer contract belongs to Platform/GDS; source,
+option and endpoint definitions remain the native compiler's retained types.
+Saved dataset listing uses Platform's Files route through the same configured
+client, preserving its query and cursor instead of calling native search.
+
+The retained-discovery reader uses types generated from Platform's frozen
+`discovery-legacy-v1.schema.json`. Its source revision and digest are recorded in
+`contracts/discovery-legacy-provenance.json`; regenerate with
+`scripts/generate_legacy_discovery_types.sh`. These are read compatibility types,
+not a restored native search API. Current screening uses the v4 `ScreenInput1`
+and `ScreenInput2` models, including decimal-text share counts until conversion
+at the native execution boundary.
+
 The Python preview is `0.1.0a44`; the TypeScript preview is `0.1.0-alpha.9`. A local preview is not a published package. Consumers must use the exact coordinated package artifacts when the service release is approved.
 
 ## Search, inspect, select
@@ -62,3 +76,15 @@ The sample is a preview, not a substitute for the roster. `incomplete` and `over
 The old dataset-discovery MCP server is removed. The separate workflow MCP tools remain. Direct application clients, notebooks and the AI use the same Platform discovery contract.
 
 The AI keeps full transport evidence for the UI/checkpoint and projects a smaller model view. After a successful selection it removes resolved alternatives while preserving unanswered needs and unselected private inputs. This projection never edits the original retained records.
+## Native search retirement qualification
+
+The cleanup candidate requires StratifyX 3.3.0rc96. Platform owns catalogue and
+private-inventory envelopes; native compiler definitions remain their typed
+leaves. The retained metadata reader is generated from Platform's frozen
+legacy schema, with its source revision recorded alongside that schema.
+
+Local validation against the generated native rc96 candidate: 752 Python tests
+passed; 314 live-discovery cases and two explicitly configured run-output tests
+were skipped. The shared request/error schema check and 116 focused catalogue
+and discovery transport tests passed. This is local package qualification, not
+registry publication or deployed migration acceptance.

@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pytest
 from pydantic import TypeAdapter
-from stratifyx.types import DatasetCatalogRequest, ScreenAssetsRequest
+from epoch_sdk.catalogue_types import CatalogueRequest
+from epoch_sdk.discovery_types import ScreenInput1, ScreenInput2
 
 from epoch_sdk.catalogue import CatalogueClient
 from epoch_sdk.datasets import DatasetClient
@@ -104,13 +105,13 @@ async def exercise(case: dict, receipt: dict):
     data.catalogue = client
     try:
         if case["operation"] == "catalog":
-            response = await client.dataset_catalog(DatasetCatalogRequest.model_validate(case["request"]))
+            response = await client.dataset_catalog(CatalogueRequest.model_validate(case["request"]))
             receipt["response"] = response.model_dump(mode="json", by_alias=True, exclude_unset=True)
             assert {source.source.source_id for source in response.sources} == set(case["expected_source_ids"])
             assert response.loader_registry_version and response.registry_version
             return
         if case["operation"] == "screen":
-            request = TypeAdapter(ScreenAssetsRequest).validate_python(case["request"])
+            request = TypeAdapter(ScreenInput1 | ScreenInput2).validate_python(case["request"])
             response = await data.screen_assets(request)
             receipt["response"] = response.model_dump(mode="json", by_alias=True, exclude_unset=True)
             assert response.status == "ready", receipt["response"]

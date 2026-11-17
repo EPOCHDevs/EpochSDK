@@ -1,0 +1,7 @@
+{
+  "owner": "EpochPlatform",
+  "source_path": "contracts/discovery-legacy-v1.schema.json",
+  "source_commit": "ce80550b739f5a6392cf7fb8a931bfc6d5e9f61a",
+  "source_sha256": "566a1f7a79c837539171616f1f163ad8a3cdc96de44a76556931be21de4f84b3",
+  "scope": "Frozen owner-checked legacy evidence reading. No native search operation or new search request is exposed."
+}
