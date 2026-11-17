@@ -45,6 +45,9 @@ def main() -> None:
             ("version", "FileVersion"),
             ("save", "FileEditRequest"),
             ("grid", "FileEditGrid"),
+            ("document_read", "DocumentRead"),
+            ("document_page", "DocumentContentPage"),
+            ("document_passage", "DocumentSourcePassage"),
         ):
             Draft202012Validator(document["components"]["schemas"][model]).validate(
                 json.loads(

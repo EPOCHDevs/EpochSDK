@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 from importlib.resources import files
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import quote, urlsplit
 
 import httpx
@@ -28,6 +28,10 @@ from .platform_file_models import (
     FilePreview,
     FileVersion,
     FileVersionPage,
+    PlatformDocumentBlock,
+    PlatformDocumentContentPage,
+    PlatformDocumentRead,
+    PlatformDocumentSourcePassage,
 )
 
 _URI = "https://epoch.trade/contracts/platform-files-v1"
@@ -49,6 +53,9 @@ _adapters = {
     "FileVersion": TypeAdapter(FileVersion),
     "FileVersionPage": TypeAdapter(FileVersionPage),
     "FileEditGrid": TypeAdapter(FileEditGrid),
+    "DocumentRead": TypeAdapter(PlatformDocumentRead),
+    "DocumentContentPage": TypeAdapter(PlatformDocumentContentPage),
+    "DocumentSourcePassage": TypeAdapter(PlatformDocumentSourcePassage),
 }
 _original = re.compile(
     _document["components"]["schemas"]["FileVersion"]["properties"]["original_file_ref"]["pattern"]
@@ -190,6 +197,101 @@ class PlatformFilesClient:
             or (result.version == 0 and digest != original[5:])
         ):
             raise ValueError("Platform returned an inconsistent file version")
+        return result
+
+    def _document_url(self, ref: str, kind: str, suffix: str = "") -> str:
+        if not isinstance(ref, str) or not re.fullmatch(rf"{kind}:[0-9a-f]{{64}}", ref):
+            raise ValueError(f"Provide an exact {kind} reference")
+        prefix = "reads/" if kind == "document-read" else ""
+        return f"{self.base_url}/api/v1/files/documents/{prefix}{quote(ref, safe='')}{suffix}"
+
+    @staticmethod
+    def _positions(block: PlatformDocumentBlock, source_bytes: int) -> None:
+        if (block.start_byte is None) != (block.length is None) or (
+            block.start_byte is not None
+            and (
+                block.length != len(block.text.encode("utf-8"))
+                or block.start_byte + (block.length or 0) > source_bytes
+            )
+        ):
+            raise ValueError("Platform returned an inconsistent document position")
+
+    async def begin_document_read(self, ref: str) -> PlatformDocumentRead:
+        self._url(ref, "")
+        result = cast(
+            PlatformDocumentRead,
+            await self._json(
+                f"{self.base_url}/api/v1/files/documents/reads",
+                "DocumentRead",
+                body={"file_ref": ref},
+            ),
+        )
+        if result.source.file_ref != ref:
+            raise ValueError("Platform returned a different document source")
+        return result
+
+    async def document_read(self, ref: str) -> PlatformDocumentRead:
+        result = cast(
+            PlatformDocumentRead,
+            await self._json(self._document_url(ref, "document-read"), "DocumentRead"),
+        )
+        if result.read_ref != ref:
+            raise ValueError("Platform returned a different document read")
+        return result
+
+    async def document_content(
+        self,
+        ref: str,
+        *,
+        offset: int = 0,
+        limit: int = 4,
+        max_bytes: int = 32768,
+        layer: Literal["primary", "element", "all"] = "primary",
+    ) -> PlatformDocumentContentPage:
+        url = self._document_url(ref, "document", "/blocks")
+        if (
+            type(offset) is not int
+            or not 0 <= offset <= 2**53 - 1
+            or type(limit) is not int
+            or not 1 <= limit <= 100
+            or type(max_bytes) is not int
+            or not 16384 <= max_bytes <= 131072
+            or layer not in {"primary", "element", "all"}
+        ):
+            raise ValueError("Invalid document content page")
+        query = str(
+            httpx.QueryParams(
+                {"offset": offset, "limit": limit, "max_bytes": max_bytes, "layer": layer}
+            )
+        )
+        result = cast(
+            PlatformDocumentContentPage, await self._json(f"{url}?{query}", "DocumentContentPage")
+        )
+        if (
+            result.document_version_ref != ref
+            or result.offset != offset
+            or result.layer != layer
+            or len(result.blocks) > limit
+            or result.offset + len(result.blocks) > result.total_blocks
+        ):
+            raise ValueError("Platform returned an inconsistent document page")
+        for block in result.blocks:
+            self._positions(block, result.source.size_bytes)
+        return result
+
+    async def document_passage(self, ref: str, block_ref: str) -> PlatformDocumentSourcePassage:
+        if not isinstance(block_ref, str) or not re.fullmatch(r"block:[0-9a-f]{64}", block_ref):
+            raise ValueError("Provide an exact block reference")
+        result = cast(
+            PlatformDocumentSourcePassage,
+            await self._json(
+                self._document_url(ref, "document", f"/blocks/{quote(block_ref, safe='')}"),
+                "DocumentSourcePassage",
+            ),
+        )
+        if result.document_version_ref != ref or result.block.block_ref != block_ref:
+            raise ValueError("Platform returned a different document passage")
+        self._positions(result.block, result.source.size_bytes)
         return result
 
     async def preview(self, ref: str) -> FilePreview:

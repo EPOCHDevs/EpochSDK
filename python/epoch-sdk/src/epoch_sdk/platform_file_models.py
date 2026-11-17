@@ -227,3 +227,68 @@ class ImagePreviewReady(FileModel):
 type FileImagePreview = Annotated[
     PreviewNone | PreviewPending | PreviewFailed | ImagePreviewReady, Field(discriminator="state")
 ]
+
+
+class PlatformDocumentBlock(FileModel):
+    block_ref: Annotated[str, Field(pattern=r"^block:[0-9a-f]{64}$")]
+    page: Annotated[int, Field(ge=1)] | None = None
+    kind: Literal["text", "table"]
+    text: str
+    bounding_box: Annotated[list[float], Field(min_length=4, max_length=4)] | None = None
+    layer: Literal["primary", "element"]
+    start_byte: Annotated[int, Field(ge=0, le=64 * 1024**2)] | None = None
+    length: Annotated[int, Field(ge=1, le=16384)] | None = None
+
+
+class DocumentOutline(FileModel):
+    level: Annotated[int, Field(ge=1, le=6)]
+    text: str
+    block_ref: Annotated[str, Field(pattern=r"^block:[0-9a-f]{64}$")]
+
+
+class DocumentAttachment(FileModel):
+    name: str | None
+    media_type: str
+    size_bytes: Annotated[int, Field(ge=0)]
+
+
+class DocumentCoverage(FileModel):
+    processed_pages: list[Annotated[int, Field(ge=1)]]
+    unread_pages: list[Annotated[int, Field(ge=1)]]
+    total_pages: Annotated[int, Field(ge=1)] | None = None
+
+
+class PlatformDocumentRead(FileModel):
+    read_ref: Annotated[str, Field(pattern=r"^document-read:[0-9a-f]{64}$")]
+    source: PlatformFileDescriptor
+    state: Literal["queued", "preparing", "checking", "ready", "failed", "stopped", "deleted"]
+    attempt: Annotated[int, Field(ge=1)]
+    message: str
+    created_at: str
+    updated_at: str
+    document_version_ref: Annotated[str, Field(pattern=r"^document:[0-9a-f]{64}$")] | None = None
+    coverage: DocumentCoverage
+    limitations: list[str]
+    outline: list[DocumentOutline] | None = None
+    attachments: list[DocumentAttachment] | None = None
+
+
+class PlatformDocumentContentPage(FileModel):
+    document_version_ref: Annotated[str, Field(pattern=r"^document:[0-9a-f]{64}$")]
+    source: PlatformFileDescriptor
+    content_sha256: Digest
+    provider_version: str
+    coverage: DocumentCoverage
+    limitations: list[str]
+    blocks: Annotated[list[PlatformDocumentBlock], Field(max_length=100)]
+    offset: Annotated[int, Field(ge=0)]
+    total_blocks: Annotated[int, Field(ge=0)]
+    has_more: bool
+    layer: Literal["primary", "element", "all"]
+
+
+class PlatformDocumentSourcePassage(FileModel):
+    document_version_ref: Annotated[str, Field(pattern=r"^document:[0-9a-f]{64}$")]
+    source: PlatformFileDescriptor
+    content_sha256: Digest
+    block: PlatformDocumentBlock

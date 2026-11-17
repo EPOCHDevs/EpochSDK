@@ -19,6 +19,9 @@ function version(value, original) {
   }
   return value
 }
+function documentPosition(block, source) {
+  if ((block.start_byte === undefined) !== (block.length === undefined) || (block.start_byte !== undefined && (block.length !== encoder.encode(block.text).byteLength || block.start_byte + block.length > source.size_bytes))) throw new TypeError('Platform returned an inconsistent document position')
+}
 export class PlatformFileError extends Error {
   constructor(status, code, message, retryAfter) {
     super(message)
@@ -78,6 +81,37 @@ export class PlatformFilesClient {
       result = await response.json()
       validate(model, result)
     } catch { throw new TypeError(`Platform returned an invalid ${model}`) }
+    return result
+  }
+  _documentUrl(ref, kind, suffix = '') {
+    if (typeof ref !== 'string' || new RegExp(`^${kind}:[0-9a-f]{64}$`, 'u').exec(ref)?.[0] !== ref) throw new TypeError(`Provide an exact ${kind} reference`)
+    return `${this.apiUrl}/api/v1/files/documents/${kind === 'document-read' ? 'reads/' : ''}${encodeURIComponent(ref)}${suffix}`
+  }
+  async beginDocumentRead(ref, options) {
+    this._url(ref, '')
+    const result = await this._json(`${this.apiUrl}/api/v1/files/documents/reads`, 'DocumentRead', {file_ref: ref}, options)
+    if (result.source.file_ref !== ref) throw new TypeError('Platform returned a different document source')
+    return result
+  }
+  async documentRead(ref, options) {
+    const result = await this._json(this._documentUrl(ref, 'document-read'), 'DocumentRead', undefined, options)
+    if (result.read_ref !== ref) throw new TypeError('Platform returned a different document read')
+    return result
+  }
+  async documentContent(ref, {offset = 0, limit = 4, maxBytes = 32768, layer = 'primary', signal} = {}) {
+    const url = new URL(this._documentUrl(ref, 'document', '/blocks'))
+    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(maxBytes) || maxBytes < 16384 || maxBytes > 131072 || !['primary','element','all'].includes(layer)) throw new TypeError('Invalid document content page')
+    for (const [key,value] of Object.entries({offset,limit,max_bytes:maxBytes,layer})) url.searchParams.set(key, String(value))
+    const result = await this._json(url.href, 'DocumentContentPage', undefined, {signal})
+    if (result.document_version_ref !== ref || result.offset !== offset || result.layer !== layer || result.blocks.length > limit || result.offset + result.blocks.length > result.total_blocks) throw new TypeError('Platform returned an inconsistent document page')
+    for (const block of result.blocks) documentPosition(block, result.source)
+    return result
+  }
+  async documentPassage(ref, blockRef, options) {
+    if (typeof blockRef !== 'string' || /^block:[0-9a-f]{64}$/u.exec(blockRef)?.[0] !== blockRef) throw new TypeError('Provide an exact block reference')
+    const result = await this._json(this._documentUrl(ref, 'document', `/blocks/${encodeURIComponent(blockRef)}`), 'DocumentSourcePassage', undefined, options)
+    if (result.document_version_ref !== ref || result.block.block_ref !== blockRef) throw new TypeError('Platform returned a different document passage')
+    documentPosition(result.block, result.source)
     return result
   }
   preview(ref, options) { return this._json(this._url(ref, '/preview'), 'FilePreview', undefined, options) }
