@@ -437,7 +437,7 @@ class LoaderBinding(DiscoveryModel):
     registry_version: StrictStr
     arguments: dict[str, Json | None]
     asset_ids: list[StrictStr] | None = Field(
-        None,
+        default=None,
         description='Native per-study sources take their assets from the study input, never an invented constructor argument.',
     )
 
@@ -501,7 +501,7 @@ class AssetPredicate(DiscoveryModel):
     delisted_after: StrictStr | None = None
     delisted_before: StrictStr | None = None
     ipo_shares_min: StrictStr | None = Field(
-        None,
+        default=None,
         description='Decimal integer text preserves the complete int64 domain over JSON.',
     )
     ipo_shares_max: StrictStr | None = None
@@ -511,7 +511,7 @@ class AssetPredicate(DiscoveryModel):
     ipo_price_max: StrictFloat | None = None
     all_of: list[AssetPredicate] | None = None
     any_of: list[AssetPredicate] | None = None
-    not_: AssetPredicate | None = Field(None, alias='not')
+    not_: AssetPredicate | None = Field(default=None, alias='not')
     max_assets: StrictInt | None = None
     order_by: Literal['IdAsc'] | None = None
     index_membership_mode: IndexMembershipMode | None = None
@@ -734,7 +734,7 @@ class SavedCandidate(DiscoveryModel):
     format: Format
     source_ref: StrictStr | None
     description: StrictStr | None = None
-    schema_: Json | None = Field(None, alias='schema')
+    schema_: Json | None = Field(default=None, alias='schema')
     columns: list[StrictStr] | None = None
     needs_detail: Literal[True] | None = None
 
@@ -802,7 +802,7 @@ class SourceRecord(DiscoveryModel):
         | dict[str, Json | None]
         | None
     ) = Field(
-        None,
+        default=None,
         description='Original provider-owned JSON, retained for audit and excluded from model projections.',
     )
 
@@ -873,7 +873,7 @@ class DiscoveryQuery(DiscoveryModel):
     id: StrictStr
     query: StrictStr
     retrieval_query: StrictStr | None = Field(
-        None,
+        default=None,
         description='Concise lexical/vendor recall terms; query remains the complete relevance intent.',
     )
     mode: Mode

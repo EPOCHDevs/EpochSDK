@@ -5,4 +5,4 @@ uv run --no-project --with datamodel-code-generator==0.92.0 --with pydantic data
   --output python/epoch-sdk/src/epoch_sdk/discovery_types.py \
   --output-model-type pydantic_v2.BaseModel --base-class epoch_sdk.discovery_model.DiscoveryModel --use-standard-collections \
   --strict-types str int float bool --collapse-root-models --use-union-operator --target-python-version 3.12 --extra-fields forbid \
-  --disable-timestamp --use-schema-description --formatters black isort
+  --disable-timestamp --use-schema-description --use-default-kwarg --formatters black isort
