@@ -17,6 +17,10 @@
     "./files": {
       "types": "./files.d.ts",
       "import": "./files.js"
+    },
+    "./discovery": {
+      "types": "./discovery.d.ts",
+      "import": "./discovery.js"
     }
   },
   "files": [
@@ -25,10 +29,12 @@
     "schemas.generated.json",
     "README.md",
     "dataset-review.schema.json",
-    "platform-files.openapi.json"
+    "platform-files.openapi.json",
+    "discovery.schema.json"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "generate:discovery": "node generate-discovery.mjs"
   },
   "dependencies": {
     "ajv": "8.17.1",
@@ -45,5 +51,8 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "15.0.4"
   }
 }

@@ -1,6 +1,6 @@
 # Persistent Files and Space
 
-`EpochClient` and `AgentToolsClient` share native file, prepared-dataset and
+`EpochClient` provides native file, prepared-dataset and
 folder operations. They use the installed generated StratifyX SDK and make no
 graph/model call for these operations. Backend owns resource identity, review,
 authorization and persistence across conversations.
@@ -23,7 +23,7 @@ from stratifyx.types import (
     StructuredImportOptions, StructuredImportRequest,
 )
 
-# client is an authenticated EpochClient or AgentToolsClient.
+# client is an authenticated EpochClient.
 uploaded = await client.upload_file(
     b"label,value\nfirst,1.25\nsecond,2.5\n",
     name="observations.csv", media_type="text/csv",
@@ -87,39 +87,8 @@ organization metadata, including an obsolete reference, without deleting the
 underlying asset. Normal native deletion dependency checks still apply.
 Restart pagination after a 409 caused by changed contents or selections.
 
-## MCP
+## Direct SDK access
 
-The existing `epoch-mcp` entry point exposes `epoch_upload_file`,
-`epoch_inspect_file`, `epoch_prepare_dataset`, `epoch_review_datasets`,
-`epoch_list_files`, `epoch_list_datasets`, `epoch_preview_dataset`,
-`epoch_dataset_content`, and `epoch_space_*` organization operations.
+Use `EpochClient` file, dataset and Space methods. The composable `epoch-mcp` file/Space facade is retired. Complete dataset content remains an owner-authorized binary download; saved studies keep their native execution and input-retention semantics after folder moves.
 
-`epoch_dataset_content` returns a resource link. Read that resource to retrieve
-the full owner-authorized binary Arrow IPC file. The URI remains meaningful
-across fresh MCP connections using the same owner; it grants no independent
-access. Saved studies still execute through `epoch_execute` after folder moves.
-The existing default MCP specialist-catalogue dependency remains in effect.
-
-The reproducible local acceptance driver is
-`python/epoch-sdk/tests/live/space_core_acceptance.py`. It uses installed
-packages, the actual native HTTP store/compiler/executor and fresh stdio MCP
-processes. Its metadata-only specialist catalogue is an explicit fixture; it
-does not implement resource or study operations. The generated evidence records
-versions and exact references and does not claim deployed Cognito/S3 or live
-EpochAI verification.
-
-For real-service acceptance, use
-`python/epoch-sdk/tests/live/space_real_services_acceptance.py`. Its `create`
-phase requires an empty, disposable Backend storage namespace, a private normal
-Cognito login file and the live EpochAI URL. It checks the actual catalogue,
-native data flow and a small fitted model. Restart the candidate with fresh
-local scratch storage and run `verify` to prove durable resource and execution
-reuse through a fresh MCP process. Run `foreign` with a second real Cognito
-subject to complete cross-owner acceptance; a single-account run does not prove
-that check.
-
-Run `cleanup` in a `finally` path, then delete the disposable storage namespace.
-The runner records exact references and removes API-deletable test resources.
-Immutable models and retained object versions require disposal of the test
-namespace as well. Keep evidence and cleanup receipts separately from tokens.
-The live-test README contains the phase commands.
+Controlled transport coverage lives in the direct SDK tests. Live drivers retain their explicit disposable-storage and caller-authentication requirements; they must not be pointed at production storage.

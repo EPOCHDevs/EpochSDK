@@ -13,12 +13,9 @@ import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX
-from test_agent_tools import CATALOG
 from test_execution_extensions import ANSWER, PIN, RECORD
 
-from epoch_sdk.agent_tools import AgentToolsClient
 from epoch_sdk.errors import EpochError
-from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient
 from epoch_sdk.supervisor import ChosenExecution, SupervisorClient
 
@@ -65,7 +62,7 @@ class ReplayService:
     def graph(self, request):
         self.graph_calls.append(request)
         assert request.method == "GET" and request.url.path == "/api/v1/agent-tools"
-        return httpx.Response(200, json=CATALOG)
+        raise AssertionError("Native operation must not use the retired tools graph")
 
     def backend(self, request):
         self.calls.append(request)
@@ -195,43 +192,5 @@ def test_report_read_rejects_corrupt_native_pins_including_dashboard_only(change
                 all(request.method == "GET" for request in service.calls)
                 and not service.graph_calls
             )
-
-    asyncio.run(scenario())
-
-
-def test_mcp_reuses_existing_execute_extension_contract_for_native_report_replay():
-    async def scenario():
-        service = ReplayService(*replay())
-        async with (
-            httpx.AsyncClient(transport=httpx.MockTransport(service.backend)) as http,
-            httpx.AsyncClient(
-                base_url="https://graph.invalid", transport=httpx.MockTransport(service.graph)
-            ) as graph_http,
-        ):
-            tools = AgentToolsClient(
-                LangGraphClient(graph_http),
-                AsyncStratifyX(
-                    base_url="https://backend.invalid", token="fixture", httpx_client=http
-                ),
-                graph_http,
-            )
-            async with Client(create_server(tools)) as mcp:
-                listed = {tool.name for tool in (await mcp.list_tools()).tools}
-                assert (
-                    not {
-                        "epoch_audit_run",
-                        "epoch_publish_response",
-                        "epoch_inspect_response_sources",
-                        "epoch_edit_dashboard",
-                    }
-                    & listed
-                )
-                output = await mcp.call_tool(
-                    "epoch_execute_extension", {"request": service.parent["request"]}
-                )
-                assert not output.is_error
-                assert output.structured_content == service.parent
-            assert sum(request.method == "POST" for request in service.calls) == 1
-            assert all(request.method == "GET" for request in service.graph_calls)
 
     asyncio.run(scenario())

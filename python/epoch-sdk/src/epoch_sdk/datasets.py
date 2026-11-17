@@ -1,37 +1,35 @@
-"""Shared native data discovery for notebook, application and MCP clients.
+"""Data methods shared by notebook and application clients.
 
-Backend owns the catalog, source options, search facts and saved universes.
-These methods make no EpochAI or generative model call. Search may use the
-Backend's non-generative relevance ranker; it never fetches observations.
+Platform/GDS own current discovery, retained evidence and complete cohorts.
+The native client remains the transport for ordinary execution.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
+from .catalogue import CatalogueClient
+from .discovery_types import DiscoveryQuery, DiscoveryResult, SelectedInputs, AssetUniverseResult
+
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from stratifyx import AsyncStratifyX
 from stratifyx.types import (
-    AssetUniverseResponse,
     DatasetCatalogRequest,
     DatasetCatalogResponse,
-    DatasetSearchQuery,
-    DatasetSearchRequest,
     DiscoverySearchResponse,
     DiscoveryStoredQueryResponse,
     ScreenAssetsRequest,
 )
-from stratifyx.types.discovery_stored_operation import DiscoveryStoredOperation_Read
 
 _SCREEN_REQUEST = TypeAdapter(ScreenAssetsRequest)
 
 
 class DatasetSearchResult(BaseModel):
-    """Backend-ranked selections for every requested subject/product.
+    """Frozen legacy search envelope for historical client/checkpoint deliveries.
 
     The original completeness/receipt still describes the full captured pool.
-    page is retained only to decode historical client/checkpoint deliveries;
-    ordinary search returns its complete selection without a metadata read.
+    Page is retained only to decode historical client/checkpoint deliveries;
+    current search uses DiscoveryResult and Platform-owned source selections.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -40,9 +38,10 @@ class DatasetSearchResult(BaseModel):
 
 
 class DatasetClient:
-    """Native data methods shared by EpochClient and AgentToolsClient."""
+    """Data methods shared by application and notebook clients."""
 
     backend: AsyncStratifyX
+    catalogue: CatalogueClient | None = None
 
     async def dataset_catalog(
         self,
@@ -53,7 +52,7 @@ class DatasetClient:
         saved_cursor: str | None = None,
         saved_limit: int = 100,
     ) -> DatasetCatalogResponse:
-        """Read Backend's dataset directory, options and exact shared prose.
+        """Read Platform's published constructor directory and private inventory.
 
         Select source_ids and include_details for constructor schemas, vintage
         and revision options. Saved entries remain scoped to the caller.
@@ -62,44 +61,23 @@ class DatasetClient:
             "source_ids": source_ids, "include_details": include_details,
             "include_saved": include_saved, "saved_cursor": saved_cursor, "saved_limit": saved_limit,
         })
-        return await self.backend.discovery.read_dataset_catalog(
-            source_ids=request.source_ids,
-            include_details=request.include_details,
-            include_saved=request.include_saved,
-            saved_cursor=request.saved_cursor,
-            saved_limit=request.saved_limit,
-            request_options={"max_retries": 0},
-        )
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before reading the directory")
+        return await self.catalogue.dataset_catalog(request)
 
-    async def search_dataset(
-        self,
-        requests: Sequence[DatasetSearchQuery],
-        *,
-        candidate_limit: int | None = None,
-        saved_query: str | None = None,
-    ) -> DatasetSearchResult:
-        """Find native asset/series identities, optionally with a constructor.
+    async def search_dataset(self, requests: Sequence[DiscoveryQuery], *,
+                             candidate_limit: int | None = None,
+                             saved_query: str | None = None) -> DiscoveryResult:
+        """Discover through Platform/GDS using the same contract as the agent."""
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before searching")
+        return await self.catalogue.search_dataset(requests, limit=5 if candidate_limit is None else candidate_limit,
+                                                   saved_query=saved_query)
 
-        Carry selected native identities, loader options and material source
-        qualifications into the build_study briefing. References identify saved
-        metadata; they are not native loader inputs.
-        Backend delivers relevant candidates per requested subject and product.
-        saved_query finds caller-owned datasets by descriptive metadata or exact
-        returned references. Search does not create an asset cohort; use
-        screen_assets for a complete universe.
-        """
-        request = DatasetSearchRequest.model_validate({
-            "requests": requests, "candidate_limit": candidate_limit, "saved_query": saved_query,
-        })
-        result = await self.backend.discovery.search_dataset(
-            requests=request.requests,
-            candidate_limit=request.candidate_limit,
-            saved_query=request.saved_query,
-            request_options={"max_retries": 0, "additional_headers": {"X-Epoch-Dataset-Selection": "v1"}},
-        )
-        if not result.records_complete and not result.records:
-            raise RuntimeError("Backend returned an incomplete search without ranked candidates; update the Backend dataset-search service. No candidate paging was started.")
-        return DatasetSearchResult(result=result)
+    async def select_sources(self, session_id: str, candidate_ids: Sequence[str]) -> SelectedInputs:
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before selecting sources")
+        return await self.catalogue.select(session_id, candidate_ids)
 
     async def read_dataset_search(
         self, result_ref: str, *, cursor: str | None = None, limit: int = 10
@@ -107,15 +85,11 @@ class DatasetClient:
         """Read 1..10 saved metadata records; no SQL or vendor search is rerun."""
         if type(limit) is not int or not 1 <= limit <= 10:
             raise ValueError("Saved metadata page limit must be an integer in 1..10.")
-        return await self.backend.discovery.query_stored_discovery(
-            result_refs=[result_ref],
-            operation=DiscoveryStoredOperation_Read(kind="read"),
-            cursor=cursor,
-            limit=limit,
-            request_options={"max_retries": 0},
-        )
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before reopening discovery evidence")
+        return await self.catalogue.read_retained(result_ref, cursor=cursor, limit=limit)
 
-    async def screen_assets(self, request: ScreenAssetsRequest) -> AssetUniverseResponse:
+    async def screen_assets(self, request: ScreenAssetsRequest) -> AssetUniverseResult:
         """Create/reuse a complete cohort, preserving its membership time basis.
 
         Carry the selected membership definition and qualifications into the
@@ -123,6 +97,20 @@ class DatasetClient:
         Acquisition/integrity gaps remain visible and cannot form a usable
         universe. Screening never applies relevance top-k.
         """
-        return await self.backend.discovery.screen_asset_universe(
-            request=_SCREEN_REQUEST.validate_python(request), request_options={"max_retries": 0}
-        )
+        value = _SCREEN_REQUEST.validate_python(request)
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before screening assets")
+        payload = value.model_dump(mode="json", by_alias=True, exclude_unset=True, exclude_none=True)
+        def exact_integers(node):
+            if not isinstance(node, dict):
+                return
+            for key in ("ipo_shares_min", "ipo_shares_max"):
+                if key in node:
+                    node[key] = str(node[key])
+            for key in ("any_of", "all_of"):
+                for child in node.get(key, []):
+                    exact_integers(child)
+            if "not" in node:
+                exact_integers(node["not"])
+        exact_integers(payload.get("screen"))
+        return await self.catalogue.screen_assets(payload)

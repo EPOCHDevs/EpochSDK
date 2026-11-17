@@ -31,7 +31,6 @@ test = ["pytest>=8,<10"]
 
 [project.scripts]
 epoch-api-check = "epoch_sdk.capabilities:main"
-epoch-mcp = "epoch_sdk.mcp:main"
 epoch = "epoch_sdk.cli:main"
 
 [tool.setuptools.packages.find]

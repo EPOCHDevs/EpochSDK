@@ -1,6 +1,7 @@
 """Shared Epoch contracts. SDK/MCP flow adapters are added in their owning issues."""
 
 from .api import Epoch, EpochApiError, UsageLimitReached
+from .catalogue import CatalogueClient
 from .contracts import (
     Acknowledgement,
     AiTextSkipped,
@@ -24,6 +25,7 @@ from .platform_files import PlatformFileError, PlatformFilesClient
 
 __all__ = [
     "Acknowledgement",
+    "CatalogueClient",
     "AiTextSkipped",
     "DomainError",
     "Epoch",

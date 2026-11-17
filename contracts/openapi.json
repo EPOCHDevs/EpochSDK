@@ -29243,14 +29243,6 @@
     }
   ],
   "x-contract-source": "contracts/openapi.json",
-  "x-epoch-agent-tools": {
-    "assistant_id": "epoch-tools",
-    "catalogue_path": "/api/v1/agent-tools",
-    "schema_owner": "EpochAI registered execution tools",
-    "service": "graph",
-    "source_catalogue_snapshot": "agent-tools-native.json",
-    "transport_schema": "agent-tools.schema.json"
-  },
   "x-epoch-document-operations": {
     "backend_sha256": "c0370bd8449396fcd539fcff5c7f2e9e7757ac92dc1fba37b144d6cb2398632e",
     "epochai_sha256": "4e1859bb3b5c3dbf51675646cb21fe3e94cc54a8580bea42ed2245100013db6b",

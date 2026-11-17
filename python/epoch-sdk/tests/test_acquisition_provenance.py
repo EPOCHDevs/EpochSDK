@@ -14,11 +14,8 @@ import pytest
 from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX
-from test_agent_tools import CATALOG
 
-from epoch_sdk.agent_tools import AgentToolsClient
 from epoch_sdk.errors import EpochError
-from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient
 from epoch_sdk.supervisor import SupervisorClient
 
@@ -40,7 +37,7 @@ class Service:
     def graph(self, request):
         self.graph_calls.append(request)
         assert request.method == "GET" and request.url.path == "/api/v1/agent-tools"
-        return httpx.Response(200, json=CATALOG)
+        raise AssertionError("Native operation must not use the retired tools graph")
 
     def backend(self, request):
         self.calls.append(request)
@@ -67,7 +64,7 @@ class Service:
         return httpx.Response(200, json=REVISION if request.url.params["version"] == "2" else ANSWER)
 
 
-async def scenario(operation, *, client_kind="coding_agent", service=None):
+async def scenario(operation, *, client_kind="application", service=None):
     service = service or Service()
     async with (
         httpx.AsyncClient(transport=httpx.MockTransport(service.backend)) as native_http,
@@ -75,12 +72,11 @@ async def scenario(operation, *, client_kind="coding_agent", service=None):
     ):
         native = AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http)
         graph = LangGraphClient(graph_http)
-        client = (EpochClient(SupervisorClient(graph, native)) if client_kind == "application"
-                  else AgentToolsClient(graph, native, graph_http))
+        client = EpochClient(SupervisorClient(graph, native, document_http=graph_http))
         await operation(client, service)
 
 
-@pytest.mark.parametrize("client_kind", ["application", "coding_agent"])
+@pytest.mark.parametrize("client_kind", ["application"])
 def test_frozen_reference_and_exact_acquisition_clocks_survive_both_clients(client_kind):
     async def check(client, service):
         first = await client.response(ANSWER["response_id"], version=1)
@@ -103,34 +99,6 @@ def test_frozen_reference_and_exact_acquisition_clocks_survive_both_clients(clie
     asyncio.run(scenario(check, client_kind=client_kind))
 
 
-def test_mcp_existing_read_tool_preserves_pin_and_rejects_misrouted_arguments():
-    async def check(client, service):
-        async with Client(create_server(client)) as mcp:
-            read = next(t for t in (await mcp.list_tools()).tools if t.name == "epoch_read")
-            assert "expected_sha256" in read.input_schema["properties"]
-            result = await mcp.call_tool("epoch_read", {
-                "kind": "execution_provenance", "identifier": "execution-one",
-                "expected_sha256": SHA, "page_size": 1,
-            })
-            assert not result.is_error and result.structured_content == PAGE
-            assert service.calls[-1].url.params["expected_sha256"] == SHA
-            result = await mcp.call_tool("epoch_read", {
-                "kind": "response_provenance", "identifier": ANSWER["response_id"],
-                "version": 1, "page_size": 1,
-            })
-            assert not result.is_error and result.structured_content == PAGE
-            before = len(service.calls)
-            for args in (
-                {"kind": "response_provenance", "expected_sha256": SHA},
-                {"kind": "execution_provenance", "version": 1},
-                {"kind": "execution_provenance", "expected_sha256": "bad"},
-                {"kind": "execution_provenance", "page_size": 1001},
-            ):
-                result = await mcp.call_tool("epoch_read", {"identifier": "execution-one", **args})
-                assert result.is_error
-            assert len(service.calls) == before
-        assert all(call.url.path == "/api/v1/agent-tools" for call in service.graph_calls)
-    asyncio.run(scenario(check))
 
 
 @pytest.mark.parametrize("arguments", [

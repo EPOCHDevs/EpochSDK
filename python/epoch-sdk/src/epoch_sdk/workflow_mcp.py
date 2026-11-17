@@ -140,7 +140,11 @@ def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
                 tool.input_schema["additionalProperties"] = False
         return result
 
-    server = MCPServer("Epoch", middleware=[closed_arguments])
+    server = MCPServer("Epoch", middleware=[closed_arguments], instructions=(
+        "USAGE_LIMIT_REACHED is a terminal HTTP 403; report its meter and resets_at without retrying. "
+        "Computed study results remain valid when ai_text.status=skipped and reason=usage_limit. "
+        "Explain the reset time; do not describe the computation as failed or resubmit it."
+    ))
     epoch = client if isinstance(client, EpochClient) else EpochClient(client)
 
     def draft_identity(draft_ref: str, digest: str) -> None:

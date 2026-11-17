@@ -1,6 +1,6 @@
 # Document workflows
 
-Python `EpochClient` and `AgentToolsClient` share the same document adapter.
+Python `EpochClient` provides the same document adapter.
 Configure the ordinary Backend and EpochAI origins and current bearer identity.
 Native resources remain on Backend; explicit processing and URL capture use the
 existing EpochAI server. No graph run is needed for these direct API methods.

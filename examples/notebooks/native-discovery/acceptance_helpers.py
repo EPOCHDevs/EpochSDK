@@ -7,20 +7,19 @@ from pathlib import Path
 
 import httpx
 from epoch_sdk import RunRequest
-from epoch_sdk.datasets import DatasetSearchResult
+from epoch_sdk.discovery_types import DiscoveryResult
 from epoch_sdk.output_validation import Cell, TableValue
 from epoch_sdk.research import EpochClient, ResearchCompleted
 from epoch_sdk.supervisor import ChosenExecution, NeedsInput
 from IPython.display import JSON, display
 from stratifyx import DatePeriodConfig
-from stratifyx.types import DiscoverySourceAddress
 from notebook_identity import identity_token
 
 
 def connect() -> EpochClient:
     """Use only the Epoch identity and service URLs supplied to this kernel."""
     return EpochClient.connect(graph_url=os.environ["EPOCH_GRAPH_URL"],
-        backend_url=os.environ["EPOCH_BACKEND_URL"], token=identity_token())
+        backend_url=os.environ["EPOCH_BACKEND_URL"], token=identity_token(), platform_url=os.environ.get("EPOCH_PLATFORM_URL"))
 
 
 async def check_services() -> None:
@@ -95,8 +94,6 @@ async def execute(epoch: EpochClient, review: Task, result: ResearchCompleted,
                                operation_id=f"{review.operation_id}-execute-{suffix}")
 
 
-def identities(result: DatasetSearchResult) -> list[DiscoverySourceAddress]:
-    """A concise display of source-owned identities, retaining the original DTO."""
-    records = result.result.records if result.page is None else result.page.records
-    return [record.identity
-            for record in records if record.identity is not None]
+def identities(result: DiscoveryResult) -> list[str]:
+    """Show each returned source once; selection uses its exact candidate ID."""
+    return [candidate.source_id for candidate in result.candidates]

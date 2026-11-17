@@ -34,6 +34,7 @@ from stratifyx import (
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
+from .catalogue import CatalogueClient
 from .contracts import DomainError
 from .credentials import Token, http_clients
 from .platform_files import PlatformFilesClient
@@ -435,6 +436,7 @@ class SupervisorClient:
         source_connections: AsyncSourcesClient | None = None,
         document_http: httpx.AsyncClient | None = None,
         platform_files: PlatformFilesClient | None = None,
+        catalogue: CatalogueClient | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
@@ -443,6 +445,7 @@ class SupervisorClient:
         self.source_connections = source_connections
         self.document_http = document_http
         self.platform_files = platform_files
+        self.catalogue = catalogue
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -451,6 +454,7 @@ class SupervisorClient:
         *,
         graph_url: str,
         backend_url: str,
+        platform_url: str | None = None,
         token: Token,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
@@ -463,6 +467,7 @@ class SupervisorClient:
         return cls._connect(
             graph_url=graph_url,
             backend_url=backend_url,
+            platform_url=platform_url,
             token=token,
             assistant_id=assistant_id,
             ui_url=ui_url,
@@ -474,6 +479,7 @@ class SupervisorClient:
         *,
         graph_url: str,
         backend_url: str,
+        platform_url: str | None = None,
         token: Token,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
@@ -498,6 +504,7 @@ class SupervisorClient:
             ),
             document_http=graph_http,
             platform_files=PlatformFilesClient(backend_url, token=fixed, http=backend_http),
+            catalogue=CatalogueClient(platform_url or backend_url, token, http=backend_http),
         )
         client._owned_http = [graph_http, backend_http]
         return client

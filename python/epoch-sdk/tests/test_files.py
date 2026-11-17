@@ -12,9 +12,8 @@ import pyarrow as pa
 import pytest
 from mcp import Client
 from mcp.types import BlobResourceContents, ResourceLink
-from test_agent_tools import Service
+from native_service_fixture import Service
 
-from epoch_sdk.mcp import create_server
 
 FILE = "file:" + "a" * 64
 DATASET = "dataset:" + "b" * 64
@@ -113,47 +112,4 @@ def test_space_page_limits_are_not_coerced_before_transport(limit):
             with pytest.raises(ValueError):
                 await sdk.browse_space(limit=limit)
             assert service.backend_calls == service.graph_calls == []
-    asyncio.run(scenario())
-
-
-def test_space_mcp_keeps_refs_and_serves_complete_binary_data_as_a_resource():
-    async def scenario():
-        service = FilesService()
-        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
-            tools = {item.name: item for item in (await mcp.list_tools()).tools}
-            assert tools["epoch_space_browse"].input_schema["additionalProperties"] is False
-            folder = await mcp.call_tool("epoch_space_create_folder", {"name": "Research"})
-            assert not folder.is_error and folder.structured_content["folder_ref"] == FOLDER
-            placed = await mcp.call_tool("epoch_space_place_resource", {
-                "resource": {"kind": "file", "ref": FILE}, "folder_ref": FOLDER, "name": "Saved file",
-            })
-            assert not placed.is_error
-            assert placed.structured_content["resource"]["ref"] == FILE
-            assert placed.structured_content["name"] == "Saved file"
-            preview = await mcp.call_tool("epoch_preview_dataset", {"dataset_ref": DATASET})
-            assert not preview.is_error
-            assert preview.structured_content["content"]["requires_download"] is True
-            link = await mcp.call_tool("epoch_dataset_content", {"dataset_ref": DATASET})
-            assert not link.is_error and isinstance(link.content[0], ResourceLink)
-            result = await mcp.read_resource(link.content[0].uri)
-            assert isinstance(result.contents[0], BlobResourceContents)
-            content = base64.b64decode(result.contents[0].blob, validate=True)
-            assert content == service.arrow
-            table = pa.ipc.open_file(pa.BufferReader(content)).read_all()
-            assert table.column("value")[0].as_py() == 9007199254740993
-            assert len(table.column("text")[0].as_py()) == 1024 * 1024 + 128
-            assert await sdk.download_dataset(DATASET) == content
-            assert all(r.url.path == "/api/v1/agent-tools" for r in service.graph_calls)
-    asyncio.run(scenario())
-
-
-def test_mcp_rejects_unknown_authority_fields_without_native_work():
-    async def scenario():
-        service = FilesService()
-        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
-            result = await mcp.call_tool("epoch_space_create_folder", {"name": "Research", "owner_user_id": "bob"})
-            assert result.is_error
-            assert service.backend_calls == []
-            result = await mcp.call_tool("epoch_upload_file", {"name": "data.bin", "media_type": "application/octet-stream", "content_base64": "invalid!"})
-            assert result.is_error and service.backend_calls == []
     asyncio.run(scenario())

@@ -38,7 +38,7 @@ _REVIEW = TypeAdapter(DatasetReviewRequest)
 
 
 class FileClient:
-    """Native resource methods shared by EpochClient and AgentToolsClient."""
+    """Native resource methods provided by EpochClient."""
 
     backend: AsyncStratifyX
     platform_files: PlatformFilesClient | None
