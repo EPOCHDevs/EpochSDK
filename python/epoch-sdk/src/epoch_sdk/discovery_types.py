@@ -87,6 +87,28 @@ class Error(DiscoveryModel):
     message: StrictStr
 
 
+class Code(StrEnum):
+    filter_conflict = 'filter_conflict'
+    metadata_unknown = 'metadata_unknown'
+
+
+class FieldModel(StrEnum):
+    countries = 'countries'
+    exchanges = 'exchanges'
+    kinds = 'kinds'
+
+
+class ScopeIssue(DiscoveryModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    code: Code
+    field: FieldModel
+    requested: list[StrictStr]
+    available: list[StrictStr]
+    source_ids: list[StrictStr]
+
+
 class SearchRequestFailure(DiscoveryModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -718,6 +740,10 @@ class NeedResult(DiscoveryModel):
     id: StrictStr
     status: Status
     reason: Literal['low_relevance'] | None = None
+    scope_issues: list[ScopeIssue] | None = Field(
+        default=None,
+        description='Source facts outside a requested filter; never matching/selectable candidates.',
+    )
     candidates: list[StrictStr]
     next_cursor: StrictStr | None
     completeness: Completeness

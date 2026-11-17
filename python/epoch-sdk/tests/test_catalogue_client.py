@@ -48,3 +48,20 @@ def test_response_bound_and_origin():
             with pytest.raises(ValueError, match="exceeds"):
                 await client.search_dataset([DiscoveryQuery(id="one", query="x", mode="exact")])
     asyncio.run(run())
+
+
+def test_scope_issue_is_preserved_as_incomplete_without_fabricated_candidates():
+    async def run():
+        issue = {"code": "filter_conflict", "field": "exchanges", "requested": ["CME"],
+                 "available": ["GBLX"], "source_ids": ["ES-Futures"]}
+        body = {"format": "epoch-search-v4", "session_id": "search:scope",
+                "needs": [{"id": "es", "status": "incomplete", "candidates": [],
+                           "next_cursor": None, "completeness": "complete", "scope_issues": [issue]}],
+                "candidates": [], "saved": [], "omitted": 0}
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(200, json=body))) as http:
+            client = CatalogueClient("https://api.example.test", "token", http=http)
+            result = await client.search_dataset([DiscoveryQuery(id="es", query="ES", mode="exact")])
+            assert result.needs[0].status == "incomplete"
+            assert result.needs[0].scope_issues[0].available == ["GBLX"]
+            assert result.candidates == []
+    asyncio.run(run())

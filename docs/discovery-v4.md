@@ -32,6 +32,8 @@ Selection returns the exact native constructor, arguments, registry version and 
 
 Search is a bounded candidate operation. `needs_detail`, `incomplete`, `no_match`, provider failures and continuation cursors are meaningful states. Long company descriptions in search are original-text excerpts of at most 480 characters plus an ellipsis; `details` returns the full original text. Semantic scores remain internal. Exact lookup and ordinary browse do not invoke the embedding model or reranker.
 
+An empty need can include `scope_issues`: requested filter values conflict with a known identity, or the matching source lacks that metadata. Such needs remain `incomplete`. Reported available values and source IDs are catalogue facts, not matching datasets or permission to drop a constraint. Use the constructor catalogue for an explicit native constructor such as `asset_catalog`; source constructors are not dataset identities.
+
 ## Complete asset universes
 
 Use screening for a complete cohort, not semantic search or its sample rows:

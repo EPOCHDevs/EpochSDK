@@ -354,6 +354,13 @@
           "type": "string",
           "const": "low_relevance"
         },
+        "scope_issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScopeIssue"
+          },
+          "description": "Source facts outside a requested filter; never matching/selectable candidates."
+        },
         "candidates": {
           "type": "array",
           "items": {
@@ -402,6 +409,52 @@
         "candidates",
         "next_cursor",
         "completeness"
+      ],
+      "additionalProperties": false
+    },
+    "ScopeIssue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "filter_conflict",
+            "metadata_unknown"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "enum": [
+            "countries",
+            "exchanges",
+            "kinds"
+          ]
+        },
+        "requested": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "available": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "code",
+        "field",
+        "requested",
+        "available",
+        "source_ids"
       ],
       "additionalProperties": false
     },

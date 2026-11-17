@@ -20,3 +20,9 @@ test('bounds and errors remain explicit without a second request', async () => {
   const failed = new CatalogueClient({ baseUrl: 'https://platform.invalid', token: 'x', fetch: async () => Response.json({ message: 'Unavailable' }, { status: 503 }) })
   await assert.rejects(failed.search({ requests: [], saved_query: 'owned' }), CatalogueHTTPError)
 })
+test('scope conflicts remain incomplete with exact catalogue facts and no candidates', async () => {
+  const issue = { code: 'filter_conflict', field: 'exchanges', requested: ['CME'], available: ['GBLX'], source_ids: ['ES-Futures'] }
+  const body = { ...empty, needs: [{ id: 'es', status: 'incomplete', candidates: [], next_cursor: null, completeness: 'complete', scope_issues: [issue] }] }
+  const client = new CatalogueClient({ baseUrl: 'https://platform.invalid', token: 'x', fetch: async () => Response.json(body) })
+  assert.deepEqual((await client.search({ requests: [{ id: 'es', query: 'ES', mode: 'exact' }] })).needs[0].scope_issues, [issue])
+})

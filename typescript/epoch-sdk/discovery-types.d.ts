@@ -105,6 +105,10 @@ export interface NeedResult {
   id: string;
   status: "ok" | "no_match" | "incomplete" | "needs_detail" | "error";
   reason?: "low_relevance";
+  /**
+   * Source facts outside a requested filter; never matching/selectable candidates.
+   */
+  scope_issues?: ScopeIssue[];
   candidates: string[];
   next_cursor: string | null;
   completeness: "complete" | "candidate_set";
@@ -113,6 +117,13 @@ export interface NeedResult {
     status: IntegerCount;
     message: string;
   };
+}
+export interface ScopeIssue {
+  code: "filter_conflict" | "metadata_unknown";
+  field: "countries" | "exchanges" | "kinds";
+  requested: string[];
+  available: string[];
+  source_ids: string[];
 }
 export interface SearchRequestFailure {
   provider: Provider;
