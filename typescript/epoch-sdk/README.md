@@ -162,3 +162,10 @@ a `PlatformFileError` with its server code. Keep the draft until resolved; do no
 silently create a new ID or merge another writer's changes. No operation starts
 AI or writes back to a connected provider. The application owns token renewal
 and clearing drafts/cache when the signed-in account changes.
+
+`imagePreview(ref)` opts into separately paged PNG previews for HEIC/HEIF and
+TIFF. A ready manifest lists each page's number, dimensions, byte size and SHA-256.
+`content(ref, {imagePage: 2})` streams one page. The ordinary PDF `preview` method
+retains its existing response contract. No conversion is requested at upload.
+
+Native source reads are available on `PlatformFilesClient` from `@epochdevs/epoch-sdk/files`: call `beginDocumentRead(fileRef)` only for an explicit read request, then `documentRead(readRef)`, `documentContent(documentVersionRef)` or `documentPassage(documentVersionRef, blockRef)`. The response types preserve optional exact original-byte positions and heading/attachment metadata. Decoded HTML and email blocks may omit byte positions; their block citations still resolve. These methods validate response identities and positions and do not retry requests automatically.

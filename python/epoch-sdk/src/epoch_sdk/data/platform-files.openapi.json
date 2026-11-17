@@ -23,6 +23,606 @@
       }
     },
     "schemas": {
+      "DocumentRead": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "read_ref": {
+            "type": "string",
+            "pattern": "^document-read:[0-9a-f]{64}$"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "file_ref": {
+                "type": "string",
+                "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "media_type": {
+                "type": "string"
+              },
+              "detected_media_type": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "dataset",
+                  "document",
+                  "other"
+                ]
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "uploading",
+                  "uploaded",
+                  "failed"
+                ]
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "content_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file_ref",
+              "name",
+              "media_type",
+              "size_bytes",
+              "status",
+              "created_at"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "preparing",
+              "checking",
+              "ready",
+              "failed",
+              "stopped",
+              "deleted"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "message": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "document_version_ref": {
+            "type": "string",
+            "pattern": "^document:[0-9a-f]{64}$"
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "processed_pages": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "unread_pages": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "total_pages": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "processed_pages",
+              "unread_pages"
+            ],
+            "additionalProperties": false
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 6
+                },
+                "text": {
+                  "type": "string"
+                },
+                "block_ref": {
+                  "type": "string",
+                  "pattern": "^block:[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "level",
+                "text",
+                "block_ref"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "media_type": {
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "name",
+                "media_type",
+                "size_bytes"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "read_ref",
+          "source",
+          "state",
+          "attempt",
+          "message",
+          "created_at",
+          "updated_at",
+          "coverage",
+          "limitations"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentBlock": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "block_ref": {
+            "type": "string",
+            "pattern": "^block:[0-9a-f]{64}$"
+          },
+          "page": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "text",
+              "table"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "bounding_box": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "element"
+            ]
+          },
+          "start_byte": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 67108864
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16384
+          }
+        },
+        "required": [
+          "block_ref",
+          "kind",
+          "text",
+          "layer"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentContentPage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "document_version_ref": {
+            "type": "string",
+            "pattern": "^document:[0-9a-f]{64}$"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "file_ref": {
+                "type": "string",
+                "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "media_type": {
+                "type": "string"
+              },
+              "detected_media_type": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "dataset",
+                  "document",
+                  "other"
+                ]
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "uploading",
+                  "uploaded",
+                  "failed"
+                ]
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "content_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file_ref",
+              "name",
+              "media_type",
+              "size_bytes",
+              "status",
+              "created_at"
+            ],
+            "additionalProperties": false
+          },
+          "content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "provider_version": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "processed_pages": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "unread_pages": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "total_pages": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "processed_pages",
+              "unread_pages"
+            ],
+            "additionalProperties": false
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocks": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "block_ref": {
+                  "type": "string",
+                  "pattern": "^block:[0-9a-f]{64}$"
+                },
+                "page": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "table"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "bounding_box": {
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "layer": {
+                  "type": "string",
+                  "enum": [
+                    "primary",
+                    "element"
+                  ]
+                },
+                "start_byte": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 67108864
+                },
+                "length": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                }
+              },
+              "required": [
+                "block_ref",
+                "kind",
+                "text",
+                "layer"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "total_blocks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "element",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "document_version_ref",
+          "source",
+          "content_sha256",
+          "provider_version",
+          "coverage",
+          "limitations",
+          "blocks",
+          "offset",
+          "total_blocks",
+          "has_more",
+          "layer"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentSourcePassage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "document_version_ref": {
+            "type": "string",
+            "pattern": "^document:[0-9a-f]{64}$"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "file_ref": {
+                "type": "string",
+                "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "media_type": {
+                "type": "string"
+              },
+              "detected_media_type": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "dataset",
+                  "document",
+                  "other"
+                ]
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "uploading",
+                  "uploaded",
+                  "failed"
+                ]
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "content_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file_ref",
+              "name",
+              "media_type",
+              "size_bytes",
+              "status",
+              "created_at"
+            ],
+            "additionalProperties": false
+          },
+          "content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "block": {
+            "type": "object",
+            "properties": {
+              "block_ref": {
+                "type": "string",
+                "pattern": "^block:[0-9a-f]{64}$"
+              },
+              "page": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "table"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "bounding_box": {
+                "minItems": 4,
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "layer": {
+                "type": "string",
+                "enum": [
+                  "primary",
+                  "element"
+                ]
+              },
+              "start_byte": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 67108864
+              },
+              "length": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16384
+              }
+            },
+            "required": [
+              "block_ref",
+              "kind",
+              "text",
+              "layer"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "document_version_ref",
+          "source",
+          "content_sha256",
+          "block"
+        ],
+        "additionalProperties": false
+      },
       "FileDescriptor": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1019,6 +1619,125 @@
         ],
         "additionalProperties": false
       },
+      "FileImagePreview": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "none"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "pending"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "failed"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "ready"
+              },
+              "media_type": {
+                "type": "string",
+                "const": "image/png"
+              },
+              "converter_version": {
+                "type": "string"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "pages": {
+                "minItems": 1,
+                "maxItems": 1000,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "size_bytes": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "content_sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "page",
+                    "width",
+                    "height",
+                    "size_bytes",
+                    "content_sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "state",
+              "media_type",
+              "converter_version",
+              "size_bytes",
+              "pages"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "FilePreview": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "oneOf": [
@@ -1319,6 +2038,552 @@
     }
   },
   "paths": {
+    "/api/v1/files/documents/reads": {
+      "post": {
+        "operationId": "beginDocumentRead",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Explicitly request original-source reading. No model summaries or attachment extraction. Native formats use detected MIME; original UTF-8/CSV/TSV/JSON citation identities remain unchanged.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "file_ref"
+                ],
+                "properties": {
+                  "file_ref": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "string",
+                    "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/documents/reads/{read_ref}": {
+      "get": {
+        "operationId": "getDocumentRead",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "read_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^document-read:[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/documents/{document_version_ref}/blocks": {
+      "get": {
+        "operationId": "readDocumentContent",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^document:[0-9a-f]{64}$"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 4
+            }
+          },
+          {
+            "name": "max_bytes",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 16384,
+              "maximum": 131072,
+              "default": 32768
+            }
+          },
+          {
+            "name": "layer",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "primary",
+                "element",
+                "all"
+              ],
+              "default": "primary"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentContentPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/documents/{document_version_ref}/blocks/{block_ref}": {
+      "get": {
+        "operationId": "readDocumentPassage",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^document:[0-9a-f]{64}$"
+            }
+          },
+          {
+            "name": "block_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^block:[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSourcePassage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/files/{file_ref}/content": {
       "get": {
         "operationId": "downloadFileContent",
@@ -1522,6 +2787,344 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/files/{file_ref}/image-preview": {
+      "get": {
+        "operationId": "getFileImagePreview",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+            },
+            "description": "An original file or a pinned saved version."
+          }
+        ],
+        "description": "On-demand PNG image previews for HEIC/HEIF and TIFF. Each TIFF page remains separately available. No AI work is started. The existing PDF preview endpoint is unchanged.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileImagePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/files/{file_ref}/image-preview/{page}/content": {
+      "get": {
+        "operationId": "downloadFileImagePreview",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^(?:file:[0-9a-f]{64}|file-version:[0-9a-f]{64}:[1-9]\\d{0,15}:[0-9a-f]{64})$"
+            },
+            "description": "An original file or a pinned saved version."
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Range",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed complete content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Accept-Ranges": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Streamed byte range",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Accept-Ranges": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Stream one PNG preview page, using the ready manifest page SHA-256 as its strong ETag."
       }
     },
     "/api/v1/files/{file_ref}/preview": {

@@ -60,3 +60,37 @@ test('credentials stay out of redirects and invalid ranges fail before auth', as
   const files=new PlatformFilesClient({apiUrl:'https://api.test',token:()=>assert.fail('auth called'),fetch:()=>assert.fail('HTTP called')})
   await assert.rejects(files.content(pin,{byteRange:'bytes=0-1,4-5'}),TypeError)
 })
+
+test('PNG image pages stay separate from the existing PDF preview contract', async () => {
+  const ready={state:'ready',media_type:'image/png',converter_version:'raster-png-v1',size_bytes:8,pages:[{page:1,width:2,height:2,size_bytes:4,content_sha256:'b'.repeat(64)},{page:2,width:2,height:2,size_bytes:4,content_sha256:'c'.repeat(64)}]}
+  const files=client(async(url)=>url.endsWith('/content')?new Response('page',{status:200}):json(url.endsWith('/image-preview')?ready:{state:'none'}))
+  assert.equal((await files.imagePreview(original)).pages.length,2)
+  assert.equal((await files.preview(original)).state,'none')
+  assert.equal(await(await files.content(original,{imagePage:2})).text(),'page')
+  await assert.rejects(files.content(original,{imagePage:0}),TypeError)
+  await assert.rejects(files.content(original,{imagePage:1,preview:true}),TypeError)
+  await assert.rejects(client(async()=>json({...ready,size_bytes:9})).imagePreview(original),/inconsistent/)
+})
+
+test('native document DTOs preserve exact positions, outlines and passage identity', async () => {
+  const read=await fixture('document_read'),page=await fixture('document_page'),passage=await fixture('document_passage')
+  const originalBytes=await readFile(new URL('../../../contracts/fixtures/platform-files/document-original.txt',import.meta.url))
+  const files=client(async(url,init)=> {
+    if(url.endsWith('/reads')) { assert.deepEqual(JSON.parse(init.body),{file_ref:read.source.file_ref});return json(read) }
+    if(url.includes('/reads/')) return json(read)
+    return json(new URL(url).pathname.endsWith('/blocks')?page:passage)
+  })
+  assert.equal((await files.beginDocumentRead(read.source.file_ref)).outline[0].text,'Résumé')
+  assert.equal((await files.documentRead(read.read_ref)).read_ref,read.read_ref)
+  const content=await files.documentContent(page.document_version_ref)
+  const {block}=await files.documentPassage(page.document_version_ref,content.blocks[0].block_ref)
+  assert.equal(originalBytes.subarray(block.start_byte,block.start_byte+block.length).toString(),block.text)
+  for(const mutate of [value=>value.offset++,value=>value.blocks[0].length=1,value=>delete value.blocks[0].length]) {
+    const invalid=structuredClone(page);mutate(invalid)
+    await assert.rejects(client(async()=>json(invalid)).documentContent(page.document_version_ref),/inconsistent/)
+  }
+  const forbidden=new PlatformFilesClient({apiUrl:'https://api.test',token:()=>assert.fail('auth called'),fetch:()=>assert.fail('HTTP called')})
+  await assert.rejects(forbidden.documentContent(page.document_version_ref+'\n'),TypeError)
+  await assert.rejects(forbidden.documentContent(page.document_version_ref,{offset:-1}),TypeError)
+  await assert.rejects(forbidden.documentPassage(page.document_version_ref,block.block_ref+'\n'),TypeError)
+})

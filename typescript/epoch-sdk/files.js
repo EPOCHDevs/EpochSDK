@@ -19,6 +19,9 @@ function version(value, original) {
   }
   return value
 }
+function documentPosition(block, source) {
+  if ((block.start_byte === undefined) !== (block.length === undefined) || (block.start_byte !== undefined && (block.length !== encoder.encode(block.text).byteLength || block.start_byte + block.length > source.size_bytes))) throw new TypeError('Platform returned an inconsistent document position')
+}
 export class PlatformFileError extends Error {
   constructor(status, code, message, retryAfter) {
     super(message)
@@ -80,7 +83,43 @@ export class PlatformFilesClient {
     } catch { throw new TypeError(`Platform returned an invalid ${model}`) }
     return result
   }
+  _documentUrl(ref, kind, suffix = '') {
+    if (typeof ref !== 'string' || new RegExp(`^${kind}:[0-9a-f]{64}$`, 'u').exec(ref)?.[0] !== ref) throw new TypeError(`Provide an exact ${kind} reference`)
+    return `${this.apiUrl}/api/v1/files/documents/${kind === 'document-read' ? 'reads/' : ''}${encodeURIComponent(ref)}${suffix}`
+  }
+  async beginDocumentRead(ref, options) {
+    this._url(ref, '')
+    const result = await this._json(`${this.apiUrl}/api/v1/files/documents/reads`, 'DocumentRead', {file_ref: ref}, options)
+    if (result.source.file_ref !== ref) throw new TypeError('Platform returned a different document source')
+    return result
+  }
+  async documentRead(ref, options) {
+    const result = await this._json(this._documentUrl(ref, 'document-read'), 'DocumentRead', undefined, options)
+    if (result.read_ref !== ref) throw new TypeError('Platform returned a different document read')
+    return result
+  }
+  async documentContent(ref, {offset = 0, limit = 4, maxBytes = 32768, layer = 'primary', signal} = {}) {
+    const url = new URL(this._documentUrl(ref, 'document', '/blocks'))
+    if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(maxBytes) || maxBytes < 16384 || maxBytes > 131072 || !['primary','element','all'].includes(layer)) throw new TypeError('Invalid document content page')
+    for (const [key,value] of Object.entries({offset,limit,max_bytes:maxBytes,layer})) url.searchParams.set(key, String(value))
+    const result = await this._json(url.href, 'DocumentContentPage', undefined, {signal})
+    if (result.document_version_ref !== ref || result.offset !== offset || result.layer !== layer || result.blocks.length > limit || result.offset + result.blocks.length > result.total_blocks) throw new TypeError('Platform returned an inconsistent document page')
+    for (const block of result.blocks) documentPosition(block, result.source)
+    return result
+  }
+  async documentPassage(ref, blockRef, options) {
+    if (typeof blockRef !== 'string' || /^block:[0-9a-f]{64}$/u.exec(blockRef)?.[0] !== blockRef) throw new TypeError('Provide an exact block reference')
+    const result = await this._json(this._documentUrl(ref, 'document', `/blocks/${encodeURIComponent(blockRef)}`), 'DocumentSourcePassage', undefined, options)
+    if (result.document_version_ref !== ref || result.block.block_ref !== blockRef) throw new TypeError('Platform returned a different document passage')
+    documentPosition(result.block, result.source)
+    return result
+  }
   preview(ref, options) { return this._json(this._url(ref, '/preview'), 'FilePreview', undefined, options) }
+  async imagePreview(ref, options) {
+    const result = await this._json(this._url(ref, '/image-preview'), 'FileImagePreview', undefined, options)
+    if (result.state === 'ready' && (result.pages.reduce((sum, page) => sum + page.size_bytes, 0) !== result.size_bytes || result.pages.some((page, index) => page.page !== index + 1))) throw new TypeError('Platform returned an inconsistent image preview')
+    return result
+  }
   async editOptions(ref, options) {
     const result = await this._json(this._url(ref, '/edit-options', true), 'FileEditOptions', undefined, options)
     version(result.latest, ref)
@@ -122,8 +161,9 @@ export class PlatformFilesClient {
     if (result.version !== request.base_version + 1) throw new TypeError('Platform returned another save generation')
     return result
   }
-  async content(ref, { preview = false, byteRange, ifRange, signal } = {}) {
-    const url = this._url(ref, preview ? '/preview/content' : '/content')
+  async content(ref, { preview = false, imagePage, byteRange, ifRange, signal } = {}) {
+    if (imagePage !== undefined && (preview || !Number.isInteger(imagePage) || imagePage < 1 || imagePage > 1000)) throw new TypeError('Provide one image page in 1..1000, separately from PDF preview')
+    const url = this._url(ref, imagePage === undefined ? preview ? '/preview/content' : '/content' : `/image-preview/${imagePage}/content`)
     const headers = {}
     if (byteRange !== undefined) {
       if (typeof byteRange !== 'string' || byteRange.length > 256 || !/^bytes=(?:\d+-\d*|-\d+)$/u.test(byteRange)) throw new TypeError('Provide one byte range')
