@@ -24,6 +24,7 @@ from .platform_file_models import (
     FileEditGrid,
     FileEditOptions,
     FileEditRequest,
+    FileImagePreview,
     FilePreview,
     FileVersion,
     FileVersionPage,
@@ -43,6 +44,7 @@ _validators = {
 }
 _adapters = {
     "FilePreview": TypeAdapter(FilePreview),
+    "FileImagePreview": TypeAdapter(FileImagePreview),
     "FileEditOptions": TypeAdapter(FileEditOptions),
     "FileVersion": TypeAdapter(FileVersion),
     "FileVersionPage": TypeAdapter(FileVersionPage),
@@ -193,6 +195,17 @@ class PlatformFilesClient:
     async def preview(self, ref: str) -> FilePreview:
         return cast(FilePreview, await self._json(self._url(ref, "/preview"), "FilePreview"))
 
+    async def image_preview(self, ref: str) -> FileImagePreview:
+        result = cast(
+            FileImagePreview, await self._json(self._url(ref, "/image-preview"), "FileImagePreview")
+        )
+        if result.state == "ready" and (
+            sum(page.size_bytes for page in result.pages) != result.size_bytes
+            or any(page.page != index + 1 for index, page in enumerate(result.pages))
+        ):
+            raise ValueError("Platform returned an inconsistent image preview")
+        return result
+
     async def edit_options(self, ref: str) -> FileEditOptions:
         result = cast(
             FileEditOptions,
@@ -267,10 +280,22 @@ class PlatformFilesClient:
         ref: str,
         *,
         preview: bool = False,
+        image_page: int | None = None,
         byte_range: str | None = None,
         if_range: str | None = None,
     ) -> AsyncIterator[FileContent]:
-        url = self._url(ref, "/preview/content" if preview else "/content")
+        if image_page is not None and (
+            preview or type(image_page) is not int or not 1 <= image_page <= 1000
+        ):
+            raise ValueError("Provide one image page in 1..1000, separately from PDF preview")
+        suffix = (
+            f"/image-preview/{image_page}/content"
+            if image_page is not None
+            else "/preview/content"
+            if preview
+            else "/content"
+        )
+        url = self._url(ref, suffix)
         headers: dict[str, str] = {}
         if byte_range is not None:
             if len(byte_range) > 256 or not re.fullmatch(r"bytes=(?:\d+-\d*|-\d+)", byte_range):

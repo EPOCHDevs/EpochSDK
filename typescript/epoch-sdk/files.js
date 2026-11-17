@@ -81,6 +81,11 @@ export class PlatformFilesClient {
     return result
   }
   preview(ref, options) { return this._json(this._url(ref, '/preview'), 'FilePreview', undefined, options) }
+  async imagePreview(ref, options) {
+    const result = await this._json(this._url(ref, '/image-preview'), 'FileImagePreview', undefined, options)
+    if (result.state === 'ready' && (result.pages.reduce((sum, page) => sum + page.size_bytes, 0) !== result.size_bytes || result.pages.some((page, index) => page.page !== index + 1))) throw new TypeError('Platform returned an inconsistent image preview')
+    return result
+  }
   async editOptions(ref, options) {
     const result = await this._json(this._url(ref, '/edit-options', true), 'FileEditOptions', undefined, options)
     version(result.latest, ref)
@@ -122,8 +127,9 @@ export class PlatformFilesClient {
     if (result.version !== request.base_version + 1) throw new TypeError('Platform returned another save generation')
     return result
   }
-  async content(ref, { preview = false, byteRange, ifRange, signal } = {}) {
-    const url = this._url(ref, preview ? '/preview/content' : '/content')
+  async content(ref, { preview = false, imagePage, byteRange, ifRange, signal } = {}) {
+    if (imagePage !== undefined && (preview || !Number.isInteger(imagePage) || imagePage < 1 || imagePage > 1000)) throw new TypeError('Provide one image page in 1..1000, separately from PDF preview')
+    const url = this._url(ref, imagePage === undefined ? preview ? '/preview/content' : '/content' : `/image-preview/${imagePage}/content`)
     const headers = {}
     if (byteRange !== undefined) {
       if (typeof byteRange !== 'string' || byteRange.length > 256 || !/^bytes=(?:\d+-\d*|-\d+)$/u.test(byteRange)) throw new TypeError('Provide one byte range')

@@ -174,3 +174,41 @@ def test_redirects_are_not_followed_and_model_requests_are_validated():
             assert error.value.status == 307 and len(calls) == 1
 
     asyncio.run(scenario())
+
+
+def test_image_pages_are_validated_and_do_not_change_the_pdf_preview_contract():
+    async def scenario():
+        ready = {
+            "state": "ready",
+            "media_type": "image/png",
+            "converter_version": "raster-png-v1",
+            "size_bytes": 8,
+            "pages": [
+                {"page": n, "width": 2, "height": 2, "size_bytes": 4, "content_sha256": "b" * 64}
+                for n in (1, 2)
+            ],
+        }
+
+        def transport(request):
+            if request.url.path.endswith("/content"):
+                assert request.url.path.endswith("/image-preview/2/content")
+                return httpx.Response(200, content=b"page")
+            return httpx.Response(
+                200,
+                json=ready if request.url.path.endswith("/image-preview") else {"state": "none"},
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            assert len((await client.image_preview(ORIGINAL)).pages) == 2
+            assert (await client.preview(ORIGINAL)).state == "none"
+            async with client.content(ORIGINAL, image_page=2) as result:
+                assert b"".join([chunk async for chunk in result.body]) == b"page"
+            with pytest.raises(ValueError):
+                async with client.content(ORIGINAL, image_page=0):
+                    pass
+            with pytest.raises(ValueError):
+                async with client.content(ORIGINAL, image_page=1, preview=True):
+                    pass
+
+    asyncio.run(scenario())

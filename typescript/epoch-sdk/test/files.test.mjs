@@ -60,3 +60,14 @@ test('credentials stay out of redirects and invalid ranges fail before auth', as
   const files=new PlatformFilesClient({apiUrl:'https://api.test',token:()=>assert.fail('auth called'),fetch:()=>assert.fail('HTTP called')})
   await assert.rejects(files.content(pin,{byteRange:'bytes=0-1,4-5'}),TypeError)
 })
+
+test('PNG image pages stay separate from the existing PDF preview contract', async () => {
+  const ready={state:'ready',media_type:'image/png',converter_version:'raster-png-v1',size_bytes:8,pages:[{page:1,width:2,height:2,size_bytes:4,content_sha256:'b'.repeat(64)},{page:2,width:2,height:2,size_bytes:4,content_sha256:'c'.repeat(64)}]}
+  const files=client(async(url)=>url.endsWith('/content')?new Response('page',{status:200}):json(url.endsWith('/image-preview')?ready:{state:'none'}))
+  assert.equal((await files.imagePreview(original)).pages.length,2)
+  assert.equal((await files.preview(original)).state,'none')
+  assert.equal(await(await files.content(original,{imagePage:2})).text(),'page')
+  await assert.rejects(files.content(original,{imagePage:0}),TypeError)
+  await assert.rejects(files.content(original,{imagePage:1,preview:true}),TypeError)
+  await assert.rejects(client(async()=>json({...ready,size_bytes:9})).imagePreview(original),/inconsistent/)
+})

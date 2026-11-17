@@ -427,3 +427,9 @@ request ID after an uncertain result, then explicitly call `save` again.
 base requires resolving the working draft; a new request ID cannot fix it.
 Opening, reading or saving a file starts no AI or provider writeback. Applications
 own account-scoped draft/cache cleanup and token renewal.
+
+`await files.image_preview(ref)` opts into HEIC/HEIF and TIFF previews as ordered
+PNG pages, with dimensions, size and SHA-256 for each. Read one with
+`async with files.content(ref, image_page=2) as result`. The existing PDF
+`preview` contract is unchanged. Conversion starts on explicit preview access,
+never on upload, and starts no AI.
