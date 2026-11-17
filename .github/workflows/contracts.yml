@@ -24,6 +24,7 @@ jobs:
       - run: python tools/validate_contract.py
       - run: python tools/validate_public_contract.py
       - run: python tools/sync_native_parameters.py --check
+      - run: python tools/sync_platform_files_contract.py --check
       - run: python tools/sync_typescript_workflow_schemas.py --check
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
@@ -35,3 +36,20 @@ jobs:
       - run: python tools/generate_demo_notebooks.py --check
       - run: python tools/generate_report_notebooks.py --check
       - run: python -m compileall -q python/epoch-sdk/src
+
+  platform-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install './python/epoch-sdk[clients,test]'
+      - run: python -m pytest python/epoch-sdk/tests/test_platform_files.py -q
+      - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
+      - run: node --test typescript/epoch-sdk/test/files.test.mjs

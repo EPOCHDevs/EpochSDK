@@ -34,6 +34,7 @@ from .datasets import DatasetClient
 from .documents import DocumentClient
 from .extensions import ExecutionExtensionClient
 from .files import FileClient
+from .platform_files import PlatformFilesClient
 from .json_schema import validate_schema
 from .sources import SourceClient
 from .supervisor import (
@@ -144,12 +145,14 @@ class AgentToolsClient(DatasetClient, FileClient, DocumentClient, SourceClient, 
     def __init__(
         self, graph: LangGraphClient, backend: AsyncStratifyX, graph_http: httpx.AsyncClient,
         *, source_connections: AsyncSourcesClient | None = None,
+        platform_files: PlatformFilesClient | None = None,
     ):
         self.graph = graph
         self.backend = backend
         self.graph_http = graph_http
         self.document_http = graph_http
         self.source_connections = source_connections
+        self.platform_files = platform_files
         self._catalog: AgentToolsCatalog | None = None
         self._owned_http: list[httpx.AsyncClient] = []
 
@@ -164,6 +167,7 @@ class AgentToolsClient(DatasetClient, FileClient, DocumentClient, SourceClient, 
             AsyncStratifyX(base_url=api_url(backend_url), token=token, httpx_client=backend_http),
             graph_http,
             source_connections=AsyncSourcesClient(base_url=api_url(backend_url), token=token, http=backend_http),
+            platform_files=PlatformFilesClient(api_url(backend_url), token=token, http=backend_http),
         )
         client._owned_http = [graph_http, backend_http]
         return client

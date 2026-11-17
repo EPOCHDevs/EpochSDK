@@ -1,6 +1,6 @@
 {
   "name": "@epochdevs/epoch-sdk",
-  "version": "0.1.0-alpha.8",
+  "version": "0.1.0-alpha.9",
   "description": "Typed Epoch research workflows over the native StratifyX and LangGraph clients",
   "type": "module",
   "main": "index.js",
@@ -13,6 +13,10 @@
     "./api": {
       "types": "./api.d.ts",
       "import": "./api.js"
+    },
+    "./files": {
+      "types": "./files.d.ts",
+      "import": "./files.js"
     }
   },
   "files": [
@@ -20,7 +24,8 @@
     "*.d.ts",
     "schemas.generated.json",
     "README.md",
-    "dataset-review.schema.json"
+    "dataset-review.schema.json",
+    "platform-files.openapi.json"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs"

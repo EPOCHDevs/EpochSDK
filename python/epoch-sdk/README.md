@@ -382,3 +382,48 @@ The source package and native SDK preview wheels must accompany an unpublished
 SDK candidate; none of these preview artifacts is published by acceptance tests.
 The retained local demonstration and real-service receipts live outside the
 repository, including credentials and the resource cleanup ledger.
+
+### Platform file previews and versioned edits
+
+A connected `EpochClient` or `AgentToolsClient` exposes `client.file_edits`.
+For a standalone file client, use `epoch_sdk.PlatformFilesClient(api_url,
+token=token_or_async_provider)`. Request/response models live in
+`epoch_sdk.platform_file_models` and follow the packaged Platform-owned OpenAPI
+snapshot. Native file APIs and their generated StratifyX types remain unchanged.
+
+```python
+from epoch_sdk import PlatformFilesClient
+from epoch_sdk.platform_file_models import FileEditRequest, TextEdit
+
+files = PlatformFilesClient(api_url, token=token_provider)
+try:
+    options = await files.edit_options(original_ref)
+    latest = options.latest
+    saved = await files.save(original_ref, FileEditRequest(
+        request_id=save_id, base_version=latest.version,
+        base_content_sha256=latest.file.content_sha256,
+        edit=TextEdit(kind="text", content="# Updated notes\n"),
+    ))
+finally:
+    await files.aclose()
+```
+
+Check `options.kind` before editing. `grid` reads typed bounded pages. Cell saves
+use exact lexical numeric strings, booleans, strings and explicit nulls, with
+zero-based data rows and optional worksheet names per change. Formula cells are
+read-only; caches are not recalculated. `latest` resolves the latest saved
+version; `history` includes Original (version 0). Retain the returned
+`saved.file.file_ref` for immutable content, study and citation inputs. The
+original reference still reads the uploaded bytes.
+
+`preview` reports conversion state. `async with files.content(ref,
+byte_range="bytes=0-65535") as result` exposes status, headers and an async byte
+iterator without buffering the complete file. Set `preview=True` for the
+converted preview's content.
+
+Mutation failures are never automatically retried. Keep the exact body and
+request ID after an uncertain result, then explicitly call `save` again.
+`PlatformFileError` preserves the server status/code and Retry-After. A stale
+base requires resolving the working draft; a new request ID cannot fix it.
+Opening, reading or saving a file starts no AI or provider writeback. Applications
+own account-scoped draft/cache cleanup and token renewal.
