@@ -169,6 +169,8 @@ def test_sdk_mcp_native_bounds_defaults_and_valid_selectors_match(candidate_limi
             assert calls[0] == calls[3]
             query_wire = deepcopy(query)
             query_wire['subjects'][0]['geographies'] = []
+            # rc.94's native contract also emits an empty provider list for a macro concept.
+            query_wire['subjects'][0]['providers'] = []
             query_wire['datasets'][0]['fields'] = []
             query_wire['datasets'][0]['categories'] = []
             assert calls[0][1]['requests'] == [query_wire]
@@ -202,7 +204,7 @@ class MetadataService:
             assert body['include_details'] is True
             return httpx.Response(200, json=fixture('catalog'))
         if request.url.path == '/api/v1/discovery/datasets/search':
-            assert request.headers['X-Epoch-Dataset-Selection'] == 'v1'
+            assert request.headers['X-Epoch-Dataset-Selection'] == 'v3'
             assert body['requests'][0] == QUERY_WIRE
             return httpx.Response(200, json=self.search)
         if request.url.path == '/api/v1/discovery/assets/screen':
@@ -618,3 +620,68 @@ def test_private_dataset_search_returns_native_descriptors_in_one_sdk_and_mcp_ca
                 assert response.structured_content['result']['saved']['items'][0] == saved
             assert len(calls) == 2
     asyncio.run(scenario())
+
+
+def v3_search():
+    """A selection protocol v3 delivery, shaped as Backend's StateSharedFactsOnce leaves it (ENG-2918).
+
+    Item AAPL has one selection, so its records omit requested_dataset; item SPX has
+    two, so each record names its own. Shared facts sit on the selection or the response.
+    """
+    base = fixture('search')
+    record = base['records'][0]
+    loader = {'category': 'DailyBars', 'registry_version': 'r1', 'schema_ref': 'bars', 'source_id': 'bars'}
+    daily = {'category': 'DailyBars', 'fields': []}
+    minute = {'category': 'MinuteBars', 'fields': []}
+    counts = {'candidates': 2, 'errors': 0, 'resolved': 0, 'stored_records': 2, 'unavailable': 0, 'unknown': 0}
+
+    def row(index, item, qualifications, **extra):
+        return {**record, 'record_ref': f'discovery-record:v1:{index:064x}', 'request_id': 'source',
+                'request_item_id': item, 'qualifications': qualifications, **extra}
+
+    def selection(item, **extra):
+        return {'counts': counts, 'delivered_records': 2, 'request_id': 'source', 'request_item_id': item, **extra}
+
+    return {**base, 'qualifications': ['Metadata visibility does not certify loader entitlement/access.'],
+            'records': [row(1, 'AAPL', ['Own note.']), row(2, 'AAPL', []),
+                        row(3, 'SPX', [], requested_dataset=daily, vendor='FMP'),
+                        row(4, 'SPX', ['Minute note.'], requested_dataset=minute)],
+            'selections': [
+                selection('AAPL', qualifications=['Window retained.'], loader=loader, vendor='Barchart',
+                          source_search_completeness='ObservedRequest', requested_dataset=daily),
+                selection('SPX', requested_dataset=daily),
+                selection('SPX', requested_dataset=minute, vendor='Barchart'),
+            ]}
+
+
+def test_complete_records_restores_each_records_shared_facts():
+    from stratifyx.types import DiscoverySearchResponse
+
+    from epoch_sdk.datasets import complete_records
+
+    result = DiscoverySearchResponse.model_validate(v3_search())
+    complete = complete_records(result)
+    shared = 'Metadata visibility does not certify loader entitlement/access.'
+    first, second, daily, minute = complete.records
+    # A record's facts are its own, then its selection's, then the response's.
+    assert first.qualifications == ['Own note.', 'Window retained.', shared]
+    assert second.qualifications == ['Window retained.', shared]
+    assert first.loader == result.selections[0].loader and first.vendor.value == 'Barchart'
+    assert first.source_search_completeness.value == 'ObservedRequest'
+    assert first.requested_dataset == result.selections[0].requested_dataset
+    # An item with two selections: each record keeps its own dataset and its own vendor.
+    assert daily.vendor.value == 'FMP' and daily.qualifications == [shared]
+    assert minute.vendor.value == 'Barchart' and minute.qualifications == ['Minute note.', shared]
+    # Shared facts now live only on the records, so a display shows each once.
+    assert complete.qualifications is None
+    assert all(s.qualifications is None and s.loader is None and s.vendor is None for s in complete.selections)
+    assert [s.requested_dataset for s in complete.selections] == [s.requested_dataset for s in result.selections]
+
+
+def test_complete_records_leaves_a_v1_result_unchanged():
+    from stratifyx.types import DiscoverySearchResponse
+
+    from epoch_sdk.datasets import complete_records
+
+    result = DiscoverySearchResponse.model_validate(fixture('search'))
+    assert complete_records(result) == result

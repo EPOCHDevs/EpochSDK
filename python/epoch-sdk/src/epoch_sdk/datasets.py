@@ -17,6 +17,8 @@ from stratifyx.types import (
     DatasetCatalogResponse,
     DatasetSearchQuery,
     DatasetSearchRequest,
+    DatasetSearchSelection,
+    DiscoveryMetadataRecord,
     DiscoverySearchResponse,
     DiscoveryStoredQueryResponse,
     ScreenAssetsRequest,
@@ -37,6 +39,48 @@ class DatasetSearchResult(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     result: DiscoverySearchResponse
     page: DiscoveryStoredQueryResponse | None = None
+
+
+def _selection_of(result: DiscoverySearchResponse, record: DiscoveryMetadataRecord) -> DatasetSearchSelection | None:
+    """The selection a record belongs to under selection protocol v3.
+
+    A record names its requested_dataset only when its request item has several
+    selections; otherwise the item's single selection is the record's.
+    """
+    matches = [
+        selection for selection in result.selections or []
+        if selection.request_id == record.request_id and selection.request_item_id == record.request_item_id
+        and (record.requested_dataset is None or selection.requested_dataset == record.requested_dataset)
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
+def complete_records(result: DiscoverySearchResponse) -> DiscoverySearchResponse:
+    """The same result with every record carrying all of its facts.
+
+    Selection protocol v3 states a fact every delivered record shares once: on the
+    response, or on the record's selection (qualifications, loader, vendor and
+    provider-search completeness). A record's facts are its own, its selection's
+    and the response's. Use this for displays that show one record at a time; a
+    model or an API caller should read the compact result as delivered.
+    """
+    shared = list(result.qualifications or [])
+    records = []
+    for record in result.records:
+        selection = _selection_of(result, record)
+        update: dict[str, object] = {"qualifications": list(dict.fromkeys(
+            [*record.qualifications, *((selection.qualifications or []) if selection else []), *shared]))}
+        if selection is not None:
+            for name in ("loader", "vendor", "source_search_completeness", "requested_dataset"):
+                if getattr(record, name) is None and getattr(selection, name) is not None:
+                    update[name] = getattr(selection, name)
+        records.append(record.model_copy(update=update))
+    selections = [
+        selection.model_copy(update={"qualifications": None, "loader": None, "vendor": None,
+                                     "source_search_completeness": None})
+        for selection in result.selections
+    ] if result.selections is not None else None
+    return result.model_copy(update={"records": records, "qualifications": None, "selections": selections})
 
 
 class DatasetClient:
@@ -84,6 +128,9 @@ class DatasetClient:
         qualifications into the build_study briefing. References identify saved
         metadata; they are not native loader inputs.
         Backend delivers relevant candidates per requested subject and product.
+        A fact every delivered record shares is stated once, on the result or on
+        the record's selection (selection protocol v3); complete_records restores
+        it to each record for display.
         saved_query finds caller-owned datasets by descriptive metadata or exact
         returned references. Search does not create an asset cohort; use
         screen_assets for a complete universe.
@@ -95,7 +142,7 @@ class DatasetClient:
             requests=request.requests,
             candidate_limit=request.candidate_limit,
             saved_query=request.saved_query,
-            request_options={"max_retries": 0, "additional_headers": {"X-Epoch-Dataset-Selection": "v1"}},
+            request_options={"max_retries": 0, "additional_headers": {"X-Epoch-Dataset-Selection": "v3"}},
         )
         if not result.records_complete and not result.records:
             raise RuntimeError("Backend returned an incomplete search without ranked candidates; update the Backend dataset-search service. No candidate paging was started.")
