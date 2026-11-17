@@ -38,22 +38,25 @@ def test_sdk_manifest_reader_keeps_native_values_without_a_graph_call():
     asyncio.run(scenario())
 
 
-def test_specialist_refusal_preserves_its_terminal_payload_and_is_an_mcp_error():
-    from epoch_sdk.agent_tools import AgentToolOperation
-    from epoch_sdk.agent_tools_contract import AgentToolHandle
-    from epoch_sdk.mcp import _value
+def test_normal_ended_refusal_preserves_its_terminal_payload_in_the_active_mcp_surface():
+    from test_supervisor import clients
+    from epoch_sdk import UsageLimitReached
+    from epoch_sdk.workflow_mcp import _error
 
-    problem = {"code": "USAGE_LIMIT_REACHED", "retryable": False,
-               "meter": "assistant", "resets_at": "2099-11-23T00:00:00Z"}
-    operation = AgentToolOperation(
-        status="failed", native_status="success", tool_status="error",
-        handle=AgentToolHandle(workspace_id="workspace", run_id="run", tool_call_id="call",
-                               tool="build_study"), output=problem,
-    )
-    result = _value(operation)
-    assert result.is_error
-    assert result.structured_content["output"] == problem
-    assert result.structured_content["handle"]["run_id"] == "run"
+    async def scenario():
+        marker = {"meter": "assistant", "state": "reached", "resets_at": "2099-11-23T00:00:00Z"}
+        async with clients([{"usage_limit": marker}]) as (client, graph_calls, backend_calls):
+            with pytest.raises(UsageLimitReached) as raised:
+                await client.run("Question stopped before its model")
+            result = _error(raised.value)
+            assert result.is_error
+            assert result.structured_content["error"]["code"] == "USAGE_LIMIT_REACHED"
+            assert result.structured_content["error"]["retryable"] is False
+            assert result.structured_content["error"]["meter"] == "assistant"
+            assert result.structured_content["error"]["resets_at"] == marker["resets_at"]
+            assert len([r for r in graph_calls if r.method == "POST" and r.url.path.endswith("/runs/wait")]) == 1
+            assert not [r for r in backend_calls if r.method in {"POST", "PATCH"}]
+    asyncio.run(scenario())
 
 
 def test_workflow_refusal_is_an_mcp_error_with_reset_guidance():
