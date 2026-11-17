@@ -704,3 +704,18 @@ def test_a_question_with_a_title_briefing_and_option_descriptions_reads() -> Non
     Draft202012Validator(snapshot["schemas"]["AskUser"]).validate(
         asked.model_dump(mode="json", exclude_none=True)
     )
+
+
+def test_source_catalogue_receipts_survive_followup_state_reads_without_an_execution() -> None:
+    async def scenario() -> None:
+        catalogue = {"tool_call_id": "catalogue-read", "tool_name": "build_study",
+                     "subject": "saved-prices", "status": "source_catalogue",
+                     "detail": "Read the saved table catalogue", "execution_id": None}
+        before = {"execution_ids": ["earlier"], "next_action_outcomes": {"catalogue": catalogue}}
+        values = {**before, "messages": [{"type": "ai", "content": "The saved table was read."}]}
+        async with clients([values], before=before) as (client, _, backend_calls):
+            result = await client.run("Read the same saved rows", thread_id=THREAD)
+            assert isinstance(result, NoExecution)
+            assert backend_calls == []
+            assert "without an engine execution" in result.reason
+    asyncio.run(scenario())
