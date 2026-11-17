@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "request_id": "stable-save",
+  "base_version": 0,
+  "base_content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "edit": {
+    "kind": "cells",
+    "format": "csv",
+    "changes": [
+      {
+        "row": 201,
+        "column": "id",
+        "value": {
+          "type": "number",
+          "value": "9007199254740993"
+        }
+      },
+      {
+        "row": 0,
+        "column": "text",
+        "value": {
+          "type": "string",
+          "value": ""
+        }
+      },
+      {
+        "row": 1,
+        "column": "text",
+        "value": {
+          "type": "null"
+        }
+      }
+    ]
+  }
+}

@@ -176,6 +176,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         self.backend = supervisor.backend
         self.document_http = supervisor.document_http
         self.source_connections = supervisor.source_connections
+        self.platform_files = supervisor.platform_files
 
     @classmethod
     def connect(

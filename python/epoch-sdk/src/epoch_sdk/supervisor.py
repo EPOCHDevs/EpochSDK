@@ -36,6 +36,7 @@ from stratifyx.types.job_list_item import JobListItem
 
 from .contracts import DomainError
 from .credentials import Token, http_clients
+from .platform_files import PlatformFilesClient
 from .dataset_reviews import (
     DatasetConfigureInterrupt,
     DatasetConfigureResponse,
@@ -432,6 +433,7 @@ class SupervisorClient:
         ui_url: str | None = None,
         source_connections: AsyncSourcesClient | None = None,
         document_http: httpx.AsyncClient | None = None,
+        platform_files: PlatformFilesClient | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
@@ -439,6 +441,7 @@ class SupervisorClient:
         self.ui_url = ui_url
         self.source_connections = source_connections
         self.document_http = document_http
+        self.platform_files = platform_files
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -493,6 +496,7 @@ class SupervisorClient:
                 http=backend_http,
             ),
             document_http=graph_http,
+            platform_files=PlatformFilesClient(backend_url, token=fixed, http=backend_http),
         )
         client._owned_http = [graph_http, backend_http]
         return client
