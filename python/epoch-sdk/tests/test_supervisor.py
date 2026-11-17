@@ -719,3 +719,25 @@ def test_source_catalogue_receipts_survive_followup_state_reads_without_an_execu
             assert backend_calls == []
             assert "without an engine execution" in result.reason
     asyncio.run(scenario())
+
+
+def test_normal_ended_quota_turn_is_specific_and_does_not_require_a_published_answer():
+    from epoch_sdk import UsageLimitReached
+    async def scenario():
+        marker={"meter":"assistant","state":"reached","resets_at":"2099-11-23T00:00:00Z"}
+        async with clients([{"usage_limit":marker}]) as (client, graph_calls, backend_calls):
+            with pytest.raises(UsageLimitReached) as raised:
+                await client.run("Question stopped before its model")
+            assert raised.value.meter=="assistant" and not raised.value.retryable
+            assert len([r for r in graph_calls if r.method=="POST" and r.url.path.endswith('/runs/wait')])==1
+            assert not [r for r in backend_calls if r.method in {"POST","PATCH"}]
+    asyncio.run(scenario())
+
+
+def test_a_stale_quota_notice_cannot_claim_another_request():
+    async def scenario():
+        marker={"meter":"assistant","state":"reached","resets_at":"2099-11-23T00:00:00Z","question_message_id":"another"}
+        async with clients([{"usage_limit":marker}]) as (client, _, _):
+            with pytest.raises(ValueError,match="another research request"):
+                await client.run("Current question")
+    asyncio.run(scenario())

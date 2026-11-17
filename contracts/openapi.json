@@ -4319,6 +4319,29 @@
                 "access_requirements"
               ]
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "USAGE_LIMIT_REACHED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "meter",
+                "resets_at"
+              ]
+            }
           }
         ],
         "properties": {
@@ -4355,6 +4378,14 @@
             "title": "Message",
             "type": "string"
           },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
+          },
           "questions": {
             "items": {
               "$ref": "#/components/schemas/Question"
@@ -4367,6 +4398,12 @@
             "minLength": 1,
             "pattern": "\\S",
             "title": "Recommended Task",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
             "type": "string"
           },
           "retryable": {
@@ -4400,6 +4437,7 @@
           "FETCH_CURSOR_EXPIRED",
           "FETCH_LIMIT_EXCEEDED",
           "RATE_LIMITED",
+          "USAGE_LIMIT_REACHED",
           "TEMPORARILY_UNAVAILABLE",
           "UPSTREAM_TIMEOUT"
         ],

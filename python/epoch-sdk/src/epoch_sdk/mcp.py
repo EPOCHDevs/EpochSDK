@@ -50,7 +50,7 @@ from stratifyx.types import (
 )
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
-from .agent_tools import AgentToolsClient
+from .agent_tools import AgentToolOperation, AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
 from .documents import CaptureDocumentRequest
 from .errors import EpochError
@@ -75,7 +75,7 @@ def _value(value: BaseModel) -> CallToolResult:
     return CallToolResult(
         is_error=(isinstance(value, SdkExecutionRecord) and value.error is not None) or (
             isinstance(value, SourceSync) and value.state in ("failed", "submission_unknown")
-        ),
+        ) or (isinstance(value, AgentToolOperation) and value.status == "failed"),
         content=[TextContent(type="text", text=value.model_dump_json(by_alias=True, exclude_unset=True))],
         structured_content=value.model_dump(mode="json", by_alias=True, exclude_unset=True),
     )
@@ -299,6 +299,9 @@ def create_server(client: AgentToolsClient) -> MCPServer:
             "Discover and explicitly select tables, then explicitly start a full-refresh sync. Poll its returned sync_ref; do not resubmit an unconfirmed job. "
             "Prepare only a confirmed completed capture, inspect the native draft, and explicitly review it. Preparation never starts a sync. "
             "Use the accepted source_ref for studies; a later refresh creates a new captured version and cannot change an accepted dataset."
+            " USAGE_LIMIT_REACHED is a terminal HTTP 403, never a retry: tell the user its meter and resets_at. "
+            "A completed study can retain all computed results while AI text is empty with ai_text.status=skipped "
+            "and reason=usage_limit. Explain that notice; do not describe the study as failed or resubmit it."
         ),
         middleware=[checked_dispatch],
     )
@@ -602,6 +605,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         calculations. Existing context answers source questions directly. Optional
         execution_id is Backend's caller-selected ID. Never retry an uncertain
         submission blindly: retain and read its accepted ID.
+        A weekly Study AI limit can skip new AI text while computation completes.
+        Explain ai_text.reason=usage_limit and its resets_at without resubmitting.
         """
         return await _call(
             client.execute(
@@ -751,6 +756,8 @@ def create_server(client: AgentToolsClient) -> MCPServer:
         Provenance kinds page retained source receipts using identifier and
         offset/page_size (at most 1000); response_provenance accepts a revision.
         Execution provenance accepts the catalogue's expected_sha256 to pin its receipts.
+        Empty text with ai_text.reason=usage_limit is a completed study's skipped
+        AI text. Explain its reset time and keep the computed results.
         Presentation reads require the exact publication/catalog/edit pin from
         extension_outputs; edit zero is a real version, not a latest lookup.
         """

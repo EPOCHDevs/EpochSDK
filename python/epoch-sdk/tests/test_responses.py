@@ -134,3 +134,26 @@ def test_an_answer_revision_does_not_change_the_native_execution_reference() -> 
     second = SavedResearchResponse.model_validate(value)
     assert first.primary_execution_id == second.primary_execution_id
     assert first.content.outputs[2] != second.content.outputs[2]
+
+
+def test_skipped_text_preserves_other_computed_outputs_and_round_trips():
+    value = example()
+    marker = {"status": "skipped", "reason": "usage_limit", "resets_at": "2026-11-23T00:00:00Z"}
+    before = copy.deepcopy(value["content"]["outputs"])
+    value["ai_text"] = marker
+    text = next(output for output in value["content"]["outputs"] if output["type"] == "text")
+    text.update(value="", ai_text=marker)
+    answer = SavedResearchResponse.model_validate(value)
+    assert answer.to_wire() == value and answer.reference().ai_text == answer.ai_text
+    for old, actual in zip(before, answer.to_wire()["content"]["outputs"], strict=True):
+        if old["type"] != "text": assert old == actual
+    text["value"] = "This cannot be a skipped output."
+    with pytest.raises(ValidationError, match="Skipped AI text must be empty"):
+        SavedResearchResponse.model_validate(value)
+
+
+@pytest.mark.parametrize("reset", ["Monday", "2026-11-23T00:00:00", "2026-15-23T00:00:00Z"])
+def test_skipped_text_requires_a_real_reset_time_with_timezone(reset):
+    value = example()
+    value["ai_text"] = {"status": "skipped", "reason": "usage_limit", "resets_at": reset}
+    with pytest.raises(ValidationError): SavedResearchResponse.model_validate(value)

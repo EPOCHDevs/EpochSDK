@@ -11,7 +11,7 @@ import webbrowser
 from pathlib import Path
 
 from .contracts import Contract, ErrorResponse, RunRequest
-from .errors import EpochError
+from .errors import EpochError, usage_limit_message
 from .research import EpochClient, ResearchCompleted, ResearchError
 from .sign_in import SignInError, SignInSettings, default_store, login, logout
 
@@ -118,7 +118,9 @@ def main() -> int:
     try:
         return asyncio.run(_research(args))
     except EpochError as error:
-        if not args.json and sys.stdin.isatty() and sys.stdout.isatty():
+        if error.error.code == "USAGE_LIMIT_REACHED" and not args.json:
+            print(usage_limit_message(error.error.meter, error.error.resets_at), file=sys.stderr)
+        elif not args.json and sys.stdin.isatty() and sys.stdout.isatty():
             print(f"Epoch · {error.error.code}\n{error}", file=sys.stderr)
         else:
             failure = (

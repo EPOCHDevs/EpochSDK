@@ -466,3 +466,35 @@ def test_events_stop_at_a_lasting_refusal():
     with pytest.raises(EpochApiError) as failure:
         list(epoch.research.events("req_other"))
     assert failure.value.code == "NOT_FOUND"
+
+
+@pytest.mark.parametrize("operation", ["create", "wait", "execution_wait", "events"])
+def test_a_weekly_limit_is_specific_terminal_and_never_retried(operation, no_sleep):
+    from epoch_sdk import UsageLimitReached
+    seen = []
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(403, headers={"Retry-After": "900"}, json={
+            "title": "Weekly limit reached", "status": 403, "code": "USAGE_LIMIT_REACHED",
+            # Even an incorrect upstream retry flag cannot create a quota wait loop.
+            "retryable": True, "meter": "assistant", "resets_at": "2026-11-23T00:00:00Z",
+        })
+    epoch = client(handler)
+    with pytest.raises(UsageLimitReached) as raised:
+        if operation == "create": epoch.research.create("Task", outputs=[OUTPUT])
+        elif operation == "wait": epoch.research.wait("req_1")
+        elif operation == "execution_wait": epoch.executions.wait("job_1")
+        else: list(epoch.research.events("req_1"))
+    error = raised.value
+    assert isinstance(error, EpochApiError) and not error.retryable and error.retry_after is None
+    assert error.meter == "assistant" and error.resets_at == "2026-11-23T00:00:00Z"
+    assert "Mon 23 Nov, 00:00 UTC" in str(error)
+    assert error.error.to_wire()["resets_at"] == error.resets_at
+    assert len(seen) == 1 and no_sleep == []
+
+
+def test_new_answer_readers_opt_in_to_skipped_text_metadata():
+    seen = []
+    epoch = client(lambda r: (seen.append(r), httpx.Response(200, json={}))[1])
+    epoch.request("GET", "/v1/responses/rsp_1")
+    assert seen[0].headers["Epoch-Features"] == "ai-text-skipped-v1"

@@ -28,6 +28,24 @@ export class EpochApiError extends Error {
   }
 }
 
+export class UsageLimitReached extends EpochApiError {
+  constructor(problem) {
+    super({ ...problem, retryable: false })
+    this.name = "UsageLimitReached"
+    this.meter = problem.meter ?? null
+    this.resetsAt = problem.resets_at ?? null
+    const label = this.meter === "study_ai" ? "Study AI" : "Assistant"
+    this.message = `You've reached this week's ${label} limit.`
+    const reset = this.resetsAt && new Date(this.resetsAt)
+    if (reset && Number.isFinite(reset.getTime())) {
+      this.message += ` It resets ${new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC", timeZoneName: "short" }).format(reset)}.`
+    }
+  }
+}
+
+const apiError = (problem, options) => problem.status === 403 && problem.code === "USAGE_LIMIT_REACHED"
+  ? new UsageLimitReached(problem) : new EpochApiError(problem, options)
+
 const retryAfterOf = response => {
   const header = response.headers.get("Retry-After")
   const seconds = header === null ? NaN : Number(header)
@@ -37,7 +55,8 @@ const retryAfterOf = response => {
 const problemOf = async response => {
   try {
     const body = await response.json()
-    if (body && typeof body.title === "string") return body
+    if (body && typeof body.title === "string") return response.status === 403 && body.code === "USAGE_LIMIT_REACHED"
+      ? { ...body, status: 403, retryable: false } : body
   } catch {
     // Not problem+json: describe it from the status.
   }
@@ -233,7 +252,7 @@ export class Epoch {
    * is retried only after a rate limit, which refuses it before any work.
    */
   async request(method, route, { json, body, headers = {}, idempotencyKey, deduplicated = true } = {}) {
-    const sent = { Authorization: `Bearer ${this.#key}`, ...headers }
+    const sent = { Authorization: `Bearer ${this.#key}`, "Epoch-Features": "ai-text-skipped-v1", ...headers }
     if (json !== undefined) {
       sent["Content-Type"] = "application/json"
       body = JSON.stringify(json)
@@ -257,7 +276,7 @@ export class Epoch {
         await sleep(after !== null ? after * 1000 : backoff(attempt))
         continue
       }
-      throw new EpochApiError(problem, { retryAfter: after })
+      throw apiError(problem, { retryAfter: after })
     }
   }
 
@@ -280,7 +299,7 @@ export class Epoch {
       try {
         const response = await this.#fetch(`${this.apiUrl}/v1/research/${path(researchId)}/events`, { headers, signal })
         if (!response.ok) {
-          const error = new EpochApiError(await problemOf(response), { retryAfter: retryAfterOf(response) })
+          const error = apiError(await problemOf(response), { retryAfter: retryAfterOf(response) })
           if (!error.retryable) throw error
           wait = error.retryAfter
         } else {

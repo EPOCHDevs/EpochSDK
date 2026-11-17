@@ -15,6 +15,7 @@ from stratifyx.types import (
 )
 
 from .contracts import (
+    AiTextSkipped,
     Column,
     Contract,
     DomainError,
@@ -96,6 +97,7 @@ class ResponseReference(Contract):
     # Native facts frozen when the answer was first saved. The full evidence
     # is paged independently so receipts do not consume the answer's budget.
     acquisition_provenance: AcquisitionProvenanceReference | None = None
+    ai_text: AiTextSkipped | None = None
 
     @model_validator(mode="after")
     def paired_source(self) -> Self:
