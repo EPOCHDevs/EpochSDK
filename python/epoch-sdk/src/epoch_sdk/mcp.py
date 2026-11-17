@@ -50,7 +50,7 @@ from stratifyx.types import (
 )
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
 
-from .agent_tools import AgentToolsClient
+from .agent_tools import AgentToolOperation, AgentToolsClient
 from .agent_tools_contract import MCP_TOOL_NAMES, AgentToolHandle
 from .documents import CaptureDocumentRequest
 from .errors import EpochError
@@ -75,7 +75,7 @@ def _value(value: BaseModel) -> CallToolResult:
     return CallToolResult(
         is_error=(isinstance(value, SdkExecutionRecord) and value.error is not None) or (
             isinstance(value, SourceSync) and value.state in ("failed", "submission_unknown")
-        ),
+        ) or (isinstance(value, AgentToolOperation) and value.status == "failed"),
         content=[TextContent(type="text", text=value.model_dump_json(by_alias=True, exclude_unset=True))],
         structured_content=value.model_dump(mode="json", by_alias=True, exclude_unset=True),
     )
