@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "file_ref": "file-version:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "offset": 201,
+  "total_rows": 300,
+  "sheets": [],
+  "limitations": [],
+  "columns": [
+    {
+      "name": "id",
+      "native_type": "int64",
+      "nullable": false,
+      "edit_type": "number"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "value": {
+          "type": "number",
+          "value": "9007199254740993"
+        },
+        "read_only": false
+      }
+    ]
+  ]
+}

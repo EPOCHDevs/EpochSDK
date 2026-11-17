@@ -1,0 +1,17 @@
+{
+  "original_file_ref": "file:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "version": 1,
+  "file": {
+    "file_ref": "file-version:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "name": "research.csv",
+    "media_type": "text/csv",
+    "detected_media_type": "text/plain",
+    "category": "dataset",
+    "size_bytes": 40,
+    "status": "uploaded",
+    "created_at": "2026-11-17T00:00:00Z",
+    "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "saved_at": "2026-11-17T01:00:00Z",
+  "limitations": []
+}

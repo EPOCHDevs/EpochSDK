@@ -123,3 +123,42 @@ running `node --test typescript/epoch-sdk/test/workflow.test.mjs`.
 These tests do not establish live authentication, graph deployment, engine job,
 or publication compatibility. Those require service acceptance against the
 target environment before release.
+
+## File previews and edits
+
+`@epochdevs/epoch-sdk/files` connects to the Platform routes at the normal API
+origin. It uses fetch and the packaged Platform-owned contract; native Backend
+models remain owned by StratifyX.
+
+```ts
+import { PlatformFilesClient } from '@epochdevs/epoch-sdk/files'
+const files = new PlatformFilesClient({ apiUrl, token: async () => currentToken() })
+const options = await files.editOptions(originalRef)
+const latest = options.latest
+const saved = await files.save(originalRef, {
+  schema_version: 1, request_id: crypto.randomUUID(),
+  base_version: latest.version,
+  base_content_sha256: latest.file.content_sha256!,
+  edit: { kind: 'text', content: '# Updated notes\n' },
+})
+```
+
+Inspect `options.kind` before choosing an editor. Cell saves support CSV, TSV,
+JSONL, Parquet and XLSX with tagged string/number/boolean/null values; numbers
+are exact lexical strings. Row indexes are zero based and exclude the header.
+Each change may name its worksheet. Use `grid` for bounded typed pages; formulas
+are read-only and their cached results are not recalculated.
+
+The Space placement keeps its original reference. `latest` resolves a saved
+version; `history` pages newest first (including Original, version 0). Retain
+`saved.file.file_ref` to pin downloads, study inputs or citations. Reads of an
+original reference continue to return the upload's bytes. `preview` returns the
+conversion state; `content(ref, {preview:true, byteRange:'bytes=0-65535'})` returns
+a streamed Response, including status and range/ETag headers.
+
+Saves are never automatically retried. Keep the exact request/body and ID after
+an uncertain result and retry explicitly. A stale base or reused request ID is
+a `PlatformFileError` with its server code. Keep the draft until resolved; do not
+silently create a new ID or merge another writer's changes. No operation starts
+AI or writes back to a connected provider. The application owns token renewal
+and clearing drafts/cache when the signed-in account changes.

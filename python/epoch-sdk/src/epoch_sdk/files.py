@@ -30,6 +30,7 @@ from stratifyx.types import (
     UserFileDetails,
     UserFileListPage,
 )
+from .platform_files import PlatformFilesClient
 
 _RESOURCE = TypeAdapter(SpaceResourceRef)
 _IMPORT = TypeAdapter(StructuredImportRequest)
@@ -40,6 +41,15 @@ class FileClient:
     """Native resource methods shared by EpochClient and AgentToolsClient."""
 
     backend: AsyncStratifyX
+    platform_files: PlatformFilesClient | None
+
+    @property
+    def file_edits(self) -> PlatformFilesClient:
+        """Platform previews/history/edits; all writes require an explicit save."""
+        client = getattr(self, "platform_files", None)
+        if client is None:
+            raise ValueError("Configure PlatformFilesClient, or use a connected Epoch client")
+        return client
 
     async def upload_file(self, content: bytes, *, name: str, media_type: str) -> UserFileDescriptor:
         """Upload exact bytes in Backend-selected chunks, then verify completion.

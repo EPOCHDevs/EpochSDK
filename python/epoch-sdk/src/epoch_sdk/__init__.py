@@ -19,6 +19,7 @@ from .contracts import (
 )
 from .dates import date_range
 from .errors import EpochError
+from .platform_files import PlatformFileError, PlatformFilesClient
 
 __all__ = [
     "Acknowledgement",
@@ -32,6 +33,8 @@ __all__ = [
     "FreshFetchRequest",
     "IngestRequest",
     "JsonOutputRequest",
+    "PlatformFileError",
+    "PlatformFilesClient",
     "RefreshRequest",
     "RunParameters",
     "RunRequest",
