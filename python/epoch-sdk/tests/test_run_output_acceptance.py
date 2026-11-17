@@ -29,6 +29,21 @@ from epoch_sdk.responses import SavedResearchResponse
 pytestmark = pytest.mark.live_run_outputs
 
 
+class LoseReply(httpx.AsyncBaseTransport):
+    """Forward real HTTP, then lose the reply after native durable acceptance."""
+    def __init__(self):
+        self.inner = httpx.AsyncHTTPTransport()
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        response = await self.inner.handle_async_request(request)
+        await response.aread()
+        await response.aclose()
+        raise httpx.ReadError("Controlled lost acknowledgement after the native reply", request=request)
+
+    async def aclose(self) -> None:
+        await self.inner.aclose()
+
+
 def output_version(record: SdkExecutionRecord) -> int:
     assert record.output_revision is not None
     return record.output_revision.version
@@ -116,7 +131,10 @@ def test_real_run_outputs_and_same_execution_edits():
             table = await client.response_table(initial_answer.response_id, "numbers", page_size=2)
             table_tail = await client.response_table(initial_answer.response_id, "numbers", offset=2, page_size=2)
             assert table.total_rows == table_tail.total_rows == 4
-            assert table.rows[0][2] == table_tail.rows[1][2] == 9007199254740993
+            # The shared SDK's lossless JSON view encodes int64 as decimal
+            # strings. Native Arrow retains int64, as the native gate proves.
+            assert table.columns[2].type == "int64"
+            assert table.rows[0][2] == table_tail.rows[1][2] == "9007199254740993"
             assert table_tail.rows[0][1] is None
             assert (await state(ai))["provider_calls"] == ai_before["provider_calls"] + 1
 
@@ -191,16 +209,31 @@ def test_real_run_outputs_and_same_execution_edits():
             assert failed.candidate_text[0].value == "" and failed.text_failures[0].code.value == "text_timeout"
             assert output_version(await client.execution_outputs(execution)) == 6
             capture("failed-rewrite", failed)
+            uncertain_calls = (await state(ai))["provider_calls"]
+            uncertain = await client.edit_outputs(execution, CreateExecutionOutputEdit(operation_id=handle("uncertain-retry"),
+                expected_revision=6, kind=ExecutionOutputEditKind.REPORT,
+                report=ExecutionReportEdit(study_id="failed-rewrite-report", input_tables=["numbers"],
+                    replace=[ExecutionOutputAddress(response_name="answer")], remove=[])))
+            assert uncertain.phase == ExecutionOutputEditPhase.FAILED and uncertain.text_failures is not None
+            assert uncertain.text_failures[0].code.value == "text_unconfirmed"
+            assert (await state(ai))["provider_calls"] == uncertain_calls
+            capture("uncertain-retry-blocked", uncertain)
 
             await control()
-            # The first reply is deliberately discarded. Reconnect and replay
-            # use its original operation identity and cannot create another edit.
+            # Lose a real native HTTP reply after acceptance. Reconnect and
+            # replay use the same identity without dispatching another edit.
             lost_request = CreateExecutionOutputEdit(operation_id=handle("lost-reply"), expected_revision=6,
                 kind=ExecutionOutputEditKind.RESPONSE_TEXT, response_text=[ExecutionResponseTextEdit(name="answer", value="Accepted before reconnect.")])
-            await client.edit_outputs(execution, lost_request)
+            before_lost = (await state(backend))["edits"]
+            async with httpx.AsyncClient(transport=LoseReply(), timeout=120) as lost_http:
+                lost = ExecutionExtensionClient()
+                lost.backend = AsyncStratifyX(base_url=backend, token="run-output-owner", httpx_client=lost_http)
+                with pytest.raises(httpx.ReadError):
+                    await lost.edit_outputs(execution, lost_request)
             reconnect = await client.output_edit_by_handle(execution, lost_request.operation_id)
             assert accepted_version(reconnect) == 7
             assert await client.edit_outputs(execution, lost_request) == reconnect
+            assert (await state(backend))["edits"] == before_lost + 1
             candidates = [CreateExecutionOutputEdit(operation_id=handle("race"), expected_revision=7,
                 kind=ExecutionOutputEditKind.RESPONSE_TEXT, response_text=[ExecutionResponseTextEdit(name="answer", value=text)])
                 for text in ("Concurrent writer one.", "Concurrent writer two.")]
@@ -211,6 +244,7 @@ def test_real_run_outputs_and_same_execution_edits():
             assert output_version(await client.execution_outputs(execution)) == 8
 
             await control(delay=2.0)
+            before_late = (await state(ai))["provider_calls"]
             cancel_request = CreateExecutionOutputEdit(operation_id=handle("cancel"), expected_revision=8,
                 kind=ExecutionOutputEditKind.REPORT, report=ExecutionReportEdit(study_id="cancelled-rewrite-report",
                     input_tables=["numbers"], replace=[ExecutionOutputAddress(response_name="answer")], remove=[]))
@@ -225,6 +259,18 @@ def test_real_run_outputs_and_same_execution_edits():
                 await asyncio.sleep(0.01)
             else:
                 pytest.fail("The controlled candidate was not admitted")
+            for _ in range(200):
+                if (await state(ai))["provider_calls"] > before_late:
+                    break
+                await asyncio.sleep(0.01)
+            else:
+                pytest.fail("The controlled model did not start before cancellation")
+            query_started = time.monotonic()
+            interactive_page = await client.response_table(initial_answer.response_id, "numbers", page_size=1)
+            query_seconds = time.monotonic() - query_started
+            assert interactive_page.total_rows == 4 and query_seconds < 1.5
+            capture("query-during-model", {"query_seconds": query_seconds, "controlled_model_delay_seconds": 2.0,
+                "total_rows": interactive_page.total_rows})
             cancelled = await client.cancel_output_edit(execution, observed.request_id)
             assert cancelled.phase == ExecutionOutputEditPhase.CANCELLED
             assert (await pending).phase == ExecutionOutputEditPhase.CANCELLED
@@ -241,8 +287,21 @@ def test_real_run_outputs_and_same_execution_edits():
             with pytest.raises(ApiError) as denied:
                 await other.execution_outputs(execution)
             assert denied.value.status_code == 404
-            await initial(selected_client=other)
+            isolated = await initial(selected_client=other)
+            capture("other-owner-initial", isolated)
             assert (await state(ai))["provider_calls"] == calls + 1
+            await control()
+            no_text_calls = (await state(ai))["provider_calls"]
+            computed = await initial("computed-report")
+            assert computed.extension_outputs is not None and not computed.extension_outputs.dashboards
+            computed_answer = await client.execution_answer(computed.execution_id)
+            assert computed_answer is not None and [part.name for part in computed_answer.content.outputs] == ["computed"]
+            dashboard = await initial("dashboard-report")
+            assert dashboard.extension_outputs is not None and len(dashboard.extension_outputs.dashboards) == 1
+            assert await client.execution_answer(dashboard.execution_id) is None
+            assert (await state(ai))["provider_calls"] == no_text_calls
+            capture("computed-only", computed)
+            capture("dashboard-only", dashboard)
             await control("timeout")
             empty = await initial("failed-mixed-report")
             empty_answer = await client.execution_answer(empty.execution_id)
