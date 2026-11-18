@@ -22,6 +22,10 @@
       "types": "./identity.d.ts",
       "import": "./identity.js"
     },
+    "./discovery-presentation": {
+      "types": "./discovery-presentation.d.ts",
+      "import": "./discovery-presentation.js"
+    },
     "./discovery": {
       "types": "./discovery.d.ts",
       "import": "./discovery.js"
@@ -35,7 +39,8 @@
     "dataset-review.schema.json",
     "platform-files.openapi.json",
     "discovery.schema.json",
-    "asset-identity.schema.json"
+    "asset-identity.schema.json",
+    "discovery-presentation.schema.json"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",

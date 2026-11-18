@@ -1,0 +1,37 @@
+{
+  "owners": [
+    "EpochPlatform retained activity",
+    "EpochGlobalDataService constructor directory"
+  ],
+  "source_repository": "EPOCHDevs/EpochBackend",
+  "source_commit": "841a4a77270579a6c9fea0941b8ed0540e3a5cd3",
+  "source_path": "stratifyx_openapi.json",
+  "source_sha256": "c329b4791f0130c894bd3c019b64d3fd2d7d26d29dffed3acad2ffbc7442b4bb",
+  "scope": "Frozen saved activity decoding and the preserved public constructor directory. No native search client or model tool is provided.",
+  "roots": [
+    "AssetScreen",
+    "AssetUniverseResponse",
+    "DatasetBrowseGroup",
+    "DatasetCatalogEntry",
+    "DatasetCatalogResponse",
+    "DatasetCatalogRequest",
+    "DatasetCatalogSummary",
+    "DatasetSearchDataset",
+    "DatasetSearchQuery",
+    "DatasetSearchSubject",
+    "DatasetSearchRequest",
+    "DatasetSourceMetadataResponse",
+    "DiscoveryDatasetRequest",
+    "DiscoveryLoaderBinding",
+    "DiscoveryMetadataRecord",
+    "DiscoveryResultReceipt",
+    "DiscoverySearchResponse",
+    "DiscoverySelectors",
+    "DiscoverySourceAddress",
+    "DiscoveryStoredQueryResponse",
+    "ScreenAssetsRequest"
+  ],
+  "aliases": {
+    "DatasetSourceMetadataResponseConstructor": "StudyDataConstructor"
+  }
+}
