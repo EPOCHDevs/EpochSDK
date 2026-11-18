@@ -1,3 +1,6 @@
+export type * from './discovery-types.js'
+export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
+export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
 import type { StratifyXClient } from "@epoch/stratifyx"
 import type { Client as LangGraphClient } from "@langchain/langgraph-sdk"
 import type { ResearchResponseRecord, JobListItem, SdkExecutionRecord, ExecutionReportReference, SdkContractResponsePlanReference } from "@epoch/stratifyx/api/types/index.js"

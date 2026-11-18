@@ -4,7 +4,7 @@ Four separate notebooks exercise ENG-2152 without changing the earlier demos.
 They use ordinary SDK helpers, local request files and the prepared Epoch login.
 Vendor/model credentials stay on the services.
 
-1. `00_catalog_search_and_mcp.ipynb`: shared Backend prose/options, name lookup,
+1. `00_catalog_search_and_selection.ipynb`: shared Backend prose/options, name lookup,
    a complete current cohort, then the same owned saved search read through MCP.
    This notebook starts no research agent or execution.
 2. `01_aapl_volatility.ipynb`: a short single-asset question, response-only table

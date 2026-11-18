@@ -118,8 +118,7 @@ runner; it is not a desk case or a notebook default.
 ## Legacy workflow MCP
 
 The following calls apply to the explicit `python -m epoch_sdk.workflow_mcp`
-compatibility module. The default `epoch-mcp` uses the composable catalog,
-search/screen, build and execute tools described in the current interface above.
+compatibility module. The composable `epoch-mcp` command is retired. The current public research MCP is served by EpochAI.
 
 Pass the selected base file's object to `epoch_run`, with its own readable
 operation ID. No notebook-specific SDK or server is involved. The notebook's

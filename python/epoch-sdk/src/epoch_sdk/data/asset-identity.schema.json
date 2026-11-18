@@ -1,0 +1,664 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/AssetIdentityProtocol",
+  "definitions": {
+    "AssetClass": {
+      "type": "string",
+      "enum": [
+        "Stocks",
+        "FX",
+        "Crypto",
+        "Futures"
+      ],
+      "title": "AssetClass"
+    },
+    "AssetDisclosure": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_date": {
+          "type": "string"
+        },
+        "effectiveness_date": {
+          "type": "string"
+        },
+        "filing_date": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "title": "AssetDisclosure"
+    },
+    "AssetLogoResponse": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "type": "string"
+            },
+            "image": {
+              "$ref": "#/definitions/IdentityImage"
+            },
+            "kind": {
+              "$ref": "#/definitions/SingleAssetLogoKind"
+            }
+          },
+          "required": [
+            "kind",
+            "asset_id",
+            "image"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "type": "string"
+            },
+            "base": {
+              "$ref": "#/definitions/IdentityImage"
+            },
+            "counter": {
+              "$ref": "#/definitions/IdentityImage"
+            },
+            "kind": {
+              "$ref": "#/definitions/PairedAssetLogoKind"
+            }
+          },
+          "required": [
+            "kind",
+            "asset_id",
+            "base",
+            "counter"
+          ],
+          "type": "object"
+        }
+      ],
+      "type": "object",
+      "title": "AssetLogoResponse"
+    },
+    "AssetLookupRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "asset_ids"
+      ],
+      "type": "object",
+      "title": "AssetLookupRequest"
+    },
+    "AssetLookupResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/AssetLookupResult"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "type": "object",
+      "title": "AssetLookupResponse"
+    },
+    "AssetLookupResult": {
+      "additionalProperties": false,
+      "properties": {
+        "asset": {
+          "$ref": "#/definitions/AssetSpecification"
+        },
+        "asset_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id"
+      ],
+      "type": "object",
+      "title": "AssetLookupResult"
+    },
+    "AssetNameAlias": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "source"
+      ],
+      "type": "object",
+      "title": "AssetNameAlias"
+    },
+    "AssetProspectus": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_date": {
+          "type": "string"
+        },
+        "discounts_and_commissions_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "discounts_and_commissions_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "filing_date": {
+          "type": "string"
+        },
+        "form": {
+          "type": "string"
+        },
+        "price_public_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "price_public_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "proceeds_before_expenses_per_share": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "proceeds_before_expenses_total": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "title": "AssetProspectus"
+    },
+    "AssetSpecification": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_class": {
+          "$ref": "#/definitions/AssetClass"
+        },
+        "base": {
+          "$ref": "#/definitions/CurrencyIdentity"
+        },
+        "category": {
+          "type": "string"
+        },
+        "cik": {
+          "type": "string"
+        },
+        "counter": {
+          "$ref": "#/definitions/CurrencyIdentity"
+        },
+        "country": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "delisted_date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "description_source": {
+          "type": "string"
+        },
+        "disclosure_filings": {
+          "items": {
+            "$ref": "#/definitions/AssetDisclosure"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "eod_history_start": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "expiry_months": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "industry": {
+          "type": "string"
+        },
+        "ipo_date": {
+          "type": "string"
+        },
+        "ipo_market_cap": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_market_cap_at_listing_usd": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_market_cap_usd": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_max": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_min": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "ipo_price_range": {
+          "type": "string"
+        },
+        "ipo_shares": {
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
+          "type": "integer"
+        },
+        "is_actively_trading": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "logo_url": {
+          "type": "string"
+        },
+        "min_tick": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "minute_history_start": {
+          "type": "string"
+        },
+        "multiplier": {
+          "maximum": 1.7976931348623157e+308,
+          "minimum": -1.7976931348623157e+308,
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "name_aliases": {
+          "items": {
+            "$ref": "#/definitions/AssetNameAlias"
+          },
+          "type": "array"
+        },
+        "prospectus_filings": {
+          "items": {
+            "$ref": "#/definitions/AssetProspectus"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "root_id": {
+          "type": "string"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "security_type": {
+          "type": "string"
+        },
+        "stock_profile": {
+          "$ref": "#/definitions/StockProfileIdentity"
+        },
+        "symbol_changes": {
+          "items": {
+            "$ref": "#/definitions/AssetSymbolChange"
+          },
+          "type": "array"
+        },
+        "ticker": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name_aliases",
+        "symbol_changes"
+      ],
+      "type": "object",
+      "title": "AssetSpecification"
+    },
+    "AssetSymbolChange": {
+      "additionalProperties": false,
+      "properties": {
+        "company_name": {
+          "type": "string"
+        },
+        "effective_date": {
+          "type": "string"
+        },
+        "new_symbol": {
+          "type": "string"
+        },
+        "old_symbol": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "new_symbol",
+        "old_symbol",
+        "source"
+      ],
+      "type": "object",
+      "title": "AssetSymbolChange"
+    },
+    "CountryCatalogResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "countries": {
+          "items": {
+            "$ref": "#/definitions/CountryIdentity"
+          },
+          "type": "array"
+        },
+        "globe": {
+          "$ref": "#/definitions/IdentityImage"
+        },
+        "regions": {
+          "items": {
+            "$ref": "#/definitions/CountryIdentity"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "countries",
+        "regions",
+        "globe"
+      ],
+      "type": "object",
+      "title": "CountryCatalogResponse"
+    },
+    "CountryIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/IdentityImage"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "image"
+      ],
+      "type": "object",
+      "title": "CountryIdentity"
+    },
+    "CurrencyIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/IdentityCurrencyKind"
+        }
+      },
+      "required": [
+        "code",
+        "kind"
+      ],
+      "type": "object",
+      "title": "CurrencyIdentity"
+    },
+    "IdentityCurrencyKind": {
+      "type": "string",
+      "enum": [
+        "fiat",
+        "crypto"
+      ],
+      "title": "IdentityCurrencyKind"
+    },
+    "IdentityImage": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string"
+        },
+        "image_id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/IdentityImageState"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "identity",
+        "state"
+      ],
+      "type": "object",
+      "title": "IdentityImage"
+    },
+    "IdentityImageState": {
+      "type": "string",
+      "enum": [
+        "available",
+        "unverified",
+        "missing",
+        "unavailable"
+      ],
+      "title": "IdentityImageState"
+    },
+    "PairedAssetLogoKind": {
+      "type": "string",
+      "enum": [
+        "pair"
+      ],
+      "title": "PairedAssetLogoKind"
+    },
+    "SingleAssetLogoKind": {
+      "type": "string",
+      "enum": [
+        "single"
+      ],
+      "title": "SingleAssetLogoKind"
+    },
+    "StockProfileIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "cik": {
+          "type": "string"
+        },
+        "cusip": {
+          "type": "string"
+        },
+        "is_adr": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "isin": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "test_classification": {
+          "$ref": "#/definitions/StockTestClassificationEvidence"
+        }
+      },
+      "required": [
+        "observed_at",
+        "source",
+        "symbol"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "StockProfileIdentity"
+    },
+    "StockTestClassificationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "is_etf": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "is_fund": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "state": {
+          "$ref": "#/definitions/StockTestClassificationState"
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "StockTestClassificationEvidence"
+    },
+    "StockTestClassificationState": {
+      "type": "string",
+      "enum": [
+        "DeclaredTest",
+        "ConflictingRoles",
+        "Withdrawn"
+      ],
+      "title": "StockTestClassificationState"
+    },
+    "optional_bool": {
+      "type": "boolean",
+      "title": "optional_bool"
+    },
+    "AssetInformationPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetSpecification"
+          }
+        },
+        "page": {
+          "type": "integer"
+        },
+        "total_pages": {
+          "type": "integer"
+        },
+        "total_items": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "total_items"
+      ],
+      "title": "AssetInformationPage"
+    },
+    "AssetIdentityProtocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "asset_information": {
+          "$ref": "#/definitions/AssetSpecification"
+        },
+        "asset_lookup_request": {
+          "$ref": "#/definitions/AssetLookupRequest"
+        },
+        "asset_lookup_response": {
+          "$ref": "#/definitions/AssetLookupResponse"
+        },
+        "asset_logos": {
+          "$ref": "#/definitions/AssetLogoResponse"
+        },
+        "country_catalog": {
+          "$ref": "#/definitions/CountryCatalogResponse"
+        },
+        "country": {
+          "$ref": "#/definitions/CountryIdentity"
+        },
+        "asset_page": {
+          "$ref": "#/definitions/AssetInformationPage"
+        }
+      },
+      "required": [
+        "asset_information",
+        "asset_lookup_request",
+        "asset_lookup_response",
+        "asset_logos",
+        "country_catalog",
+        "country",
+        "asset_page"
+      ],
+      "title": "AssetIdentityProtocol"
+    }
+  },
+  "x-source": {
+    "owner": "EpochPlatform/GDS",
+    "compatibility_source": "EPOCHDevs/EpochBackend stratifyx_openapi.json",
+    "sha256": "670438540c7c199608cfcad041e4563c7308d29e0e0de41d607320b3adc59820",
+    "scope": "Existing public identity URL and wire contract; ownership moves to Platform/GDS. Page items match AssetIdentityCatalog.List runtime enriched AssetSpecification, not the obsolete raw-metadata page annotation."
+  }
+}

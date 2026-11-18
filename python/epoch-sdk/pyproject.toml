@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epoch-sdk"
-version = "0.1.0a47"
+version = "0.1.0a49"
 description = "Epoch integration contracts and client adapters over LangGraph and StratifyX"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -13,7 +13,7 @@ dependencies = [
   "jsonschema>=4.23,<5",
   "referencing>=0.36,<1",
   "httpx>=0.28,<1",
-  "stratifyx>=3.3.0rc57,<4",
+  "stratifyx>=3.3.0rc96,<4",
   "epoch-source-connections>=0.1.0a3,<0.2",
 ]
 
@@ -31,7 +31,6 @@ test = ["pytest>=8,<10"]
 
 [project.scripts]
 epoch-api-check = "epoch_sdk.capabilities:main"
-epoch-mcp = "epoch_sdk.mcp:main"
 epoch = "epoch_sdk.cli:main"
 
 [tool.setuptools.packages.find]
@@ -43,7 +42,7 @@ epoch_sdk = ["py.typed", "data/*.json", "data/*.md"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
-markers = ["live_discovery: opt-in real Backend and registered MCP acceptance", "live_space: opt-in native Files/Space SDK and fresh MCP acceptance"]
+markers = ["live_discovery: opt-in real Backend and registered MCP acceptance", "live_space: opt-in native Files/Space SDK and fresh MCP acceptance", "live_run_outputs: opt-in real Backend and EpochAI run-output/edit acceptance"]
 
 [tool.ruff]
 target-version = "py312"

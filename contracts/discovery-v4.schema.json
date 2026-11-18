@@ -1,0 +1,2849 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/PublicDiscoveryProtocol",
+  "definitions": {
+    "PublicDiscoveryProtocol": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "$ref": "#/definitions/DiscoveryInput"
+        },
+        "response": {
+          "$ref": "#/definitions/DiscoveryResult"
+        },
+        "selection": {
+          "$ref": "#/definitions/SelectedInputs"
+        },
+        "details": {
+          "$ref": "#/definitions/DiscoveryDetails"
+        },
+        "screen_request": {
+          "$ref": "#/definitions/ScreenInput"
+        },
+        "screen_response": {
+          "$ref": "#/definitions/AssetUniverseResult"
+        },
+        "universe_page_request": {
+          "$ref": "#/definitions/UniversePageRequest"
+        },
+        "universe_page": {
+          "$ref": "#/definitions/UniversePage"
+        },
+        "universe_binding": {
+          "$ref": "#/definitions/UniverseBinding"
+        },
+        "observation_request": {
+          "$ref": "#/definitions/ObservationInput"
+        },
+        "asset_lookup_request": {
+          "$ref": "#/definitions/AssetLookupInput"
+        },
+        "asset_lookup_response": {
+          "$ref": "#/definitions/AssetLookupResult"
+        }
+      },
+      "required": [
+        "request",
+        "response",
+        "selection",
+        "details",
+        "screen_request",
+        "screen_response",
+        "universe_page_request",
+        "universe_page",
+        "universe_binding",
+        "observation_request",
+        "asset_lookup_request",
+        "asset_lookup_response"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryInput": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscoveryQuery"
+          }
+        },
+        "saved_query": {
+          "type": "string"
+        },
+        "limit": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "budget": {
+          "$ref": "#/definitions/IntegerCount"
+        }
+      },
+      "required": [
+        "requests"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryQuery": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "retrieval_query": {
+          "type": "string",
+          "description": "Concise lexical/vendor recall terms; query remains the complete relevance intent."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "discover",
+            "exact",
+            "browse"
+          ]
+        },
+        "filters": {
+          "$ref": "#/definitions/SearchFilters"
+        },
+        "semantic": {
+          "type": "boolean"
+        },
+        "cursor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "query",
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "SearchFilters": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Provider"
+          }
+        },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SourceKind"
+          }
+        },
+        "countries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "asset_classes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exchanges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sectors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "industries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "security_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "support": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SupportState"
+          }
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "classifications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unit": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "loaders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "macrobond": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "currency": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "data_type": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "region": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "exchange": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "frequency": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "klass": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "include_discontinued": {
+              "type": "boolean"
+            },
+            "must_have_revisions": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Provider": {
+      "type": "string",
+      "enum": [
+        "TradingEconomics",
+        "Macrobond",
+        "FMP",
+        "Barchart",
+        "EpochCatalog"
+      ]
+    },
+    "SourceKind": {
+      "type": "string",
+      "enum": [
+        "asset",
+        "series",
+        "release",
+        "calendar"
+      ]
+    },
+    "SupportState": {
+      "type": "string",
+      "enum": [
+        "qualified",
+        "held",
+        "excluded",
+        "unknown"
+      ]
+    },
+    "IntegerCount": {
+      "type": "integer"
+    },
+    "DiscoveryResult": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-search-v4"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NeedResult"
+          }
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CompactCandidate"
+          }
+        },
+        "saved": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SavedCandidate"
+          }
+        },
+        "omitted": {
+          "$ref": "#/definitions/IntegerCount"
+        }
+      },
+      "required": [
+        "format",
+        "session_id",
+        "needs",
+        "candidates",
+        "saved",
+        "omitted"
+      ],
+      "additionalProperties": false
+    },
+    "NeedResult": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "no_match",
+            "incomplete",
+            "needs_detail",
+            "error"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "const": "low_relevance"
+        },
+        "scope_issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScopeIssue"
+          },
+          "description": "Source facts outside a requested filter; never matching/selectable candidates."
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "candidate_set"
+          ]
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SearchRequestFailure"
+          }
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "$ref": "#/definitions/IntegerCount"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "candidates",
+        "next_cursor",
+        "completeness"
+      ],
+      "additionalProperties": false
+    },
+    "ScopeIssue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "filter_conflict",
+            "metadata_unknown"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "enum": [
+            "countries",
+            "exchanges",
+            "kinds"
+          ]
+        },
+        "requested": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "available": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "code",
+        "field",
+        "requested",
+        "available",
+        "source_ids"
+      ],
+      "additionalProperties": false
+    },
+    "SearchRequestFailure": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "CompactCandidate": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/CandidateDetails"
+        },
+        {
+          "$ref": "#/definitions/CandidateSummary"
+        }
+      ]
+    },
+    "CandidateDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "scheme": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "scheme",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "kind": {
+          "$ref": "#/definitions/SourceKind"
+        },
+        "product": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "asset_class": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "vendor": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "accepted": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "missing_years": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/IntegerCount"
+                      }
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "vendor",
+            "accepted"
+          ],
+          "additionalProperties": false
+        },
+        "detail": {
+          "type": "string",
+          "const": "full"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "geography": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "asset_attributes": {
+          "type": "object",
+          "properties": {
+            "industry": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "base_currency": {
+              "type": "string"
+            },
+            "quote_currency": {
+              "type": "string"
+            },
+            "active": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipo_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "delisted_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "industry",
+            "active",
+            "ipo_date",
+            "delisted_date"
+          ],
+          "additionalProperties": false
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "high": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "high_on": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "low": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "low_on": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "high",
+            "high_on",
+            "low",
+            "low_on"
+          ],
+          "additionalProperties": false
+        },
+        "measurement": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "base": {
+              "type": "string"
+            },
+            "maturity": {
+              "type": "string"
+            },
+            "inflation_adjustment": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "revisions": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "first": {
+              "type": "string"
+            },
+            "last": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "source_cutoff": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "available"
+          ],
+          "additionalProperties": false
+        },
+        "last_observation": {
+          "type": "string"
+        },
+        "publishers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "release_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "replaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "replaced_by": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "lifecycle": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "frequency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adjustment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "publisher": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "classification": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "support": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "$ref": "#/definitions/SupportState"
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "native",
+                "published",
+                "unavailable",
+                "unknown"
+              ]
+            },
+            "environment": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode",
+            "environment"
+          ],
+          "additionalProperties": false
+        },
+        "entitlement": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "denied",
+            "unchecked"
+          ]
+        },
+        "qualifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "adjustment",
+        "classification",
+        "coverage",
+        "definition",
+        "delivery",
+        "detail",
+        "entitlement",
+        "frequency",
+        "geography",
+        "id",
+        "identifiers",
+        "kind",
+        "name",
+        "product",
+        "provider",
+        "publisher",
+        "qualifications",
+        "source_id",
+        "support",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "CandidateSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "scheme": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "scheme",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "kind": {
+          "$ref": "#/definitions/SourceKind"
+        },
+        "product": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "asset_class": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "sector": {
+          "type": "string"
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "vendor": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "accepted": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "missing_years": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/IntegerCount"
+                      }
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "vendor",
+            "accepted"
+          ],
+          "additionalProperties": false
+        },
+        "detail": {
+          "type": "string",
+          "const": "compact"
+        }
+      },
+      "required": [
+        "coverage",
+        "detail",
+        "id",
+        "identifiers",
+        "kind",
+        "name",
+        "product",
+        "provider",
+        "source_id"
+      ],
+      "additionalProperties": false
+    },
+    "SavedCandidate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "table",
+            "json"
+          ]
+        },
+        "source_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "schema": {
+          "$ref": "#/definitions/Json"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "needs_detail": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "format",
+        "source_ref"
+      ],
+      "additionalProperties": false
+    },
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Json"
+          }
+        }
+      ]
+    },
+    "SelectedInputs": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-selected-inputs-v1"
+        },
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SourceRecord"
+          }
+        },
+        "saved": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrivateSource"
+          }
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "owner",
+        "created_at",
+        "sources",
+        "saved"
+      ],
+      "additionalProperties": false
+    },
+    "SourceRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/SourceKind"
+        },
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "title": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "scheme": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "scheme",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "geography": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "code"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "asset_class": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exchange": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "asset_attributes": {
+          "type": "object",
+          "properties": {
+            "industry": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "base_currency": {
+              "type": "string"
+            },
+            "quote_currency": {
+              "type": "string"
+            },
+            "active": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipo_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "delisted_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "industry",
+            "active",
+            "ipo_date",
+            "delisted_date"
+          ],
+          "additionalProperties": false
+        },
+        "asset_details": {
+          "$ref": "#/definitions/AssetDetails"
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "frequency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adjustment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "publisher": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "publishers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "release_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "replaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "replaced_by": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "lifecycle": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "classification": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "high": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "high_on": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "low": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "low_on": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "high",
+            "high_on",
+            "low",
+            "low_on"
+          ],
+          "additionalProperties": false
+        },
+        "measurement": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "base": {
+              "type": "string"
+            },
+            "maturity": {
+              "type": "string"
+            },
+            "inflation_adjustment": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "revisions": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "first": {
+              "type": "string"
+            },
+            "last": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "source_cutoff": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "available"
+          ],
+          "additionalProperties": false
+        },
+        "last_observation": {
+          "type": "string"
+        },
+        "support": {
+          "type": "object",
+          "properties": {
+            "state": {
+              "$ref": "#/definitions/SupportState"
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "native",
+                "published",
+                "unavailable",
+                "unknown"
+              ]
+            },
+            "environment": {
+              "type": "string"
+            },
+            "revision": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "environment",
+            "revision"
+          ],
+          "additionalProperties": false
+        },
+        "entitlement": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "denied",
+            "unchecked"
+          ]
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "vendor": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Extent"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "accepted": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "string"
+                    },
+                    "missing_years": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/Integer"
+                      }
+                    },
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "vendor",
+            "accepted"
+          ],
+          "additionalProperties": false
+        },
+        "qualifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "binding": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LoaderBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "uri",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "vendor_metadata": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Json"
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/Json"
+              }
+            }
+          ],
+          "description": "Original provider-owned JSON, retained for audit and excluded from model projections."
+        }
+      },
+      "required": [
+        "id",
+        "source_id",
+        "revision",
+        "kind",
+        "provider",
+        "title",
+        "definition",
+        "identifiers",
+        "geography",
+        "asset_class",
+        "exchange",
+        "sector",
+        "unit",
+        "frequency",
+        "adjustment",
+        "publisher",
+        "classification",
+        "support",
+        "delivery",
+        "entitlement",
+        "coverage",
+        "qualifications",
+        "binding",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "AssetDetails": {
+      "type": "object",
+      "properties": {
+        "min_tick": {
+          "type": "string"
+        },
+        "multiplier": {
+          "type": "string"
+        },
+        "expiry_months": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "logo_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cik": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "eod_history_start": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "minute_history_start": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_shares": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_market_cap": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_price_range": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_price_min": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_price_max": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_market_cap_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ipo_market_cap_at_listing_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name_aliases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "symbol_changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "old_symbol": {
+                "type": "string"
+              },
+              "new_symbol": {
+                "type": "string"
+              },
+              "effective_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "company_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "old_symbol",
+              "new_symbol",
+              "effective_date",
+              "company_name",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "currency_pair": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "fiat",
+                      "crypto"
+                    ]
+                  }
+                },
+                "required": [
+                  "code",
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_profile": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "FMP"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "observed_at": {
+              "type": "string"
+            },
+            "isin": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cusip": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cik": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "provider",
+            "symbol",
+            "observed_at",
+            "isin",
+            "cusip",
+            "cik"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "min_tick",
+        "multiplier",
+        "expiry_months",
+        "logo_url",
+        "cik",
+        "description_source",
+        "eod_history_start",
+        "minute_history_start",
+        "ipo_shares",
+        "ipo_market_cap",
+        "ipo_price_range",
+        "ipo_price_min",
+        "ipo_price_max",
+        "ipo_market_cap_usd",
+        "ipo_market_cap_at_listing_usd",
+        "name_aliases",
+        "symbol_changes",
+        "currency_pair"
+      ],
+      "additionalProperties": false
+    },
+    "Extent": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "Integer": {
+      "type": "integer"
+    },
+    "LoaderBinding": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "registry_version": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Json"
+          }
+        },
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Native per-study sources take their assets from the study input, never an invented constructor argument."
+        }
+      },
+      "required": [
+        "source_id",
+        "category",
+        "registry_version",
+        "arguments"
+      ],
+      "additionalProperties": false,
+      "description": "Native argument keys are owned by the versioned loader contract, not by discovery."
+    },
+    "PrivateSource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "table",
+            "json"
+          ]
+        },
+        "revision": {
+          "type": "string"
+        },
+        "source_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schema": {
+          "$ref": "#/definitions/Json"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "format",
+        "revision",
+        "source_ref",
+        "schema",
+        "columns",
+        "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "DiscoveryDetails": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-search-details-v1"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SourceRecord"
+          }
+        },
+        "saved": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrivateSource"
+          }
+        }
+      },
+      "required": [
+        "format",
+        "session_id",
+        "sources",
+        "saved"
+      ],
+      "additionalProperties": false
+    },
+    "ScreenInput": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "screen": {
+              "$ref": "#/definitions/AssetPredicate"
+            },
+            "membership_window": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            },
+            "current_cap_min_exclusive": {
+              "type": "number"
+            },
+            "current_cap_max_exclusive": {
+              "type": "number"
+            },
+            "kind": {
+              "type": "string",
+              "const": "screen"
+            }
+          },
+          "required": [
+            "kind",
+            "screen"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "saved"
+            },
+            "universe_ref": {
+              "type": "string"
+            },
+            "current_cap_min_exclusive": {
+              "type": "number"
+            },
+            "current_cap_max_exclusive": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "universe_ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssetPredicate": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "index": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "asset_class": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exchange": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "country": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sector": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "industry": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "category": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "security_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "is_actively_trading": {
+          "type": "boolean"
+        },
+        "base_currency": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quote_currency": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ipo_after": {
+          "type": "string"
+        },
+        "ipo_before": {
+          "type": "string"
+        },
+        "delisted_after": {
+          "type": "string"
+        },
+        "delisted_before": {
+          "type": "string"
+        },
+        "ipo_shares_min": {
+          "type": "string",
+          "description": "Decimal integer text preserves the complete int64 domain over JSON."
+        },
+        "ipo_shares_max": {
+          "type": "string"
+        },
+        "ipo_market_cap_min": {
+          "type": "number"
+        },
+        "ipo_market_cap_max": {
+          "type": "number"
+        },
+        "ipo_price_min": {
+          "type": "number"
+        },
+        "ipo_price_max": {
+          "type": "number"
+        },
+        "all_of": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetPredicate"
+          }
+        },
+        "any_of": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetPredicate"
+          }
+        },
+        "not": {
+          "$ref": "#/definitions/AssetPredicate"
+        },
+        "max_assets": {
+          "$ref": "#/definitions/Integer"
+        },
+        "order_by": {
+          "type": "string",
+          "const": "IdAsc"
+        },
+        "index_membership_mode": {
+          "type": "string",
+          "enum": [
+            "CurrentSnapshot",
+            "PointInTime"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "AssetUniverseResult": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-universe-v1"
+        },
+        "universe_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "generation": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "no_match",
+            "incomplete",
+            "over_limit"
+          ]
+        },
+        "asset_count": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "matched": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "definition": {
+          "$ref": "#/definitions/UniverseRequest"
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "selection_semantics": {
+              "type": "string",
+              "enum": [
+                "StaticCatalog",
+                "HistoricalUnion"
+              ]
+            },
+            "requires_point_in_time_gate": {
+              "type": "boolean"
+            },
+            "point_in_time_indexes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "selection_semantics",
+            "requires_point_in_time_gate",
+            "point_in_time_indexes"
+          ],
+          "additionalProperties": false
+        },
+        "sample": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UniverseMember"
+          }
+        },
+        "facets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "count": {
+                  "$ref": "#/definitions/Integer"
+                }
+              },
+              "required": [
+                "value",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "excluded_count": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "current_cap": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "FMP"
+            },
+            "queried_at": {
+              "type": "string"
+            },
+            "source_as_of": {
+              "type": "null"
+            },
+            "min_exclusive": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "max_exclusive": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "provider",
+            "queried_at",
+            "source_as_of",
+            "min_exclusive",
+            "max_exclusive"
+          ],
+          "additionalProperties": false
+        },
+        "membership": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "string"
+              },
+              "source_kind": {
+                "type": "string"
+              },
+              "source_symbol": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "is_proxy": {
+                "type": "boolean"
+              },
+              "source_as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "checked_at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "index",
+              "source_kind",
+              "source_symbol",
+              "is_proxy",
+              "source_as_of",
+              "checked_at"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "historical_integrity": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "string"
+              },
+              "unresolved": {
+                "$ref": "#/definitions/Integer"
+              },
+              "unmatched_removals": {
+                "$ref": "#/definitions/Integer"
+              },
+              "address_conflicts": {
+                "$ref": "#/definitions/Integer"
+              },
+              "identity_reviews": {
+                "$ref": "#/definitions/Integer"
+              },
+              "completeness_verified": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "required": [
+              "index",
+              "unresolved",
+              "unmatched_removals",
+              "address_conflicts",
+              "identity_reviews",
+              "completeness_verified"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "format",
+        "universe_ref",
+        "generation",
+        "created_at",
+        "status",
+        "asset_count",
+        "matched",
+        "definition",
+        "selection",
+        "sample",
+        "facets",
+        "excluded_count",
+        "exclusions"
+      ],
+      "additionalProperties": false
+    },
+    "UniverseRequest": {
+      "type": "object",
+      "properties": {
+        "screen": {
+          "$ref": "#/definitions/AssetPredicate"
+        },
+        "membership_window": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        "current_cap_min_exclusive": {
+          "type": "number"
+        },
+        "current_cap_max_exclusive": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "screen"
+      ],
+      "additionalProperties": false
+    },
+    "UniverseMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "ticker": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "asset_class": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "industry": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fmp_symbol": {
+          "type": "string"
+        },
+        "current_market_cap": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "ticker",
+        "name",
+        "asset_class",
+        "exchange",
+        "country",
+        "sector",
+        "industry"
+      ],
+      "additionalProperties": false
+    },
+    "UniversePageRequest": {
+      "type": "object",
+      "properties": {
+        "universe_ref": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "exchange": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "limit": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "cursor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "universe_ref"
+      ],
+      "additionalProperties": false
+    },
+    "UniversePage": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-universe-page-v1"
+        },
+        "universe_ref": {
+          "type": "string"
+        },
+        "generation": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UniverseMember"
+          }
+        },
+        "total": {
+          "$ref": "#/definitions/IntegerCount"
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "facets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "count": {
+                  "$ref": "#/definitions/Integer"
+                }
+              },
+              "required": [
+                "value",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "required": [
+        "format",
+        "universe_ref",
+        "generation",
+        "records",
+        "total",
+        "next_cursor",
+        "facets"
+      ],
+      "additionalProperties": false
+    },
+    "UniverseBinding": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "epoch-universe-binding-v1"
+        },
+        "universe_ref": {
+          "type": "string"
+        },
+        "generation": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "screen": {
+          "$ref": "#/definitions/AssetPredicate"
+        },
+        "definition": {
+          "$ref": "#/definitions/UniverseRequest"
+        },
+        "selection": {
+          "type": "object",
+          "properties": {
+            "selection_semantics": {
+              "type": "string",
+              "enum": [
+                "StaticCatalog",
+                "HistoricalUnion"
+              ]
+            },
+            "requires_point_in_time_gate": {
+              "type": "boolean"
+            },
+            "point_in_time_indexes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "selection_semantics",
+            "requires_point_in_time_gate",
+            "point_in_time_indexes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "format",
+        "universe_ref",
+        "generation",
+        "ids",
+        "screen",
+        "definition",
+        "selection"
+      ],
+      "additionalProperties": false
+    },
+    "ObservationInput": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "window": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Json"
+          }
+        },
+        "market": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Json"
+          }
+        },
+        "limit": {
+          "$ref": "#/definitions/IntegerCount"
+        }
+      },
+      "required": [
+        "session_id",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "AssetLookupInput": {
+      "type": "object",
+      "properties": {
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "asset_ids"
+      ],
+      "additionalProperties": false
+    },
+    "AssetLookupResult": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string"
+              },
+              "source": {
+                "$ref": "#/definitions/SourceRecord"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

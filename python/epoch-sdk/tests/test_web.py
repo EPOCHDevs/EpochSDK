@@ -6,10 +6,9 @@ import json
 import httpx
 from mcp import Client
 from stratifyx.types import DatasetBuildRequest, WebResearchRequest
-from test_agent_tools import Service
+from native_service_fixture import Service
 from test_documents import NOW, PREPARATION, REQUEST
 
-from epoch_sdk.mcp import create_server
 
 READ = "web-read:" + hashlib.sha256(b"web-sdk-request").hexdigest()
 SOURCE = "web-source:" + "b" * 64
@@ -61,17 +60,4 @@ def test_web_sdk_preserves_source_identity_and_asof_policy():
             assert (await client.web_research(READ)).sources[0].content_sha256 == CONTENT["source"]["content_sha256"]
             build = await client.prepare_web_dataset(DatasetBuildRequest.model_validate(WEB_REQUEST))
             assert build.web_read_ref == READ and build.source is None
-    asyncio.run(scenario())
-
-
-def test_mcp_uses_retained_web_sources_without_restarting_provider_work():
-    async def scenario():
-        service = WebService()
-        async with service.client() as client:
-            server = create_server(client)
-            async with Client(server) as mcp:
-                result = await mcp.call_tool("epoch_read_web_source", {"source_ref": SOURCE})
-                assert not result.is_error
-                assert result.structured_content["text"] == TEXT
-                assert all(request.url.path == "/api/v1/agent-tools" for request in service.graph_calls)
     asyncio.run(scenario())

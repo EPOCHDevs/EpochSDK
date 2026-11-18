@@ -86,7 +86,7 @@ output failures and confirmed `extension_outputs` remain distinct.
 
 ## Reuse and replay
 
-Both `EpochClient` and `AgentToolsClient` expose `extension_inputs`,
+`EpochClient` exposes `extension_inputs`,
 `save_extension`, `execute_extension`, `extension_status`, `response`,
 `response_table` and `extension_presentation` over the native APIs. The default
 MCP exposes the same extension lifecycle; the caller can write the program itself

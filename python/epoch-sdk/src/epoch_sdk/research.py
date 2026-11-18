@@ -179,6 +179,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
     def __init__(self, supervisor: SupervisorClient):
         self.supervisor = supervisor
         self.backend = supervisor.backend
+        self.catalogue = supervisor.catalogue
         self.document_http = supervisor.document_http
         self.source_connections = supervisor.source_connections
         self.platform_files = supervisor.platform_files
@@ -189,6 +190,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         *,
         graph_url: str,
         backend_url: str,
+        platform_url: str | None = None,
         token: Token,
         assistant_id: str = "epoch-ai",
         ui_url: str | None = None,
@@ -198,6 +200,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             SupervisorClient.connect(
                 graph_url=graph_url,
                 backend_url=backend_url,
+                platform_url=platform_url,
                 token=token,
                 assistant_id=assistant_id,
                 ui_url=ui_url,

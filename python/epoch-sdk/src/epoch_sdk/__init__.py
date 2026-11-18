@@ -1,6 +1,7 @@
 """Shared Epoch contracts. SDK/MCP flow adapters are added in their owning issues."""
 
 from .api import Epoch, EpochApiError, UsageLimitReached
+from .catalogue import CatalogueClient
 from .contracts import (
     Acknowledgement,
     AiTextSkipped,
@@ -20,10 +21,12 @@ from .contracts import (
 )
 from .dates import date_range
 from .errors import EpochError
+from .identity import IdentityClient, IdentityHTTPError
 from .platform_files import PlatformFileError, PlatformFilesClient
 
 __all__ = [
     "Acknowledgement",
+    "CatalogueClient",
     "AiTextSkipped",
     "DomainError",
     "Epoch",
@@ -34,6 +37,8 @@ __all__ = [
     "FetchRequest",
     "FreshFetchRequest",
     "IngestRequest",
+    "IdentityClient",
+    "IdentityHTTPError",
     "JsonOutputRequest",
     "PlatformFileError",
     "PlatformFilesClient",

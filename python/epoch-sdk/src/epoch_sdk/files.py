@@ -15,7 +15,6 @@ from stratifyx.types import (
     DatasetReviewResponse,
     DatasetSourceDescriptor,
     SavedDataset,
-    SavedDatasetListPage,
     SpaceFolder,
     SpaceFolderRequest,
     SpacePage,
@@ -31,6 +30,8 @@ from stratifyx.types import (
     UserFileListPage,
 )
 from .platform_files import PlatformFilesClient
+from .catalogue import CatalogueClient
+from .catalogue_types import SavedInventory
 
 _RESOURCE = TypeAdapter(SpaceResourceRef)
 _IMPORT = TypeAdapter(StructuredImportRequest)
@@ -38,10 +39,11 @@ _REVIEW = TypeAdapter(DatasetReviewRequest)
 
 
 class FileClient:
-    """Native resource methods shared by EpochClient and AgentToolsClient."""
+    """Native resource methods provided by EpochClient."""
 
     backend: AsyncStratifyX
     platform_files: PlatformFilesClient | None
+    catalogue: CatalogueClient | None = None
 
     @property
     def file_edits(self) -> PlatformFilesClient:
@@ -138,12 +140,12 @@ class FileClient:
 
     async def list_datasets(
         self, *, query: str | None = None, cursor: str | None = None, limit: int = 100,
-    ) -> SavedDatasetListPage:
+    ) -> SavedInventory:
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError("Dataset page limit must be an integer in 1..100")
-        return await self.backend.user_files.list_saved_datasets(
-            query=query, cursor=cursor, limit=limit, request_options={"max_retries": 0}
-        )
+        if self.catalogue is None:
+            raise RuntimeError("Connect a Platform catalogue client before listing saved datasets")
+        return await self.catalogue.list_saved_datasets(query=query, cursor=cursor, limit=limit)
 
     async def dataset(self, dataset_ref: str) -> SavedDataset:
         return await self.backend.user_files.describe_saved_dataset(

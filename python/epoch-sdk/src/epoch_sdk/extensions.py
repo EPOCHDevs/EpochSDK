@@ -15,6 +15,7 @@ from stratifyx import AsyncStratifyX
 from stratifyx.types import (
     AcquisitionProvenancePage,
     CreateSdkExecutionRequest,
+    CreateExecutionOutputEdit,
     DashboardEditView,
     DataOption,
     ExecutionInputCatalogResponse,
@@ -22,6 +23,11 @@ from stratifyx.types import (
     ExecutionParameterValue,
     ExecutionPresentationPin,
     ExecutionReportReference,
+    ExecutionOutputEditRecord,
+    ExecutionOutputRevisionPage,
+    ExecutionResponseTextEdit,
+    ExecutionPresentationEdit,
+    ExecutionReportEdit,
     IdResponse,
     NamedExecutionInputSelection,
     SdkExecutionRecord,
@@ -52,8 +58,103 @@ class _ExecutionOptions(TypedDict, total=False):
     additional_sources: list[NamedExecutionInputSelection]
 
 
+class _OutputEditOptions(TypedDict, total=False):
+    response_text: list[ExecutionResponseTextEdit]
+    presentation: ExecutionPresentationEdit
+    report: ExecutionReportEdit
+
+
 class ExecutionExtensionClient:
     backend: AsyncStratifyX
+
+    async def execution_outputs(self, execution_id: str, *, revision: int | None = None) -> SdkExecutionRecord:
+        """Read current accepted outputs, or pin a historical output revision.
+
+        The numerical execution identity is stable through all output edits.
+        Reading this record invokes neither computation nor a model.
+        """
+        if revision is not None and (isinstance(revision, bool) or revision < 1):
+            raise ValueError("Choose a positive accepted output revision.")
+        record = await self.backend.sdk_requests.get_execution_outputs(
+            execution_id, revision=revision, request_options={"max_retries": 0},
+        )
+        if record.execution_id != execution_id or (
+            revision is not None and (record.output_revision is None or record.output_revision.version != revision)
+        ):
+            raise ValueError("The output record differs from its selected execution and revision.")
+        return record
+
+    async def edit_outputs(self, execution_id: str, request: CreateExecutionOutputEdit) -> ExecutionOutputEditRecord:
+        """Submit one explicit direct or EpochScript output edit to this run.
+
+        Keep operation_id and the returned request_id to reconnect. Direct text
+        saves invoke no model. Authored reports consume selected saved tables;
+        original numerical acquisition and simulation are never rerun.
+        """
+        if request.model_extra:
+            raise ValueError("Unknown execution output-edit fields.")
+        options: _OutputEditOptions = {}
+        if request.response_text is not None:
+            options["response_text"] = request.response_text
+        if request.presentation is not None:
+            options["presentation"] = request.presentation
+        if request.report is not None:
+            options["report"] = request.report
+        record = await self.backend.execution_output_edits.create_execution_output_edit(
+            execution_id, operation_id=request.operation_id, expected_revision=request.expected_revision,
+            kind=request.kind, **options, request_options={"max_retries": 0},
+        )
+        if record.execution_id != execution_id or record.request != request:
+            raise ValueError("The output edit receipt differs from its submitted target and request.")
+        return record
+
+    async def output_edit_status(self, execution_id: str, request_id: str) -> ExecutionOutputEditRecord:
+        """Reconnect the original edit operation without dispatching another attempt."""
+        record = await self.backend.execution_output_edits.get_execution_output_edit(
+            execution_id, request_id, request_options={"max_retries": 0},
+        )
+        if record.execution_id != execution_id or record.request_id != request_id:
+            raise ValueError("The edit receipt differs from its original operation identity.")
+        return record
+
+    async def output_edit_by_handle(self, execution_id: str, operation_id: str) -> ExecutionOutputEditRecord:
+        """Read an admitted edit after losing its initial reply; this starts no work."""
+        record = await self.backend.execution_output_edits.get_execution_output_edit_by_handle(
+            execution_id, operation_id, request_options={"max_retries": 0},
+        )
+        if record.execution_id != execution_id or record.request.operation_id != operation_id:
+            raise ValueError("The edit receipt differs from its original target and handle.")
+        return record
+
+    async def cancel_output_edit(self, execution_id: str, request_id: str) -> ExecutionOutputEditRecord:
+        """Cancel a candidate edit while preserving the last accepted output."""
+        record = await self.backend.execution_output_edits.cancel_execution_output_edit(
+            execution_id, request_id, request_options={"max_retries": 0},
+        )
+        if record.execution_id != execution_id or record.request_id != request_id:
+            raise ValueError("The cancellation receipt differs from its original edit operation.")
+        return record
+
+    async def output_revisions(self, execution_id: str, *, offset: int = 0, page_size: int = 50) -> ExecutionOutputRevisionPage:
+        """Page immutable accepted history. Failed candidates remain edit receipts."""
+        if isinstance(offset, bool) or offset < 0 or isinstance(page_size, bool) or not 1 <= page_size <= 200:
+            raise ValueError("Choose a nonnegative history offset and page_size from 1 to 200.")
+        page = await self.backend.execution_output_edits.list_execution_output_revisions(
+            execution_id, offset=offset, page_size=page_size, request_options={"max_retries": 0},
+        )
+        if page.execution_id != execution_id or page.offset != offset:
+            raise ValueError("The output history differs from its selected execution and offset.")
+        return page
+
+    async def execution_answer(self, execution_id: str, *, revision: int | None = None) -> SavedResearchResponse | None:
+        """Read the answer pinned by the selected output revision; dashboard-only runs return None."""
+        record = await self.execution_outputs(execution_id, revision=revision)
+        outputs = record.extension_outputs
+        if outputs is None or outputs.response_id is None or outputs.response_version is None:
+            if record.response_id is not None and record.response_version is not None:
+                return await self.response(record.response_id, version=record.response_version)
+            return None
+        return await self.response(outputs.response_id, version=outputs.response_version)
 
     async def extension_inputs(
         self, execution_id: str, *, tables: Sequence[str],

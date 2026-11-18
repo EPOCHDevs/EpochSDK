@@ -127,7 +127,7 @@ not implemented by this method; it must not be described as a lossless replay.
 
 ## MCP
 
-`epoch-mcp` exposes `epoch_run`, `epoch_execute`, `epoch_resume`, `epoch_status`
+The independent `python -m epoch_sdk.workflow_mcp` compatibility adapter exposes `epoch_run`, `epoch_execute`, `epoch_resume`, `epoch_status`
 and `epoch_read` over the public SDK. Task-only calls, explicit output schemas,
 structured progress/questions and saved answers all use the shared session.
 There are no separate default publication, manifest or supervisor tools.

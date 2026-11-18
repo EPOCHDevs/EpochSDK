@@ -15,10 +15,7 @@ from langgraph_sdk.client import LangGraphClient
 from mcp import Client
 from stratifyx import AsyncStratifyX
 from stratifyx.types import CreateSdkExecutionRequest, NamedExecutionInputSelection
-from test_agent_tools import CATALOG
 
-from epoch_sdk.agent_tools import AgentToolsClient
-from epoch_sdk.mcp import create_server
 from epoch_sdk.research import EpochClient
 from epoch_sdk.responses import SavedResearchResponse
 from epoch_sdk.supervisor import SupervisorClient
@@ -46,7 +43,7 @@ class Service:
     def graph(self, request):
         self.graph_calls.append(request)
         assert request.method == "GET" and request.url.path == "/api/v1/agent-tools"
-        return httpx.Response(200, json=CATALOG)
+        raise AssertionError("Native operation must not use the retired tools graph")
 
     def backend(self, request):
         self.calls.append(request)
@@ -96,7 +93,7 @@ class Service:
         return httpx.Response(200, json=ANSWER)
 
 
-@pytest.mark.parametrize("client_kind", ["application", "coding_agent"])
+@pytest.mark.parametrize("client_kind", ["application"])
 def test_both_clients_share_native_lifecycle_and_preserve_source_and_zero_edit_pin(client_kind):
     async def scenario():
         service = Service()
@@ -106,8 +103,7 @@ def test_both_clients_share_native_lifecycle_and_preserve_source_and_zero_edit_p
         ):
             native = AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http)
             graph = LangGraphClient(graph_http)
-            client = (EpochClient(SupervisorClient(graph, native)) if client_kind == "application"
-                      else AgentToolsClient(graph, native, graph_http))
+            client = EpochClient(SupervisorClient(graph, native, document_http=graph_http))
             inputs = await client.extension_inputs("original", tables=["orders"])
             assert inputs.source.execution_id == "original"
             assert inputs.tables[0].fields[0].reference == "ExecutionTableOrders.Quantity"
@@ -130,43 +126,6 @@ def test_both_clients_share_native_lifecycle_and_preserve_source_and_zero_edit_p
     asyncio.run(scenario())
 
 
-def test_mcp_uses_the_same_methods_and_returns_machine_readable_pins_without_graph_runs():
-    async def scenario():
-        service = Service()
-        async with (
-            httpx.AsyncClient(transport=httpx.MockTransport(service.backend)) as native_http,
-            httpx.AsyncClient(base_url="https://graph.invalid", transport=httpx.MockTransport(service.graph)) as graph_http,
-        ):
-            tools = AgentToolsClient(LangGraphClient(graph_http), AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http), graph_http)
-            async with Client(create_server(tools)) as mcp:
-                listed = {tool.name for tool in (await mcp.list_tools()).tools}
-                assert {"epoch_extension_inputs", "epoch_save_extension", "epoch_execute_extension"} <= listed
-                assert not (await mcp.call_tool("epoch_extension_inputs", {"execution_id": "original", "tables": ["orders"]})).is_error
-                assert not (await mcp.call_tool("epoch_save_extension", {"thread_id": "native-scope", "source_execution_id": "original", "tables": ["orders"], "source": SOURCE, "name": "Order review", "description": "Controlled source save"})).is_error
-                executed = await mcp.call_tool("epoch_execute_extension", {"request": REQUEST})
-                assert not executed.is_error and executed.structured_content == RECORD
-                status = await mcp.call_tool("epoch_status", {"kind": "extension", "operation_id": "presentation-test"})
-                assert not status.is_error and status.structured_content == RECORD
-                view = await mcp.call_tool("epoch_read", {"kind": "presentation", "presentation": PIN})
-                assert not view.is_error and view.structured_content["edit_version"] == 0
-                assert view.structured_content["dashboard"] == DASHBOARD
-                answer = await mcp.call_tool("epoch_read", {"kind": "response", "identifier": ANSWER["response_id"], "version": 1})
-                assert not answer.is_error and answer.structured_content == ANSWER
-                part = next(item for item in ANSWER["content"]["outputs"] if item["type"] == "table")
-                page = await mcp.call_tool("epoch_read", {"kind": "response", "identifier": ANSWER["response_id"], "version": 1,
-                                                        "table": part["name"], "offset": part["source"]["row_count"]})
-                assert not page.is_error and page.structured_content["rows"] == []
-                assert page.structured_content["total_rows"] == part["source"]["row_count"]
-                assert page.structured_content["next_offset"] is None
-                calls = len(service.calls)
-                invalid = await mcp.call_tool("epoch_execute_extension", {"request": {**REQUEST, "owner": "forged"}})
-                assert invalid.is_error and len(service.calls) == calls
-                wrong = await mcp.call_tool("epoch_status", {"kind": "extension", "operation_id": "presentation-test", "execution_id": "wrong"})
-                assert wrong.is_error and len(service.calls) == calls
-                paging = await mcp.call_tool("epoch_read", {"kind": "response", "identifier": ANSWER["response_id"], "offset": 1})
-                assert paging.is_error and len(service.calls) == calls
-            assert all(call.url.path == "/api/v1/agent-tools" for call in service.graph_calls)
-    asyncio.run(scenario())
 
 
 def test_saved_answer_rejects_mismatched_extension_identity_and_old_answers_remain_valid():
@@ -198,7 +157,7 @@ def test_native_contract_refs_and_discriminator_targets_resolve_to_the_same_owne
         visit(schemas[name])
 
 
-@pytest.mark.parametrize("interface", ["sdk", "mcp"])
+@pytest.mark.parametrize("interface", ["sdk"])
 def test_named_sources_cross_the_existing_catalog_save_and_execute_interfaces(interface):
     """Controlled transport checks; the native worker owns numeric parity."""
     async def scenario():
@@ -221,7 +180,7 @@ def test_named_sources_cross_the_existing_catalog_save_and_execute_interfaces(in
         def graph(request):
             graph_calls.append(request)
             assert request.method == "GET" and request.url.path == "/api/v1/agent-tools"
-            return httpx.Response(200, json=CATALOG)
+            raise AssertionError("Native operation must not use the retired tools graph")
 
         def backend(request):
             body = json.loads(request.content)
@@ -242,31 +201,17 @@ def test_named_sources_cross_the_existing_catalog_save_and_execute_interfaces(in
             httpx.AsyncClient(base_url="https://graph.invalid",
                 transport=httpx.MockTransport(graph)) as graph_http,
         ):
-            client = AgentToolsClient(LangGraphClient(graph_http),
-                AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http), graph_http)
-            if interface == "sdk":
-                sources = [NamedExecutionInputSelection.model_validate(extra)]
-                metadata = await client.extension_inputs("original", tables=["orders"], additional_sources=sources)
-                assert metadata.additional_sources is not None
-                assert metadata.additional_sources[0].execution_id == "candidate-source"
-                await client.save_extension("native-scope", source_execution_id="original", tables=["orders"],
-                    additional_sources=sources, source=SOURCE, name="Comparison", description="Saved comparison")
-                result = await client.execute_extension(CreateSdkExecutionRequest.model_validate(request_wire))
-                assert result.extension_outputs is not None
-                assert result.extension_outputs.provenance.additional_sources == sources
-            else:
-                async with Client(create_server(client)) as mcp:
-                    result = await mcp.call_tool("epoch_extension_inputs", {"execution_id": "original",
-                        "tables": ["orders"], "additional_sources": [extra]})
-                    assert not result.is_error
-                    assert result.structured_content["additional_sources"][0]["execution_id"] == "candidate-source"
-                    saved = await mcp.call_tool("epoch_save_extension", {"thread_id": "native-scope",
-                        "source_execution_id": "original", "tables": ["orders"], "additional_sources": [extra],
-                        "source": SOURCE, "name": "Comparison", "description": "Saved comparison"})
-                    assert not saved.is_error
-                    executed = await mcp.call_tool("epoch_execute_extension", {"request": request_wire})
-                    assert not executed.is_error
-                    assert executed.structured_content["extension_outputs"]["provenance"]["additional_sources"] == [extra]
+            client = EpochClient(SupervisorClient(LangGraphClient(graph_http),
+                AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http), document_http=graph_http))
+            sources = [NamedExecutionInputSelection.model_validate(extra)]
+            metadata = await client.extension_inputs("original", tables=["orders"], additional_sources=sources)
+            assert metadata.additional_sources is not None
+            assert metadata.additional_sources[0].execution_id == "candidate-source"
+            await client.save_extension("native-scope", source_execution_id="original", tables=["orders"],
+                additional_sources=sources, source=SOURCE, name="Comparison", description="Saved comparison")
+            result = await client.execute_extension(CreateSdkExecutionRequest.model_validate(request_wire))
+            assert result.extension_outputs is not None
+            assert result.extension_outputs.provenance.additional_sources == sources
             assert len(calls) == 3
-            assert len(graph_calls) == (1 if interface == "mcp" else 0)
+            assert not graph_calls
     asyncio.run(scenario())

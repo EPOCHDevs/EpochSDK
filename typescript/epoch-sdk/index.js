@@ -1,3 +1,5 @@
+export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
+export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
 import { invariant, validateResponse, requestToWire, parametersToWire, operationId } from "./contract.js"
 import { researchStatus, resumeResearch, startResearch } from "./research.js"
 import { executionStatus, ordinarySource, startExecution } from "./execution.js"

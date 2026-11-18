@@ -12,10 +12,9 @@ from jsonschema import Draft202012Validator, FormatChecker
 from mcp import Client
 from mcp.types import ResourceLink, TextResourceContents
 from stratifyx.types import DatasetBuildRequest
-from test_agent_tools import Service
+from native_service_fixture import Service
 
 from epoch_sdk.documents import CaptureDocumentRequest
-from epoch_sdk.mcp import create_server
 
 FILE = "file:" + "a" * 64
 READ = "document-read:" + "b" * 64
@@ -194,34 +193,8 @@ def test_document_content_limits_reject_coercion_before_transport(value):
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("payload", [b'{"value":9007199254740993,"decimal":0.12345678901234567890123456789,"approved":false}', b"false", b'"Exact text \\n -0"', b"9007199254740993"])
-def test_mcp_json_resource_keeps_every_original_numeric_token_and_false(payload):
-    async def scenario():
-        service = DocumentsService()
-        service.json_bytes = payload
-        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
-            result = await mcp.call_tool("epoch_dataset_content", {"dataset_ref": DATASET})
-            assert not result.is_error and isinstance(result.content[0], ResourceLink)
-            assert result.content[0].mime_type == "application/json"
-            resource = await mcp.read_resource(result.content[0].uri)
-            assert isinstance(resource.contents[0], TextResourceContents)
-            assert resource.contents[0].text.encode() == service.json_bytes
-            assert service.graph_calls and all(r.url.path == "/api/v1/agent-tools" for r in service.graph_calls)
-    asyncio.run(scenario())
 
 
-def test_mcp_owner_denial_and_unknown_authority_are_errors_without_source_disclosure():
-    async def scenario():
-        service = DocumentsService()
-        async with service.client() as sdk, Client(create_server(sdk)) as mcp:
-            for tool, args in [("epoch_read_documents", {"document_version_ref": VERSION, "owner": "bob"}),
-                ("epoch_prepare_document_dataset", {"request": {**REQUEST, "owner": "bob"}})]:
-                result = await mcp.call_tool(tool, args)
-                assert result.is_error and service.backend_calls == []
-            service.owner_denied = True
-            result = await mcp.call_tool("epoch_document_read", {"read_ref": READ})
-            assert result.is_error and ORIGINAL.decode() not in str(result)
-    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize("kind", ["mime", "length", "hash", "budget"])

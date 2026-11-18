@@ -1,0 +1,15 @@
+{
+  "native_source": "6d41edb474897908ac26bd1f713e27e7f2677a2a",
+  "native_openapi_sha256": "c4dab84f72291f8d5053981ac99afdd33d0f7cc61947b5f3ff3bb588f827cd8f",
+  "scope": "Optional provider coverage in retained metadata; historical definitions, required fields and execution/access meanings stay unchanged.",
+  "verified_dependency_definitions": {
+    "discovery-legacy-v1.schema.json": [
+      "extent__ProviderCoverage",
+      "optional_bool"
+    ],
+    "discovery-presentation-v1.schema.json": [
+      "extent__ProviderCoverage",
+      "optional_bool"
+    ]
+  }
+}
