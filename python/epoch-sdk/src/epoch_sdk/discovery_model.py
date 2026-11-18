@@ -1,4 +1,4 @@
-"""Serialization policy shared by generated Platform discovery models."""
+"""Serialization policy shared by generated Platform wire models."""
 from pydantic import BaseModel, ConfigDict
 
 

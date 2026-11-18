@@ -21,6 +21,7 @@ from .contracts import (
 )
 from .dates import date_range
 from .errors import EpochError
+from .identity import IdentityClient, IdentityHTTPError
 from .platform_files import PlatformFileError, PlatformFilesClient
 
 __all__ = [
@@ -36,6 +37,8 @@ __all__ = [
     "FetchRequest",
     "FreshFetchRequest",
     "IngestRequest",
+    "IdentityClient",
+    "IdentityHTTPError",
     "JsonOutputRequest",
     "PlatformFileError",
     "PlatformFilesClient",

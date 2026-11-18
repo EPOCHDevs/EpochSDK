@@ -377,7 +377,7 @@ test("expired dataset reviews remain observable and continue without another nat
 
 
 test("a normally ended quota turn raises guidance without a native failure write", async () => {
-  const { UsageLimitReached } = await import("../api.js")
+  const { UsageLimitReached } = await import(new URL("./api.js", entry).href)
   const h = harness()
   await h.client.run(request(), { operationId: "quota", wait: false })
   h.state.runStatus = "success"

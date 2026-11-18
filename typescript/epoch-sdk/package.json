@@ -18,6 +18,10 @@
       "types": "./files.d.ts",
       "import": "./files.js"
     },
+    "./identity": {
+      "types": "./identity.d.ts",
+      "import": "./identity.js"
+    },
     "./discovery": {
       "types": "./discovery.d.ts",
       "import": "./discovery.js"
@@ -30,7 +34,8 @@
     "README.md",
     "dataset-review.schema.json",
     "platform-files.openapi.json",
-    "discovery.schema.json"
+    "discovery.schema.json",
+    "asset-identity.schema.json"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",

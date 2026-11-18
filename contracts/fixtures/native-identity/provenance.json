@@ -1,0 +1,15 @@
+{
+  "source_repository": "EPOCHDevs/EpochBackend",
+  "source_directory": "sdk/native-identity-fixtures",
+  "original_producer": "f826b49a63482946dbb9eb44d3e7df1c793bde0d",
+  "openapi_sha256": "670438540c7c199608cfcad041e4563c7308d29e0e0de41d607320b3adc59820",
+  "files": {
+    "classification-conflict.json": "eb85b33cdf6e8c14584e740ba57d97c17032f2778b08676e62fa79d25a329b5d",
+    "adr-true.json": "6e966371a35b8aac4c563d174d0addfa9b7290343f34ea24cec78e0ded6aa15e",
+    "classification-withdrawn.json": "d8009c976241bdc2fdb078c0ffb233ef8e0bd430b29b3b75256f2eec20ee0b57",
+    "classification-declared.json": "484982250a02bc3a4af0ae9dbd14bbedad39640f040dbcf29e4e5cd83c26e4df",
+    "adr-absent.json": "2fa7b9e37219e16fa13aa22c7e8ed99247cef89018e46351b9205863e674de59",
+    "adr-false.json": "0bedbcb7ef2bfe1254f9a91a94904aa8cea1bfc782385f4c617c72d30ecfec4a"
+  },
+  "scope": "Original native positive response bytes; no new native execution is claimed. The explicit-null negative control is intentionally excluded."
+}
