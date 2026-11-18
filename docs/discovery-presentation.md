@@ -13,6 +13,11 @@ constructor alias refers to the original `StudyDataConstructor` definition.
 Generated bindings come from this contract, independently of the retired
 native SDK operations; no historical generated client is restored.
 
+The provider-coverage addendum records the source and digest of the generated
+native contract used to add optional coverage to retained metadata. Historical
+records without it remain valid. Unknown or unavailable supplier coverage is
+preserved without changing discovery availability or native feedability.
+
 `parseDiscoveryPresentation(name, wire)` validates before converting declared
 field names to camelCase. `serializeDiscoveryPresentation(name, model)` performs
 the reverse conversion and validates the resulting wire object. Dictionary

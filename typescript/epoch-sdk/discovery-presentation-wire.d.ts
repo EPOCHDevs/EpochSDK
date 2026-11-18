@@ -876,6 +876,17 @@ export type Extent__MacrobondSourceDefinition = {
   revision_history_source_cutoff?: string;
   source_ids: string[];
 } | null;
+export type Extent__ProviderCoverage = {
+  discontinued?: OptionalBool;
+  effective_at?: string;
+  family?: string;
+  observed_at?: string;
+  reason?: string;
+  source?: string;
+  source_kind?: string;
+  source_sha256?: string;
+  status: string;
+} | null;
 export type DiscoveryItemStatus = "resolved" | "candidate" | "unavailable" | "unknown" | "error";
 export type DataVendor = "Macrobond" | "Barchart" | "FMP" | "TradingEconomics";
 export type DatasetSavedSearchResult = {
@@ -1594,6 +1605,7 @@ export interface DataExtentDTO {
   start?: string;
   unit?: string;
   vendor: string;
+  provider_coverage?: Extent__ProviderCoverage;
 }
 export interface AssetSpecification {
   asset_class?: AssetClass;

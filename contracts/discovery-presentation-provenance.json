@@ -33,5 +33,8 @@
   ],
   "aliases": {
     "DatasetSourceMetadataResponseConstructor": "StudyDataConstructor"
-  }
+  },
+  "addenda": [
+    "discovery-legacy-provider-coverage.json"
+  ]
 }

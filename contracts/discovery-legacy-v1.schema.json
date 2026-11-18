@@ -698,6 +698,9 @@
         },
         "vendor": {
           "type": "string"
+        },
+        "provider_coverage": {
+          "$ref": "#/definitions/extent__ProviderCoverage"
         }
       },
       "required": [
@@ -1454,6 +1457,45 @@
         "number",
         "string",
         "boolean",
+        "null"
+      ]
+    },
+    "extent__ProviderCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "discontinued": {
+          "$ref": "#/definitions/optional_bool"
+        },
+        "effective_at": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": [
+        "object",
         "null"
       ]
     }

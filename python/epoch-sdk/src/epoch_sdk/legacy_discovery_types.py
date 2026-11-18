@@ -345,6 +345,21 @@ class DiscoveryResultReceipt(DiscoveryModel):
     table: StrictStr
 
 
+class ExtentProviderCoverage(DiscoveryModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    discontinued: StrictBool | None = None
+    effective_at: StrictStr | None = None
+    family: StrictStr | None = None
+    observed_at: StrictStr | None = None
+    reason: StrictStr | None = None
+    source: StrictStr | None = None
+    source_kind: StrictStr | None = None
+    source_sha256: StrictStr | None = None
+    status: StrictStr
+
+
 class DiscoveryMetadataError(DiscoveryModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -588,6 +603,7 @@ class DataExtentDTO(DiscoveryModel):
     start: StrictStr | None = None
     unit: StrictStr | None = None
     vendor: StrictStr
+    provider_coverage: ExtentProviderCoverage | None = None
 
 
 class DiscoveryMetadataRecord(DiscoveryModel):

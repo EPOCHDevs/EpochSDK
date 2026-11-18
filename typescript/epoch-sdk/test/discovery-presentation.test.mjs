@@ -20,3 +20,26 @@ test('published directories keep map keys literal and ignore inherited construct
   assert.deepEqual(serialize('DatasetCatalogResponse', decoded), wire)
   assert.equal(Object.hasOwn(decoded, 'constructor'), false)
 })
+
+test('retained metadata preserves optional provider coverage without changing availability', () => {
+  for (const coverage of [undefined, { status: 'unknown', discontinued: false }, { status: 'unavailable', discontinued: true }]) {
+    const wire = {
+      record_ref: `discovery-record:v1:${'a'.repeat(64)}`, request_id: 'saved', request_item_id: 'item',
+      status: 'resolved', availability: 'unknown', coverage_basis: 'unknown', qualifications: [],
+      identity: { kind: 'te_indicator', country: 'United States', indicator: 'GDP' },
+      metadata: {
+        data_source_id: 'TradingEconomics:United States:GDP', vendor: 'trading_economics',
+        queried_at: '2026-11-17T00:00:00Z', provider_endpoint: 'historical', feedable: false,
+        ...(coverage === undefined ? {} : { provider_coverage: coverage }),
+      },
+    }
+    const decoded = parse('DiscoveryMetadataRecord', wire)
+    assert.equal(decoded.availability, 'unknown')
+    assert.equal(decoded.metadata.feedable, false)
+    assert.deepEqual(decoded.metadata.providerCoverage, coverage)
+    assert.deepEqual(serialize('DiscoveryMetadataRecord', decoded), wire)
+    assert.throws(() => parse('DiscoveryMetadataRecord', {
+      ...wire, metadata: { ...wire.metadata, provider_coverage: { status: 'unknown', invented: true } },
+    }))
+  }
+})

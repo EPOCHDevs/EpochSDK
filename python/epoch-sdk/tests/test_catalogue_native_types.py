@@ -53,3 +53,26 @@ def test_frozen_platform_legacy_reader_keeps_exact_scalar_values_and_closed_shap
     assert value.model_dump(mode='json',by_alias=True,exclude_unset=True)==body
     with pytest.raises(ValidationError):
         DiscoveryStoredQueryResponse.model_validate({**body,'invented':True})
+
+
+@pytest.mark.parametrize('coverage', [None, {'status': 'unknown', 'discontinued': False},
+                                      {'status': 'unavailable', 'discontinued': True}])
+def test_retained_provider_coverage_does_not_infer_availability_or_feedability(coverage):
+    metadata = {'data_source_id': 'TradingEconomics:United States:GDP',
+                'vendor': 'trading_economics', 'queried_at': '2026-11-17T00:00:00Z',
+                'provider_endpoint': 'historical', 'feedable': False}
+    if coverage is not None:
+        metadata['provider_coverage'] = coverage
+    record = {'record_ref': 'discovery-record:v1:'+'a'*64, 'request_id': 'saved',
+              'request_item_id': 'item', 'status': 'resolved', 'availability': 'unknown',
+              'coverage_basis': 'unknown', 'qualifications': [],
+              'identity': {'kind': 'te_indicator', 'country': 'United States', 'indicator': 'GDP'},
+              'metadata': metadata}
+    body = {'records': [record], 'columns': [], 'rows': [], 'result_refs': [], 'receipts': [],
+            'original_receipts': [], 'total_stored': 1, 'total_matching': 1,
+            'returned': 1, 'has_more': False}
+    parsed = DiscoveryStoredQueryResponse.model_validate(body)
+    assert parsed.model_dump(mode='json', by_alias=True, exclude_unset=True) == body
+    with pytest.raises(ValidationError):
+        DiscoveryStoredQueryResponse.model_validate({**body, 'records': [{**record,
+            'metadata': {**metadata, 'provider_coverage': {'status': 'unknown', 'invented': True}}}]})
