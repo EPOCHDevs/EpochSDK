@@ -8432,6 +8432,13 @@
           "execution_input": {
             "$ref": "#/components/schemas/Native_ExecutionInputSelection"
           },
+          "execution_parameter_bindings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_ExecutionParameterValue"
+            },
+            "description": "Authoring-only typed values used to validate the immutable source. Required specialization inputs must be supplied. Values are not saved as execution defaults; each execution supplies its own bindings.",
+            "type": "object"
+          },
           "name": {
             "type": "string"
           },
@@ -8455,6 +8462,44 @@
         "title": "epoch_stratifyx::AgentStudyDefinitionCreateRequest",
         "type": "object",
         "x-native-schema-name": "AgentStudyDefinitionCreateRequest"
+      },
+      "Native_AiTextSkipReason": {
+        "enum": [
+          "usage_limit"
+        ],
+        "type": "string",
+        "x-native-schema-name": "AiTextSkipReason"
+      },
+      "Native_AiTextSkipStatus": {
+        "enum": [
+          "skipped"
+        ],
+        "type": "string",
+        "x-native-schema-name": "AiTextSkipStatus"
+      },
+      "Native_AiTextSkipped": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/Native_AiTextSkipReason"
+          },
+          "resets_at": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Native_AiTextSkipStatus"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "AiTextSkipped"
       },
       "Native_AlgoParams": {
         "discriminator": {
@@ -9165,6 +9210,16 @@
             "minimum": -9223372036854776000,
             "type": "integer"
           },
+          "is_actively_trading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Native_optional_bool"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "max_assets": {
             "maximum": 9223372036854776000,
             "minimum": -9223372036854776000,
@@ -9296,6 +9351,26 @@
         "type": "object",
         "x-native-schema-name": "BandSchema"
       },
+      "Native_BarIntervalSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "high_id": {
+            "type": "string"
+          },
+          "low_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "low_id",
+          "high_id"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "BarIntervalSchema"
+      },
       "Native_BarPresentation": {
         "enum": [
           "Bar",
@@ -9322,6 +9397,9 @@
           },
           "id": {
             "type": "string"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/Native_BarIntervalSchema"
           },
           "name": {
             "type": "string"
@@ -9401,6 +9479,90 @@
         "type": "object",
         "x-native-schema-name": "BoxPlotOutlierSpec"
       },
+      "Native_BriefingItemSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "epoch_tearsheet::BriefingItemSchema",
+        "type": "object",
+        "x-native-schema-name": "BriefingItemSchema"
+      },
+      "Native_BriefingMarker": {
+        "enum": [
+          "Dot",
+          "Check",
+          "Dash",
+          "None"
+        ],
+        "type": "string",
+        "x-native-schema-name": "BriefingMarker"
+      },
+      "Native_BriefingSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Native_BriefingItemSchema"
+            },
+            "type": "array"
+          },
+          "marker": {
+            "$ref": "#/components/schemas/Native_BriefingMarker"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_BriefingSourceSchema"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "epoch_tearsheet::BriefingSchema",
+        "type": "object",
+        "x-native-schema-name": "BriefingSchema"
+      },
+      "Native_BriefingSourceSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "url"
+        ],
+        "title": "epoch_tearsheet::BriefingSourceSchema",
+        "type": "object",
+        "x-native-schema-name": "BriefingSourceSchema"
+      },
       "Native_CardRenderType": {
         "enum": [
           "TextFormat",
@@ -9460,7 +9622,7 @@
             "type": "string"
           },
           "value": {
-            "$ref": "#/components/schemas/Native_MetricValue"
+            "$ref": "#/components/schemas/Native_CellValue"
           }
         },
         "required": [
@@ -9520,6 +9682,9 @@
           "chart_def": {
             "$ref": "#/components/schemas/Native_epoch_tearsheet__ChartDef"
           },
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
+          },
           "context_binding": {
             "$ref": "#/components/schemas/Native_ContextBindingSchema"
           },
@@ -9550,6 +9715,15 @@
             "maximum": 2147483647,
             "minimum": -2147483648,
             "type": "integer"
+          },
+          "point_annotations": {
+            "items": {
+              "$ref": "#/components/schemas/Native_PointAnnotationSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "range_enabled": {
             "$ref": "#/components/schemas/Native_optional_bool"
@@ -9691,7 +9865,8 @@
           "YearValue",
           "MonthValue",
           "AssetValue",
-          "CountryValue"
+          "CountryValue",
+          "UrlValue"
         ],
         "type": "string",
         "x-native-schema-name": "ChartValueType"
@@ -10041,6 +10216,9 @@
           "native_category": {
             "type": "string"
           },
+          "parent_id": {
+            "type": "string"
+          },
           "subtitle": {
             "type": "string"
           },
@@ -10100,6 +10278,26 @@
         "type": "object",
         "x-native-schema-name": "ContextComponentBindingSchema"
       },
+      "Native_ContextComponentFooterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ContextMetricGroupSchema"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMarkdownRefSchema__ContextGraphRefSchema"
+          }
+        },
+        "required": [
+          "target",
+          "metrics"
+        ],
+        "type": "object",
+        "x-native-schema-name": "ContextComponentFooterSchema"
+      },
       "Native_ContextComponentKind": {
         "enum": [
           "Chart",
@@ -10140,6 +10338,9 @@
         "properties": {
           "answer": {
             "type": "string"
+          },
+          "briefing": {
+            "$ref": "#/components/schemas/Native_BriefingSchema"
           },
           "interpretation": {
             "type": "string"
@@ -10275,6 +10476,9 @@
       "Native_ContextGraphSchema": {
         "additionalProperties": false,
         "properties": {
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
+          },
           "directed": {
             "type": "boolean"
           },
@@ -10442,6 +10646,9 @@
       "Native_ContextInterpretationSchema": {
         "additionalProperties": false,
         "properties": {
+          "ai_text": {
+            "$ref": "#/components/schemas/Native_AiTextSkipped"
+          },
           "cache_key": {
             "type": "string"
           },
@@ -10542,6 +10749,12 @@
           "anchor": {
             "$ref": "#/components/schemas/Native_ContextMarkdownAnchorSchema"
           },
+          "briefing": {
+            "$ref": "#/components/schemas/Native_BriefingSchema"
+          },
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
+          },
           "hidden": {
             "type": "boolean"
           },
@@ -10553,6 +10766,14 @@
           },
           "markdown": {
             "type": "string"
+          },
+          "order": {
+            "maximum": 2147483647,
+            "minimum": -2147483648,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
           }
         },
         "required": [
@@ -10561,6 +10782,26 @@
         ],
         "type": "object",
         "x-native-schema-name": "ContextMarkdownSchema"
+      },
+      "Native_ContextMetricGroupSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "primary": {
+            "$ref": "#/components/schemas/Native_ContextCardRefSchema"
+          },
+          "secondary": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ContextCardRefSchema"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "primary",
+          "secondary"
+        ],
+        "type": "object",
+        "x-native-schema-name": "ContextMetricGroupSchema"
       },
       "Native_ContextQualifierSchema": {
         "additionalProperties": false,
@@ -10608,11 +10849,22 @@
         "type": "object",
         "x-native-schema-name": "ContextResultRefSchema"
       },
+      "Native_ContextSectionLayout": {
+        "enum": [
+          "Stack",
+          "Cards"
+        ],
+        "type": "string",
+        "x-native-schema-name": "ContextSectionLayout"
+      },
       "Native_ContextSectionSchema": {
         "additionalProperties": false,
         "properties": {
           "category": {
             "type": "string"
+          },
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
           },
           "executive_summary": {
             "$ref": "#/components/schemas/Native_ContextExecutiveSummarySchema"
@@ -10628,6 +10880,12 @@
               "$ref": "#/components/schemas/Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema"
             },
             "type": "array"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/Native_ContextSectionLayout"
+          },
+          "subtitle": {
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -11478,6 +11736,15 @@
         "type": "string",
         "x-native-schema-name": "DashStyle"
       },
+      "Native_DashboardContentRole": {
+        "enum": [
+          "Primary",
+          "Guide",
+          "Diagnostic"
+        ],
+        "type": "string",
+        "x-native-schema-name": "DashboardContentRole"
+      },
       "Native_DashboardContentSchema": {
         "additionalProperties": false,
         "properties": {
@@ -11486,6 +11753,15 @@
               "$ref": "#/components/schemas/Native_ContextCategorySchema"
             },
             "type": "array"
+          },
+          "component_footers": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ContextComponentFooterSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "default_category": {
             "type": "string"
@@ -11727,6 +12003,9 @@
       "Native_DashboardSchema": {
         "additionalProperties": false,
         "properties": {
+          "ai_text": {
+            "$ref": "#/components/schemas/Native_AiTextSkipped"
+          },
           "charts": {
             "items": {
               "$ref": "#/components/schemas/Native_ChartSchema"
@@ -11786,6 +12065,7 @@
         "additionalProperties": false,
         "properties": {
           "assets": {
+            "description": "Concrete Backend asset IDs only, for example SEC_<identity>-Stocks or ES-Futures. Index and exchange names are rejected. Select those universes with screen: {index: [\"SP500\"]} or screen: {exchange: [\"NYSE\"]}. Backend SDK callers may use ticker aliases such as AAPL-Stocks.",
             "items": {
               "type": "string"
             },
@@ -12049,6 +12329,9 @@
       "Native_ExecutionCompletedText": {
         "additionalProperties": false,
         "properties": {
+          "ai_text": {
+            "$ref": "#/components/schemas/Native_AiTextSkipped"
+          },
           "producer_id": {
             "type": "string"
           },
@@ -12190,6 +12473,9 @@
       "Native_ExecutionExtensionOutputs": {
         "additionalProperties": false,
         "properties": {
+          "ai_text": {
+            "$ref": "#/components/schemas/Native_AiTextSkipped"
+          },
           "dashboard_prose": {
             "type": "string"
           },
@@ -12216,6 +12502,15 @@
           "text": {
             "items": {
               "$ref": "#/components/schemas/Native_ExecutionCompletedText"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "text_failures": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ExecutionTextFailure"
             },
             "type": [
               "array",
@@ -12553,6 +12848,30 @@
         "type": "object",
         "x-native-schema-name": "ExecutionOptions"
       },
+      "Native_ExecutionOutputRevisionReference": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_id": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "version": {
+            "maximum": 18446744073709552000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "execution_id",
+          "version",
+          "sha256"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionOutputRevisionReference",
+        "type": "object",
+        "x-native-schema-name": "ExecutionOutputRevisionReference"
+      },
       "Native_ExecutionParameterBinding": {
         "enum": [
           "Runtime",
@@ -12688,6 +13007,40 @@
         "title": "epoch_stratifyx::server::ExecutionReportReference",
         "type": "object",
         "x-native-schema-name": "ExecutionReportReference"
+      },
+      "Native_ExecutionTextFailure": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/Native_ExecutionTextFailureCode"
+          },
+          "message": {
+            "type": "string"
+          },
+          "producer_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionTextFailure",
+        "type": "object",
+        "x-native-schema-name": "ExecutionTextFailure"
+      },
+      "Native_ExecutionTextFailureCode": {
+        "enum": [
+          "text_timeout",
+          "text_rate_limited",
+          "text_transport",
+          "text_invalid",
+          "text_unavailable",
+          "text_unconfirmed"
+        ],
+        "type": "string",
+        "x-native-schema-name": "ExecutionTextFailureCode"
       },
       "Native_ExecutiveSummaryOrigin": {
         "enum": [
@@ -12965,8 +13318,16 @@
           "name_format": {
             "$ref": "#/components/schemas/Native_ChartValueType"
           },
+          "point_labels": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "render_as": {
             "$ref": "#/components/schemas/Native_SeriesRenderKind"
+          },
+          "row_presence_column": {
+            "description": "Names a non-null Boolean column in the chart's saved Arrow data. False rows are shared-coordinate padding; true rows retain genuine missing values. Omission or null retains legacy all-rows membership.",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -13232,6 +13593,71 @@
         "type": "object",
         "x-native-schema-name": "PieSeriesSpec"
       },
+      "Native_PointAnnotationContextKind": {
+        "enum": [
+          "XBand",
+          "ReferenceLine"
+        ],
+        "type": "string",
+        "x-native-schema-name": "PointAnnotationContextKind"
+      },
+      "Native_PointAnnotationContextRef": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "description": "Zero-based index in x_bands or reference_lines, selected by kind.",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Native_PointAnnotationContextKind",
+            "description": "Existing X band or vertical reference line in this same chart generation."
+          }
+        },
+        "required": [
+          "kind",
+          "index"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "PointAnnotationContextRef"
+      },
+      "Native_PointAnnotationSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "context_ref": {
+            "$ref": "#/components/schemas/Native_PointAnnotationContextRef",
+            "description": "Optional explicit context address. Omission leaves this point independent; a referenced event onset need not equal the saved vertex date."
+          },
+          "label": {
+            "description": "Source-authored label for the referenced saved point.",
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "series_id": {
+            "description": "Exact existing series ID in this chart's saved Arrow table.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "source_row": {
+            "description": "Zero-based row in the immutable chart data generation; display projections must remap it explicitly.",
+            "maximum": 9223372036854776000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "series_id",
+          "source_row"
+        ],
+        "type": "object",
+        "x-native-schema-name": "PointAnnotationSchema"
+      },
       "Native_PreparedCommentaryStep": {
         "additionalProperties": false,
         "properties": {
@@ -13274,11 +13700,29 @@
           "next_step_presentation": {
             "$ref": "#/components/schemas/Native_CommentaryNextStepPresentation"
           },
+          "output_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "policy": {
             "$ref": "#/components/schemas/Native_CommentaryPolicy"
           },
           "source": {
             "$ref": "#/components/schemas/Native_CommentarySource"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_BriefingSourceSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
         "required": [
@@ -13470,6 +13914,9 @@
           "acquisition_provenance": {
             "$ref": "#/components/schemas/Native_AcquisitionProvenanceReference"
           },
+          "ai_text": {
+            "$ref": "#/components/schemas/Native_AiTextSkipped"
+          },
           "content": {
             "$ref": "#/components/schemas/Native_SdkContract_ResearchResponseContent"
           },
@@ -13616,6 +14063,36 @@
         "title": "AccessRequirement",
         "type": "object",
         "x-native-schema-name": "SdkContract_AccessRequirement"
+      },
+      "Native_SdkContract_AiTextSkipped": {
+        "additionalProperties": false,
+        "description": "Completed computation whose new AI text was omitted without a model call.",
+        "properties": {
+          "reason": {
+            "const": "usage_limit",
+            "title": "Reason",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "status": {
+            "const": "skipped",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "title": "AiTextSkipped",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_AiTextSkipped"
       },
       "Native_SdkContract_Cell": {
         "anyOf": [
@@ -13766,6 +14243,29 @@
                 "access_requirements"
               ]
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "USAGE_LIMIT_REACHED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "meter",
+                "resets_at"
+              ]
+            }
           }
         ],
         "properties": {
@@ -13802,6 +14302,14 @@
             "title": "Message",
             "type": "string"
           },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
+          },
           "questions": {
             "items": {
               "$ref": "#/components/schemas/Native_SdkContract_Question"
@@ -13814,6 +14322,12 @@
             "minLength": 1,
             "pattern": "\\S",
             "title": "Recommended Task",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
             "type": "string"
           },
           "retryable": {
@@ -13848,6 +14362,7 @@
           "FETCH_CURSOR_EXPIRED",
           "FETCH_LIMIT_EXCEEDED",
           "RATE_LIMITED",
+          "USAGE_LIMIT_REACHED",
           "TEMPORARILY_UNAVAILABLE",
           "UPSTREAM_TIMEOUT"
         ],
@@ -14631,7 +15146,28 @@
       },
       "Native_SdkContract_TextValue": {
         "additionalProperties": false,
+        "if": {
+          "properties": {
+            "ai_text": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ai_text"
+          ]
+        },
         "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Native_SdkContract_AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "format": {
             "enum": [
               "plain",
@@ -14662,6 +15198,13 @@
           "format",
           "value"
         ],
+        "then": {
+          "properties": {
+            "value": {
+              "const": ""
+            }
+          }
+        },
         "title": "TextValue",
         "type": "object",
         "x-native-schema-name": "SdkContract_TextValue"
@@ -14688,6 +15231,9 @@
           },
           "output_cancelled": {
             "$ref": "#/components/schemas/Native_optional_bool"
+          },
+          "output_revision": {
+            "$ref": "#/components/schemas/Native_ExecutionOutputRevisionReference"
           },
           "phase": {
             "$ref": "#/components/schemas/Native_SdkRequestPhase"
@@ -14878,7 +15424,8 @@
         "enum": [
           "CommonStock",
           "Etf",
-          "Fund"
+          "Fund",
+          "TestSecurity"
         ],
         "type": "string",
         "x-native-schema-name": "SecurityType"
@@ -14891,6 +15438,15 @@
               "$ref": "#/components/schemas/Native_ContextCategorySchema"
             },
             "type": "array"
+          },
+          "component_footers": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ContextComponentFooterSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "content_revision": {
             "type": "string"
@@ -15574,11 +16130,129 @@
         ],
         "x-native-schema-name": "SummaryLayoutSchema"
       },
+      "Native_TableBadge": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "$ref": "#/components/schemas/Native_Color",
+            "description": "Explicit badge color; it does not imply statistical confidence.",
+            "enum": [
+              "Default",
+              "Primary",
+              "Secondary",
+              "Success",
+              "Warning",
+              "Error",
+              "Info",
+              "Muted",
+              "Accent",
+              "Slate",
+              "Gray",
+              "Zinc",
+              "Neutral",
+              "Stone",
+              "Black",
+              "White",
+              "Blue",
+              "Sky",
+              "Cyan",
+              "Teal",
+              "Indigo",
+              "Violet",
+              "Purple",
+              "Red",
+              "Rose",
+              "Pink",
+              "Fuchsia",
+              "Orange",
+              "Amber",
+              "Yellow",
+              "Lime",
+              "Green",
+              "Emerald",
+              "Gold",
+              "Silver",
+              "Bronze",
+              "CubixHelixPallete"
+            ]
+          },
+          "label": {
+            "description": "Optional display label. The original value remains available for sorting and export.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Exact string value to match; unknown values remain plain text.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "x-native-schema-name": "TableBadge"
+      },
+      "Native_TableCellPresentation": {
+        "additionalProperties": false,
+        "properties": {
+          "badges": {
+            "description": "Badge only: exact string mappings. Labels/colors are explicit; unknown values stay readable and neutral.",
+            "items": {
+              "$ref": "#/components/schemas/Native_TableBadge"
+            },
+            "type": "array"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/Native_array_double_2",
+            "description": "Optional finite [minimum, maximum] for DataBar/Heatmap, in the table's emitted numeric units. DataBar must include zero. Omitted bounds use the entire saved column, never the visible page or filtered rows."
+          },
+          "high_column": {
+            "description": "Range only: exact high-bound column name in authoring; resolved Arrow column ID in the saved schema. All three values are on the same row and in the same units.",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Native_TableCellVisual",
+            "description": "Cell visual, independent of scalar formatting: Plain, DataBar, Heatmap, Badge or Range.",
+            "enum": [
+              "Plain",
+              "DataBar",
+              "Heatmap",
+              "Badge",
+              "Range"
+            ]
+          },
+          "low_column": {
+            "description": "Range only: exact low-bound column name in authoring; resolved Arrow column ID in the saved schema. The styled column supplies the current value.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "badges"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "TableCellPresentation"
+      },
+      "Native_TableCellVisual": {
+        "enum": [
+          "Plain",
+          "DataBar",
+          "Heatmap",
+          "Badge",
+          "Range"
+        ],
+        "type": "string",
+        "x-native-schema-name": "TableCellVisual"
+      },
       "Native_TableColumnSchema": {
         "additionalProperties": false,
         "properties": {
           "color_by_sign": {
             "$ref": "#/components/schemas/Native_optional_bool"
+          },
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
           },
           "coordinate_member": {
             "$ref": "#/components/schemas/Native_CoordinateMemberRefSchema"
@@ -15599,6 +16273,9 @@
           "info": {
             "type": "string"
           },
+          "initially_hidden": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "min_width": {
             "maximum": 2147483647,
             "minimum": -2147483648,
@@ -15609,6 +16286,9 @@
           },
           "notation": {
             "$ref": "#/components/schemas/Native_ValueNotation"
+          },
+          "presentation": {
+            "$ref": "#/components/schemas/Native_TableCellPresentation"
           },
           "sign_display": {
             "$ref": "#/components/schemas/Native_CardSignDisplay"
@@ -15691,6 +16371,9 @@
               "array",
               "null"
             ]
+          },
+          "content_role": {
+            "$ref": "#/components/schemas/Native_DashboardContentRole"
           },
           "context_binding": {
             "$ref": "#/components/schemas/Native_ContextBindingSchema"
@@ -16127,6 +16810,9 @@
           "bubble_size_by": {
             "type": "string"
           },
+          "data_labels": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "kind": {
             "const": "Bubble"
           },
@@ -16144,6 +16830,38 @@
         "type": "object",
         "x-native-schema-name": "epoch_tearsheet__BubbleChartDef"
       },
+      "Native_epoch_tearsheet__CandlestickChartDef": {
+        "additionalProperties": false,
+        "properties": {
+          "close_field": {
+            "type": "string"
+          },
+          "high_field": {
+            "type": "string"
+          },
+          "kind": {
+            "const": "Candlestick"
+          },
+          "low_field": {
+            "type": "string"
+          },
+          "open_field": {
+            "type": "string"
+          },
+          "price_unit": {
+            "type": "string"
+          },
+          "volume_field": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "Candlestick",
+        "type": "object",
+        "x-native-schema-name": "epoch_tearsheet__CandlestickChartDef"
+      },
       "Native_epoch_tearsheet__ChartDef": {
         "description": "Tagged union of per-chart-kind payloads. The `kind` discriminator selects the active alternative and narrows the available fields.",
         "discriminator": {
@@ -16152,6 +16870,7 @@
             "Bar": "#/components/schemas/Native_epoch_tearsheet__BarChartDef",
             "BoxPlot": "#/components/schemas/Native_epoch_tearsheet__BoxPlotChartDef",
             "Bubble": "#/components/schemas/Native_epoch_tearsheet__BubbleChartDef",
+            "Candlestick": "#/components/schemas/Native_epoch_tearsheet__CandlestickChartDef",
             "Gauge": "#/components/schemas/Native_epoch_tearsheet__GaugeChartDef",
             "HeatMap": "#/components/schemas/Native_epoch_tearsheet__HeatMapChartDef",
             "Histogram": "#/components/schemas/Native_epoch_tearsheet__HistogramChartDef",
@@ -16203,6 +16922,9 @@
           },
           {
             "$ref": "#/components/schemas/Native_epoch_tearsheet__RadarChartDef"
+          },
+          {
+            "$ref": "#/components/schemas/Native_epoch_tearsheet__CandlestickChartDef"
           }
         ],
         "type": "object",
@@ -16428,6 +17150,9 @@
       "Native_epoch_tearsheet__ScatterChartDef": {
         "additionalProperties": false,
         "properties": {
+          "data_labels": {
+            "$ref": "#/components/schemas/Native_optional_bool"
+          },
           "kind": {
             "const": "Scatter"
           },
@@ -16874,6 +17599,16 @@
             "minimum": -9223372036854776000,
             "type": "integer"
           },
+          "is_actively_trading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Native_optional_bool"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "max_assets": {
             "maximum": 9223372036854776000,
             "minimum": -9223372036854776000,
@@ -16928,6 +17663,111 @@
         "minimum": 0,
         "type": "integer",
         "x-native-schema-name": "uint32_t"
+      },
+      "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMarkdownRefSchema__ContextGraphRefSchema": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "default_variant": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "ChartRef"
+              },
+              "publication_id": {
+                "type": "string"
+              },
+              "variant_label": {
+                "type": "string"
+              },
+              "variants": {
+                "items": {
+                  "$ref": "#/components/schemas/Native_ContextChartVariantRefSchema"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "category",
+              "id",
+              "kind"
+            ],
+            "title": "ChartRef",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "index": {
+                "maximum": 2147483647,
+                "minimum": -2147483648,
+                "type": "integer"
+              },
+              "kind": {
+                "const": "TableRef"
+              },
+              "publication_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "category",
+              "index",
+              "kind"
+            ],
+            "title": "TableRef",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "MarkdownRef"
+              }
+            },
+            "required": [
+              "id",
+              "kind"
+            ],
+            "title": "MarkdownRef",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "const": "GraphRef"
+              }
+            },
+            "required": [
+              "id",
+              "kind"
+            ],
+            "title": "GraphRef",
+            "type": "object"
+          }
+        ],
+        "type": "object",
+        "x-native-schema-name": "variant_ContextChartRefSchema__ContextTableRefSchema__ContextMarkdownRefSchema__ContextGraphRefSchema"
       },
       "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema": {
         "oneOf": [
@@ -29582,6 +30422,9 @@
       "Native_AcquisitionProvenanceRecord",
       "Native_AcquisitionProvenanceReference",
       "Native_AgentStudyDefinitionCreateRequest",
+      "Native_AiTextSkipReason",
+      "Native_AiTextSkipStatus",
+      "Native_AiTextSkipped",
       "Native_AlgoParams",
       "Native_AlgoParams_bayes",
       "Native_AlgoParams_cmaes",
@@ -29600,10 +30443,15 @@
       "Native_AxisSchema",
       "Native_AxisSide",
       "Native_BandSchema",
+      "Native_BarIntervalSchema",
       "Native_BarPresentation",
       "Native_BarSeriesSpec",
       "Native_BoxPlotDataPointSpec",
       "Native_BoxPlotOutlierSpec",
+      "Native_BriefingItemSchema",
+      "Native_BriefingMarker",
+      "Native_BriefingSchema",
+      "Native_BriefingSourceSchema",
       "Native_CardRenderType",
       "Native_CardSchema",
       "Native_CardSignDisplay",
@@ -29628,6 +30476,7 @@
       "Native_ContextCategorySchema",
       "Native_ContextChartVariantRefSchema",
       "Native_ContextComponentBindingSchema",
+      "Native_ContextComponentFooterSchema",
       "Native_ContextComponentKind",
       "Native_ContextComponentRefSchema",
       "Native_ContextExecutiveSummarySchema",
@@ -29645,9 +30494,11 @@
       "Native_ContextManifestSchema",
       "Native_ContextMarkdownAnchorSchema",
       "Native_ContextMarkdownSchema",
+      "Native_ContextMetricGroupSchema",
       "Native_ContextQualifierSchema",
       "Native_ContextResultKind",
       "Native_ContextResultRefSchema",
+      "Native_ContextSectionLayout",
       "Native_ContextSectionSchema",
       "Native_ContextSharedPartSchema",
       "Native_ContextSourceSchema",
@@ -29667,6 +30518,7 @@
       "Native_CreateSdkExecutionRequest",
       "Native_CreateSdkRequest",
       "Native_DashStyle",
+      "Native_DashboardContentRole",
       "Native_DashboardContentSchema",
       "Native_DashboardContextPin",
       "Native_DashboardEditAddress",
@@ -29695,11 +30547,14 @@
       "Native_ExecutionInputSourceView",
       "Native_ExecutionInputTableView",
       "Native_ExecutionOptions",
+      "Native_ExecutionOutputRevisionReference",
       "Native_ExecutionParameterBinding",
       "Native_ExecutionParameterSpec",
       "Native_ExecutionParameterValue",
       "Native_ExecutionPresentationPin",
       "Native_ExecutionReportReference",
+      "Native_ExecutionTextFailure",
+      "Native_ExecutionTextFailureCode",
       "Native_ExecutiveSummaryOrigin",
       "Native_ExhibitAvailability",
       "Native_FuturesTickRule",
@@ -29720,6 +30575,9 @@
       "Native_NamedExecutionInputSelection",
       "Native_PieDataPointSpec",
       "Native_PieSeriesSpec",
+      "Native_PointAnnotationContextKind",
+      "Native_PointAnnotationContextRef",
+      "Native_PointAnnotationSchema",
       "Native_PreparedCommentaryStep",
       "Native_PreparedCommentaryStep__FactType",
       "Native_RadarAxisSpec",
@@ -29732,6 +30590,7 @@
       "Native_ResponseEncoding",
       "Native_ScatterSeriesSpec",
       "Native_SdkContract_AccessRequirement",
+      "Native_SdkContract_AiTextSkipped",
       "Native_SdkContract_Cell",
       "Native_SdkContract_Column",
       "Native_SdkContract_DataRequirement",
@@ -29787,6 +30646,9 @@
       "Native_StudyType",
       "Native_SummaryCellSchema",
       "Native_SummaryLayoutSchema",
+      "Native_TableBadge",
+      "Native_TableCellPresentation",
+      "Native_TableCellVisual",
       "Native_TableColumnSchema",
       "Native_TableFlavor",
       "Native_TableInfoDisplay",
@@ -29805,6 +30667,7 @@
       "Native_epoch_tearsheet__BarChartDef",
       "Native_epoch_tearsheet__BoxPlotChartDef",
       "Native_epoch_tearsheet__BubbleChartDef",
+      "Native_epoch_tearsheet__CandlestickChartDef",
       "Native_epoch_tearsheet__ChartDef",
       "Native_epoch_tearsheet__GaugeChartDef",
       "Native_epoch_tearsheet__HeatMapChartDef",
@@ -29833,11 +30696,12 @@
       "Native_raw_json",
       "Native_shared_ptr_AssetScreen",
       "Native_uint32_t",
+      "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMarkdownRefSchema__ContextGraphRefSchema",
       "Native_variant_ContextChartRefSchema__ContextTableRefSchema__ContextMetricGroupSchema__ContextMarkdownRefSchema__ContextGraphRefSchema__ContextStudyRefSchema__ContextSharedPartRefSchema",
       "Native_variant_bool_int64_t_double_string",
       "Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
     ],
-    "sha256": "c31c7bf5c652501ea361779dc6f9226004d130fb0b48b5d9af5c2d2f8e26f2c8",
+    "sha256": "55d2d18eb365da84972f4aef236f9a0c9c63f03ae9c33ecd272e5d469ba855b8",
     "source": "EpochBackend/stratifyx_openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",

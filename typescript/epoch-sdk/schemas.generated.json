@@ -1579,7 +1579,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "7a782fc9d6445c75c4fa64281af609c04b253fb1331a03e2f0d850cc60d874f2",
+    "openapi.json": "39c91f06d66e1ef985a599db0f5fd195f0fd65fd8ee50879f3bba3a4718b6a7c",
     "research-response.schema.json": "0134d566fe313d57f8ba6b20cd6940e6ce8498bcecb9e7107ed3dd83bebc484d"
   }
 }
