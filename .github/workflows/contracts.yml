@@ -35,7 +35,7 @@ jobs:
       - run: python tools/generate_report_notebooks.py --check
       - run: python -m compileall -q python/epoch-sdk/src
 
-  typescript-runtime:
+  standalone-typescript-runtime:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,8 +44,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      # Native Python distributions are private. The Backend release's SDK
-      # conformance step runs all Python tests with its exact generated wheel;
-      # this public repository never downloads private wheels or credentials.
+      # Native distributions are private. Backend's release conformance step
+      # runs all Python and TypeScript tests with its exact generated packages.
+      # These standalone clients need no private native package or credential.
       - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
-      - run: node --test typescript/epoch-sdk/test/*.test.mjs
+      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,identity}.test.mjs

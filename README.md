@@ -123,11 +123,12 @@ python tools/check_python_contracts.py
 python -m pytest python/epoch-sdk/tests
 ```
 
-The public workflow validates the shared contract, fixtures and all TypeScript
-runtime tests. The Backend release's SDK conformance step installs its exact
-newly generated native wheel and source-connections package, then runs all
-Python runtime tests against a pinned shared SDK source commit. These include
-the Platform Files HTTP checks. Local tests use that same normal versioned wheel.
+The public workflow validates the shared contract, fixtures and standalone
+TypeScript clients. The Backend release's SDK conformance step installs its exact
+newly generated native Python and TypeScript packages and source-connections,
+then runs all Python and TypeScript runtime tests against a pinned shared SDK
+source commit. These include the Platform Files HTTP and native workflow checks.
+Local tests use those same normal versioned packages.
 Native SDK distribution/authentication remains owned by its package workflow;
 no private wheel or registry credentials are copied into this public repository.
 
