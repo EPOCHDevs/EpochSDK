@@ -33,6 +33,10 @@
     "./files-api": {
       "types": "./files-api/index.d.ts",
       "default": "./files-api/index.js"
+    },
+    "./files-api/core/fetcher": {
+      "types": "./files-api/core/fetcher/index.d.ts",
+      "default": "./files-api/core/fetcher/index.js"
     }
   },
   "files": [
