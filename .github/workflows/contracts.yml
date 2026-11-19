@@ -25,6 +25,7 @@ jobs:
       - run: python tools/validate_public_contract.py
       - run: python tools/sync_native_parameters.py --check
       - run: python tools/sync_platform_files_contract.py --check
+      - run: python tools/generate_files_api.py --check
       - run: python tools/sync_typescript_workflow_schemas.py --check
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
@@ -49,6 +50,6 @@ jobs:
         with:
           node-version: '24'
       - run: python -m pip install './python/epoch-sdk[clients,test]'
-      - run: python -m pytest python/epoch-sdk/tests/test_platform_files.py -q
+      - run: python -m pytest python/epoch-sdk/tests/test_platform_files.py python/epoch-sdk/tests/test_files_api.py -q
       - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
-      - run: node --test typescript/epoch-sdk/test/files.test.mjs
+      - run: node --test typescript/epoch-sdk/test/files.test.mjs typescript/epoch-sdk/test/files-api.test.mjs

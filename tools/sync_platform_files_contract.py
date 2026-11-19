@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 ROOT = Path(__file__).resolve().parents[1]
 PATHS = [
@@ -17,6 +18,8 @@ PATHS = [
     ROOT / "typescript/epoch-sdk/platform-files.openapi.json",
 ]
 SOURCE = ROOT / "contracts/platform-files.source.json"
+# Schemas adopted from Backend refer to each other; resolve them within the whole contract.
+_URI = "https://epoch.trade/contracts/platform-files-v1"
 
 
 def main() -> None:
@@ -48,8 +51,17 @@ def main() -> None:
             ("document_read", "DocumentRead"),
             ("document_page", "DocumentContentPage"),
             ("document_passage", "DocumentSourcePassage"),
+            ("saved_dataset", "SavedDataset"),
         ):
-            Draft202012Validator(document["components"]["schemas"][model]).validate(
+            Draft202012Validator(
+                {"$ref": f"{_URI}#/components/schemas/{model}"},
+                registry=Registry().with_resource(
+                    _URI,
+                    Resource.from_contents(
+                        {"$schema": "https://json-schema.org/draft/2020-12/schema", **document}
+                    ),
+                ),
+            ).validate(
                 json.loads(
                     (
                         ROOT / f"contracts/fixtures/platform-files/{name}.json"

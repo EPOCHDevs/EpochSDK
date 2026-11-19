@@ -1,0 +1,97 @@
+{
+  "dataset_ref": "dataset:segment-reference@1",
+  "name": "Segment revenue reference",
+  "descriptor": {
+    "shape": {
+      "format": "table",
+      "schema": {
+        "key_fields": [
+          "timestamp",
+          "fiscal_period_end",
+          "segment"
+        ],
+        "frame_schema": {
+          "columns": [
+            {
+              "name": "timestamp",
+              "dtype": "timestamp[ns,UTC]",
+              "nullable": false,
+              "is_index": false,
+              "display_name": "Published",
+              "description": "Filing availability coordinate",
+              "semantic": "Timestamp"
+            },
+            {
+              "name": "fiscal_period_end",
+              "dtype": "utf8",
+              "nullable": false,
+              "is_index": false,
+              "display_name": "Year end",
+              "description": "ISO calendar date retained as source text; no timestamp promotion applied."
+            },
+            {
+              "name": "segment",
+              "dtype": "utf8",
+              "nullable": false,
+              "is_index": false,
+              "display_name": "Segment"
+            },
+            {
+              "name": "revenue_usd",
+              "dtype": "utf8",
+              "nullable": true,
+              "is_index": false,
+              "display_name": "Revenue",
+              "unit": "USD",
+              "semantic": "Currency",
+              "description": "Exact reported decimal retained as source text; no floating-point conversion applied."
+            }
+          ]
+        },
+        "dataframe_metadata": {
+          "data_type": "user_dataset",
+          "description": "Reported segment revenue",
+          "foundation": "Null",
+          "source_capabilities": {
+            "range": "Unsupported",
+            "future_rows": "PastOrPresentOnly",
+            "predecessor": "Unsupported",
+            "availability_axis": "None"
+          },
+          "entity_columns": [
+            "segment"
+          ]
+        }
+      },
+      "coverage": {
+        "row_count": 2
+      }
+    },
+    "sources": [
+      {
+        "kind": "file",
+        "file_ref": "file:annual-report"
+      }
+    ],
+    "preparation": {
+      "origin": "document",
+      "instruction": "Extract segment revenue with publication and fiscal-period dates",
+      "implementation_version": "document-v1",
+      "provider": "evaluation-candidate",
+      "provider_version": "recorded-at-run",
+      "schema_choice": {
+        "mode": "agent"
+      },
+      "purpose": "knowledge",
+      "enrichment": "user_defined"
+    },
+    "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "schema_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "limitations": [
+      "Illustrative contract fixture; not an actual company filing or provider result"
+    ],
+    "evidence_ref": "evidence:annual-report-table"
+  },
+  "saved_at": "2026-09-19T12:30:00Z",
+  "archived": false
+}

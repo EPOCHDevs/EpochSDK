@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epoch-sdk"
-version = "0.1.0a49"
+version = "0.1.0a50"
 description = "Epoch integration contracts and client adapters over LangGraph and StratifyX"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -47,8 +47,11 @@ markers = ["live_discovery: opt-in real Backend and registered MCP acceptance", 
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+# Generated from Platform's Files contract by tools/generate_files_api.py.
+extend-exclude = ["src/epoch_sdk/files_api"]
 
 [tool.pyright]
 include = ["src"]
+exclude = ["src/epoch_sdk/files_api"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
