@@ -448,3 +448,35 @@ value is empty and optional `ai_text` metadata records `status: skipped`,
 New v1 readers send `Epoch-Features: ai-text-skipped-v1`. Clients without that
 capability receive the empty text without new members, preserving older strict
 answer models. Cached real text can still be reused at the limit.
+
+## Platform sharing controls
+
+The generated `epoch_sdk.shares_api` client follows Platform's source-owned
+conversation-sharing contract. Existing operation names are preserved. These
+examples use a signed-in owner's token; the Terminal's existing public viewer is
+not changed by this SDK addition.
+
+```python
+from epoch_sdk.shares_api import AsyncEpochShares
+from epoch_sdk.shares_api.types import ChangeShareAccessRequest
+
+platform = AsyncEpochShares(base_url="https://api.dev.epoch.trade", token=token)
+history = await platform.studies_shares.list_published_share_versions(share_id)
+request = ChangeShareAccessRequest(
+    expected_access_version=last_read.access_version,
+    audience="named_subjects", subjects=["reader@example.com"],
+)
+await platform.studies_shares.change_who_can_open_a_share_link(
+    share_id, **request.model_dump(exclude_none=True), request_options={"max_retries": 0},
+)
+await platform.studies_shares.select_published_share_version(
+    share_id, snapshot_version=selected_version, expected_current_version=current_version,
+    request_options={"max_retries": 0},
+)
+received = await platform.studies_shares.list_received_thread_shares()
+```
+
+On 409, refetch and have the owner review the conflict before retrying. Request
+models preserve required compare-and-set versions and closed fields. Unavailable
+history entries have a reason instead of counts and cannot be selected. Saving a
+study to Space, invitation email and automatic publication are separate features.

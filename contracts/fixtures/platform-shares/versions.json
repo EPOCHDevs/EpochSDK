@@ -1,0 +1,18 @@
+{
+  "versions": [
+    {
+      "available": true,
+      "snapshot_version": 2,
+      "frozen_at_ms": 1795121450000,
+      "message_count": 9,
+      "run_count": 2,
+      "is_current": true
+    },
+    {
+      "available": false,
+      "snapshot_version": 1,
+      "reason": "legacy_missing",
+      "is_current": false
+    }
+  ]
+}

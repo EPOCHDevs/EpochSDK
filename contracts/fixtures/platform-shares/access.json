@@ -1,0 +1,7 @@
+{
+  "audience": "named_subjects",
+  "subjects": [
+    "reader@example.test"
+  ],
+  "expected_access_version": 0
+}

@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChangeShareAccessRequest = exports.SelectShareVersionRequest = exports.UpdateThreadShareRequest = exports.CreateThreadShareRequest = void 0;
+var CreateThreadShareRequest_1 = require("./CreateThreadShareRequest");
+Object.defineProperty(exports, "CreateThreadShareRequest", { enumerable: true, get: function () { return CreateThreadShareRequest_1.CreateThreadShareRequest; } });
+var UpdateThreadShareRequest_1 = require("./UpdateThreadShareRequest");
+Object.defineProperty(exports, "UpdateThreadShareRequest", { enumerable: true, get: function () { return UpdateThreadShareRequest_1.UpdateThreadShareRequest; } });
+var SelectShareVersionRequest_1 = require("./SelectShareVersionRequest");
+Object.defineProperty(exports, "SelectShareVersionRequest", { enumerable: true, get: function () { return SelectShareVersionRequest_1.SelectShareVersionRequest; } });
+var ChangeShareAccessRequest_1 = require("./ChangeShareAccessRequest");
+Object.defineProperty(exports, "ChangeShareAccessRequest", { enumerable: true, get: function () { return ChangeShareAccessRequest_1.ChangeShareAccessRequest; } });

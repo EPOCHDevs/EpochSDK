@@ -91,3 +91,23 @@ owner, then copy its exact output here.
 These endpoints are served by the Python gateway at /api/v1/sources. Native
 Files, dataset review, immutable data and study execution keep their existing
 Backend ownership and authentication.
+
+## Platform conversation sharing
+
+`platform-shares.openapi.json` is copied byte-for-byte from EpochPlatform's
+`contracts/shares.openapi.json`, with its reviewed source commit and hash in
+`platform-shares.source.json`. Regenerate the mirror with
+`tools/sync_platform_shares_contract.py --platform-openapi PATH --source-revision SHA`.
+Its `--check` validates the installed contract copies and synthetic fixtures.
+
+`tools/generate_shares_api.py` generates the Python `epoch_sdk.shares_api` and
+TypeScript `@epochdevs/epoch-sdk/shares-api` clients with the same pinned Fern
+versions and source-owned closure/compatibility fixes as the Files client. Do not
+edit their generated output. The additional normalizer derives request roots and
+boolean version-availability tags from the canonical schema. It preserves the
+available/unavailable union, including missing or ambiguous legacy versions.
+
+The clients expose Platform's existing StudiesShares method names, plus access
+updates, published-version history/selection and verified-recipient discovery.
+Creation and Publish update in the Terminal still go through EpochAI so it can
+capture and redact the conversation. These SDK additions do not change that flow.

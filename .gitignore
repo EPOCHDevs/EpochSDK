@@ -28,3 +28,4 @@ Thumbs.db
 *.so
 *.dylib
 fern/openapi/
+fern-shares/openapi/

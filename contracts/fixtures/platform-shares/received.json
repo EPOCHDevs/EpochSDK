@@ -1,0 +1,11 @@
+{
+  "shares": [
+    {
+      "share_id": "share-fixture",
+      "thread_title": "Synthetic conversation",
+      "owner_display_name": "Fixture owner",
+      "snapshot_version": 2,
+      "frozen_at_ms": 1795121450000
+    }
+  ]
+}
