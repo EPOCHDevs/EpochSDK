@@ -11,9 +11,9 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from stratifyx.types import DatasetBuildRequest, DatasetSchemaChoice_Provided
 
 from .dataset_reviews import DatasetConfigureInterrupt, DatasetWorkflowInterrupt, dataset_response
+from .files_api.types import DatasetBuildRequest, DatasetSchemaChoice_Provided
 from .output_validation import JsonValueOutput, TextValue
 from .presentation import question_answer
 from .research import ResearchCompleted

@@ -51,10 +51,16 @@ failure cannot implicitly resubmit a launch or clarification command. The
 wrapper disables native Backend retries per request; it cannot change an
 already constructed graph client's retry configuration.
 
+`files` is Platform's Files and Space client, generated from Platform's contract
+(`EpochFilesClient` from `@epochdevs/epoch-sdk/files-api`). Dataset reviews read
+and decide through it; without it, a run that pauses on a dataset review fails.
+
 ```ts
 import { EpochClient, type RunRequest } from "@epochdevs/epoch-sdk"
+import { EpochFilesClient } from "@epochdevs/epoch-sdk/files-api"
 
-const epoch = new EpochClient({ backend, graph })
+const files = new EpochFilesClient({ baseUrl: apiUrl, token })
+const epoch = new EpochClient({ backend, graph, files })
 const request: RunRequest = {
   task: "Explain the supplied evidence",
   context: ["Use only the facts provided in this request."],

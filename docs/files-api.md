@@ -36,6 +36,16 @@ Two differences from StratifyX's Files client are deliberate:
   `UserFileDescriptor`), `created_at` and `updated_at` are strings, and they carry Platform's extra
   fields (`outline`, `attachments`, block byte offsets). Field names are unchanged.
 
+## In this package
+
+`EpochClient` and `SupervisorClient` call Files and Space through this client.
+`EpochClient.connect` builds it on the same authenticated HTTP client as the rest
+of the API (`files_api`). If you construct `SupervisorClient` directly, pass
+`files_api=AsyncEpochFiles(...)`. In TypeScript, pass `files` (an
+`EpochFilesClient`) to `new EpochClient(...)`; dataset reviews need it. Files
+methods return the types from `epoch_sdk.files_api.types`. Errors are
+`epoch_sdk.files_api.core.api_error.ApiError`, not StratifyX's.
+
 ## Updating
 
 1. `python tools/sync_platform_files_contract.py --platform-openapi <EpochPlatform>/contracts/files.openapi.json --source-revision <commit>`

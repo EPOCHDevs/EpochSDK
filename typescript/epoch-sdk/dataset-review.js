@@ -1,6 +1,6 @@
 import Ajv from "ajv/dist/2020.js"
 import addFormats from "ajv-formats"
-import { serialization } from "@epoch/stratifyx"
+import filesApi from "./files-api/index.js"
 import bundle from "./dataset-review.schema.json" with { type: "json" }
 import { canonical, EpochError, invariant } from "./contract.js"
 
@@ -46,21 +46,29 @@ export function validateDatasetResponse(payload, response) {
   "This review action is unavailable.", "INVALID_STATE")
 }
 
+const { serialization } = filesApi
+
+// Platform owns Files and Space (ENG-2819); its client is generated from Platform's contract.
+function filesOf(client) {
+  invariant(client.files, "Provide Platform's Files client (EpochFilesClient from @epochdevs/epoch-sdk/files-api) as files.")
+  return client.files
+}
+
 export async function refreshDatasetInterrupts(client, items, signal) {
   const result = []
   for (const item of items) {
     if (item.value.type !== "dataset_review" || item.value.stage !== "review") { result.push(item); continue }
-    let op = await client.backend.userFiles.getDatasetPreparation(item.value.operation.preparation_ref, {}, opts(signal))
+    let op = await filesOf(client).userFiles.getDatasetPreparation(item.value.operation.preparation_ref, {}, opts(signal))
     const seen = new Set()
     while (op.replacedBy) {
       invariant(!seen.has(op.preparationRef) && seen.size < 32, "Invalid review replacement chain.")
       seen.add(op.preparationRef)
-      const child = await client.backend.userFiles.getDatasetPreparation(op.replacedBy, {}, opts(signal))
+      const child = await filesOf(client).userFiles.getDatasetPreparation(op.replacedBy, {}, opts(signal))
       invariant(child.request.replaces?.preparationRef === op.preparationRef, "The replacement belongs to another workflow.")
       op = child
     }
     const preview = op.draftRef && ["pending_review", "incomplete", "save_failed", "saved"].includes(op.state)
-      ? await client.backend.userFiles.previewSavedDataset(op.draftRef, { offset: 0, limit: 5 }, opts(signal)) : undefined
+      ? await filesOf(client).userFiles.previewSavedDataset(op.draftRef, { offset: 0, limit: 5 }, opts(signal)) : undefined
     const value = { type: "dataset_review", stage: "review", tool_call_id: item.value.tool_call_id,
       operation: serialization.DatasetBuild.jsonOrThrow(op), can_edit: ["pending_review", "incomplete"].includes(op.state),
       ...(preview ? { preview: serialization.DatasetPreviewPage.jsonOrThrow(preview) } : {}) }
@@ -74,7 +82,7 @@ export async function confirmDatasetDecisions(client, waiting, responses, signal
     if (item.value.type !== "dataset_review" || item.value.stage !== "review") continue
     const answer = responses[item.id]
     if (answer.action === "edit") continue
-    let op = await client.backend.userFiles.getDatasetPreparation(answer.preparation_ref, {}, opts(signal))
+    let op = await filesOf(client).userFiles.getDatasetPreparation(answer.preparation_ref, {}, opts(signal))
     invariant(op.review && op.preparationRef === answer.preparation_ref && op.attempt === answer.attempt &&
       op.review.reviewRef === answer.review_ref && op.resultSha256 === answer.result_sha256 && op.review.schemaSha256 === answer.schema_sha256,
     "The native dataset review changed.", "STALE_REVIEW")
@@ -84,13 +92,13 @@ export async function confirmDatasetDecisions(client, waiting, responses, signal
     if (op.state !== expected) {
       const action = answer.action === "decline" ? "discard" : op.state === "save_failed" ? "retry_save" : answer.action
       try {
-        op = await client.backend.userFiles.actOnDatasetPreparation(answer.preparation_ref, { body: {
+        op = await filesOf(client).userFiles.actOnDatasetPreparation(answer.preparation_ref, { body: {
           action, attempt: answer.attempt, resultSha256: answer.result_sha256,
           reviewRef: answer.review_ref, schemaSha256: answer.schema_sha256,
         } }, opts(signal))
       } catch {
         // Only an authoritative read can reconcile a lost write acknowledgement.
-        try { op = await client.backend.userFiles.getDatasetPreparation(answer.preparation_ref, {}, opts(signal)) }
+        try { op = await filesOf(client).userFiles.getDatasetPreparation(answer.preparation_ref, {}, opts(signal)) }
         catch { throw new EpochError("TEMPORARILY_UNAVAILABLE", "The dataset decision is unconfirmed; the agent remains paused.") }
       }
     }

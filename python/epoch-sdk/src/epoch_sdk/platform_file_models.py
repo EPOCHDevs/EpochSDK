@@ -8,7 +8,8 @@ from importlib.resources import files
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
-from stratifyx.types import UserFileDescriptor
+
+from .files_api.types import UserFileDescriptor
 
 _contract = json.loads(files("epoch_sdk").joinpath("data/platform-files.openapi.json").read_text())
 _file_pattern = _contract["components"]["schemas"]["FileDescriptor"]["properties"]["file_ref"][

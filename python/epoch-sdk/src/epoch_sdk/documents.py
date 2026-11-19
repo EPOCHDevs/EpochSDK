@@ -10,8 +10,10 @@ from typing import Literal, cast
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from stratifyx import AsyncStratifyX
-from stratifyx.types import (
+
+from ._files_client import files_client
+from .files_api import AsyncEpochFiles
+from .files_api.types import (
     DatasetBuild,
     DatasetBuildActionRequest,
     DatasetBuildAttentionList,
@@ -56,7 +58,7 @@ def _closed(value: object) -> None:
 
 
 class DocumentClient:
-    backend: AsyncStratifyX
+    files_api: AsyncEpochFiles | None
     document_http: httpx.AsyncClient | None = None
 
     def _document_http(self) -> httpx.AsyncClient:
@@ -80,20 +82,20 @@ class DocumentClient:
         return result
 
     async def web_research(self, read_ref: str) -> WebResearch:
-        return await self.backend.user_files.get_web_research(read_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.get_web_research(read_ref, request_options={"max_retries": 0})
 
     async def read_web_source(self, source_ref: str, *, offset: int = 0, max_bytes: int = 65536) -> WebSourceContent:
         if type(offset) is not int or offset < 0 or type(max_bytes) is not int or not 1 <= max_bytes <= 8 * 1024 * 1024:
             raise ValueError("Use a nonnegative byte offset and a budget up to 8 MiB")
-        return await self.backend.user_files.read_web_source(source_ref, offset=offset, max_bytes=max_bytes, request_options={"max_retries": 0})
+        return await files_client(self).user_files.read_web_source(source_ref, offset=offset, max_bytes=max_bytes, request_options={"max_retries": 0})
 
     async def act_web_research(self, read_ref: str, request: DatasetBuildActionRequest) -> WebResearch:
         _closed(request)
-        return await self.backend.user_files.act_on_web_research(read_ref, action=request.action, attempt=request.attempt,
+        return await files_client(self).user_files.act_on_web_research(read_ref, action=request.action, attempt=request.attempt,
             result_sha256=request.result_sha256, request_options={"max_retries": 0})
 
     async def delete_web_research(self, read_ref: str) -> None:
-        await self.backend.user_files.delete_web_research(read_ref, request_options={"max_retries": 0})
+        await files_client(self).user_files.delete_web_research(read_ref, request_options={"max_retries": 0})
 
     async def prepare_web_dataset(self, request: DatasetBuildRequest) -> DatasetBuild:
         _closed(request)
@@ -120,10 +122,10 @@ class DocumentClient:
         return capture
 
     async def document_capture(self, capture_ref: str) -> DocumentCapture:
-        return await self.backend.user_files.get_document_capture(capture_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.get_document_capture(capture_ref, request_options={"max_retries": 0})
 
     async def delete_document_capture(self, capture_ref: str) -> None:
-        await self.backend.user_files.delete_document_capture(capture_ref, request_options={"max_retries": 0})
+        await files_client(self).user_files.delete_document_capture(capture_ref, request_options={"max_retries": 0})
 
     async def start_document_read(self, file_ref: str) -> DocumentRead:
         response = await self._document_http().post("/api/v1/document-reads", json={"file_ref": file_ref}, timeout=30)
@@ -131,33 +133,33 @@ class DocumentClient:
         return DocumentRead.model_validate_json(response.content)
 
     async def document_read(self, read_ref: str) -> DocumentRead:
-        return await self.backend.user_files.get_document_read(read_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.get_document_read(read_ref, request_options={"max_retries": 0})
 
     async def current_document_reads(self, file_ref: str) -> DocumentReadList:
-        return await self.backend.user_files.current_document_read(file_ref=file_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.current_document_read(file_ref=file_ref, request_options={"max_retries": 0})
 
     async def delete_document_read(self, read_ref: str) -> None:
         """Explicitly retire parsed read artifacts. The original upload remains."""
-        await self.backend.user_files.delete_document_read(read_ref, request_options={"max_retries": 0})
+        await files_client(self).user_files.delete_document_read(read_ref, request_options={"max_retries": 0})
 
     async def document_build_attention(self) -> DatasetBuildAttentionList:
         """Lightweight unread/active build references; does not acknowledge work."""
-        return await self.backend.user_files.list_dataset_preparation_attention(request_options={"max_retries": 0})
+        return await files_client(self).user_files.list_dataset_preparation_attention(request_options={"max_retries": 0})
 
     async def document_content(self, document_version_ref: str, *, offset: int = 0, limit: int = 4, layer: Literal["primary", "element", "all"] = "primary") -> DocumentContentPage:
         if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError("Use a nonnegative offset and a block limit in 1..100")
         if layer not in {"primary", "element", "all"}:
             raise ValueError("Unknown document source layer")
-        return await self.backend.user_files.read_document_content(document_version_ref, offset=offset, limit=limit, layer=layer, max_bytes=65536, request_options={"max_retries": 0})
+        return await files_client(self).user_files.read_document_content(document_version_ref, offset=offset, limit=limit, layer=layer, max_bytes=65536, request_options={"max_retries": 0})
 
     async def document_passage(self, document_version_ref: str, block_ref: str) -> DocumentSourcePassage:
-        return await self.backend.user_files.read_document_passage(document_version_ref, block_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.read_document_passage(document_version_ref, block_ref, request_options={"max_retries": 0})
 
     async def search_documents(self, query: str, *, file_refs: list[str] | None = None, cursor: str | None = None, limit: int = 10) -> DocumentSearchResponse:
         if type(limit) is not int or not 1 <= limit <= 20:
             raise ValueError("Document search limit must be in 1..20")
-        return await self.backend.user_files.search_documents(query=query, file_refs=file_refs or [], cursor=cursor, limit=limit, request_options={"max_retries": 0})
+        return await files_client(self).user_files.search_documents(query=query, file_refs=file_refs or [], cursor=cursor, limit=limit, request_options={"max_retries": 0})
 
     async def prepare_document_dataset(self, request: DatasetBuildRequest) -> DatasetBuild:
         _closed(request)
@@ -166,16 +168,16 @@ class DocumentClient:
         return DatasetBuild.model_validate_json(response.content)
 
     async def document_preparation(self, preparation_ref: str) -> DatasetBuild:
-        return await self.backend.user_files.get_dataset_preparation(preparation_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.get_dataset_preparation(preparation_ref, request_options={"max_retries": 0})
 
     async def current_document_preparations(self, file_ref: str) -> DatasetBuildList:
-        return await self.backend.user_files.current_dataset_preparation(file_ref=file_ref, request_options={"max_retries": 0})
+        return await files_client(self).user_files.current_dataset_preparation(file_ref=file_ref, request_options={"max_retries": 0})
 
     async def act_document_preparation(self, preparation_ref: str, request: DatasetBuildActionRequest) -> DatasetBuild:
         _closed(request)
-        return await self.backend.user_files.act_on_dataset_preparation(preparation_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256,
+        return await files_client(self).user_files.act_on_dataset_preparation(preparation_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256,
             review_ref=request.review_ref, schema_sha256=request.schema_sha256, request_options={"max_retries": 0})
 
     async def act_document_read(self, read_ref: str, request: DatasetBuildActionRequest) -> DocumentRead:
         _closed(request)
-        return await self.backend.user_files.act_on_document_read(read_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256, request_options={"max_retries": 0})
+        return await files_client(self).user_files.act_on_document_read(read_ref, action=request.action, attempt=request.attempt, result_sha256=request.result_sha256, request_options={"max_retries": 0})

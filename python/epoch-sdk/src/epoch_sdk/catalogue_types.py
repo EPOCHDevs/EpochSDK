@@ -6,14 +6,22 @@ leaves describe executable source capabilities; no native search API is needed.
 from __future__ import annotations
 
 from typing import Literal
+
 from pydantic import Field, StrictBool, StrictInt, StrictStr
 from stratifyx.types import (
-    DataSourceRegistryBacking, DataSourceRegistryEndpoint, DataSourceRegistryFamily,
-    DataSourceRegistryKey, DataSourceRegistryOption, DataSourceRegistryOutput,
-    DataSourceRegistryScope, DataSourceRegistrySource, DataSourceRegistryWindow,
-    SavedDataset,
+    DataSourceRegistryBacking,
+    DataSourceRegistryEndpoint,
+    DataSourceRegistryFamily,
+    DataSourceRegistryKey,
+    DataSourceRegistryOption,
+    DataSourceRegistryOutput,
+    DataSourceRegistryScope,
+    DataSourceRegistrySource,
+    DataSourceRegistryWindow,
 )
+
 from .discovery_model import DiscoveryModel
+from .files_api.types import SavedDataset
 
 
 class CatalogueRequest(DiscoveryModel):

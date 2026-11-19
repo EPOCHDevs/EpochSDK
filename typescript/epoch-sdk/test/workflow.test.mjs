@@ -8,6 +8,8 @@ const entry = process.env.EPOCH_SDK_TEST_ENTRY ? pathToFileURL(process.env.EPOCH
 const sdk = await import(entry.href)
 const native = await import(process.env.EPOCH_NATIVE_TEST_ENTRY ? pathToFileURL(process.env.EPOCH_NATIVE_TEST_ENTRY).href : "@epoch/stratifyx")
 const { researchThreadId } = await import(new URL("./research.js", entry).href)
+// Platform's Files client (ENG-2819), generated from its contract.
+const { EpochFilesClient } = (await import(new URL("./files-api/index.js", entry).href)).default
 const { EpochClient, validateRequest, parseRequest, requestToWire, responseToWire, validateResponse } = sdk
 const copy = value => JSON.parse(JSON.stringify(value))
 const request = () => ({ task: "Explain a concept", context: ["Use supplied facts."], outputs: [
@@ -26,7 +28,7 @@ function harness() {
   const graphCalls = []
   const state = { record: null, response: null, runStatus: "running", interrupts: [], published: null, execution: null, job: null }
   const response = (body, args) => ({ ok: true, body: copy(body), rawResponse: new Response(JSON.stringify(body), { status: 200 }) })
-  const backend = new native.StratifyXClient({ baseUrl: "https://backend.invalid", fetcher: async args => {
+  const fetcher = async args => {
     assert.equal(args.maxRetries, 0, "No implicit retries, including reads")
     const path = new URL(args.url).pathname
     const body = typeof args.body === "string" ? JSON.parse(args.body) : args.body
@@ -76,7 +78,9 @@ function harness() {
     }
     if (path.startsWith("/api/v1/studies/executions/")) return response(state.job, args)
     throw new Error(`Unexpected request ${args.method} ${path}`)
-  } })
+  }
+  const backend = new native.StratifyXClient({ baseUrl: "https://backend.invalid", fetcher })
+  const files = new EpochFilesClient({ baseUrl: "https://backend.invalid", token: "fixture", fetcher })
   const graph = {
     threads: {
       create: async payload => { graphCalls.push(["threads.create", payload]); return { thread_id: payload.threadId } },
@@ -100,7 +104,7 @@ function harness() {
         metadata: { epoch_sdk_request_id: state.wrongRequest ?? state.record.request_id } }),
     },
   }
-  const client = new EpochClient({ backend, graph, pollIntervalMs: 250 })
+  const client = new EpochClient({ backend, graph, files, pollIntervalMs: 250 })
   return { client, backend, graph, calls, graphCalls, state, finish() {
     state.response = answer(state.record.request, state.record.runtime.thread_id)
     state.record.response_id = state.response.response_id

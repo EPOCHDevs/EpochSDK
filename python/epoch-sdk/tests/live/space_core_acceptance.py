@@ -25,9 +25,14 @@ from uuid import uuid4
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict
 from stratifyx import DataOption, DatePeriodConfig
-from stratifyx.core.api_error import ApiError
-from stratifyx.types import DatasetReviewRequest, DatasetReviewResponse, DatasetTableSchema, DataSourceColumn, JobListItem, SavedDataset, SpaceFolder, SpacePage, SpaceResourceRef, StructuredImportOptions, StructuredImportRequest, StructuredImportResult, UserFileDescriptor
+from stratifyx.core.api_error import ApiError as NativeApiError
+from epoch_sdk.files_api.core.api_error import ApiError as FilesApiError
+from stratifyx.types import JobListItem
+from epoch_sdk.files_api.types import DatasetReviewRequest, DatasetReviewResponse, DatasetTableSchema, DataSourceColumn, SavedDataset, SpaceFolder, SpacePage, SpaceResourceRef, StructuredImportOptions, StructuredImportRequest, StructuredImportResult, UserFileDescriptor
 from epoch_sdk.research import EpochClient
+
+# Files and Space calls raise the Files client's error; the rest raise StratifyX's.
+ApiError = (NativeApiError, FilesApiError)
 SDK_ROOT = Path(__file__).resolve().parents[4]
 
 class Receipt(BaseModel):
@@ -110,9 +115,9 @@ async def scenario(receipt: Receipt, graph_url: str, backend: Path) -> Evidence:
     checks: list[str] = []
     try:
         csv = b'date,value\n2020-01-02,1.25\n2020-01-03,\n2020-01-06,2.5\n'
-        pending = await notebook.backend.user_files.init_file_upload(name='observations.csv', media_type='text/csv', size_bytes=len(csv), content_sha256=hashlib.sha256(csv).hexdigest(), request_options={'max_retries': 0})
+        pending = await notebook.files_api.user_files.init_file_upload(name='observations.csv', media_type='text/csv', size_bytes=len(csv), content_sha256=hashlib.sha256(csv).hexdigest(), request_options={'max_retries': 0})
         try:
-            await notebook.backend.user_files.complete_file_upload(pending.file_ref, upload_id=pending.upload_id, request_options={'max_retries': 0})
+            await notebook.files_api.user_files.complete_file_upload(pending.file_ref, upload_id=pending.upload_id, request_options={'max_retries': 0})
             raise AssertionError('An incomplete upload was published')
         except ApiError as error:
             assert error.status_code in {400, 409}

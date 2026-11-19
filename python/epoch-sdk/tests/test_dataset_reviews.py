@@ -17,7 +17,9 @@ import pytest
 from langgraph_sdk.client import LangGraphClient
 from pydantic import ValidationError
 from stratifyx import AsyncStratifyX
-from stratifyx.types import DatasetBuild
+
+from epoch_sdk.files_api import AsyncEpochFiles
+from epoch_sdk.files_api.types import DatasetBuild
 
 from epoch_sdk.dataset_reviews import (
     DatasetConfigureInterrupt,
@@ -141,6 +143,9 @@ async def harness(build=None):
         client = SupervisorClient(
             LangGraphClient(graph_http),
             AsyncStratifyX(
+                base_url="https://native.test", token="fixture", httpx_client=native_http
+            ),
+            files_api=AsyncEpochFiles(
                 base_url="https://native.test", token="fixture", httpx_client=native_http
             ),
         )
