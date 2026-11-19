@@ -8,11 +8,7 @@ import * as EpochFiles from "../../../../index";
  *         schemaVersion: 1.1,
  *         requestId: "request_id",
  *         baseVersion: 1,
- *         baseContentSha256: "base_content_sha256",
- *         edit: {
- *             kind: "text",
- *             content: "content"
- *         }
+ *         baseContentSha256: "base_content_sha256"
  *     }
  */
 export interface FileEditRequest {
@@ -20,5 +16,8 @@ export interface FileEditRequest {
     requestId: string;
     baseVersion: number;
     baseContentSha256: string;
-    edit: EpochFiles.FileEditRequestEdit;
+    /** The edit, inline. Send exactly one of edit and edit_upload. */
+    edit?: EpochFiles.FileEditRequestEdit;
+    /** The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload. */
+    editUpload?: EpochFiles.FileEditRequestEditUpload;
 }

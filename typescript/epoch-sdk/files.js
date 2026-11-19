@@ -33,6 +33,33 @@ function version(value, original) {
 function documentPosition(block, source) {
   if ((block.start_byte === undefined) !== (block.length === undefined) || (block.start_byte !== undefined && (block.length !== encoder.encode(block.text).byteLength || block.start_byte + block.length > source.size_bytes))) throw new TypeError('Platform returned an inconsistent document position')
 }
+async function sha256Hex(bytes) {
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), byte => byte.toString(16).padStart(2, '0')).join('')
+}
+/** Storage refused a signed transfer. The message never includes the link. */
+export class StorageTransferError extends Error {
+  constructor(status) {
+    super(`Storage refused the signed file transfer (${status})`)
+    this.name = 'StorageTransferError'
+    this.status = status
+  }
+}
+/**
+ * PUT exact bytes to a link Platform signed for them (direct file transfer, ENG-2960), with exactly
+ * its headers. `storageFetch` must not add API credentials. A link can lapse before its expiry when
+ * Platform's credentials rotate, so a refused PUT asks for one new link: `link(1)`.
+ */
+export async function putSigned(storageFetch, link, body, { signal } = {}) {
+  const size = typeof Blob !== 'undefined' && body instanceof Blob ? body.size : body.byteLength
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const signed = await link(attempt)
+    // The wire form (`size_bytes`) or the generated Files client's (`sizeBytes`).
+    if (signed?.method !== 'PUT' || (signed.size_bytes ?? signed.sizeBytes) !== size) throw new TypeError('Platform signed a different file transfer')
+    const response = await storageFetch(signed.url, { method: 'PUT', headers: signed.headers, body, signal, redirect: 'error', credentials: 'omit' })
+    if (response.ok) return
+    if (attempt || ![400, 403].includes(response.status)) throw new StorageTransferError(response.status)
+  }
+}
 export class PlatformFileError extends Error {
   constructor(status, code, message, retryAfter) {
     super(message)
@@ -46,7 +73,8 @@ export class PlatformFileError extends Error {
 export class PlatformFilesClient {
   #token
   #fetch
-  constructor({ apiUrl, token, fetch: authenticatedFetch }) {
+  #storageFetch
+  constructor({ apiUrl, token, fetch: authenticatedFetch, storageFetch }) {
     const url = new URL(apiUrl)
     if (apiUrl !== apiUrl.trim() || /[\u0000-\u001f]/u.test(apiUrl) || !['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
       throw new TypeError('Provide an HTTP(S) Platform API endpoint without credentials')
@@ -55,6 +83,8 @@ export class PlatformFilesClient {
     this.apiUrl = url.href.replace(/\/$/u, '')
     this.#token = token
     this.#fetch = authenticatedFetch ?? globalThis.fetch
+    // Its own fetch: the API's credentials never reach storage.
+    this.#storageFetch = storageFetch ?? ((...args) => globalThis.fetch(...args))
   }
   _url(ref, suffix, original = false) {
     if (typeof ref !== 'string' || (original ? originalPattern : referencePattern).exec(ref)?.[0] !== ref) throw new TypeError('Provide an exact file reference')
@@ -163,12 +193,33 @@ export class PlatformFilesClient {
     if (result.file_ref !== ref || result.source_sha256 !== hash || result.offset !== (request.offset ?? 0) || result.rows.length > (request.limit ?? 100) || result.rows.some(row => row.length !== result.columns.length)) throw new TypeError('Platform returned an inconsistent file grid')
     return result
   }
+  // The edit goes through a signed storage link where Platform offers one, so its text never passes
+  // through the API's firewall (Platform docs/design/direct-file-transfer.md). Platform keys the staged
+  // edit by request_id and its SHA-256, so a retry puts the same bytes to the same place.
+  async _staged(ref, request, { signal } = {}) {
+    const edit = encoder.encode(JSON.stringify(request.edit))
+    const upload = { size_bytes: edit.byteLength, content_sha256: await sha256Hex(edit) }
+    const url = this._url(ref, '/edit-uploads', true)
+    const link = () => this._json(url, 'FileTransferLink', { request_id: request.request_id, ...upload }, { signal })
+    let first
+    try { first = await link() } catch (error) {
+      if (error instanceof PlatformFileError && error.code === 'FILE_DIRECT_TRANSFER_UNAVAILABLE') return request
+      throw error
+    }
+    await putSigned(this.#storageFetch, attempt => attempt ? link() : first, edit, { signal })
+    const { edit: _inline, ...staged } = request
+    staged.edit_upload = upload
+    validate('FileEditRequest', staged)
+    return staged
+  }
   async save(ref, request, options) {
     request = structuredClone(request)
     const url = this._url(ref, '/versions', true)
     validate('FileEditRequest', request)
+    if (request.edit === undefined) throw new TypeError('Pass the edit itself; the client stages it')
     if (encoder.encode(request.request_id).byteLength > 128) throw new TypeError('request_id must fit 128 UTF-8 bytes')
-    const result = version(await this._json(url, 'FileVersion', request, options), ref)
+    const body = await this._staged(ref, request, options)
+    const result = version(await this._json(url, 'FileVersion', body, options), ref)
     if (result.version !== request.base_version + 1) throw new TypeError('Platform returned another save generation')
     return result
   }

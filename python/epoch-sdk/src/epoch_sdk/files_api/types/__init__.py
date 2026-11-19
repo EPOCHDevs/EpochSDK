@@ -223,6 +223,8 @@ if typing.TYPE_CHECKING:
     from .file_preview_pending import FilePreviewPending
     from .file_preview_ready import FilePreviewReady
     from .file_preview_ready_media_type import FilePreviewReadyMediaType
+    from .file_transfer_link import FileTransferLink
+    from .file_transfer_link_method import FileTransferLinkMethod
     from .file_version import FileVersion
     from .file_version_file import FileVersionFile
     from .file_version_file_category import FileVersionFileCategory
@@ -262,6 +264,7 @@ if typing.TYPE_CHECKING:
     from .user_file_list_page import UserFileListPage
     from .user_file_status import UserFileStatus
     from .user_file_upload_session import UserFileUploadSession
+    from .user_file_upload_session_transfer import UserFileUploadSessionTransfer
     from .variant_double_string_bool_nullptr_t import VariantDoubleStringBoolNullptrT
     from .variant_space_folder_space_resource_item import VariantSpaceFolderSpaceResourceItem
     from .variant_space_folder_space_resource_item_parent_folder_ref import (
@@ -503,6 +506,8 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FilePreview_None": ".file_preview",
     "FilePreview_Pending": ".file_preview",
     "FilePreview_Ready": ".file_preview",
+    "FileTransferLink": ".file_transfer_link",
+    "FileTransferLinkMethod": ".file_transfer_link_method",
     "FileVersion": ".file_version",
     "FileVersionFile": ".file_version_file",
     "FileVersionFileCategory": ".file_version_file_category",
@@ -542,6 +547,7 @@ _dynamic_imports: typing.Dict[str, str] = {
     "UserFileListPage": ".user_file_list_page",
     "UserFileStatus": ".user_file_status",
     "UserFileUploadSession": ".user_file_upload_session",
+    "UserFileUploadSessionTransfer": ".user_file_upload_session_transfer",
     "VariantDoubleStringBoolNullptrT": ".variant_double_string_bool_nullptr_t",
     "VariantSpaceFolderSpaceResourceItem": ".variant_space_folder_space_resource_item",
     "VariantSpaceFolderSpaceResourceItemParentFolderRef": ".variant_space_folder_space_resource_item_parent_folder_ref",
@@ -803,6 +809,8 @@ __all__ = [
     "FilePreview_None",
     "FilePreview_Pending",
     "FilePreview_Ready",
+    "FileTransferLink",
+    "FileTransferLinkMethod",
     "FileVersion",
     "FileVersionFile",
     "FileVersionFileCategory",
@@ -842,6 +850,7 @@ __all__ = [
     "UserFileListPage",
     "UserFileStatus",
     "UserFileUploadSession",
+    "UserFileUploadSessionTransfer",
     "VariantDoubleStringBoolNullptrT",
     "VariantSpaceFolderSpaceResourceItem",
     "VariantSpaceFolderSpaceResourceItemParentFolderRef",

@@ -1,4 +1,5 @@
 export * from "./ReadDocumentContentRequestLayer";
+export * from "./UserFileUploadRequestTransfer";
 export * from "./CellGridRequestFormat";
 export * from "./FileEditRequestEditText";
 export * from "./FileEditRequestEditCellsFormat";
@@ -10,3 +11,4 @@ export * from "./FileEditRequestEditCellsChangesItemValue";
 export * from "./FileEditRequestEditCellsChangesItem";
 export * from "./FileEditRequestEditCells";
 export * from "./FileEditRequestEdit";
+export * from "./FileEditRequestEditUpload";

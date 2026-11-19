@@ -5,6 +5,7 @@ import * as serializers from "../../../../index";
 import * as EpochFiles from "../../../../../api/index";
 import * as core from "../../../../../core";
 import { FileEditRequestEdit } from "../../types/FileEditRequestEdit";
+import { FileEditRequestEditUpload } from "../../types/FileEditRequestEditUpload";
 export declare const FileEditRequest: core.serialization.Schema<serializers.FileEditRequest.Raw, EpochFiles.FileEditRequest>;
 export declare namespace FileEditRequest {
     interface Raw {
@@ -12,6 +13,7 @@ export declare namespace FileEditRequest {
         request_id: string;
         base_version: number;
         base_content_sha256: string;
-        edit: FileEditRequestEdit.Raw;
+        edit?: FileEditRequestEdit.Raw | null;
+        edit_upload?: FileEditRequestEditUpload.Raw | null;
     }
 }

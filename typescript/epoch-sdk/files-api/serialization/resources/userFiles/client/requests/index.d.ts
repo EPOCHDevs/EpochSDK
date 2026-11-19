@@ -7,4 +7,6 @@ export { UserFileUploadRequest } from "./UserFileUploadRequest";
 export { UserFileRenameRequest } from "./UserFileRenameRequest";
 export { UserFileCompleteRequest } from "./UserFileCompleteRequest";
 export { CellGridRequest } from "./CellGridRequest";
+export { FileEditUploadRequest } from "./FileEditUploadRequest";
+export { FilePartLinkRequest } from "./FilePartLinkRequest";
 export { FileEditRequest } from "./FileEditRequest";

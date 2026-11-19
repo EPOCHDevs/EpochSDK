@@ -4,6 +4,7 @@
 import * as serializers from "../../../../index";
 import * as EpochFiles from "../../../../../api/index";
 import * as core from "../../../../../core";
+import { UserFileUploadRequestTransfer } from "../../types/UserFileUploadRequestTransfer";
 export declare const UserFileUploadRequest: core.serialization.Schema<serializers.UserFileUploadRequest.Raw, EpochFiles.UserFileUploadRequest>;
 export declare namespace UserFileUploadRequest {
     interface Raw {
@@ -11,5 +12,6 @@ export declare namespace UserFileUploadRequest {
         media_type: string;
         name: string;
         size_bytes: number;
+        transfer?: UserFileUploadRequestTransfer.Raw | null;
     }
 }

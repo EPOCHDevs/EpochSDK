@@ -10,6 +10,7 @@ import hashlib
 from pydantic import TypeAdapter
 
 from ._files_client import files_client
+from ._storage import SignedLink, put_signed, signed_link, storage_client
 from .catalogue import CatalogueClient
 from .catalogue_types import SavedInventory
 from .files_api import AsyncEpochFiles
@@ -56,32 +57,53 @@ class FileClient:
         return client
 
     async def upload_file(self, content: bytes, *, name: str, media_type: str) -> UserFileDescriptor:
-        """Upload exact bytes in Backend-selected chunks, then verify completion.
+        """Upload exact bytes in Platform-selected chunks, then verify completion.
 
-        An uncertain call may be repeated with the same bytes: Backend owns the
-        content identity, upload generation and idempotent completion.
+        Where Platform signs storage links, each part goes straight to storage, so file
+        content never passes through the API's firewall; elsewhere parts go through the API.
+        An uncertain call may be repeated with the same bytes: Platform owns the content
+        identity, upload generation and idempotent completion.
         """
         if type(content) is not bytes:
             raise TypeError("File content must be bytes")
-        session = await files_client(self).user_files.init_file_upload(
+        api = files_client(self).user_files
+        session = await api.init_file_upload(
             name=name,
             media_type=media_type,
             size_bytes=len(content),
             content_sha256=hashlib.sha256(content).hexdigest(),
+            transfer="direct",
             request_options={"max_retries": 0},
         )
         if session.status != "uploading":
             return (await self.file(session.file_ref)).file
-        for part in range(session.part_count):
-            start = part * session.chunk_size_bytes
-            await files_client(self).user_files.upload_file_part(
-                session.file_ref,
-                upload_id=session.upload_id,
-                part_index=part,
-                request=content[start:start + session.chunk_size_bytes],
-                request_options={"max_retries": 0},
-            )
-        return await files_client(self).user_files.complete_file_upload(
+        size = session.chunk_size_bytes
+        if session.transfer == "direct":
+            async with storage_client() as storage:
+                for part in range(session.part_count):
+                    chunk = content[part * size:(part + 1) * size]
+
+                    async def link(part: int = part, chunk: bytes = chunk) -> SignedLink:
+                        signed = await api.link_file_upload_part(
+                            session.file_ref,
+                            upload_id=session.upload_id,
+                            part_index=part,
+                            content_sha256=hashlib.sha256(chunk).hexdigest(),
+                            request_options={"max_retries": 0},
+                        )
+                        return signed_link(signed, len(chunk))
+
+                    await put_signed(storage, link, chunk)
+        else:
+            for part in range(session.part_count):
+                await api.upload_file_part(
+                    session.file_ref,
+                    upload_id=session.upload_id,
+                    part_index=part,
+                    request=content[part * size:(part + 1) * size],
+                    request_options={"max_retries": 0},
+                )
+        return await api.complete_file_upload(
             session.file_ref, upload_id=session.upload_id, request_options={"max_retries": 0}
         )
 

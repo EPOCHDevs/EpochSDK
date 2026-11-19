@@ -44,6 +44,7 @@ from ..types.file_edit_grid import FileEditGrid
 from ..types.file_edit_options import FileEditOptions
 from ..types.file_image_preview import FileImagePreview
 from ..types.file_preview import FilePreview
+from ..types.file_transfer_link import FileTransferLink
 from ..types.file_version import FileVersion
 from ..types.file_version_page import FileVersionPage
 from ..types.saved_dataset import SavedDataset
@@ -64,7 +65,9 @@ from ..types.web_search_depth import WebSearchDepth
 from ..types.web_source_content import WebSourceContent
 from .types.cell_grid_request_format import CellGridRequestFormat
 from .types.file_edit_request_edit import FileEditRequestEdit
+from .types.file_edit_request_edit_upload import FileEditRequestEditUpload
 from .types.read_document_content_request_layer import ReadDocumentContentRequestLayer
+from .types.user_file_upload_request_transfer import UserFileUploadRequestTransfer
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -3533,6 +3536,7 @@ class RawUserFilesClient:
         media_type: str,
         name: str,
         size_bytes: int,
+        transfer: typing.Optional[UserFileUploadRequestTransfer] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[UserFileUploadSession]:
         """
@@ -3545,6 +3549,9 @@ class RawUserFilesClient:
         name : str
 
         size_bytes : int
+
+        transfer : typing.Optional[UserFileUploadRequestTransfer]
+            direct asks for signed storage links (linkFileUploadPart) so parts never pass through this API. The session says which transfer it has.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3562,6 +3569,7 @@ class RawUserFilesClient:
                 "media_type": media_type,
                 "name": name,
                 "size_bytes": size_bytes,
+                "transfer": transfer,
             },
             headers={
                 "content-type": "application/json",
@@ -5424,6 +5432,154 @@ class RawUserFilesClient:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    def link_file_edit_upload(
+        self,
+        file_ref: str,
+        *,
+        request_id: str,
+        size_bytes: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[FileTransferLink]:
+        """
+        A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        request_id : str
+
+        size_bytes : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[FileTransferLink]
+            Success
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"api/v1/files/{jsonable_encoder(file_ref)}/edit-uploads",
+            method="POST",
+            json={
+                "request_id": request_id,
+                "size_bytes": size_bytes,
+                "content_sha256": content_sha256,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    FileTransferLink,
+                    parse_obj_as(
+                        type_=FileTransferLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 416:
+                raise RangeNotSatisfiableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     def get_file_image_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> HttpResponse[FileImagePreview]:
@@ -5697,6 +5853,154 @@ class RawUserFilesClient:
                 raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
             yield _stream()
+
+    def link_file_upload_part(
+        self,
+        file_ref: str,
+        *,
+        upload_id: str,
+        part_index: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> HttpResponse[FileTransferLink]:
+        """
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        upload_id : str
+
+        part_index : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        HttpResponse[FileTransferLink]
+            Success
+        """
+        _response = self._client_wrapper.httpx_client.request(
+            f"api/v1/files/{jsonable_encoder(file_ref)}/parts",
+            method="POST",
+            json={
+                "upload_id": upload_id,
+                "part_index": part_index,
+                "content_sha256": content_sha256,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    FileTransferLink,
+                    parse_obj_as(
+                        type_=FileTransferLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return HttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 416:
+                raise RangeNotSatisfiableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     def get_file_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -6114,11 +6418,12 @@ class RawUserFilesClient:
         request_id: str,
         base_version: int,
         base_content_sha256: str,
-        edit: FileEditRequestEdit,
+        edit: typing.Optional[FileEditRequestEdit] = OMIT,
+        edit_upload: typing.Optional[FileEditRequestEditUpload] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[FileVersion]:
         """
-        Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+        Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
 
         Parameters
         ----------
@@ -6133,7 +6438,11 @@ class RawUserFilesClient:
 
         base_content_sha256 : str
 
-        edit : FileEditRequestEdit
+        edit : typing.Optional[FileEditRequestEdit]
+            The edit, inline. Send exactly one of edit and edit_upload.
+
+        edit_upload : typing.Optional[FileEditRequestEditUpload]
+            The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -6152,6 +6461,7 @@ class RawUserFilesClient:
                 "base_version": base_version,
                 "base_content_sha256": base_content_sha256,
                 "edit": edit,
+                "edit_upload": edit_upload,
             },
             headers={
                 "content-type": "application/json",
@@ -9852,6 +10162,7 @@ class AsyncRawUserFilesClient:
         media_type: str,
         name: str,
         size_bytes: int,
+        transfer: typing.Optional[UserFileUploadRequestTransfer] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[UserFileUploadSession]:
         """
@@ -9864,6 +10175,9 @@ class AsyncRawUserFilesClient:
         name : str
 
         size_bytes : int
+
+        transfer : typing.Optional[UserFileUploadRequestTransfer]
+            direct asks for signed storage links (linkFileUploadPart) so parts never pass through this API. The session says which transfer it has.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -9881,6 +10195,7 @@ class AsyncRawUserFilesClient:
                 "media_type": media_type,
                 "name": name,
                 "size_bytes": size_bytes,
+                "transfer": transfer,
             },
             headers={
                 "content-type": "application/json",
@@ -11744,6 +12059,154 @@ class AsyncRawUserFilesClient:
             raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
         raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
+    async def link_file_edit_upload(
+        self,
+        file_ref: str,
+        *,
+        request_id: str,
+        size_bytes: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[FileTransferLink]:
+        """
+        A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        request_id : str
+
+        size_bytes : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[FileTransferLink]
+            Success
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"api/v1/files/{jsonable_encoder(file_ref)}/edit-uploads",
+            method="POST",
+            json={
+                "request_id": request_id,
+                "size_bytes": size_bytes,
+                "content_sha256": content_sha256,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    FileTransferLink,
+                    parse_obj_as(
+                        type_=FileTransferLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 416:
+                raise RangeNotSatisfiableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
+
     async def get_file_image_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> AsyncHttpResponse[FileImagePreview]:
@@ -12018,6 +12481,154 @@ class AsyncRawUserFilesClient:
                 raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
             yield await _stream()
+
+    async def link_file_upload_part(
+        self,
+        file_ref: str,
+        *,
+        upload_id: str,
+        part_index: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> AsyncHttpResponse[FileTransferLink]:
+        """
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        upload_id : str
+
+        part_index : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        AsyncHttpResponse[FileTransferLink]
+            Success
+        """
+        _response = await self._client_wrapper.httpx_client.request(
+            f"api/v1/files/{jsonable_encoder(file_ref)}/parts",
+            method="POST",
+            json={
+                "upload_id": upload_id,
+                "part_index": part_index,
+                "content_sha256": content_sha256,
+            },
+            headers={
+                "content-type": "application/json",
+            },
+            request_options=request_options,
+            omit=OMIT,
+        )
+        try:
+            if 200 <= _response.status_code < 300:
+                _data = typing.cast(
+                    FileTransferLink,
+                    parse_obj_as(
+                        type_=FileTransferLink,  # type: ignore
+                        object_=_response.json(),
+                    ),
+                )
+                return AsyncHttpResponse(response=_response, data=_data)
+            if _response.status_code == 400:
+                raise BadRequestError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 401:
+                raise UnauthorizedError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 403:
+                raise ForbiddenError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 404:
+                raise NotFoundError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 409:
+                raise ConflictError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 413:
+                raise ContentTooLargeError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 416:
+                raise RangeNotSatisfiableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        Error,
+                        parse_obj_as(
+                            type_=Error,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            if _response.status_code == 503:
+                raise ServiceUnavailableError(
+                    headers=dict(_response.headers),
+                    body=typing.cast(
+                        typing.Any,
+                        parse_obj_as(
+                            type_=typing.Any,  # type: ignore
+                            object_=_response.json(),
+                        ),
+                    ),
+                )
+            _response_json = _response.json()
+        except JSONDecodeError:
+            raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response.text)
+        raise ApiError(status_code=_response.status_code, headers=dict(_response.headers), body=_response_json)
 
     async def get_file_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -12436,11 +13047,12 @@ class AsyncRawUserFilesClient:
         request_id: str,
         base_version: int,
         base_content_sha256: str,
-        edit: FileEditRequestEdit,
+        edit: typing.Optional[FileEditRequestEdit] = OMIT,
+        edit_upload: typing.Optional[FileEditRequestEditUpload] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[FileVersion]:
         """
-        Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+        Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
 
         Parameters
         ----------
@@ -12455,7 +13067,11 @@ class AsyncRawUserFilesClient:
 
         base_content_sha256 : str
 
-        edit : FileEditRequestEdit
+        edit : typing.Optional[FileEditRequestEdit]
+            The edit, inline. Send exactly one of edit and edit_upload.
+
+        edit_upload : typing.Optional[FileEditRequestEditUpload]
+            The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -12474,6 +13090,7 @@ class AsyncRawUserFilesClient:
                 "base_version": base_version,
                 "base_content_sha256": base_content_sha256,
                 "edit": edit,
+                "edit_upload": edit_upload,
             },
             headers={
                 "content-type": "application/json",

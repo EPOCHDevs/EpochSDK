@@ -4130,6 +4130,115 @@ class UserFiles {
         });
     }
     /**
+     * A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+     *
+     * @param {string} fileRef - The original immutable file reference identifying this version family.
+     * @param {EpochFiles.FileEditUploadRequest} request
+     * @param {UserFiles.RequestOptions} requestOptions - Request-specific configuration.
+     *
+     * @throws {@link EpochFiles.BadRequestError}
+     * @throws {@link EpochFiles.UnauthorizedError}
+     * @throws {@link EpochFiles.ForbiddenError}
+     * @throws {@link EpochFiles.NotFoundError}
+     * @throws {@link EpochFiles.ConflictError}
+     * @throws {@link EpochFiles.ContentTooLargeError}
+     * @throws {@link EpochFiles.RangeNotSatisfiableError}
+     * @throws {@link EpochFiles.ServiceUnavailableError}
+     *
+     * @example
+     *     await client.userFiles.linkFileEditUpload("file_ref", {
+     *         requestId: "request_id",
+     *         sizeBytes: 1,
+     *         contentSha256: "content_sha256"
+     *     })
+     */
+    linkFileEditUpload(fileRef, request, requestOptions) {
+        return core.HttpResponsePromise.fromPromise(this.__linkFileEditUpload(fileRef, request, requestOptions));
+    }
+    __linkFileEditUpload(fileRef, request, requestOptions) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const _response = yield ((_a = this._options.fetcher) !== null && _a !== void 0 ? _a : core.fetcher)({
+                url: (0, url_join_1.default)((_b = (yield core.Supplier.get(this._options.baseUrl))) !== null && _b !== void 0 ? _b : (yield core.Supplier.get(this._options.environment)), `api/v1/files/${encodeURIComponent(fileRef)}/edit-uploads`),
+                method: "POST",
+                headers: Object.assign({ Authorization: yield this._getAuthorizationHeader(), "X-Fern-Language": "JavaScript", "X-Fern-Runtime": core.RUNTIME.type, "X-Fern-Runtime-Version": core.RUNTIME.version }, requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.headers),
+                contentType: "application/json",
+                requestType: "json",
+                body: serializers.FileEditUploadRequest.jsonOrThrow(request, {
+                    unrecognizedObjectKeys: "passthrough",
+                    allowUnrecognizedUnionMembers: true,
+                    allowUnrecognizedEnumValues: true,
+                }),
+                timeoutMs: (requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.timeoutInSeconds) != null ? requestOptions.timeoutInSeconds * 1000 : 60000,
+                maxRetries: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.maxRetries,
+                withCredentials: true,
+                abortSignal: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.abortSignal,
+            });
+            if (_response.ok) {
+                return {
+                    data: serializers.FileTransferLink.parseOrThrow(_response.body, {
+                        unrecognizedObjectKeys: "passthrough",
+                        allowUnrecognizedUnionMembers: true,
+                        allowUnrecognizedEnumValues: true,
+                        breadcrumbsPrefix: ["response"],
+                    }),
+                    rawResponse: _response.rawResponse,
+                };
+            }
+            if (_response.error.reason === "status-code") {
+                switch (_response.error.statusCode) {
+                    case 400:
+                        throw new EpochFiles.BadRequestError(_response.error.body, _response.rawResponse);
+                    case 401:
+                        throw new EpochFiles.UnauthorizedError(_response.error.body, _response.rawResponse);
+                    case 403:
+                        throw new EpochFiles.ForbiddenError(serializers.Error_.parseOrThrow(_response.error.body, {
+                            unrecognizedObjectKeys: "passthrough",
+                            allowUnrecognizedUnionMembers: true,
+                            allowUnrecognizedEnumValues: true,
+                            breadcrumbsPrefix: ["response"],
+                        }), _response.rawResponse);
+                    case 404:
+                        throw new EpochFiles.NotFoundError(_response.error.body, _response.rawResponse);
+                    case 409:
+                        throw new EpochFiles.ConflictError(_response.error.body, _response.rawResponse);
+                    case 413:
+                        throw new EpochFiles.ContentTooLargeError(_response.error.body, _response.rawResponse);
+                    case 416:
+                        throw new EpochFiles.RangeNotSatisfiableError(serializers.Error_.parseOrThrow(_response.error.body, {
+                            unrecognizedObjectKeys: "passthrough",
+                            allowUnrecognizedUnionMembers: true,
+                            allowUnrecognizedEnumValues: true,
+                            breadcrumbsPrefix: ["response"],
+                        }), _response.rawResponse);
+                    case 503:
+                        throw new EpochFiles.ServiceUnavailableError(_response.error.body, _response.rawResponse);
+                    default:
+                        throw new errors.EpochFilesError({
+                            statusCode: _response.error.statusCode,
+                            body: _response.error.body,
+                            rawResponse: _response.rawResponse,
+                        });
+                }
+            }
+            switch (_response.error.reason) {
+                case "non-json":
+                    throw new errors.EpochFilesError({
+                        statusCode: _response.error.statusCode,
+                        body: _response.error.rawBody,
+                        rawResponse: _response.rawResponse,
+                    });
+                case "timeout":
+                    throw new errors.EpochFilesTimeoutError("Timeout exceeded when calling POST /api/v1/files/{file_ref}/edit-uploads.");
+                case "unknown":
+                    throw new errors.EpochFilesError({
+                        message: _response.error.errorMessage,
+                        rawResponse: _response.rawResponse,
+                    });
+            }
+        });
+    }
+    /**
      * On-demand PNG image previews for HEIC/HEIF and TIFF. Each TIFF page remains separately available. No AI work is started. The existing PDF preview endpoint is unchanged.
      *
      * @param {string} fileRef - An original file or a pinned saved version.
@@ -4307,6 +4416,115 @@ class UserFiles {
                     });
                 case "timeout":
                     throw new errors.EpochFilesTimeoutError("Timeout exceeded when calling GET /api/v1/files/{file_ref}/image-preview/{page}/content.");
+                case "unknown":
+                    throw new errors.EpochFilesError({
+                        message: _response.error.errorMessage,
+                        rawResponse: _response.rawResponse,
+                    });
+            }
+        });
+    }
+    /**
+     * A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+     *
+     * @param {string} fileRef - The original immutable file reference identifying this version family.
+     * @param {EpochFiles.FilePartLinkRequest} request
+     * @param {UserFiles.RequestOptions} requestOptions - Request-specific configuration.
+     *
+     * @throws {@link EpochFiles.BadRequestError}
+     * @throws {@link EpochFiles.UnauthorizedError}
+     * @throws {@link EpochFiles.ForbiddenError}
+     * @throws {@link EpochFiles.NotFoundError}
+     * @throws {@link EpochFiles.ConflictError}
+     * @throws {@link EpochFiles.ContentTooLargeError}
+     * @throws {@link EpochFiles.RangeNotSatisfiableError}
+     * @throws {@link EpochFiles.ServiceUnavailableError}
+     *
+     * @example
+     *     await client.userFiles.linkFileUploadPart("file_ref", {
+     *         uploadId: "upload_id",
+     *         partIndex: 1,
+     *         contentSha256: "content_sha256"
+     *     })
+     */
+    linkFileUploadPart(fileRef, request, requestOptions) {
+        return core.HttpResponsePromise.fromPromise(this.__linkFileUploadPart(fileRef, request, requestOptions));
+    }
+    __linkFileUploadPart(fileRef, request, requestOptions) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const _response = yield ((_a = this._options.fetcher) !== null && _a !== void 0 ? _a : core.fetcher)({
+                url: (0, url_join_1.default)((_b = (yield core.Supplier.get(this._options.baseUrl))) !== null && _b !== void 0 ? _b : (yield core.Supplier.get(this._options.environment)), `api/v1/files/${encodeURIComponent(fileRef)}/parts`),
+                method: "POST",
+                headers: Object.assign({ Authorization: yield this._getAuthorizationHeader(), "X-Fern-Language": "JavaScript", "X-Fern-Runtime": core.RUNTIME.type, "X-Fern-Runtime-Version": core.RUNTIME.version }, requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.headers),
+                contentType: "application/json",
+                requestType: "json",
+                body: serializers.FilePartLinkRequest.jsonOrThrow(request, {
+                    unrecognizedObjectKeys: "passthrough",
+                    allowUnrecognizedUnionMembers: true,
+                    allowUnrecognizedEnumValues: true,
+                }),
+                timeoutMs: (requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.timeoutInSeconds) != null ? requestOptions.timeoutInSeconds * 1000 : 60000,
+                maxRetries: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.maxRetries,
+                withCredentials: true,
+                abortSignal: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.abortSignal,
+            });
+            if (_response.ok) {
+                return {
+                    data: serializers.FileTransferLink.parseOrThrow(_response.body, {
+                        unrecognizedObjectKeys: "passthrough",
+                        allowUnrecognizedUnionMembers: true,
+                        allowUnrecognizedEnumValues: true,
+                        breadcrumbsPrefix: ["response"],
+                    }),
+                    rawResponse: _response.rawResponse,
+                };
+            }
+            if (_response.error.reason === "status-code") {
+                switch (_response.error.statusCode) {
+                    case 400:
+                        throw new EpochFiles.BadRequestError(_response.error.body, _response.rawResponse);
+                    case 401:
+                        throw new EpochFiles.UnauthorizedError(_response.error.body, _response.rawResponse);
+                    case 403:
+                        throw new EpochFiles.ForbiddenError(serializers.Error_.parseOrThrow(_response.error.body, {
+                            unrecognizedObjectKeys: "passthrough",
+                            allowUnrecognizedUnionMembers: true,
+                            allowUnrecognizedEnumValues: true,
+                            breadcrumbsPrefix: ["response"],
+                        }), _response.rawResponse);
+                    case 404:
+                        throw new EpochFiles.NotFoundError(_response.error.body, _response.rawResponse);
+                    case 409:
+                        throw new EpochFiles.ConflictError(_response.error.body, _response.rawResponse);
+                    case 413:
+                        throw new EpochFiles.ContentTooLargeError(_response.error.body, _response.rawResponse);
+                    case 416:
+                        throw new EpochFiles.RangeNotSatisfiableError(serializers.Error_.parseOrThrow(_response.error.body, {
+                            unrecognizedObjectKeys: "passthrough",
+                            allowUnrecognizedUnionMembers: true,
+                            allowUnrecognizedEnumValues: true,
+                            breadcrumbsPrefix: ["response"],
+                        }), _response.rawResponse);
+                    case 503:
+                        throw new EpochFiles.ServiceUnavailableError(_response.error.body, _response.rawResponse);
+                    default:
+                        throw new errors.EpochFilesError({
+                            statusCode: _response.error.statusCode,
+                            body: _response.error.body,
+                            rawResponse: _response.rawResponse,
+                        });
+                }
+            }
+            switch (_response.error.reason) {
+                case "non-json":
+                    throw new errors.EpochFilesError({
+                        statusCode: _response.error.statusCode,
+                        body: _response.error.rawBody,
+                        rawResponse: _response.rawResponse,
+                    });
+                case "timeout":
+                    throw new errors.EpochFilesTimeoutError("Timeout exceeded when calling POST /api/v1/files/{file_ref}/parts.");
                 case "unknown":
                     throw new errors.EpochFilesError({
                         message: _response.error.errorMessage,
@@ -4606,7 +4824,7 @@ class UserFiles {
         });
     }
     /**
-     * Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+     * Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
      *
      * @param {string} fileRef - The original immutable file reference identifying this version family.
      * @param {EpochFiles.FileEditRequest} request
@@ -4626,11 +4844,7 @@ class UserFiles {
      *         schemaVersion: 1.1,
      *         requestId: "request_id",
      *         baseVersion: 1,
-     *         baseContentSha256: "base_content_sha256",
-     *         edit: {
-     *             kind: "text",
-     *             content: "content"
-     *         }
+     *         baseContentSha256: "base_content_sha256"
      *     })
      */
     saveFileVersion(fileRef, request, requestOptions) {

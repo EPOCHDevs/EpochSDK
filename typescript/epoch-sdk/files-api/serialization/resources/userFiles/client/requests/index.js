@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FileEditRequest = exports.CellGridRequest = exports.UserFileCompleteRequest = exports.UserFileRenameRequest = exports.UserFileUploadRequest = exports.DatasetReviewRequest = exports.StructuredFileInspectionRequest = exports.StructuredImportRequest = exports.DocumentSearchRequest = exports.BeginDocumentReadRequest = void 0;
+exports.FileEditRequest = exports.FilePartLinkRequest = exports.FileEditUploadRequest = exports.CellGridRequest = exports.UserFileCompleteRequest = exports.UserFileRenameRequest = exports.UserFileUploadRequest = exports.DatasetReviewRequest = exports.StructuredFileInspectionRequest = exports.StructuredImportRequest = exports.DocumentSearchRequest = exports.BeginDocumentReadRequest = void 0;
 var BeginDocumentReadRequest_1 = require("./BeginDocumentReadRequest");
 Object.defineProperty(exports, "BeginDocumentReadRequest", { enumerable: true, get: function () { return BeginDocumentReadRequest_1.BeginDocumentReadRequest; } });
 var DocumentSearchRequest_1 = require("./DocumentSearchRequest");
@@ -19,5 +19,9 @@ var UserFileCompleteRequest_1 = require("./UserFileCompleteRequest");
 Object.defineProperty(exports, "UserFileCompleteRequest", { enumerable: true, get: function () { return UserFileCompleteRequest_1.UserFileCompleteRequest; } });
 var CellGridRequest_1 = require("./CellGridRequest");
 Object.defineProperty(exports, "CellGridRequest", { enumerable: true, get: function () { return CellGridRequest_1.CellGridRequest; } });
+var FileEditUploadRequest_1 = require("./FileEditUploadRequest");
+Object.defineProperty(exports, "FileEditUploadRequest", { enumerable: true, get: function () { return FileEditUploadRequest_1.FileEditUploadRequest; } });
+var FilePartLinkRequest_1 = require("./FilePartLinkRequest");
+Object.defineProperty(exports, "FilePartLinkRequest", { enumerable: true, get: function () { return FilePartLinkRequest_1.FilePartLinkRequest; } });
 var FileEditRequest_1 = require("./FileEditRequest");
 Object.defineProperty(exports, "FileEditRequest", { enumerable: true, get: function () { return FileEditRequest_1.FileEditRequest; } });

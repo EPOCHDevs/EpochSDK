@@ -29,6 +29,8 @@ class FilesService(Service):
         self.folder_name = "Research"
         self.upload_size = 0
         self.digest = ""
+        self.direct = False  # Platform signs storage links (direct transfer).
+        self.signed: list[dict] = []
         table = pa.table({"value": pa.array([9007199254740993], type=pa.uint64()),
                           "text": ["x" * (1024 * 1024 + 128)]})
         buffer = pa.BufferOutputStream()
@@ -56,6 +58,17 @@ class FilesService(Service):
                 "upload_url": f"/api/v1/files/{FILE}/content?upload_id=generation",
                 "required_headers": {}, "chunk_size_bytes": 4,
                 "part_count": math.ceil(self.upload_size / 4),
+                **({"transfer": "direct" if self.direct else "proxied"} if "transfer" in body else {}),
+            })
+        if path == f"/api/v1/files/{FILE}/parts":
+            body = json.loads(request.content)
+            assert self.direct and body["upload_id"] == "generation"
+            self.signed.append(body)
+            size = min(4, self.upload_size - body["part_index"] * 4)
+            return httpx.Response(200, json={
+                "url": f"https://storage.test/part?partNumber={body['part_index'] + 1}&X-Amz-Signature=s",
+                "method": "PUT", "headers": {"x-amz-checksum-sha256": body["content_sha256"]},
+                "size_bytes": size, "expires_at": "2026-11-19T12:15:00.000Z",
             })
         if path == f"/api/v1/files/{FILE}/content" and request.method == "PUT":
             assert request.url.params["upload_id"] == "generation"
@@ -101,6 +114,34 @@ def test_upload_chunks_binary_content_and_reuses_completed_native_identity():
             assert len(service.parts) == 3
             assert service.graph_calls == []
             assert sum(r.url.path.endswith("/complete") for r in service.backend_calls) == 1
+    asyncio.run(scenario())
+
+
+def test_direct_upload_puts_each_part_to_its_signed_link_without_api_credentials(monkeypatch):
+    async def scenario():
+        service = FilesService()
+        service.direct = True
+
+        def storage(request):
+            assert "authorization" not in request.headers
+            assert request.headers["x-amz-checksum-sha256"] == hashlib.sha256(request.content).hexdigest()
+            assert int(request.url.params["partNumber"]) == len(service.parts) + 1
+            service.parts.append(request.content)
+            return httpx.Response(200)
+
+        monkeypatch.setattr(
+            "epoch_sdk.files.storage_client",
+            lambda: httpx.AsyncClient(transport=httpx.MockTransport(storage)),
+        )
+        content = b"<!doctype html><script>../</script>"
+        async with service.client() as sdk:
+            uploaded = await sdk.upload_file(content, name="page.html", media_type="text/html")
+        assert uploaded.file_ref == FILE
+        assert b"".join(service.parts) == content
+        assert [s["part_index"] for s in service.signed] == list(range(math.ceil(len(content) / 4)))
+        # File bytes never pass through the API: it takes only metadata.
+        assert not any(r.url.path.endswith("/content") for r in service.backend_calls)
+        assert not any(content[:8] in r.content for r in service.backend_calls)
     asyncio.run(scenario())
 
 

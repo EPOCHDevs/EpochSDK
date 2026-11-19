@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import inspect
 import json
 import re
@@ -18,6 +19,7 @@ from jsonschema import Draft202012Validator
 from pydantic import BaseModel, JsonValue, TypeAdapter
 from referencing import Registry, Resource
 
+from ._storage import SignedLink, put_signed, signed_link, storage_client
 from .credentials import Token
 from .platform_file_models import (
     CellGridRequest,
@@ -365,11 +367,60 @@ class PlatformFilesClient:
             raise ValueError("Platform returned an inconsistent file grid")
         return result
 
+    async def _staged(self, ref: str, wire: dict[str, object]) -> dict[str, object]:
+        """Put the edit through a signed link, so the save names it and carries no file text.
+
+        Where Platform has no signed links, the edit stays inline. Platform keys the staged
+        edit by request_id and its SHA-256, so a retry puts the same bytes to the same place.
+        """
+        edit = json.dumps(wire["edit"], ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        upload = {"size_bytes": len(edit), "content_sha256": hashlib.sha256(edit).hexdigest()}
+        url = self._url(ref, "/edit-uploads", original=True)
+
+        async def link() -> SignedLink:
+            response = await self._http.post(
+                url, json={"request_id": wire["request_id"], **upload},
+                headers=await self._headers(), timeout=130, follow_redirects=False,
+            )
+            self._error(response)
+            try:
+                value = response.json()
+                _validate("FileTransferLink", value)
+            except ValueError:
+                raise ValueError("Platform returned an invalid FileTransferLink") from None
+            return signed_link(value, len(edit))
+
+        try:
+            first = await link()
+        except PlatformFileError as error:
+            if error.code == "FILE_DIRECT_TRANSFER_UNAVAILABLE":
+                return wire
+            raise
+        links = iter([first])
+
+        async def next_link() -> SignedLink:
+            return next(links, None) or await link()
+
+        async with storage_client() as storage:
+            await put_signed(storage, next_link, edit)
+        staged = {key: value for key, value in wire.items() if key != "edit"}
+        staged["edit_upload"] = upload
+        _validate("FileEditRequest", staged)
+        return staged
+
     async def save(self, ref: str, request: FileEditRequest | Mapping[str, object]) -> FileVersion:
+        """Save an edit against its exact base version; Platform never retries it.
+
+        The edit is put through a signed storage link where Platform offers one, so its text
+        never passes through the API's firewall (Platform docs/design/direct-file-transfer.md).
+        """
         wire = _request("FileEditRequest", request)
+        if "edit" not in wire:
+            raise ValueError("Pass the edit itself; the client stages it")
+        body = await self._staged(ref, wire)
         result = cast(
             FileVersion,
-            await self._json(self._url(ref, "/versions", original=True), "FileVersion", body=wire),
+            await self._json(self._url(ref, "/versions", original=True), "FileVersion", body=body),
         )
         self._version(result, ref)
         if result.version != cast(int, wire["base_version"]) + 1:

@@ -24,9 +24,25 @@ export type FilePreview = { state: 'none' | 'pending' } | { state: 'failed'; rea
 export interface RequestOptions { signal?: AbortSignal }
 export interface HistoryOptions extends RequestOptions { before?: number; limit?: number }
 export interface ContentOptions extends RequestOptions { preview?: boolean; imagePage?: number; byteRange?: string; ifRange?: string }
-export interface PlatformFilesOptions { apiUrl: string; token?: string | (() => string | Promise<string>); fetch?: typeof globalThis.fetch }
+export interface PlatformFilesOptions {
+  apiUrl: string; token?: string | (() => string | Promise<string>); fetch?: typeof globalThis.fetch
+  /** Puts edits to Platform's signed storage links. It must not add API credentials. Default: globalThis.fetch. */
+  storageFetch?: typeof globalThis.fetch
+}
 export class PlatformFileError extends Error { status: number; code: string; retryAfter?: string; constructor(status: number, code: string, message: string, retryAfter?: string) }
-/** No implicit mutation retries. Retain the exact save body/request_id after an uncertain result. */
+/** A signed storage link for exact bytes (direct file transfer). Never log `url`. */
+export interface FileTransferLink { url: string; method: 'PUT'; headers: Record<string, string>; size_bytes: number; expires_at: string }
+/** Storage refused a signed transfer. The message never includes the link. */
+export class StorageTransferError extends Error { status: number; constructor(status: number) }
+/** A link in the wire form, or as the generated Files client (`@epochdevs/epoch-sdk/files-api`) returns it. */
+export type SignedTransferLink = FileTransferLink | { url: string; method: 'PUT'; headers: Record<string, string>; sizeBytes: number; expiresAt: string }
+/** PUT exact bytes with exactly the link's headers; `link(1)` asks for a new link after storage refuses one. */
+export function putSigned(storageFetch: typeof globalThis.fetch, link: (attempt: number) => Promise<SignedTransferLink>, body: Uint8Array | Blob, options?: RequestOptions): Promise<void>
+/**
+ * No implicit mutation retries. Retain the exact save body/request_id after an uncertain result.
+ * `save` puts the edit through a signed storage link where Platform offers one, so file text never
+ * passes through the API's firewall; elsewhere the edit stays inline.
+ */
 export class PlatformFilesClient {
   constructor(options: PlatformFilesOptions)
   beginDocumentRead(ref: string, options?: RequestOptions): Promise<PlatformDocumentRead>

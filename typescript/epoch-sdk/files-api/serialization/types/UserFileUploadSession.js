@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserFileUploadSession = void 0;
 const core = __importStar(require("../../core"));
 const UserFileStatus_1 = require("./UserFileStatus");
+const UserFileUploadSessionTransfer_1 = require("./UserFileUploadSessionTransfer");
 exports.UserFileUploadSession = core.serialization.object({
     chunkSizeBytes: core.serialization.property("chunk_size_bytes", core.serialization.number()),
     expiresAt: core.serialization.property("expires_at", core.serialization.date().optional()),
@@ -48,4 +49,5 @@ exports.UserFileUploadSession = core.serialization.object({
     status: UserFileStatus_1.UserFileStatus,
     uploadId: core.serialization.property("upload_id", core.serialization.string()),
     uploadUrl: core.serialization.property("upload_url", core.serialization.string()),
+    transfer: UserFileUploadSessionTransfer_1.UserFileUploadSessionTransfer.optional(),
 });

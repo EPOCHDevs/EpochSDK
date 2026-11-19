@@ -6,6 +6,7 @@ import typing
 import pydantic
 from ..core.pydantic_utilities import UniversalBaseModel
 from .user_file_status import UserFileStatus
+from .user_file_upload_session_transfer import UserFileUploadSessionTransfer
 
 
 class UserFileUploadSession(UniversalBaseModel):
@@ -17,5 +18,9 @@ class UserFileUploadSession(UniversalBaseModel):
     status: UserFileStatus
     upload_id: str
     upload_url: str
+    transfer: typing.Optional[UserFileUploadSessionTransfer] = pydantic.Field(default=None)
+    """
+    Present when the request named a transfer. direct: put each part through linkFileUploadPart's link. proxied: PUT each part to upload_url.
+    """
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

@@ -11,4 +11,6 @@ export interface UserFileUploadSession {
     status: EpochFiles.UserFileStatus;
     uploadId: string;
     uploadUrl: string;
+    /** Present when the request named a transfer. direct: put each part through linkFileUploadPart's link. proxied: PUT each part to upload_url. */
+    transfer?: EpochFiles.UserFileUploadSessionTransfer;
 }
