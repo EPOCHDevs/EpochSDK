@@ -41,6 +41,13 @@ class CatalogueHTTPError(httpx.HTTPStatusError):
     """An HTTP failure retaining the bounded Platform error envelope."""
 
 
+#: How long a catalogue call may take.
+REQUEST_TIMEOUT_SECONDS = 35.0
+#: Platform gives a dataset search two minutes, every need included (owner,
+#: 19 November 2026). Wait a little longer so Platform's own answer arrives.
+SEARCH_TIMEOUT_SECONDS = 130.0
+
+
 class CatalogueClient:
     def __init__(self, base_url: str, token: Token, *, http: httpx.AsyncClient | None = None,
                  transport: httpx.AsyncBaseTransport | None = None):
@@ -55,16 +62,19 @@ class CatalogueClient:
             raise ValueError("Pass an HTTP client or a transport, not both")
         self._base_url = base_url.rstrip("/")
         self._owned = http is None
-        self._http = http or httpx.AsyncClient(timeout=35.0, follow_redirects=False, transport=transport)
+        self._http = http or httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS, follow_redirects=False, transport=transport)
         self._auth = BearerAuth((lambda: token) if isinstance(token, str) else token, base_url)
 
     async def aclose(self) -> None:
         if self._owned:
             await self._http.aclose()
 
-    async def _request(self, method: str, path: str, body: object, bound: int) -> bytes:
+    async def _request(self, method: str, path: str, body: object, bound: int,
+                       timeout: float | None = None) -> bytes:
+        # A per-call timeout applies even to a caller-supplied HTTP client.
+        extra = {"timeout": timeout} if timeout is not None else {}
         async with self._http.stream(method, self._base_url + path, json=body,
-                                     auth=self._auth, follow_redirects=False) as response:
+                                     auth=self._auth, follow_redirects=False, **extra) as response:
             if int(response.headers.get("content-length", "0")) > bound:
                 raise ValueError("Catalogue response exceeds the response bound")
             result = bytearray()
@@ -87,7 +97,8 @@ class CatalogueClient:
             raise ValueError("A source need or saved query is required")
         request = DiscoveryInput(requests=list(requests), saved_query=saved_query, limit=limit, budget=budget)
         content = await self._request("POST", "/api/v1/discovery/datasets/search",
-                                      request.model_dump(mode="json", exclude_none=True), budget)
+                                      request.model_dump(mode="json", exclude_none=True), budget,
+                                      timeout=SEARCH_TIMEOUT_SECONDS)
         return DiscoveryResult.model_validate_json(content)
 
     async def select(self, session_id: str, candidate_ids: Sequence[str]) -> SelectedInputs:

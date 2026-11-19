@@ -65,3 +65,23 @@ def test_scope_issue_is_preserved_as_incomplete_without_fabricated_candidates():
             assert result.needs[0].scope_issues[0].available == ["GBLX"]
             assert result.candidates == []
     asyncio.run(run())
+
+
+def test_dataset_search_waits_longer_than_other_catalogue_calls():
+    async def run():
+        seen = {}
+        def handler(request):
+            seen[request.url.path] = request.extensions["timeout"]["read"]
+            if request.url.path.endswith("/datasets/search"):
+                return httpx.Response(200, json={"format":"epoch-search-v4","session_id":"search:test","needs":[],"candidates":[],"saved":[],"omitted":0})
+            return httpx.Response(404, json={"error":"missing"})
+        client = CatalogueClient("https://api.example.test", "token", transport=httpx.MockTransport(handler))
+        try:
+            await client.search_dataset([DiscoveryQuery(id="one", query="electricity", mode="discover")])
+            with pytest.raises(httpx.HTTPStatusError):
+                await client.selection("selection:missing")
+        finally:
+            await client.aclose()
+        assert seen["/api/v1/discovery/datasets/search"] == 130.0
+        assert seen["/api/v1/discovery/selections/selection:missing"] == 35.0
+    asyncio.run(run())
