@@ -955,3 +955,11 @@ __all__ = [
     "space",
     "user_files",
 ]
+
+# Source-owned Discovery component exports.
+if typing.TYPE_CHECKING:
+    from .types.dataset_review_request import DatasetReviewRequest
+    from .types.space_placement_request import SpacePlacementRequest
+    from .types.structured_import_request import StructuredImportRequest
+_dynamic_imports.update({'DatasetReviewRequest': '.types', 'SpacePlacementRequest': '.types', 'StructuredImportRequest': '.types'})
+__all__.extend(['DatasetReviewRequest', 'SpacePlacementRequest', 'StructuredImportRequest'])

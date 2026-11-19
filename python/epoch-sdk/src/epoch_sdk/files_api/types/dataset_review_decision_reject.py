@@ -9,4 +9,4 @@ from ..core.pydantic_utilities import UniversalBaseModel
 class DatasetReviewDecisionReject(UniversalBaseModel):
     draft_ref: str
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)

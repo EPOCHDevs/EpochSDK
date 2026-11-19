@@ -10,19 +10,19 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class DatasetSchemaChoice_Agent(UniversalBaseModel):
-    mode: typing.Literal["agent"] = "agent"
+    mode: typing.Literal["agent"]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetSchemaChoice_Imported(UniversalBaseModel):
-    mode: typing.Literal["imported"] = "imported"
+    mode: typing.Literal["imported"]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetSchemaChoice_Provided(UniversalBaseModel):
-    mode: typing.Literal["provided"] = "provided"
+    mode: typing.Literal["provided"]
     json_schema_text: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

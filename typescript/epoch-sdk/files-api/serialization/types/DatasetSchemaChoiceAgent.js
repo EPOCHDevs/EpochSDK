@@ -39,3 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatasetSchemaChoiceAgent = void 0;
 const core = __importStar(require("../../core"));
 exports.DatasetSchemaChoiceAgent = core.serialization.object({});
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetSchemaChoiceAgent = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetSchemaChoiceAgent, [], true);

@@ -48,3 +48,6 @@ exports.DataSourceCapabilities = core.serialization.object({
     predecessor: SourcePredecessorCapability_1.SourcePredecessorCapability,
     range: SourceRangeCapability_1.SourceRangeCapability,
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceCapabilities = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceCapabilities, [], true);

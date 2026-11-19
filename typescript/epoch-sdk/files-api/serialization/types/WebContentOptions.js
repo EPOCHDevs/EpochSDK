@@ -42,3 +42,6 @@ exports.WebContentOptions = core.serialization.object({
     maxAgeHours: core.serialization.property("max_age_hours", core.serialization.number().optional()),
     snapshotAsOf: core.serialization.property("snapshot_as_of", core.serialization.date().optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.WebContentOptions = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.WebContentOptions, [], true);

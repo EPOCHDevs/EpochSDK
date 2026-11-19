@@ -15,7 +15,15 @@ import pytest
 
 from epoch_sdk.files_api import AsyncEpochFiles
 from epoch_sdk.files_api.errors import BadRequestError
-from epoch_sdk.files_api.types import SavedDatasetListPage, StructuredImportOptions
+from epoch_sdk.files_api.types import (
+    DatasetReviewRequest,
+    SavedDatasetListPage,
+    SpacePlacementRequest,
+    StructuredImportOptions,
+    StructuredImportRequest,
+    UserFileListPage,
+    UserFileStatus,
+)
 
 SAVED = json.loads(
     (Path(__file__).resolve().parents[3] / "contracts/fixtures/platform-files/saved_dataset.json").read_text()
@@ -87,3 +95,35 @@ def test_an_import_carries_the_persons_sort_choice():
 
     asyncio.run(scenario())
     assert sent[0]["options"]["sort_by"] == ["date"]
+
+
+def test_a_status_platform_adds_later_parses_instead_of_failing_the_page():
+    file = {
+        "file_ref": "file:" + "a" * 64, "name": "prices.csv", "media_type": "text/csv", "size_bytes": 3,
+        "created_at": "2026-11-19T00:00:00Z", "status": "quarantined",
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"items": [file], "total_count": 1})
+
+    async def scenario():
+        page = await client(handler).user_files.list_user_files(request_options={"max_retries": 0})
+        assert isinstance(page, UserFileListPage)
+        status = page.items[0].status
+        # Its own member: equal to the raw value and never a known one.
+        assert status == "quarantined" and status not in list(UserFileStatus)
+
+    asyncio.run(scenario())
+
+
+def test_request_bodies_are_closed_models_with_their_source_requiredness():
+    # Fern flattens these bodies into method arguments; they are restored as types, as in StratifyX.
+    for model in (StructuredImportRequest, DatasetReviewRequest, SpacePlacementRequest):
+        assert model.model_config["extra"] == "forbid"
+    options = StructuredImportOptions(format="csv", delimiter=",", header=True, null_values=[""], columns=[])
+    request = StructuredImportRequest(file_ref="file:" + "a" * 64, request_id="r", name="Prices", options=options)
+    assert request.purpose is None
+    with pytest.raises(ValueError):
+        StructuredImportRequest(file_ref="f", request_id="r", name="n", options=options, sorted=True)
+    with pytest.raises(ValueError):
+        StructuredImportRequest(file_ref="f", name="n", options=options)

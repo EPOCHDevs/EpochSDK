@@ -45,3 +45,6 @@ exports.WebResearchInputExcludeDomains = core.serialization.object({
     kind: WebResearchInputExcludeDomainsKind_1.WebResearchInputExcludeDomainsKind,
     query: core.serialization.string(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.WebResearchInputExcludeDomains = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.WebResearchInputExcludeDomains, [], true);

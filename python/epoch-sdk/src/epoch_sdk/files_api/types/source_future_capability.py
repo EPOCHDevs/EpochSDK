@@ -11,6 +11,19 @@ class SourceFutureCapability(enum.StrEnum):
     PAST_OR_PRESENT_ONLY = "PastOrPresentOnly"
     PROVIDER_KNOWN_FUTURE_ROWS = "ProviderKnownFutureRows"
 
+
+    @classmethod
+    def _missing_(cls, value: typing.Any) -> typing.Optional["SourceFutureCapability"]:
+        # Forward compatible (ENG-2781): a value Backend added after this SDK was built
+        # parses as a member of its own, so one new value cannot fail a whole response.
+        # It equals its raw string and is never a known member.
+        if not isinstance(value, str):
+            return None
+        member = str.__new__(cls, value)
+        member._name_ = value
+        member._value_ = value
+        return member
+
     def visit(
         self,
         past_or_present_only: typing.Callable[[], T_Result],
@@ -20,3 +33,4 @@ class SourceFutureCapability(enum.StrEnum):
             return past_or_present_only()
         if self is SourceFutureCapability.PROVIDER_KNOWN_FUTURE_ROWS:
             return provider_known_future_rows()
+        raise ValueError(f"{type(self).__name__} has no case for {self.value!r}, a value added after this SDK was built")

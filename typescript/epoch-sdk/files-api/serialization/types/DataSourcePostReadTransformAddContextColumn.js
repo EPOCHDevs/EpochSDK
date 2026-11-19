@@ -42,3 +42,6 @@ exports.DataSourcePostReadTransformAddContextColumn = core.serialization.object(
     colName: core.serialization.property("col_name", core.serialization.string().optional()),
     sourcePath: core.serialization.property("source_path", core.serialization.string().optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourcePostReadTransformAddContextColumn = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourcePostReadTransformAddContextColumn, [], true);

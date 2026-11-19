@@ -10,4 +10,4 @@ class SpaceFolderRequest(UniversalBaseModel):
     name: str
     parent_folder_ref: typing.Optional[str] = None
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)

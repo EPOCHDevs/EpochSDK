@@ -14,6 +14,19 @@ class DatasetTimePrecision(enum.StrEnum):
     MICROSECOND = "microsecond"
     NANOSECOND = "nanosecond"
 
+
+    @classmethod
+    def _missing_(cls, value: typing.Any) -> typing.Optional["DatasetTimePrecision"]:
+        # Forward compatible (ENG-2781): a value Backend added after this SDK was built
+        # parses as a member of its own, so one new value cannot fail a whole response.
+        # It equals its raw string and is never a known member.
+        if not isinstance(value, str):
+            return None
+        member = str.__new__(cls, value)
+        member._name_ = value
+        member._value_ = value
+        return member
+
     def visit(
         self,
         date: typing.Callable[[], T_Result],
@@ -32,3 +45,4 @@ class DatasetTimePrecision(enum.StrEnum):
             return microsecond()
         if self is DatasetTimePrecision.NANOSECOND:
             return nanosecond()
+        raise ValueError(f"{type(self).__name__} has no case for {self.value!r}, a value added after this SDK was built")

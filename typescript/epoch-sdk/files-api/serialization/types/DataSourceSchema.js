@@ -44,3 +44,6 @@ exports.DataSourceSchema = core.serialization.object({
     columns: core.serialization.list(DataSourceColumn_1.DataSourceColumn),
     transforms: core.serialization.list(DataSourcePostReadTransform_1.DataSourcePostReadTransform).optional(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceSchema = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceSchema, [], true);

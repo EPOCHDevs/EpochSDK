@@ -9,9 +9,9 @@ from .dataset_build_action import DatasetBuildAction
 
 class DatasetBuildActionRequest(UniversalBaseModel):
     action: DatasetBuildAction
-    attempt: int
+    attempt: int = pydantic.Field(strict=True, ge=0, le=18446744073709552000)
     result_sha256: typing.Optional[str] = None
     review_ref: typing.Optional[str] = None
     schema_sha256: typing.Optional[str] = None
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)

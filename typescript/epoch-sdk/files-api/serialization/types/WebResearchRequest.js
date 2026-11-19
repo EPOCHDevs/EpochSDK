@@ -47,3 +47,6 @@ exports.WebResearchRequest = core.serialization.object({
     requestId: core.serialization.property("request_id", core.serialization.string()),
     searchDepth: core.serialization.property("search_depth", WebSearchDepth_1.WebSearchDepth.optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.WebResearchRequest = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.WebResearchRequest, [], true);

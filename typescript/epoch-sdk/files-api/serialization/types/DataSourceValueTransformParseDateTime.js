@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DataSourceValueTransformParseDateTime = core.serialization.object({
     format: core.serialization.string().optional(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceValueTransformParseDateTime = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceValueTransformParseDateTime, [], true);

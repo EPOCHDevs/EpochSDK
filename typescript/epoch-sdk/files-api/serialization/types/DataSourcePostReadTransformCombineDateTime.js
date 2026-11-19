@@ -43,3 +43,6 @@ exports.DataSourcePostReadTransformCombineDateTime = core.serialization.object({
     outputCol: core.serialization.property("output_col", core.serialization.string().optional()),
     timeCol: core.serialization.property("time_col", core.serialization.string().optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourcePostReadTransformCombineDateTime = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourcePostReadTransformCombineDateTime, [], true);

@@ -43,3 +43,6 @@ exports.WebSearchInput = core.serialization.object({
     includeDomains: core.serialization.property("include_domains", core.serialization.list(core.serialization.string()).optionalNullable()),
     query: core.serialization.string(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.WebSearchInput = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.WebSearchInput, [], true);

@@ -47,3 +47,6 @@ exports.DatasetTimeAxis = core.serialization.object({
     sourcePrecision: core.serialization.property("source_precision", DatasetTimePrecision_1.DatasetTimePrecision),
     sourceTimezone: core.serialization.property("source_timezone", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetTimeAxis = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetTimeAxis, [], true);

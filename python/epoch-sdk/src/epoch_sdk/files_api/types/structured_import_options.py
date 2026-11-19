@@ -11,11 +11,11 @@ class StructuredImportOptions(UniversalBaseModel):
     columns: typing.List[DataSourceColumn]
     delimiter: str
     format: str
-    header: bool
+    header: bool = pydantic.Field(strict=True)
     json_pointer: typing.Optional[str] = None
     null_values: typing.List[str]
     sheet: typing.Optional[str] = None
-    sort_by: typing.Optional[typing.List[str]] = pydantic.Field(default=None)
+    sort_by: typing.Optional[typing.Annotated[typing.List[str], pydantic.Field(max_length=1, description="The person's choice to sort rows by the reviewed time index (ENG-3100): exactly that index's name. Rows otherwise keep the file's order. Written and hashed only when non-empty.")]] = pydantic.Field(default=None)
     """
     The person's choice to sort rows by the reviewed time index (ENG-3100): exactly that index's name. Rows otherwise keep the file's order. Written and hashed only when non-empty.
     """

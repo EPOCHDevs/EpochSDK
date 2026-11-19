@@ -39,3 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DataSourceValueTransformFloorDay = void 0;
 const core = __importStar(require("../../core"));
 exports.DataSourceValueTransformFloorDay = core.serialization.object({});
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceValueTransformFloorDay = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceValueTransformFloorDay, [], true);

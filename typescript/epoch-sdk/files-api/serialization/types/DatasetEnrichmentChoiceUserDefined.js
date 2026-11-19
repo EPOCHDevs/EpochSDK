@@ -42,3 +42,6 @@ const DatasetTableSchema_1 = require("./DatasetTableSchema");
 exports.DatasetEnrichmentChoiceUserDefined = core.serialization.object({
     metadata: DatasetTableSchema_1.DatasetTableSchema.optional(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetEnrichmentChoiceUserDefined = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetEnrichmentChoiceUserDefined, [], true);

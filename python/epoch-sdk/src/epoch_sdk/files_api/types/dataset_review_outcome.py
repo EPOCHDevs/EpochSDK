@@ -11,7 +11,7 @@ from .saved_dataset import SavedDataset
 
 
 class DatasetReviewOutcome_Rejected(UniversalBaseModel):
-    status: typing.Literal["rejected"] = "rejected"
+    status: typing.Literal["rejected"]
     draft_ref: str
     name: str
 
@@ -19,7 +19,7 @@ class DatasetReviewOutcome_Rejected(UniversalBaseModel):
 
 
 class DatasetReviewOutcome_SaveFailed(UniversalBaseModel):
-    status: typing.Literal["save_failed"] = "save_failed"
+    status: typing.Literal["save_failed"]
     draft_ref: str
     error: str
     name: str
@@ -28,7 +28,7 @@ class DatasetReviewOutcome_SaveFailed(UniversalBaseModel):
 
 
 class DatasetReviewOutcome_Saved(UniversalBaseModel):
-    status: typing.Literal["saved"] = "saved"
+    status: typing.Literal["saved"]
     dataset: SavedDataset
     draft_ref: str
 

@@ -10,20 +10,20 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class DataSourceValueTransform_AssumeTimezone(UniversalBaseModel):
-    kind: typing.Literal["AssumeTimezone"] = "AssumeTimezone"
+    kind: typing.Literal["AssumeTimezone"]
     tz: typing.Optional[str] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DataSourceValueTransform_FloorDay(UniversalBaseModel):
-    kind: typing.Literal["FloorDay"] = "FloorDay"
+    kind: typing.Literal["FloorDay"]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DataSourceValueTransform_ParseDateTime(UniversalBaseModel):
-    kind: typing.Literal["ParseDateTime"] = "ParseDateTime"
+    kind: typing.Literal["ParseDateTime"]
     format: typing.Optional[str] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

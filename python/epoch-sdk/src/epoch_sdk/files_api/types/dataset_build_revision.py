@@ -7,7 +7,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class DatasetBuildRevision(UniversalBaseModel):
-    attempt: int
+    attempt: int = pydantic.Field(strict=True, ge=0, le=18446744073709552000)
     preparation_ref: str
     result_sha256: str
     review_ref: str

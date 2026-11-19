@@ -39,3 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatasetSchemaChoiceImported = void 0;
 const core = __importStar(require("../../core"));
 exports.DatasetSchemaChoiceImported = core.serialization.object({});
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetSchemaChoiceImported = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetSchemaChoiceImported, [], true);

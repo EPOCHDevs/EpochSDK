@@ -9,7 +9,7 @@ from .dataset_time_precision import DatasetTimePrecision
 
 
 class DatasetTimeAxis(UniversalBaseModel):
-    assumed: bool
+    assumed: bool = pydantic.Field(strict=True)
     date_only_convention: typing.Optional[str] = None
     meaning: DatasetTimeMeaning
     source_precision: DatasetTimePrecision

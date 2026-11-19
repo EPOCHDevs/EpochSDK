@@ -14,8 +14,27 @@ in Python, `userFiles.listSavedDatasets` in TypeScript, `DatasetBuild`, `Structu
 Moving a caller is an import swap. The one method gone is `archive_user_file`; Platform dropped that
 route in ENG-2810.
 
-Responses keep fields Platform adds later. Python models allow extra fields, and TypeScript parses
-responses in passthrough mode, so a new response field never needs a lockstep client release.
+The generator applies the fixes EpochBackend applies to the same pinned Fern generators
+(`tools/fern_patches`, copied from EpochBackend with their provenance):
+
+- request bodies Fern flattens into method arguments (`StructuredImportRequest`,
+  `DatasetReviewRequest`, `SpacePlacementRequest`) exist as types, and request models keep their
+  source requiredness;
+- a response enum value Platform adds later parses as a member of its own instead of failing the
+  whole response;
+- a failed download keeps its typed JSON error body;
+- recursive schemas import lazily, and a `__proto__` record key stays a data key.
+
+Two differences from StratifyX's Files client are deliberate:
+
+- **Responses keep fields Platform adds later.** Python models a response can carry allow extra
+  fields, and TypeScript parses responses in passthrough mode, so a new response field never needs
+  a lockstep client release. StratifyX refuses unknown fields where a schema is closed. Request-only
+  models stay closed, the same split the enums follow.
+- **The five document-read operations Platform defined before the adoption keep Platform's
+  shapes.** Their nested types have operation-specific names (`DocumentReadSource` rather than
+  `UserFileDescriptor`), `created_at` and `updated_at` are strings, and they carry Platform's extra
+  fields (`outline`, `attachments`, block byte offsets). Field names are unchanged.
 
 ## Updating
 

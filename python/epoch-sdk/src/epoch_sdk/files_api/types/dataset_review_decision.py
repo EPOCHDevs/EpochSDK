@@ -10,18 +10,18 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class DatasetReviewDecision_Reject(UniversalBaseModel):
-    action: typing.Literal["reject"] = "reject"
+    action: typing.Literal["reject"]
     draft_ref: str
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)
 
 
 class DatasetReviewDecision_Save(UniversalBaseModel):
-    action: typing.Literal["save"] = "save"
+    action: typing.Literal["save"]
     draft_ref: str
     name: str
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)
 
 
 DatasetReviewDecision = typing_extensions.Annotated[

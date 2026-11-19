@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DatasetPreparationInputWebRead = core.serialization.object({
     readRef: core.serialization.property("read_ref", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationInputWebRead = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationInputWebRead, [], true);

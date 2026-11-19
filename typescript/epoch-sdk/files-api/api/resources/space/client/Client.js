@@ -293,7 +293,7 @@ class Space {
                 headers: Object.assign({ Authorization: yield this._getAuthorizationHeader(), "X-Fern-Language": "JavaScript", "X-Fern-Runtime": core.RUNTIME.type, "X-Fern-Runtime-Version": core.RUNTIME.version }, requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.headers),
                 contentType: "application/json",
                 requestType: "json",
-                body: serializers.SpaceFolderRequest.jsonOrThrow(request, {
+                body: serializers.SpaceFolderRequest.jsonOrThrow(request.body, {
                     unrecognizedObjectKeys: "passthrough",
                     allowUnrecognizedUnionMembers: true,
                     allowUnrecognizedEnumValues: true,

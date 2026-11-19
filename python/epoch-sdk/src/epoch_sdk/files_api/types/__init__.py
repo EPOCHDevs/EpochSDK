@@ -868,3 +868,11 @@ __all__ = [
     "WebSourceState",
     "WorkerResourceLimits",
 ]
+
+# Source-owned Discovery component exports.
+if typing.TYPE_CHECKING:
+    from .dataset_review_request import DatasetReviewRequest
+    from .space_placement_request import SpacePlacementRequest
+    from .structured_import_request import StructuredImportRequest
+_dynamic_imports.update({'DatasetReviewRequest': '.dataset_review_request', 'SpacePlacementRequest': '.space_placement_request', 'StructuredImportRequest': '.structured_import_request'})
+__all__.extend(['DatasetReviewRequest', 'SpacePlacementRequest', 'StructuredImportRequest'])

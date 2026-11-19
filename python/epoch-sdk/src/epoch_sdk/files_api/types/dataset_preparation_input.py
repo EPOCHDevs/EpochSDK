@@ -13,28 +13,28 @@ from .web_search_input import WebSearchInput
 
 
 class DatasetPreparationInput_Dataset(UniversalBaseModel):
-    kind: typing.Literal["dataset"] = "dataset"
+    kind: typing.Literal["dataset"]
     dataset_ref: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetPreparationInput_File(UniversalBaseModel):
-    kind: typing.Literal["file"] = "file"
+    kind: typing.Literal["file"]
     file_ref: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetPreparationInput_Search(UniversalBaseModel):
-    kind: typing.Literal["search"] = "search"
+    kind: typing.Literal["search"]
     query: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetPreparationInput_StudyResult(UniversalBaseModel):
-    kind: typing.Literal["study_result"] = "study_result"
+    kind: typing.Literal["study_result"]
     execution_ref: str
     query_sha256: str
     result_ref: str
@@ -43,14 +43,14 @@ class DatasetPreparationInput_StudyResult(UniversalBaseModel):
 
 
 class DatasetPreparationInput_Url(UniversalBaseModel):
-    kind: typing.Literal["url"] = "url"
+    kind: typing.Literal["url"]
     url: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetPreparationInput_Web(UniversalBaseModel):
-    kind: typing.Literal["web"] = "web"
+    kind: typing.Literal["web"]
     content: WebContentOptions
     input: WebSearchInput
     search_depth: typing.Optional[WebSearchDepth] = None
@@ -59,7 +59,7 @@ class DatasetPreparationInput_Web(UniversalBaseModel):
 
 
 class DatasetPreparationInput_WebRead(UniversalBaseModel):
-    kind: typing.Literal["web_read"] = "web_read"
+    kind: typing.Literal["web_read"]
     read_ref: str
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

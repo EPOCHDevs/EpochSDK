@@ -16,6 +16,19 @@ class DatasetBuildAction(enum.StrEnum):
     DISCARD = "discard"
     ACKNOWLEDGE = "acknowledge"
 
+
+    @classmethod
+    def _missing_(cls, value: typing.Any) -> typing.Optional["DatasetBuildAction"]:
+        # Forward compatible (ENG-2781): a value Backend added after this SDK was built
+        # parses as a member of its own, so one new value cannot fail a whole response.
+        # It equals its raw string and is never a known member.
+        if not isinstance(value, str):
+            return None
+        member = str.__new__(cls, value)
+        member._name_ = value
+        member._value_ = value
+        return member
+
     def visit(
         self,
         stop: typing.Callable[[], T_Result],
@@ -40,3 +53,4 @@ class DatasetBuildAction(enum.StrEnum):
             return discard()
         if self is DatasetBuildAction.ACKNOWLEDGE:
             return acknowledge()
+        raise ValueError(f"{type(self).__name__} has no case for {self.value!r}, a value added after this SDK was built")

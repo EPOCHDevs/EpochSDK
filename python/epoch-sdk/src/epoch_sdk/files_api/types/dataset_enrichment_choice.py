@@ -11,13 +11,13 @@ from .dataset_table_schema import DatasetTableSchema
 
 
 class DatasetEnrichmentChoice_Automatic(UniversalBaseModel):
-    mode: typing.Literal["automatic"] = "automatic"
+    mode: typing.Literal["automatic"]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 
 
 class DatasetEnrichmentChoice_UserDefined(UniversalBaseModel):
-    mode: typing.Literal["user_defined"] = "user_defined"
+    mode: typing.Literal["user_defined"]
     metadata: typing.Optional[DatasetTableSchema] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

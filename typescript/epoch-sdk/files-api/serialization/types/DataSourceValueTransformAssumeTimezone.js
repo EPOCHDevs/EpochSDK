@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DataSourceValueTransformAssumeTimezone = core.serialization.object({
     tz: core.serialization.string().optional(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceValueTransformAssumeTimezone = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceValueTransformAssumeTimezone, [], true);

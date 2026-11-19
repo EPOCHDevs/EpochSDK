@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DatasetPreparationInputFile = core.serialization.object({
     fileRef: core.serialization.property("file_ref", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationInputFile = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationInputFile, [], true);

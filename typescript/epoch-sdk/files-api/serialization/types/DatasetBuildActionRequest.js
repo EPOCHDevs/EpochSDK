@@ -46,3 +46,6 @@ exports.DatasetBuildActionRequest = core.serialization.object({
     reviewRef: core.serialization.property("review_ref", core.serialization.string().optional()),
     schemaSha256: core.serialization.property("schema_sha256", core.serialization.string().optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetBuildActionRequest = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetBuildActionRequest, [], true);

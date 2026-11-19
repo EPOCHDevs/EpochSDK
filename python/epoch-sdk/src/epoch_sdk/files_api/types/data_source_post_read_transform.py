@@ -10,7 +10,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class DataSourcePostReadTransform_AddContextColumn(UniversalBaseModel):
-    kind: typing.Literal["AddContextColumn"] = "AddContextColumn"
+    kind: typing.Literal["AddContextColumn"]
     col_name: typing.Optional[str] = None
     source_path: typing.Optional[str] = None
 
@@ -18,7 +18,7 @@ class DataSourcePostReadTransform_AddContextColumn(UniversalBaseModel):
 
 
 class DataSourcePostReadTransform_CombineDateTime(UniversalBaseModel):
-    kind: typing.Literal["CombineDateTime"] = "CombineDateTime"
+    kind: typing.Literal["CombineDateTime"]
     date_col: typing.Optional[str] = None
     output_col: typing.Optional[str] = None
     time_col: typing.Optional[str] = None
@@ -27,7 +27,7 @@ class DataSourcePostReadTransform_CombineDateTime(UniversalBaseModel):
 
 
 class DataSourcePostReadTransform_PromoteIndex(UniversalBaseModel):
-    kind: typing.Literal["PromoteIndex"] = "PromoteIndex"
+    kind: typing.Literal["PromoteIndex"]
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
 

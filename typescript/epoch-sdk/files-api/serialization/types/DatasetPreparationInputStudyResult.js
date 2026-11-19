@@ -43,3 +43,6 @@ exports.DatasetPreparationInputStudyResult = core.serialization.object({
     querySha256: core.serialization.property("query_sha256", core.serialization.string()),
     resultRef: core.serialization.property("result_ref", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationInputStudyResult = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationInputStudyResult, [], true);

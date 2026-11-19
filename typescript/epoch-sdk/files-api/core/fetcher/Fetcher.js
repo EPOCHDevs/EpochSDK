@@ -42,7 +42,7 @@ function fetcherImpl(args) {
             const response = yield (0, requestWithRetries_1.requestWithRetries)(() => __awaiter(this, void 0, void 0, function* () {
                 return (0, makeRequest_1.makeRequest)(fetchFn, url, args.method, headers, requestBody, args.timeoutMs, args.abortSignal, args.withCredentials, args.duplex);
             }), args.maxRetries);
-            const responseBody = yield (0, getResponseBody_1.getResponseBody)(response, args.responseType);
+            const responseBody = yield (0, getResponseBody_1.getResponseBody)(response, response.status >= 200 && response.status < 400 ? args.responseType : undefined);
             if (response.status >= 200 && response.status < 400) {
                 return {
                     ok: true,
@@ -52,6 +52,19 @@ function fetcherImpl(args) {
                 };
             }
             else {
+                // Preserve non-JSON and empty error responses, including status.
+                if (responseBody === undefined || (responseBody != null && responseBody.ok === false &&
+                    responseBody.error != null && responseBody.error.reason === "non-json")) {
+                    return {
+                        ok: false,
+                        error: {
+                            reason: "non-json",
+                            statusCode: response.status,
+                            rawBody: responseBody === undefined ? "" : responseBody.error.rawBody,
+                        },
+                        rawResponse: (0, RawResponse_1.toRawResponse)(response),
+                    };
+                }
                 return {
                     ok: false,
                     error: {

@@ -46,3 +46,6 @@ exports.DatasetBuildRequest = core.serialization.object({
     replaces: DatasetBuildRevision_1.DatasetBuildRevision.optionalNullable(),
     requestId: core.serialization.property("request_id", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetBuildRequest = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetBuildRequest, [], true);

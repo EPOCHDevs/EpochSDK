@@ -8,7 +8,7 @@ from ..core.pydantic_utilities import UniversalBaseModel
 
 
 class WebContentOptions(UniversalBaseModel):
-    max_age_hours: typing.Optional[int] = None
+    max_age_hours: typing.Optional[int] = pydantic.Field(default=None, strict=True, ge=-2147483648, le=2147483647)
     snapshot_as_of: typing.Optional[dt.datetime] = None
 
     model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)

@@ -48,3 +48,6 @@ exports.DatasetTableSchema = core.serialization.object({
     keyFields: core.serialization.property("key_fields", core.serialization.list(core.serialization.string())),
     timeAxis: core.serialization.property("time_axis", DatasetTimeAxis_1.DatasetTimeAxis.optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetTableSchema = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetTableSchema, [], true);

@@ -11,12 +11,12 @@ class DataSourceColumn(UniversalBaseModel):
     description: typing.Optional[str] = None
     display_name: typing.Optional[str] = None
     dtype: str
-    is_index: typing.Optional[bool] = None
-    is_index_alternative: typing.Optional[bool] = None
+    is_index: typing.Optional[bool] = pydantic.Field(default=None, strict=True)
+    is_index_alternative: typing.Optional[bool] = pydantic.Field(default=None, strict=True)
     name: str
-    nullable: bool
+    nullable: bool = pydantic.Field(strict=True)
     semantic: typing.Optional[str] = None
-    synthetic: typing.Optional[bool] = None
+    synthetic: typing.Optional[bool] = pydantic.Field(default=None, strict=True)
     transforms: typing.Optional[typing.List[DataSourceValueTransform]] = None
     unit: typing.Optional[str] = None
 

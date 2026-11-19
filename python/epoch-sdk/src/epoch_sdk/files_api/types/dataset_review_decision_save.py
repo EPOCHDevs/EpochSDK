@@ -10,4 +10,4 @@ class DatasetReviewDecisionSave(UniversalBaseModel):
     draft_ref: str
     name: str
 
-    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="allow", frozen=True)
+    model_config: typing.ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(extra="forbid", frozen=True)

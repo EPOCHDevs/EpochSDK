@@ -11,8 +11,22 @@ class DocumentContentPageBlocksItemLayer(enum.StrEnum):
     PRIMARY = "primary"
     ELEMENT = "element"
 
+
+    @classmethod
+    def _missing_(cls, value: typing.Any) -> typing.Optional["DocumentContentPageBlocksItemLayer"]:
+        # Forward compatible (ENG-2781): a value Backend added after this SDK was built
+        # parses as a member of its own, so one new value cannot fail a whole response.
+        # It equals its raw string and is never a known member.
+        if not isinstance(value, str):
+            return None
+        member = str.__new__(cls, value)
+        member._name_ = value
+        member._value_ = value
+        return member
+
     def visit(self, primary: typing.Callable[[], T_Result], element: typing.Callable[[], T_Result]) -> T_Result:
         if self is DocumentContentPageBlocksItemLayer.PRIMARY:
             return primary()
         if self is DocumentContentPageBlocksItemLayer.ELEMENT:
             return element()
+        raise ValueError(f"{type(self).__name__} has no case for {self.value!r}, a value added after this SDK was built")

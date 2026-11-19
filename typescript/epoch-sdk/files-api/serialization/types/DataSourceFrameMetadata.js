@@ -49,3 +49,6 @@ exports.DataSourceFrameMetadata = core.serialization.object({
     foundation: DataFoundation_1.DataFoundation,
     sourceCapabilities: core.serialization.property("source_capabilities", DataSourceCapabilities_1.DataSourceCapabilities),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DataSourceFrameMetadata = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DataSourceFrameMetadata, [], true);

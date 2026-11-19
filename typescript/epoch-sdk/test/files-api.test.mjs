@@ -41,3 +41,12 @@ test('an import carries the person\'s sort choice as sort_by', () =>
     }, { maxRetries: 0 }));
     assert.deepEqual(JSON.parse(seen[0].init.body).options.sort_by, ['date']);
   }));
+
+test('a download that fails keeps its typed JSON error body', () =>
+  withFetch(() => [404, { error: 'NotFound', message: 'No such dataset', timestamp: '2026-11-19T00:00:00Z' }], async () => {
+    await assert.rejects(client().userFiles.downloadPreparedDataset(ref('dataset'), {}, { maxRetries: 0 }), (error) => {
+      assert.equal(error.statusCode, 404);
+      assert.equal(error.body.error, 'NotFound');
+      return true;
+    });
+  }));

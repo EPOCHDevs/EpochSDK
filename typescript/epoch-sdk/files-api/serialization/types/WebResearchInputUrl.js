@@ -43,3 +43,6 @@ exports.WebResearchInputUrl = core.serialization.object({
     kind: WebResearchInputUrlKind_1.WebResearchInputUrlKind,
     url: core.serialization.string(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.WebResearchInputUrl = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.WebResearchInputUrl, [], true);

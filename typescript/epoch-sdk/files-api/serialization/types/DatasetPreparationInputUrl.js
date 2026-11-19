@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DatasetPreparationInputUrl = core.serialization.object({
     url: core.serialization.string(),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationInputUrl = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationInputUrl, [], true);

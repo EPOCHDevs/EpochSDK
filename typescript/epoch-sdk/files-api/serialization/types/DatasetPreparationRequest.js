@@ -52,3 +52,6 @@ exports.DatasetPreparationRequest = core.serialization.object({
     purpose: DatasetPurpose_1.DatasetPurpose,
     schemaChoice: core.serialization.property("schema_choice", DatasetSchemaChoice_1.DatasetSchemaChoice),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationRequest = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationRequest, [], true);

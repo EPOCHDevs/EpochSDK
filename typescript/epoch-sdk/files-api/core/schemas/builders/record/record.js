@@ -72,7 +72,7 @@ function validateAndTransformRecord({ value, isKeyNumeric, transformKey, transfo
         if (acc.ok && transformedKey.ok && transformedValue.ok) {
             return {
                 ok: true,
-                value: Object.assign(Object.assign({}, acc.value), { [transformedKey.value]: transformedValue.value }),
+                value: Object.fromEntries([...Object.entries(acc.value), [transformedKey.value, transformedValue.value]]),
             };
         }
         const errors = [];

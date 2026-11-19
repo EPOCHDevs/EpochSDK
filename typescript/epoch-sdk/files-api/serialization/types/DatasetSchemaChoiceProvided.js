@@ -41,3 +41,6 @@ const core = __importStar(require("../../core"));
 exports.DatasetSchemaChoiceProvided = core.serialization.object({
     jsonSchemaText: core.serialization.property("json_schema_text", core.serialization.string()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetSchemaChoiceProvided = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetSchemaChoiceProvided, [], true);

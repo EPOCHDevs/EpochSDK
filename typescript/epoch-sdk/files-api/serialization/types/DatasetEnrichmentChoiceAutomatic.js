@@ -39,3 +39,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatasetEnrichmentChoiceAutomatic = void 0;
 const core = __importStar(require("../../core"));
 exports.DatasetEnrichmentChoiceAutomatic = core.serialization.object({});
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetEnrichmentChoiceAutomatic = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetEnrichmentChoiceAutomatic, [], true);

@@ -46,3 +46,6 @@ exports.DatasetPreparationInputWeb = core.serialization.object({
     input: WebSearchInput_1.WebSearchInput,
     searchDepth: core.serialization.property("search_depth", WebSearchDepth_1.WebSearchDepth.optional()),
 });
+
+// Source-owned outbound closure from canonical native OpenAPI.
+exports.DatasetPreparationInputWeb = require("../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.DatasetPreparationInputWeb, [], true);
