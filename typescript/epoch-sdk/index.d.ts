@@ -3,7 +3,7 @@ export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
 export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
 import type { StratifyXClient } from "@epoch/stratifyx"
 import type { Client as LangGraphClient } from "@langchain/langgraph-sdk"
-import type { ResearchResponseRecord, JobListItem, SdkExecutionRecord, ExecutionReportReference, SdkContractResponsePlanReference } from "@epoch/stratifyx/api/types/index.js"
+import type { ResearchResponseRecord, JobListItem, SdkExecutionRecord, ExecutionReportReference } from "@epoch/stratifyx/api/types/index.js"
 import type { SdkContractRunRequest as RunSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunRequest.js"
 import type { SdkContractRunParameters as ParametersSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunParameters.js"
 import type { ResearchResponseRecord as ResponseSchema } from "@epoch/stratifyx/serialization/types/ResearchResponseRecord.js"
@@ -23,7 +23,6 @@ export interface SavedStudy {
   sourceExecutionId: string
   threadId?: string
   reportTemplate?: ExecutionReportReference
-  responsePlan?: SdkContractResponsePlanReference
 }
 export interface WorkflowHandle { requestId: string; operationId: string; threadId: string; assistantId: string; runId: string }
 export interface Question {

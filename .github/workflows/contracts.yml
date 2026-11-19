@@ -31,25 +31,22 @@ jobs:
       - run: python tools/validate_research_response_contract.py
       - run: python tools/validate_research_workflow_contract.py
       - run: python tools/validate_session_contract.py
-      - run: python tools/validate_response_plan_contract.py
       - run: python tools/validate_notebook_cases.py
       - run: python tools/generate_demo_notebooks.py --check
       - run: python tools/generate_report_notebooks.py --check
       - run: python -m compileall -q python/epoch-sdk/src
 
-  platform-files:
+  standalone-typescript-runtime:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: python -m pip install './python/epoch-sdk[clients,test]'
-      - run: python -m pytest python/epoch-sdk/tests/test_platform_files.py python/epoch-sdk/tests/test_files_api.py -q
+      # Native distributions are private. Backend's release conformance step
+      # runs all Python and TypeScript tests with its exact generated packages.
+      # These standalone clients need no private native package or credential.
       - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
-      - run: node --test typescript/epoch-sdk/test/files.test.mjs typescript/epoch-sdk/test/files-api.test.mjs
+      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,files-api,identity}.test.mjs

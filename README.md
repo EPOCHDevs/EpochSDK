@@ -78,8 +78,9 @@ in its conversation.
 `SavedStudy.report_template` retains prepared original-plus-report replay.
 Executing it runs a new original and its frozen report without a supervisor;
 source and report jobs remain separate. Refining a completed result instead uses
-explicit `input_tables` and never reruns that source. Historical response plans
-remain readable/replayable through the explicit workflow compatibility path.
+explicit `input_tables` and never reruns that source. Response-plan APIs,
+attachments and replay are retired (ENG-3105). Existing saved answers remain
+readable directly without replay.
 
 Saved answers contain named table, JSON and text parts with exact declarations
 and immutable revisions. Another query may reuse the same execution while
@@ -122,9 +123,12 @@ python tools/check_python_contracts.py
 python -m pytest python/epoch-sdk/tests
 ```
 
-The public workflow validates the shared contract and fixtures. The Backend
-producer's SDK compatibility job supplies its newly generated native wheel for
-Python runtime/conformance checks. Local tests can use that same versioned wheel.
+The public workflow validates the shared contract, fixtures and standalone
+TypeScript clients. The Backend release's SDK conformance step installs its exact
+newly generated native Python and TypeScript packages and source-connections,
+then runs all Python and TypeScript runtime tests against a pinned shared SDK
+source commit. These include the Platform Files HTTP and native workflow checks.
+Local tests use those same normal versioned packages.
 Native SDK distribution/authentication remains owned by its package workflow;
 no private wheel or registry credentials are copied into this public repository.
 
