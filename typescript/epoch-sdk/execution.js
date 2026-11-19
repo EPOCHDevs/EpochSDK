@@ -33,6 +33,8 @@ export async function startExecution(client, reference, options) {
     "Provide the reusable study reference from a completed research operation.", "VALIDATION_ERROR")
   invariant(!Object.hasOwn(reference, "responsePlan") && !Object.hasOwn(reference, "response_plan"),
     "Response-plan execution is retired; use a supported saved study reference.", "VALIDATION_ERROR")
+  invariant(reference.reuseLimitation == null && reference.reuse_limitation == null,
+    "This saved answer does not provide a reusable study.", "NOT_REUSABLE")
   const parameters = parseParameters({ period: options.period, ...(options.execution ? { execution: options.execution } : {}) })
   let bindings
   if (!reference.reportTemplate) {

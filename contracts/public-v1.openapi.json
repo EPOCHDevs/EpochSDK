@@ -8774,6 +8774,11 @@
           "ai_text": {
             "$ref": "#/components/schemas/AiTextSkipped"
           },
+          "reuse_limitation": {
+            "type": "string",
+            "const": "retired_response_plan",
+            "title": "Reuse Limitation"
+          },
           "published_at_ms": {
             "type": "integer",
             "minimum": 0.0,

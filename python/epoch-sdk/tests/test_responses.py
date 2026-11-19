@@ -33,6 +33,7 @@ def test_computed_qualifications_survive_saved_reads_outside_accepted_output_par
         "value": {"observed": 7, "expected": 8, "missing": ["unobserved_source"], "basis": None}}]
     saved = SavedResearchResponse.model_validate(value)
     expected = {key: child for key, child in value.items() if key != "response_plan"}
+    expected["reuse_limitation"]="retired_response_plan"
     assert saved.to_wire() == expected
     assert saved.to_wire()["content"]["declarations"] == declarations
     assert saved.to_wire()["content"]["outputs"] == outputs

@@ -184,7 +184,7 @@ test("historical saved answers remain readable without a reusable plan field", a
   const wire = JSON.parse(await readFile(new URL("../../../contracts/research-response.example.json", import.meta.url), "utf8"))
   const parsed = native.serialization.ResearchResponseRecord.parseOrThrow(wire)
   parsed.responsePlan = { planId: "rpl_" + "a".repeat(64), version: 1 }
-  assert.deepEqual(responseToWire(validateResponse(parsed)), wire)
+  assert.deepEqual(responseToWire(validateResponse(parsed)), { ...wire, reuse_limitation: "retired_response_plan" })
   assert.equal(Object.hasOwn(validateResponse(parsed), "responsePlan"), false)
   assert.ok(parsed.responsePlan, "reading must not mutate the original object")
 })
@@ -297,6 +297,29 @@ test("completion reads the pinned response and rejects mismatched output declara
   assert.equal(h.calls.at(-1).query.version, "1")
   h.state.response.content.declarations[0].instructions = "Different instructions"
   await assert.rejects(h.client.status("run-example"), /declarations differ/)
+})
+
+test("normalized retired answers remain readable but never supply ordinary replay", async () => {
+  for (const legacy of ["normalized", "old_server", "null"]) {
+    const h = harness()
+    await h.client.run(request(), { operationId: "old-research", wait: false })
+    h.finish()
+    h.state.response.primary_execution_id = "old-execution"
+    h.state.response.study_id = "old-study"
+    h.state.record.current_execution_id = "old-execution"
+    if (legacy === "normalized") h.state.response.reuse_limitation = "retired_response_plan"
+    else h.state.response.response_plan = legacy === "null" ? null : { plan_id: "rpl_" + "a".repeat(64), version: 1 }
+    const result = await h.client.status("old-research")
+    assert.equal(result.status, "succeeded")
+    if (legacy === "null") assert.ok(result.reusableStudy)
+    else {
+      assert.equal(result.reusableStudy, undefined)
+      assert.equal(responseToWire(result.response).reuse_limitation, "retired_response_plan")
+      const before = h.calls.filter(c => c.method === "POST").length
+      await assert.rejects(h.client.execute("old-research", { operationId: "no-replay", period: { start: "2025-01-01" } }), /no reusable saved study/)
+      assert.equal(h.calls.filter(c => c.method === "POST").length, before)
+    }
+  }
 })
 
 test("a published checkpoint is adopted once without another graph run", async () => {

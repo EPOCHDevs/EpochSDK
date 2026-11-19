@@ -94,13 +94,17 @@ class ResponseReference(Contract):
     # is paged independently so receipts do not consume the answer's budget.
     acquisition_provenance: AcquisitionProvenanceReference | None = None
     ai_text: AiTextSkipped | None = None
+    reuse_limitation: Literal["retired_response_plan"] | None = None
 
     @model_validator(mode="before")
     @classmethod
     def saved_answer_legacy_attribution(cls, value: object) -> object:
         # Read old immutable outputs without retaining a plan model or replay path.
         if isinstance(value, dict) and "response_plan" in value:
-            return {key: child for key, child in value.items() if key != "response_plan"}
+            saved={key: child for key, child in value.items() if key != "response_plan"}
+            if value["response_plan"] is not None:
+                saved["reuse_limitation"]="retired_response_plan"
+            return saved
         return value
 
     @model_validator(mode="after")

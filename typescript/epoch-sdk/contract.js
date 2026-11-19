@@ -82,8 +82,23 @@ export function validateRequest(request) {
 export const parseRequest = request => unwrap(SdkContractRunRequest.parse(validateRequest(request)))
 export const requestToWire = request => unwrap(SdkContractRunRequest.json(request))
 // Historical attribution is read-only metadata, never a reusable plan option.
-const savedAnswer = response => Object.fromEntries(Object.entries(response).filter(([key]) => key !== "responsePlan"))
-export const responseToWire = response => unwrap(ResearchResponseRecord.json(savedAnswer(response)))
+const savedAnswer = response => {
+  const saved = Object.fromEntries(Object.entries(response).filter(([key]) => key !== "responsePlan"))
+  if (Object.hasOwn(saved, "reuse_limitation")) {
+    saved.reuseLimitation = saved.reuse_limitation
+    delete saved.reuse_limitation
+  }
+  if (response.responsePlan != null) saved.reuseLimitation = "retired_response_plan"
+  return saved
+}
+export const responseToWire = response => {
+  const saved = savedAnswer(response)
+  const { reuseLimitation, ...native } = saved
+  const wire = unwrap(ResearchResponseRecord.json(native))
+  // Preserve the source-owned field across an older generated client too.
+  if (reuseLimitation != null) wire.reuse_limitation = reuseLimitation
+  return wire
+}
 export const parametersToWire = parameters => unwrap(SdkContractRunParameters.json(parameters))
 export function parseParameters(parameters) {
   validate(parametersValidator, parameters)

@@ -183,10 +183,11 @@ async function completed(client, record, signal) {
         if (statusCode(error) !== 404 && error.code !== "NOT_REUSABLE") throw error
       }
     }
-  } else if (response.studyId && response.primaryExecutionId) {
+  } else if (!response.reuseLimitation && response.studyId && response.primaryExecutionId) {
     reusableStudy = { studyId: response.studyId, sourceExecutionId: response.primaryExecutionId,
       threadId: record.runtime.threadId }
   }
+  if (response.reuseLimitation) reusableStudy = undefined
   return { status: "succeeded", kind: "run", requestId: record.requestId, operationId: record.operationId,
     response, ...(reusableStudy ? { reusableStudy } : {}) }
 }

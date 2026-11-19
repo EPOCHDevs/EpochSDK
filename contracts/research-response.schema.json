@@ -440,6 +440,11 @@
       "title": "Response Id",
       "type": "string"
     },
+    "reuse_limitation": {
+      "const": "retired_response_plan",
+      "title": "Reuse Limitation",
+      "type": "string"
+    },
     "study_id": {
       "minLength": 1,
       "pattern": "\\S",

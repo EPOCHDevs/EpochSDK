@@ -993,6 +993,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         if (
             record.native_execution_request_id is None
             and response.extension is None
+            and response.reuse_limitation is None
             and response.primary_execution_id is not None
             and response.study_id is not None
         ):
@@ -1001,6 +1002,8 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 source_execution_id=response.primary_execution_id,
                 thread_id=record.runtime.thread_id,
             )
+        if response.reuse_limitation is not None:
+            reusable = None
         completed = ResearchCompleted(
             status="succeeded", request_id=record.request_id, response=response
         )

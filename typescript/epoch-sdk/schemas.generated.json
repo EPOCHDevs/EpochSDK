@@ -1525,6 +1525,11 @@
         "title": "Response Id",
         "type": "string"
       },
+      "reuse_limitation": {
+        "const": "retired_response_plan",
+        "title": "Reuse Limitation",
+        "type": "string"
+      },
       "study_id": {
         "minLength": 1,
         "pattern": "\\S",
@@ -1556,6 +1561,6 @@
   },
   "source_sha256": {
     "openapi.json": "39c91f06d66e1ef985a599db0f5fd195f0fd65fd8ee50879f3bba3a4718b6a7c",
-    "research-response.schema.json": "dd75a4169271ce43048425a657db776584aff8ae0def7f980b23adc322febb38"
+    "research-response.schema.json": "72bdd5626f48e7ff6d0ff457b659f877953db1097c38bd3b68bf582a699abb3a"
   }
 }
