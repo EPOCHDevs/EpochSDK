@@ -11,7 +11,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from epoch_sdk._storage import StorageTransferError
+from epoch_sdk import StorageTransferError
+from epoch_sdk._storage import StorageClient
 from epoch_sdk.platform_file_models import FileEditRequest
 from epoch_sdk.platform_files import PlatformFileError, PlatformFilesClient
 from epoch_sdk.research import EpochClient
@@ -148,11 +149,12 @@ def test_response_identity_and_closed_schema_are_checked(body):
 class StagingPlatform:
     """Platform with signed storage links, and the storage they point to."""
 
-    def __init__(self, refusals: int = 0):
+    def __init__(self, refusals: int = 0, status: int = 403):
         self.calls: list[httpx.Request] = []
         self.puts: list[httpx.Request] = []
         self.links = 0
         self.refusals = refusals
+        self.status = status
 
     def api(self, request):
         self.calls.append(request)
@@ -175,19 +177,21 @@ class StagingPlatform:
         assert request.headers["content-type"] == "application/json"
         assert request.headers["x-amz-checksum-sha256"] == "checksum"
         if len(self.puts) <= self.refusals:
-            return httpx.Response(403, text="<Error><Code>AccessDenied</Code></Error>")
+            return httpx.Response(self.status, text="<Error><Code>AccessDenied</Code></Error>")
         return httpx.Response(200)
 
 
 def staged_client(monkeypatch, platform: StagingPlatform):
     monkeypatch.setattr(
         "epoch_sdk.platform_files.storage_client",
-        lambda: httpx.AsyncClient(transport=httpx.MockTransport(platform.storage)),
+        lambda: StorageClient(httpx.MockTransport(platform.storage)),
     )
     return httpx.AsyncClient(transport=httpx.MockTransport(platform.api))
 
 
-def test_save_puts_the_edit_through_a_signed_link_and_names_it(monkeypatch):
+def test_save_puts_the_edit_through_a_signed_link_and_names_it(monkeypatch, caplog):
+    caplog.set_level("DEBUG")
+
     async def scenario():
         platform = StagingPlatform()
         async with staged_client(monkeypatch, platform) as http:
@@ -201,6 +205,47 @@ def test_save_puts_the_edit_through_a_signed_link_and_names_it(monkeypatch):
         # The save carries only metadata: no file text passes through the API.
         assert platform.saved == {**{k: v for k, v in SAVE.items() if k != "edit"}, "edit_upload": upload}
         assert [r.headers["Authorization"] for r in platform.calls] == ["Bearer fixture"] * 2
+
+    asyncio.run(scenario())
+    assert "X-Amz-Signature" not in caplog.text  # A signed link is never logged.
+
+
+def test_a_storage_failure_other_than_a_refusal_fails_without_another_link(monkeypatch):
+    async def scenario():
+        async with staged_client(monkeypatch, platform := StagingPlatform(refusals=1, status=503)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            with pytest.raises(StorageTransferError) as error:
+                await client.save(ORIGINAL, SAVE)
+        assert error.value.status == 503 and platform.links == 1 and not hasattr(platform, "saved")
+
+    asyncio.run(scenario())
+
+
+def test_a_platform_without_edit_links_takes_the_edit_inline():
+    async def scenario():
+        calls = []
+
+        def transport(request):
+            calls.append(request)
+            if request.url.path.endswith("/edit-uploads"):  # Before direct transfer: no such route.
+                return httpx.Response(404, json={"error": "Not Found", "message": "Route not found"})
+            return httpx.Response(200, json=VERSION)
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            assert (await client.save(ORIGINAL, SAVE)).file.file_ref == PIN
+        assert json.loads(calls[-1].content) == SAVE
+
+    asyncio.run(scenario())
+
+
+def test_a_caller_cannot_name_a_staged_edit_itself():
+    async def scenario():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _: pytest.fail("HTTP"))) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            staged = {**SAVE, "edit_upload": {"size_bytes": 1, "content_sha256": "a" * 64}}
+            with pytest.raises(ValueError, match="Pass the edit itself"):
+                await client.save(ORIGINAL, staged)
 
     asyncio.run(scenario())
 

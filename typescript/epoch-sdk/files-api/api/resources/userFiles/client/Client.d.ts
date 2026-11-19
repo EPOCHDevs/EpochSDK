@@ -925,7 +925,7 @@ export declare class UserFiles {
     downloadFileImagePreview(fileRef: string, page: number, request?: EpochFiles.DownloadFileImagePreviewRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<stream.Readable>;
     private __downloadFileImagePreview;
     /**
-     * A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+     * A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
      *
      * @param {string} fileRef - The original immutable file reference identifying this version family.
      * @param {EpochFiles.FilePartLinkRequest} request

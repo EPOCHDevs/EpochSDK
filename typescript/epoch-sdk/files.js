@@ -203,7 +203,8 @@ export class PlatformFilesClient {
     const link = () => this._json(url, 'FileTransferLink', { request_id: request.request_id, ...upload }, { signal })
     let first
     try { first = await link() } catch (error) {
-      if (error instanceof PlatformFileError && error.code === 'FILE_DIRECT_TRANSFER_UNAVAILABLE') return request
+      // No links here, or a Platform from before direct transfer (no such route).
+      if (error instanceof PlatformFileError && (error.code === 'FILE_DIRECT_TRANSFER_UNAVAILABLE' || error.status === 404)) return request
       throw error
     }
     await putSigned(this.#storageFetch, attempt => attempt ? link() : first, edit, { signal })
@@ -216,7 +217,7 @@ export class PlatformFilesClient {
     request = structuredClone(request)
     const url = this._url(ref, '/versions', true)
     validate('FileEditRequest', request)
-    if (request.edit === undefined) throw new TypeError('Pass the edit itself; the client stages it')
+    if (request.edit === undefined || request.edit_upload !== undefined) throw new TypeError('Pass the edit itself; the client stages it')
     if (encoder.encode(request.request_id).byteLength > 128) throw new TypeError('request_id must fit 128 UTF-8 bytes')
     const body = await this._staged(ref, request, options)
     const result = version(await this._json(url, 'FileVersion', body, options), ref)

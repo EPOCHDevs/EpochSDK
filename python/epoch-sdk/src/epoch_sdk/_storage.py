@@ -23,9 +23,37 @@ class StorageTransferError(RuntimeError):
         self.status = status
 
 
-def storage_client() -> httpx.AsyncClient:
-    """A client of its own: the API client's credentials must never reach storage."""
-    return httpx.AsyncClient(timeout=httpx.Timeout(300, connect=30), follow_redirects=False)
+class StorageClient:
+    """Puts bytes to signed storage links.
+
+    It sends through a transport of its own: no API credentials or cookies, no redirects, and no
+    request logging (httpx's client logs every URL at INFO, and a signed URL carries its signature).
+    """
+
+    def __init__(self, transport: httpx.AsyncBaseTransport | None = None):
+        self._transport = transport or httpx.AsyncHTTPTransport(retries=0)
+
+    async def __aenter__(self) -> StorageClient:
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        await self._transport.aclose()
+
+    async def put(self, url: str, headers: Mapping[str, str], body: bytes) -> int:
+        request = httpx.Request(
+            "PUT", url, headers=dict(headers), content=body,
+            extensions={"timeout": {"connect": 30.0, "read": 300.0, "write": 300.0, "pool": 30.0}},
+        )
+        response = await self._transport.handle_async_request(request)
+        try:
+            await response.aread()
+        finally:
+            await response.aclose()
+        return response.status_code
+
+
+def storage_client() -> StorageClient:
+    return StorageClient()
 
 
 def signed_link(link: Any, size: int) -> SignedLink:
@@ -37,7 +65,7 @@ def signed_link(link: Any, size: int) -> SignedLink:
 
 
 async def put_signed(
-    storage: httpx.AsyncClient, link: Callable[[], Awaitable[SignedLink]], body: bytes
+    storage: StorageClient, link: Callable[[], Awaitable[SignedLink]], body: bytes
 ) -> None:
     """PUT exact bytes with exactly the signed headers.
 
@@ -46,8 +74,8 @@ async def put_signed(
     """
     for attempt in range(2):
         url, headers = await link()
-        response = await storage.put(url, content=body, headers=dict(headers))
-        if response.is_success:
+        status = await storage.put(url, headers, body)
+        if 200 <= status < 300:
             return
-        if attempt or response.status_code not in (400, 403):
-            raise StorageTransferError(response.status_code)
+        if attempt or status not in (400, 403):
+            raise StorageTransferError(status)

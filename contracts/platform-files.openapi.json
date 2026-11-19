@@ -6,10 +6,15 @@
     "description": "The Files and Space API, owned by Platform (ENG-2819). Original references and bytes stay immutable. Space opens the latest saved version; imports/citations pin a returned immutable file_ref. These operations perform no AI work."
   },
   "x-epoch-contract-owner": "EpochPlatform",
+  "x-epoch-file-transfer-error-codes": {
+    "FILE_DIRECT_TRANSFER_UNAVAILABLE": "No signed links for this session: send its parts through PUT /api/v1/files/{file_ref}/content.",
+    "FILE_UPLOAD_STORED": "The content is already stored: complete the upload.",
+    "FILE_UPLOAD_INACTIVE": "The upload session expired or was replaced: initialize the upload again."
+  },
   "x-epoch-file-edit-error-codes": {
     "FILE_EDIT_CONFLICT": "Keep the draft; reload/review the latest version before a new save.",
     "FILE_EDIT_IN_PROGRESS": "Retain the exact request_id/body and retry to reconcile the original save.",
-    "FILE_EDIT_REQUEST_REUSED": "This key belongs to a different body. A new edit needs a new key.",
+    "FILE_EDIT_REQUEST_REUSED": "This key belongs to a different edit. A new edit needs a new key. The same edit sent inline or staged is the same save.",
     "FILE_EDIT_EXPIRED": "The previous attempt is fenced. A new explicit save may use a new key.",
     "FILE_EDIT_BUSY": "No save was reserved. Retry the same key after Retry-After.",
     "FILE_EDIT_UNAVAILABLE": "The result may be uncertain. Retain the exact key/body and retry.",
@@ -11207,7 +11212,7 @@
             "description": "The original immutable file reference identifying this version family."
           }
         ],
-        "description": "A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.",
+        "description": "A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.",
         "requestBody": {
           "required": true,
           "content": {

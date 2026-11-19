@@ -5864,7 +5864,7 @@ class RawUserFilesClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> HttpResponse[FileTransferLink]:
         """
-        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
 
         Parameters
         ----------
@@ -12492,7 +12492,7 @@ class AsyncRawUserFilesClient:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> AsyncHttpResponse[FileTransferLink]:
         """
-        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. A proxied session answers 409.
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
 
         Parameters
         ----------

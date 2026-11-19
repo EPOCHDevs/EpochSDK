@@ -84,6 +84,16 @@ test('putSigned takes a generated client link and refuses one signed for other b
   assert.equal(puts[0].body, body)
   await assert.rejects(putSigned(async () => assert.fail('PUT'), async () => ({ ...link, sizeBytes: 5 }), body), /different file transfer/)
 })
+test('a Platform without edit links (before direct transfer) takes the edit inline; a caller cannot name a staged edit', async () => {
+  const calls = []
+  const files = client(async (url, init) => {
+    calls.push({ url: String(url), ...init })
+    return String(url).endsWith('/edit-uploads') ? json({ error: 'Not Found', message: 'Route not found' }, 404) : json(saved)
+  })
+  assert.equal((await files.save(original, request)).file.file_ref, pin)
+  assert.deepEqual(JSON.parse(calls.at(-1).body), request)
+  await assert.rejects(files.save(original, { ...request, edit_upload: { size_bytes: 1, content_sha256: 'a'.repeat(64) } }), /Pass the edit itself/)
+})
 test('a refused put asks for one new link, then fails without exposing it', async () => {
   const once = staging({ refusals: 1 })
   await once.files.save(original, request)

@@ -393,7 +393,8 @@ class PlatformFilesClient:
         try:
             first = await link()
         except PlatformFileError as error:
-            if error.code == "FILE_DIRECT_TRANSFER_UNAVAILABLE":
+            # No links here, or a Platform from before direct transfer (no such route).
+            if error.code == "FILE_DIRECT_TRANSFER_UNAVAILABLE" or error.status == 404:
                 return wire
             raise
         links = iter([first])
@@ -415,7 +416,7 @@ class PlatformFilesClient:
         never passes through the API's firewall (Platform docs/design/direct-file-transfer.md).
         """
         wire = _request("FileEditRequest", request)
-        if "edit" not in wire:
+        if "edit" not in wire or "edit_upload" in wire:
             raise ValueError("Pass the edit itself; the client stages it")
         body = await self._staged(ref, wire)
         result = cast(
