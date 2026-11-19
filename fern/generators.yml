@@ -1,0 +1,39 @@
+# Clients for Platform's Files and Space contract (ENG-2819), generated with the same Fern
+# generator versions as EpochBackend's StratifyX SDK so method and type names match it.
+# Regenerate with `python tools/generate_files_api.py`; never edit the output by hand.
+api:
+  specs:
+    - openapi: openapi/platform-files.openapi.json
+default-group: local
+groups:
+  local:
+    generators:
+      - name: fernapi/fern-python-sdk
+        version: 4.46.6
+        output:
+          location: local-file-system
+          path: ../build/fern-files/python
+        config:
+          package_name: files_api
+          client_class_name: EpochFiles
+          client:
+            exported_filename: client.py
+          pydantic_config:
+            version: v2
+            use_pydantic_field_aliases: true
+            # Responses keep fields Platform adds later, so a new response field never needs a
+            # lockstep client release.
+            extra_fields: allow
+            enum_type: python_enums
+      - name: fernapi/fern-typescript-node-sdk
+        version: 0.51.7
+        output:
+          location: local-file-system
+          path: ../build/fern-files/typescript
+        config:
+          namespaceExport: EpochFiles
+          allowCustomFetcher: true
+          includeCredentialsOnCrossOriginRequests: true
+          useBrandedStringAliases: true
+          generateWireTests: false
+          allowExtraFields: true

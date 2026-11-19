@@ -25,6 +25,7 @@ jobs:
       - run: python tools/validate_public_contract.py
       - run: python tools/sync_native_parameters.py --check
       - run: python tools/sync_platform_files_contract.py --check
+      - run: python tools/generate_files_api.py --check
       - run: python tools/sync_typescript_workflow_schemas.py --check
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
@@ -48,4 +49,4 @@ jobs:
       # runs all Python and TypeScript tests with its exact generated packages.
       # These standalone clients need no private native package or credential.
       - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
-      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,identity}.test.mjs
+      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,files-api,identity}.test.mjs

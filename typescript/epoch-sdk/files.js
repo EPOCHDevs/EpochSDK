@@ -2,8 +2,19 @@
 import Ajv from 'ajv/dist/2020.js'
 import document from './platform-files.openapi.json' with { type: 'json' }
 
+// The contract now covers every Files and Space operation (ENG-2819); its schemas refer to each
+// other. Each validator is compiled on first use against the whole document.
 const ajv = new Ajv({ strict: true })
-const validators = Object.fromEntries(Object.entries(document.components.schemas).map(([name, schema]) => [name, ajv.compile(schema)]))
+ajv.addVocabulary(['discriminator', 'components'])
+ajv.addFormat('date-time', true)
+ajv.addSchema({ $id: 'platform-files', components: document.components })
+const compiled = new Map()
+const validators = new Proxy({}, {
+  get: (_target, name) => {
+    if (!compiled.has(name)) compiled.set(name, ajv.compile({ $ref: `platform-files#/components/schemas/${String(name)}` }))
+    return compiled.get(name)
+  },
+})
 const originalPattern = new RegExp(document.components.schemas.FileVersion.properties.original_file_ref.pattern)
 const referencePattern = new RegExp(document.components.schemas.FileDescriptor.properties.file_ref.pattern)
 const encoder = new TextEncoder()

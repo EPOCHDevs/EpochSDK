@@ -1,0 +1,18 @@
+{
+  "cliVersion": "3.30.0",
+  "generatorName": "fernapi/fern-python-sdk",
+  "generatorVersion": "4.46.6",
+  "generatorConfig": {
+    "package_name": "files_api",
+    "client_class_name": "EpochFiles",
+    "client": {
+      "exported_filename": "client.py"
+    },
+    "pydantic_config": {
+      "version": "v2",
+      "use_pydantic_field_aliases": true,
+      "extra_fields": "allow",
+      "enum_type": "python_enums"
+    }
+  }
+}
