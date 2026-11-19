@@ -1,6 +1,6 @@
 {
   "name": "@epochdevs/epoch-sdk",
-  "version": "0.1.0-alpha.14",
+  "version": "0.1.0-alpha.15",
   "description": "Typed Epoch research workflows over the native StratifyX and LangGraph clients",
   "type": "module",
   "main": "index.js",
@@ -37,6 +37,14 @@
     "./files-api/core/fetcher": {
       "types": "./files-api/core/fetcher/index.d.ts",
       "default": "./files-api/core/fetcher/index.js"
+    },
+    "./shares-api": {
+      "types": "./shares-api/index.d.ts",
+      "default": "./shares-api/index.js"
+    },
+    "./shares-api/core/fetcher": {
+      "types": "./shares-api/core/fetcher/index.d.ts",
+      "default": "./shares-api/core/fetcher/index.js"
     }
   },
   "files": [
@@ -49,11 +57,14 @@
     "discovery.schema.json",
     "asset-identity.schema.json",
     "discovery-presentation.schema.json",
-    "files-api/"
+    "files-api/",
+    "platform-shares.openapi.json",
+    "shares-api/"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "generate:discovery": "node generate-discovery.mjs"
+    "generate:discovery": "node generate-discovery.mjs",
+    "test:shares-types": "tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext test/types/shares-api.ts"
   },
   "dependencies": {
     "ajv": "8.17.1",
@@ -77,6 +88,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "json-schema-to-typescript": "15.0.4"
+    "json-schema-to-typescript": "15.0.4",
+    "typescript": "6.0.3"
   }
 }

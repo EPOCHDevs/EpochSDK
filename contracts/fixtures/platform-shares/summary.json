@@ -1,0 +1,18 @@
+{
+  "share_id": "share-fixture",
+  "job_id": "",
+  "resource_type": "thread",
+  "resource_id": "thread-fixture",
+  "snapshot_version": 2,
+  "frozen_at_ms": 1795121450000,
+  "audience": "named_subjects",
+  "subjects": [
+    "reader@example.test"
+  ],
+  "created_at_ms": 1795121400000,
+  "expires_at_ms": 0,
+  "view_count": 1,
+  "last_viewed_at_ms": 1795121450000,
+  "can_refresh": true,
+  "access_version": 0
+}

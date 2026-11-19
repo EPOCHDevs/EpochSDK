@@ -185,3 +185,33 @@ Completed studies may have empty text with optional `ai_text` metadata:
 `{ status: "skipped", reason: "usage_limit", resets_at: "..." }`. Their computed
 results remain available. New v1 readers declare `Epoch-Features:
 ai-text-skipped-v1`; older clients receive empty text without the new members.
+
+## Platform sharing controls
+
+The generated sharing client is available as a separate import. It uses Platform's
+source-owned contract and the same operation names as the native sharing client.
+These examples use a signed-in owner's token; the existing Terminal public viewer
+continues to use its existing resolver.
+
+```js
+import { EpochSharesClient } from '@epochdevs/epoch-sdk/shares-api'
+const platform = new EpochSharesClient({ environment: 'https://api.dev.epoch.trade', token })
+const shares = platform.studiesShares
+const history = await shares.listPublishedShareVersions(shareId)
+await shares.changeWhoCanOpenAShareLink(shareId, {
+  expectedAccessVersion: lastRead.accessVersion,
+  audience: 'named_subjects', subjects: ['reader@example.com'],
+}, { maxRetries: 0 })
+await shares.selectPublishedShareVersion(shareId, {
+  snapshotVersion: selectedVersion, expectedCurrentVersion: currentVersion,
+}, { maxRetries: 0 })
+const received = await shares.listReceivedThreadShares()
+```
+
+On 409, refetch before asking the owner to apply the change again. Do not retry with
+an updated version automatically. An unavailable history entry carries `reason`
+instead of counts; only an entry with `available: true` can be selected. The
+client does not publish updates automatically or send invitation emails.
+
+Import `@epochdevs/epoch-sdk/shares-api/core/fetcher` to wrap the generated fetcher
+with an application's existing authentication handling, as for the Files client.
