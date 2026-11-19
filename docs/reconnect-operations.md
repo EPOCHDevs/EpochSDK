@@ -22,9 +22,9 @@ Run the same cell with the same ID and inputs to attach to the accepted research
 result = await epoch.research_status(operation_id="screen-sp500")
 ```
 
-The result contains progress, pending questions, a recorded failure or the original saved answer. Questions retain their native LangGraph interrupt IDs and can be answered through `resume_research` or the conversation UI. A local cancellation stops observation; explicit native server cancellation is separate.
+The result contains progress, pending questions, a recorded failure or the final saved answer. Questions retain their native LangGraph interrupt IDs and can be answered through `resume_research` or the conversation UI. A local cancellation stops observation; explicit native server cancellation is separate.
 
-The first answer revision remains pinned after later answer edits or new conversation queries. The Backend publisher and request service save/reconcile that pin. The original client does not need to reach its completion callback.
+Backend pins the first answer revision when the run publishes it, and the research completes when the agent's turn ends. Until then the result is `InProgress`, even though an outcome is recorded: the agent may still revise the run's outputs. Once the turn has ended (or its run or conversation is gone), the answer is the run's current accepted output revision, which is the first revision unless the agent revised it. A revision publishes its answer under its own `response_id`. A turn that still shows as running 15 minutes after the outcome was recorded completes with the outputs that exist. `research(..., operation_id=..., wait=True)` follows the turn to its end. The original client does not need to reach its completion callback.
 
 ## Prepared execution
 
