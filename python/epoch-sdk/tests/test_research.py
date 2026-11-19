@@ -55,7 +55,8 @@ def saved_response():
     }
 
 
-def test_published_plan_reference_is_retained_on_the_reusable_study(monkeypatch):
+@pytest.mark.parametrize("legacy", ["old_server", "normalized", "null"])
+def test_historical_answer_remains_readable_without_reintroducing_a_plan_option(monkeypatch,legacy):
     import sys
 
     ordinary = saved_response
@@ -63,7 +64,8 @@ def test_published_plan_reference_is_retained_on_the_reusable_study(monkeypatch)
 
     def planned():
         value = ordinary()
-        value["response_plan"] = reference
+        if legacy=="normalized": value["reuse_limitation"]="retired_response_plan"
+        else: value["response_plan"] = reference if legacy=="old_server" else None
         return value
 
     monkeypatch.setattr(sys.modules[__name__], "saved_response", planned)
@@ -72,10 +74,16 @@ def test_published_plan_reference_is_retained_on_the_reusable_study(monkeypatch)
         async with clients() as (sdk, _, _, _):
             result = await sdk.research(RunRequest.model_validate(REQUEST))
             assert isinstance(result, ResearchCompleted)
-            assert result.reusable_study is not None
-            assert result.response.response_plan is not None
-            assert result.reusable_study.response_plan == result.response.response_plan
-            assert result.response.reference().response_plan == result.response.response_plan
+            assert "response_plan" not in result.response.to_wire()
+            assert "response_plan" not in result.response.reference().to_wire()
+            if legacy=="null":
+                assert result.reusable_study is not None
+            else:
+                assert result.reusable_study is None
+                assert result.response.reference().reuse_limitation=="retired_response_plan"
+                from stratifyx import DatePeriodConfig
+                with pytest.raises(ValueError,match="no completed prepared study"):
+                    await sdk.execute_saved(REQUEST_ID,period=DatePeriodConfig(start="2025-01-01"))
 
     asyncio.run(scenario())
 

@@ -17,7 +17,6 @@ from test_supervisor import INTERRUPT, RUN, THREAD, job
 
 from epoch_sdk import EpochError, RunRequest
 from epoch_sdk.research import EpochClient, ExecutionAccepted, ResearchCompleted, ResearchError
-from epoch_sdk.response_plans import ResponsePlanReference
 from epoch_sdk.supervisor import (
     ChosenExecution,
     InProgress,
@@ -377,14 +376,16 @@ def test_optional_launch_and_execution_metadata_are_omitted_from_native_wire():
 
 
 @pytest.mark.parametrize("mode", ["sdk", "mcp"])
-def test_rejected_plan_period_is_not_reported_as_a_duplicate_operation(mode):
+def test_rejected_execution_period_is_not_reported_as_a_duplicate_operation(mode):
     async def scenario():
         service = Service()
         calls = []
-        reason = "This verified plan does not allow a different period."
+        reason = "This study does not allow a different period."
 
         def backend(request):
             calls.append((request.method, request.url.path))
+            if request.url.path.startswith("/api/v1/studies/executions/"):
+                return service.backend(request)
             if request.method == "POST":
                 assert request.url.path == "/api/v1/integration/execution-requests"
                 return httpx.Response(
@@ -410,7 +411,6 @@ def test_rejected_plan_period_is_not_reported_as_a_duplicate_operation(mode):
             study_id="study-one",
             source_execution_id="new",
             thread_id=THREAD,
-            response_plan=ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1),
         )
         async with service.client() as sdk:
             if mode == "sdk":
@@ -436,7 +436,8 @@ def test_rejected_plan_period_is_not_reported_as_a_duplicate_operation(mode):
                 detail = DomainError.model_validate(response.structured_content["error"])
         assert detail.code == "INVALID_STATE" and detail.message == reason
         assert detail.retryable is False
-        assert [method for method, _ in calls] == ["POST", "GET"]
+        assert [method for method, path in calls if path.startswith(
+            "/api/v1/integration/execution-requests")] == ["GET", "POST", "GET"]
         assert service.jobs == 0 and service.graph_calls == []
 
     asyncio.run(scenario())
@@ -460,117 +461,10 @@ def test_existing_execution_operation_with_changed_inputs_remains_a_conflict():
     asyncio.run(scenario())
 
 
-def test_prepared_execution_waits_for_its_answer_and_reconnects_without_a_graph_call():
-    async def scenario():
-        service = Service()
-        service.record = {"request": REQUEST}
-        plan = ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1)
-        source = SavedStudy(
-            study_id="study-one",
-            source_execution_id="new",
-            thread_id=THREAD,
-            response_plan=plan,
-        )
-        async with service.client() as sdk:
-            waiting = await sdk.execute_saved(
-                source, period=DatePeriodConfig(start="2025-01-01"), operation_id="prepared-one"
-            )
-            # The engine is already complete, but native publication has not finished.
-            assert isinstance(waiting, ExecutionAccepted)
-            assert service.execution_record["request"]["response_plan"] == plan.to_wire()
-        service.response.update(primary_execution_id="repeat-one", response_plan=plan.to_wire())
-        service.execution_record.update(
-            response_phase="outputs_recorded",
-            response_id=service.response["response_id"],
-            response_version=1,
-        )
-        async with service.client() as fresh:
-            finished = await fresh.execution_operation("prepared-one")
-            repeated = await fresh.execute_saved(
-                source, period=DatePeriodConfig(start="2025-01-01"), operation_id="prepared-one"
-            )
-            assert isinstance(finished, ChosenExecution) and finished.response is not None
-            assert finished.response.primary_execution_id == finished.execution.id == "repeat-one"
-            assert finished.reusable_study.response_plan == plan
-            assert repeated == finished
-            assert service.jobs == 1 and service.graph_calls == []
-            # MCP must preserve the same closed saved-answer contract, while
-            # retaining explicit nulls in the user's JSON response data.
-            service.record["request"] = copy.deepcopy(REQUEST)
-            schema = service.record["request"]["outputs"][0]["schema"]
-            schema["properties"]["optional"] = {"type": ["string", "null"]}
-            service.response["content"]["outputs"][0]["value"]["optional"] = None
-            async with Client(create_server(fresh.supervisor)) as mcp:
-                wire = await mcp.call_tool(
-                    "epoch_status", {"operation_id": "prepared-one", "kind": "execute"}
-                )
-                assert not wire.is_error
-                parsed = ChosenExecution.model_validate(wire.structured_content)
-                assert parsed.response is not None
-                assert parsed.response.content.outputs[0].value["optional"] is None
-                assert (
-                    "description"
-                    not in wire.structured_content["response"]["content"]["declarations"][0]
-                )
-
-    asyncio.run(scenario())
 
 
-@pytest.mark.parametrize(
-    "change",
-    [
-        {"primary_execution_id": "another-job"},
-        {"response_plan": {"plan_id": "rpl_" + "b" * 64, "version": 1}},
-        {"thread_id": "another-thread"},
-    ],
-)
-def test_prepared_execution_rejects_a_published_answer_from_another_source(change):
-    async def scenario():
-        service = Service()
-        service.record = {"request": REQUEST}
-        plan = ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1)
-        async with service.client() as sdk:
-            await sdk.execute_saved(
-                SavedStudy(
-                    study_id="study-one",
-                    source_execution_id="new",
-                    thread_id=THREAD,
-                    response_plan=plan,
-                ),
-                period=DatePeriodConfig(start="2025-01-01"),
-                operation_id="prepared-one",
-            )
-            service.response.update(primary_execution_id="repeat-one", response_plan=plan.to_wire())
-            service.response.update(change)
-            service.execution_record.update(
-                response_phase="outputs_recorded",
-                response_id=service.response["response_id"],
-                response_version=1,
-            )
-            with pytest.raises(EpochError, match="exact admitted plan/source") as mismatch:
-                await sdk.execution_operation("prepared-one")
-            assert mismatch.value.error.code == "INVALID_STATE"
-            assert service.jobs == 1 and service.graph_calls == []
-
-    asyncio.run(scenario())
 
 
-def test_lower_level_supervisor_execution_cannot_skip_a_prepared_response_plan():
-    async def scenario():
-        service = Service()
-        async with service.client() as sdk:
-            with pytest.raises(ValueError, match="EpochClient.execute_saved"):
-                await sdk.supervisor.execute_saved(
-                    SavedStudy(
-                        study_id="study-one",
-                        source_execution_id="new",
-                        response_plan=ResponsePlanReference(plan_id="rpl_" + "a" * 64, version=1),
-                    ),
-                    period=DatePeriodConfig(start="2025-01-01"),
-                )
-            assert service.jobs == 0 and service.graph_calls == []
-
-    asyncio.run(scenario())
 
 
 async def admitted(service):
@@ -665,4 +559,27 @@ def test_old_run_observation_cannot_change_a_resumed_runs_phase_or_failure(outco
         assert service.record["phase"] == "active" and "error" not in service.record
         assert service.record["version"] == version and service.submissions == 1
 
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("legacy", [None, {"plan_id": "rpl_" + "a" * 64, "version": 1}])
+def test_saved_study_rejects_retired_plan_options(legacy):
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        SavedStudy.model_validate({"study_id": "study-one", "source_execution_id": "new",
+                                   "response_plan": legacy})
+
+
+def test_legacy_plan_operation_cannot_be_reinterpreted_as_an_ordinary_run():
+    async def scenario():
+        service = Service()
+        async with service.client() as sdk:
+            await sdk.execute_saved(SavedStudy(study_id="study-one", source_execution_id="new"),
+                                    period=DatePeriodConfig(start="2025-01-01"),
+                                    operation_id="legacy-one")
+            service.execution_record["request"]["response_plan"] = {
+                "plan_id": "rpl_" + "a" * 64, "version": 1}
+            with pytest.raises(EpochError, match="Response-plan execution is retired"):
+                await sdk.execution_operation("legacy-one")
+        assert service.jobs == 1 and service.graph_calls == []
     asyncio.run(scenario())

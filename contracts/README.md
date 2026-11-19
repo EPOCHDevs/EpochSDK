@@ -58,19 +58,10 @@ client dependencies; `tools/sync_session_contract.py --check` verifies the Pytho
 binding deliberately. Service-defined UI component names/properties stay open
 extension points inside a closed source UI envelope. This adds no REST server.
 
-The `response-plan*.schema.json` files define the proposed versioned replay
-contract in [ENG-2086](https://linear.app/epoch-inc/issue/ENG-2086). Query inputs
-are Backend-issued successful-query references or exact native relation
-projections. Table and JSON mappings are deterministic; text steps explicitly
-select computed inputs and a server-owned interpretation policy. A published
-plan retains its original answer/source pin and effective non-secret model
-settings. `response-plan.cases.json` contains structural fixtures, not market
-results. `tools/validate_response_plan_contract.py` uses only local schemas;
-`tools/sync_response_plan_contract.py --check` verifies Python/schema parity.
-Cross-reference, source ownership and actual replay semantics require the
-owning native service as well as schema checks. This is currently a contract
-draft; it does not claim that the native save/replay endpoints exist yet.
-See [response-plan execution design](../docs/response-plans.md).
+ENG-3105 removes the response-plan schemas, API lifecycle, execution options and
+replay. Saved answers remain readable without executing a plan. Native
+`report_template` replay is independent and remains supported. See the
+[retired plan record](../docs/response-plans.md) for historical evidence.
 
 The native operation projection also includes saved-execution extension input
 catalogue/definition admission, output records, exact presentation reads and
