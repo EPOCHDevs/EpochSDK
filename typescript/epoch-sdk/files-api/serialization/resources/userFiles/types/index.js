@@ -15,6 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./ReadDocumentContentRequestLayer"), exports);
+__exportStar(require("./UserFileUploadRequestTransfer"), exports);
 __exportStar(require("./CellGridRequestFormat"), exports);
 __exportStar(require("./FileEditRequestEditText"), exports);
 __exportStar(require("./FileEditRequestEditCellsFormat"), exports);
@@ -26,3 +27,4 @@ __exportStar(require("./FileEditRequestEditCellsChangesItemValue"), exports);
 __exportStar(require("./FileEditRequestEditCellsChangesItem"), exports);
 __exportStar(require("./FileEditRequestEditCells"), exports);
 __exportStar(require("./FileEditRequestEdit"), exports);
+__exportStar(require("./FileEditRequestEditUpload"), exports);

@@ -12,6 +12,10 @@ from .file_edit_request_edit_cells_format import FileEditRequestEditCellsFormat
 
 
 class FileEditRequestEdit_Text(UniversalBaseModel):
+    """
+    The edit, inline. Send exactly one of edit and edit_upload.
+    """
+
     kind: typing.Literal["text"] = "text"
     content: str
 
@@ -19,6 +23,10 @@ class FileEditRequestEdit_Text(UniversalBaseModel):
 
 
 class FileEditRequestEdit_Cells(UniversalBaseModel):
+    """
+    The edit, inline. Send exactly one of edit and edit_upload.
+    """
+
     kind: typing.Literal["cells"] = "cells"
     format: FileEditRequestEditCellsFormat
     sheet: typing.Optional[str] = None

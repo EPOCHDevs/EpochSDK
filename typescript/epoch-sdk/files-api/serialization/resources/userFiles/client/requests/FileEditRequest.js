@@ -39,10 +39,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileEditRequest = void 0;
 const core = __importStar(require("../../../../../core"));
 const FileEditRequestEdit_1 = require("../../types/FileEditRequestEdit");
+const FileEditRequestEditUpload_1 = require("../../types/FileEditRequestEditUpload");
 exports.FileEditRequest = core.serialization.object({
     schemaVersion: core.serialization.property("schema_version", core.serialization.number()),
     requestId: core.serialization.property("request_id", core.serialization.string()),
     baseVersion: core.serialization.property("base_version", core.serialization.number()),
     baseContentSha256: core.serialization.property("base_content_sha256", core.serialization.string()),
-    edit: FileEditRequestEdit_1.FileEditRequestEdit,
+    edit: FileEditRequestEdit_1.FileEditRequestEdit.optional(),
+    editUpload: core.serialization.property("edit_upload", FileEditRequestEditUpload_1.FileEditRequestEditUpload.optional()),
 });

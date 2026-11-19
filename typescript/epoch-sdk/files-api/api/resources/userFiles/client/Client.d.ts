@@ -866,6 +866,31 @@ export declare class UserFiles {
     getFileEditOptions(fileRef: string, request?: EpochFiles.GetFileEditOptionsRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<EpochFiles.FileEditOptions>;
     private __getFileEditOptions;
     /**
+     * A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+     *
+     * @param {string} fileRef - The original immutable file reference identifying this version family.
+     * @param {EpochFiles.FileEditUploadRequest} request
+     * @param {UserFiles.RequestOptions} requestOptions - Request-specific configuration.
+     *
+     * @throws {@link EpochFiles.BadRequestError}
+     * @throws {@link EpochFiles.UnauthorizedError}
+     * @throws {@link EpochFiles.ForbiddenError}
+     * @throws {@link EpochFiles.NotFoundError}
+     * @throws {@link EpochFiles.ConflictError}
+     * @throws {@link EpochFiles.ContentTooLargeError}
+     * @throws {@link EpochFiles.RangeNotSatisfiableError}
+     * @throws {@link EpochFiles.ServiceUnavailableError}
+     *
+     * @example
+     *     await client.userFiles.linkFileEditUpload("file_ref", {
+     *         requestId: "request_id",
+     *         sizeBytes: 1,
+     *         contentSha256: "content_sha256"
+     *     })
+     */
+    linkFileEditUpload(fileRef: string, request: EpochFiles.FileEditUploadRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<EpochFiles.FileTransferLink>;
+    private __linkFileEditUpload;
+    /**
      * On-demand PNG image previews for HEIC/HEIF and TIFF. Each TIFF page remains separately available. No AI work is started. The existing PDF preview endpoint is unchanged.
      *
      * @param {string} fileRef - An original file or a pinned saved version.
@@ -899,6 +924,31 @@ export declare class UserFiles {
      */
     downloadFileImagePreview(fileRef: string, page: number, request?: EpochFiles.DownloadFileImagePreviewRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<stream.Readable>;
     private __downloadFileImagePreview;
+    /**
+     * A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
+     *
+     * @param {string} fileRef - The original immutable file reference identifying this version family.
+     * @param {EpochFiles.FilePartLinkRequest} request
+     * @param {UserFiles.RequestOptions} requestOptions - Request-specific configuration.
+     *
+     * @throws {@link EpochFiles.BadRequestError}
+     * @throws {@link EpochFiles.UnauthorizedError}
+     * @throws {@link EpochFiles.ForbiddenError}
+     * @throws {@link EpochFiles.NotFoundError}
+     * @throws {@link EpochFiles.ConflictError}
+     * @throws {@link EpochFiles.ContentTooLargeError}
+     * @throws {@link EpochFiles.RangeNotSatisfiableError}
+     * @throws {@link EpochFiles.ServiceUnavailableError}
+     *
+     * @example
+     *     await client.userFiles.linkFileUploadPart("file_ref", {
+     *         uploadId: "upload_id",
+     *         partIndex: 1,
+     *         contentSha256: "content_sha256"
+     *     })
+     */
+    linkFileUploadPart(fileRef: string, request: EpochFiles.FilePartLinkRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<EpochFiles.FileTransferLink>;
+    private __linkFileUploadPart;
     /**
      * @param {string} fileRef - An original file or a pinned saved version.
      * @param {EpochFiles.GetFilePreviewRequest} request
@@ -950,7 +1000,7 @@ export declare class UserFiles {
     listFileVersions(fileRef: string, request?: EpochFiles.ListFileVersionsRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<EpochFiles.FileVersionPage>;
     private __listFileVersions;
     /**
-     * Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+     * Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
      *
      * @param {string} fileRef - The original immutable file reference identifying this version family.
      * @param {EpochFiles.FileEditRequest} request
@@ -970,11 +1020,7 @@ export declare class UserFiles {
      *         schemaVersion: 1.1,
      *         requestId: "request_id",
      *         baseVersion: 1,
-     *         baseContentSha256: "base_content_sha256",
-     *         edit: {
-     *             kind: "text",
-     *             content: "content"
-     *         }
+     *         baseContentSha256: "base_content_sha256"
      *     })
      */
     saveFileVersion(fileRef: string, request: EpochFiles.FileEditRequest, requestOptions?: UserFiles.RequestOptions): core.HttpResponsePromise<EpochFiles.FileVersion>;

@@ -27,6 +27,7 @@ from ..types.file_edit_grid import FileEditGrid
 from ..types.file_edit_options import FileEditOptions
 from ..types.file_image_preview import FileImagePreview
 from ..types.file_preview import FilePreview
+from ..types.file_transfer_link import FileTransferLink
 from ..types.file_version import FileVersion
 from ..types.file_version_page import FileVersionPage
 from ..types.saved_dataset import SavedDataset
@@ -48,7 +49,9 @@ from ..types.web_source_content import WebSourceContent
 from .raw_client import AsyncRawUserFilesClient, RawUserFilesClient
 from .types.cell_grid_request_format import CellGridRequestFormat
 from .types.file_edit_request_edit import FileEditRequestEdit
+from .types.file_edit_request_edit_upload import FileEditRequestEditUpload
 from .types.read_document_content_request_layer import ReadDocumentContentRequestLayer
+from .types.user_file_upload_request_transfer import UserFileUploadRequestTransfer
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -1187,6 +1190,7 @@ class UserFilesClient:
         media_type: str,
         name: str,
         size_bytes: int,
+        transfer: typing.Optional[UserFileUploadRequestTransfer] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserFileUploadSession:
         """
@@ -1199,6 +1203,9 @@ class UserFilesClient:
         name : str
 
         size_bytes : int
+
+        transfer : typing.Optional[UserFileUploadRequestTransfer]
+            direct asks for signed storage links (linkFileUploadPart) so parts never pass through this API. The session says which transfer it has.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -1228,6 +1235,7 @@ class UserFilesClient:
             media_type=media_type,
             name=name,
             size_bytes=size_bytes,
+            transfer=transfer,
             request_options=request_options,
         )
         return _response.data
@@ -1799,6 +1807,61 @@ class UserFilesClient:
         _response = self._raw_client.get_file_edit_options(file_ref, request_options=request_options)
         return _response.data
 
+    def link_file_edit_upload(
+        self,
+        file_ref: str,
+        *,
+        request_id: str,
+        size_bytes: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FileTransferLink:
+        """
+        A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        request_id : str
+
+        size_bytes : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FileTransferLink
+            Success
+
+        Examples
+        --------
+        from epoch_sdk.files_api import EpochFiles
+
+        client = EpochFiles(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.user_files.link_file_edit_upload(
+            file_ref="file_ref",
+            request_id="request_id",
+            size_bytes=1,
+            content_sha256="content_sha256",
+        )
+        """
+        _response = self._raw_client.link_file_edit_upload(
+            file_ref,
+            request_id=request_id,
+            size_bytes=size_bytes,
+            content_sha256=content_sha256,
+            request_options=request_options,
+        )
+        return _response.data
+
     def get_file_image_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> FileImagePreview:
@@ -1881,6 +1944,61 @@ class UserFilesClient:
             file_ref, page, range=range, if_range=if_range, request_options=request_options
         ) as r:
             yield from r.data
+
+    def link_file_upload_part(
+        self,
+        file_ref: str,
+        *,
+        upload_id: str,
+        part_index: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FileTransferLink:
+        """
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        upload_id : str
+
+        part_index : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FileTransferLink
+            Success
+
+        Examples
+        --------
+        from epoch_sdk.files_api import EpochFiles
+
+        client = EpochFiles(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.user_files.link_file_upload_part(
+            file_ref="file_ref",
+            upload_id="upload_id",
+            part_index=1,
+            content_sha256="content_sha256",
+        )
+        """
+        _response = self._raw_client.link_file_upload_part(
+            file_ref,
+            upload_id=upload_id,
+            part_index=part_index,
+            content_sha256=content_sha256,
+            request_options=request_options,
+        )
+        return _response.data
 
     def get_file_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -2011,11 +2129,12 @@ class UserFilesClient:
         request_id: str,
         base_version: int,
         base_content_sha256: str,
-        edit: FileEditRequestEdit,
+        edit: typing.Optional[FileEditRequestEdit] = OMIT,
+        edit_upload: typing.Optional[FileEditRequestEditUpload] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FileVersion:
         """
-        Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+        Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
 
         Parameters
         ----------
@@ -2030,7 +2149,11 @@ class UserFilesClient:
 
         base_content_sha256 : str
 
-        edit : FileEditRequestEdit
+        edit : typing.Optional[FileEditRequestEdit]
+            The edit, inline. Send exactly one of edit and edit_upload.
+
+        edit_upload : typing.Optional[FileEditRequestEditUpload]
+            The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -2043,7 +2166,6 @@ class UserFilesClient:
         Examples
         --------
         from epoch_sdk.files_api import EpochFiles
-        from files_api.user_files import FileEditRequestEdit_Text
 
         client = EpochFiles(
             token="YOUR_TOKEN",
@@ -2055,9 +2177,6 @@ class UserFilesClient:
             request_id="request_id",
             base_version=1,
             base_content_sha256="base_content_sha256",
-            edit=FileEditRequestEdit_Text(
-                content="content",
-            ),
         )
         """
         _response = self._raw_client.save_file_version(
@@ -2067,6 +2186,7 @@ class UserFilesClient:
             base_version=base_version,
             base_content_sha256=base_content_sha256,
             edit=edit,
+            edit_upload=edit_upload,
             request_options=request_options,
         )
         return _response.data
@@ -3470,6 +3590,7 @@ class AsyncUserFilesClient:
         media_type: str,
         name: str,
         size_bytes: int,
+        transfer: typing.Optional[UserFileUploadRequestTransfer] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> UserFileUploadSession:
         """
@@ -3482,6 +3603,9 @@ class AsyncUserFilesClient:
         name : str
 
         size_bytes : int
+
+        transfer : typing.Optional[UserFileUploadRequestTransfer]
+            direct asks for signed storage links (linkFileUploadPart) so parts never pass through this API. The session says which transfer it has.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -3519,6 +3643,7 @@ class AsyncUserFilesClient:
             media_type=media_type,
             name=name,
             size_bytes=size_bytes,
+            transfer=transfer,
             request_options=request_options,
         )
         return _response.data
@@ -4197,6 +4322,69 @@ class AsyncUserFilesClient:
         _response = await self._raw_client.get_file_edit_options(file_ref, request_options=request_options)
         return _response.data
 
+    async def link_file_edit_upload(
+        self,
+        file_ref: str,
+        *,
+        request_id: str,
+        size_bytes: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FileTransferLink:
+        """
+        A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        request_id : str
+
+        size_bytes : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FileTransferLink
+            Success
+
+        Examples
+        --------
+        import asyncio
+
+        from epoch_sdk.files_api import AsyncEpochFiles
+
+        client = AsyncEpochFiles(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.user_files.link_file_edit_upload(
+                file_ref="file_ref",
+                request_id="request_id",
+                size_bytes=1,
+                content_sha256="content_sha256",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.link_file_edit_upload(
+            file_ref,
+            request_id=request_id,
+            size_bytes=size_bytes,
+            content_sha256=content_sha256,
+            request_options=request_options,
+        )
+        return _response.data
+
     async def get_file_image_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
     ) -> FileImagePreview:
@@ -4296,6 +4484,69 @@ class AsyncUserFilesClient:
         ) as r:
             async for _chunk in r.data:
                 yield _chunk
+
+    async def link_file_upload_part(
+        self,
+        file_ref: str,
+        *,
+        upload_id: str,
+        part_index: int,
+        content_sha256: str,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> FileTransferLink:
+        """
+        A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.
+
+        Parameters
+        ----------
+        file_ref : str
+            The original immutable file reference identifying this version family.
+
+        upload_id : str
+
+        part_index : int
+
+        content_sha256 : str
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        FileTransferLink
+            Success
+
+        Examples
+        --------
+        import asyncio
+
+        from epoch_sdk.files_api import AsyncEpochFiles
+
+        client = AsyncEpochFiles(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.user_files.link_file_upload_part(
+                file_ref="file_ref",
+                upload_id="upload_id",
+                part_index=1,
+                content_sha256="content_sha256",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.link_file_upload_part(
+            file_ref,
+            upload_id=upload_id,
+            part_index=part_index,
+            content_sha256=content_sha256,
+            request_options=request_options,
+        )
+        return _response.data
 
     async def get_file_preview(
         self, file_ref: str, *, request_options: typing.Optional[RequestOptions] = None
@@ -4451,11 +4702,12 @@ class AsyncUserFilesClient:
         request_id: str,
         base_version: int,
         base_content_sha256: str,
-        edit: FileEditRequestEdit,
+        edit: typing.Optional[FileEditRequestEdit] = OMIT,
+        edit_upload: typing.Optional[FileEditRequestEditUpload] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> FileVersion:
         """
-        Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
+        Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.
 
         Parameters
         ----------
@@ -4470,7 +4722,11 @@ class AsyncUserFilesClient:
 
         base_content_sha256 : str
 
-        edit : FileEditRequestEdit
+        edit : typing.Optional[FileEditRequestEdit]
+            The edit, inline. Send exactly one of edit and edit_upload.
+
+        edit_upload : typing.Optional[FileEditRequestEditUpload]
+            The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload.
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -4485,7 +4741,6 @@ class AsyncUserFilesClient:
         import asyncio
 
         from epoch_sdk.files_api import AsyncEpochFiles
-        from files_api.user_files import FileEditRequestEdit_Text
 
         client = AsyncEpochFiles(
             token="YOUR_TOKEN",
@@ -4500,9 +4755,6 @@ class AsyncUserFilesClient:
                 request_id="request_id",
                 base_version=1,
                 base_content_sha256="base_content_sha256",
-                edit=FileEditRequestEdit_Text(
-                    content="content",
-                ),
             )
 
 
@@ -4515,6 +4767,7 @@ class AsyncUserFilesClient:
             base_version=base_version,
             base_content_sha256=base_content_sha256,
             edit=edit,
+            edit_upload=edit_upload,
             request_options=request_options,
         )
         return _response.data

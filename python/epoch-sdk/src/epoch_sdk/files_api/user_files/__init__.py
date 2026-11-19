@@ -22,9 +22,11 @@ if typing.TYPE_CHECKING:
         FileEditRequestEditCellsChangesItemValue_String,
         FileEditRequestEditCellsFormat,
         FileEditRequestEditText,
+        FileEditRequestEditUpload,
         FileEditRequestEdit_Cells,
         FileEditRequestEdit_Text,
         ReadDocumentContentRequestLayer,
+        UserFileUploadRequestTransfer,
     )
 _dynamic_imports: typing.Dict[str, str] = {
     "CellGridRequestFormat": ".types",
@@ -42,9 +44,11 @@ _dynamic_imports: typing.Dict[str, str] = {
     "FileEditRequestEditCellsChangesItemValue_String": ".types",
     "FileEditRequestEditCellsFormat": ".types",
     "FileEditRequestEditText": ".types",
+    "FileEditRequestEditUpload": ".types",
     "FileEditRequestEdit_Cells": ".types",
     "FileEditRequestEdit_Text": ".types",
     "ReadDocumentContentRequestLayer": ".types",
+    "UserFileUploadRequestTransfer": ".types",
 }
 
 
@@ -85,7 +89,9 @@ __all__ = [
     "FileEditRequestEditCellsChangesItemValue_String",
     "FileEditRequestEditCellsFormat",
     "FileEditRequestEditText",
+    "FileEditRequestEditUpload",
     "FileEditRequestEdit_Cells",
     "FileEditRequestEdit_Text",
     "ReadDocumentContentRequestLayer",
+    "UserFileUploadRequestTransfer",
 ]

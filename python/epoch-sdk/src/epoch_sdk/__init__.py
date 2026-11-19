@@ -22,6 +22,7 @@ from .contracts import (
 from .dates import date_range
 from .errors import EpochError
 from .identity import IdentityClient, IdentityHTTPError
+from ._storage import StorageTransferError
 from .platform_files import PlatformFileError, PlatformFilesClient
 
 __all__ = [
@@ -42,6 +43,7 @@ __all__ = [
     "JsonOutputRequest",
     "PlatformFileError",
     "PlatformFilesClient",
+    "StorageTransferError",
     "RefreshRequest",
     "RunParameters",
     "RunRequest",

@@ -6,13 +6,20 @@
     "description": "The Files and Space API, owned by Platform (ENG-2819). Original references and bytes stay immutable. Space opens the latest saved version; imports/citations pin a returned immutable file_ref. These operations perform no AI work."
   },
   "x-epoch-contract-owner": "EpochPlatform",
+  "x-epoch-file-transfer-error-codes": {
+    "FILE_DIRECT_TRANSFER_UNAVAILABLE": "No signed links for this session: send its parts through PUT /api/v1/files/{file_ref}/content.",
+    "FILE_UPLOAD_STORED": "The content is already stored: complete the upload.",
+    "FILE_UPLOAD_INACTIVE": "The upload session expired or was replaced: initialize the upload again."
+  },
   "x-epoch-file-edit-error-codes": {
     "FILE_EDIT_CONFLICT": "Keep the draft; reload/review the latest version before a new save.",
     "FILE_EDIT_IN_PROGRESS": "Retain the exact request_id/body and retry to reconcile the original save.",
-    "FILE_EDIT_REQUEST_REUSED": "This key belongs to a different body. A new edit needs a new key.",
+    "FILE_EDIT_REQUEST_REUSED": "This key belongs to a different edit. A new edit needs a new key. The same edit sent inline or staged is the same save.",
     "FILE_EDIT_EXPIRED": "The previous attempt is fenced. A new explicit save may use a new key.",
     "FILE_EDIT_BUSY": "No save was reserved. Retry the same key after Retry-After.",
-    "FILE_EDIT_UNAVAILABLE": "The result may be uncertain. Retain the exact key/body and retry."
+    "FILE_EDIT_UNAVAILABLE": "The result may be uncertain. Retain the exact key/body and retry.",
+    "FILE_DIRECT_TRANSFER_UNAVAILABLE": "No signed links here: send the edit inline in the save request.",
+    "FILE_EDIT_UPLOAD_MISSING": "The uploaded edit expired or was never put: put it again with the same request_id, then save."
   },
   "components": {
     "securitySchemes": {
@@ -1837,6 +1844,7 @@
             "pattern": "^[0-9a-f]{64}$"
           },
           "edit": {
+            "description": "The edit, inline. Send exactly one of edit and edit_upload.",
             "oneOf": [
               {
                 "type": "object",
@@ -2004,14 +2012,122 @@
                 "additionalProperties": false
               }
             ]
+          },
+          "edit_upload": {
+            "description": "The edit put through linkFileEditUpload (its size and SHA-256). Send exactly one of edit and edit_upload.",
+            "type": "object",
+            "properties": {
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "content_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "size_bytes",
+              "content_sha256"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "schema_version",
           "request_id",
           "base_version",
-          "base_content_sha256",
-          "edit"
+          "base_content_sha256"
+        ],
+        "additionalProperties": false
+      },
+      "FileTransferLink": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "const": "PUT"
+          },
+          "headers": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expires_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "method",
+          "headers",
+          "size_bytes",
+          "expires_at"
+        ],
+        "additionalProperties": false
+      },
+      "FilePartLinkRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "part_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "upload_id",
+          "part_index",
+          "content_sha256"
+        ],
+        "additionalProperties": false
+      },
+      "FileEditUploadRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "request_id",
+          "size_bytes",
+          "content_sha256"
         ],
         "additionalProperties": false
       },
@@ -5068,6 +5184,14 @@
             "maximum": 18446744073709552000,
             "minimum": 0,
             "type": "integer"
+          },
+          "transfer": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "proxied"
+            ],
+            "description": "direct asks for signed storage links (linkFileUploadPart) so parts never pass through this API. The session says which transfer it has."
           }
         },
         "required": [
@@ -5113,6 +5237,14 @@
           },
           "upload_url": {
             "type": "string"
+          },
+          "transfer": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "proxied"
+            ],
+            "description": "Present when the request named a transfer. direct: put each part through linkFileUploadPart's link. proxied: PUT each part to upload_url."
           }
         },
         "required": [
@@ -10575,6 +10707,143 @@
         }
       }
     },
+    "/api/v1/files/{file_ref}/edit-uploads": {
+      "post": {
+        "tags": [
+          "UserFiles"
+        ],
+        "operationId": "linkFileEditUpload",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^file:[0-9a-f]{64}$"
+            },
+            "description": "The original immutable file reference identifying this version family."
+          }
+        ],
+        "description": "A signed storage link to put a save's edit (the JSON of the save request's edit) before saving it with edit_upload, so the save carries no file text. FILE_DIRECT_TRANSFER_UNAVAILABLE: send the edit inline.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileEditUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileTransferLink"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/files/{file_ref}/image-preview": {
       "get": {
         "tags": [
@@ -10917,6 +11186,143 @@
           }
         },
         "description": "Stream one PNG preview page, using the ready manifest page SHA-256 as its strong ETag."
+      }
+    },
+    "/api/v1/files/{file_ref}/parts": {
+      "post": {
+        "tags": [
+          "UserFiles"
+        ],
+        "operationId": "linkFileUploadPart",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^file:[0-9a-f]{64}$"
+            },
+            "description": "The original immutable file reference identifying this version family."
+          }
+        ],
+        "description": "A signed storage link for one part of a direct upload session (initFileUpload with transfer direct). PUT exactly size_bytes with exactly the returned headers; storage refuses other bytes, and completion still checks the whole file. Signing records nothing: ask again for an expired link. Refusals are 409 with a code from x-epoch-file-transfer-error-codes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FilePartLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileTransferLink"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "bytes */{total}"
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/files/{file_ref}/preview": {
@@ -11420,7 +11826,7 @@
             "description": "The original immutable file reference identifying this version family."
           }
         ],
-        "description": "Save against the exact base version and content hash. Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.",
+        "description": "Save against the exact base version and content hash. The edit is inline (edit) or was put through linkFileEditUpload (edit_upload). Keep request_id on uncertain retries. A completed retry returns its original result even if the head advanced. Conflict/validation errors retain the client draft. Formula cells are read-only and XLSX formulas are not recalculated.",
         "requestBody": {
           "required": true,
           "content": {

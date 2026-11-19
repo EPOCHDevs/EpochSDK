@@ -1,27 +1,31 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
-import { PlatformFilesClient, PlatformFileError } from '../files.js'
+import { createHash } from 'node:crypto'
+import { PlatformFilesClient, PlatformFileError, StorageTransferError, putSigned } from '../files.js'
 const fixture = async name => JSON.parse(await readFile(new URL(`../../../contracts/fixtures/platform-files/${name}.json`, import.meta.url)))
 const saved = await fixture('version'), request = await fixture('save'), grid = await fixture('grid')
 const original = saved.original_file_ref, pin = saved.file.file_ref
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers })
 const client = handler => new PlatformFilesClient({ apiUrl: 'https://api.test', token: 'fixture', fetch: handler })
+// A Platform without signed storage links: the edit stays in the save request.
+const inline = handler => async (url, init) => String(url).endsWith('/edit-uploads')
+  ? json({ error: 'FILE_DIRECT_TRANSFER_UNAVAILABLE', message: 'Inline here' }, 409) : handler(url, init)
 
 test('exact numeric tokens and a stable body survive an explicit retry; no automatic mutation retry', async () => {
   const calls = []
   let tokens = 0
-  const files = new PlatformFilesClient({ apiUrl: 'https://api.test', token: async () => `fresh${++tokens}`, fetch: async (url, init) => {
+  const files = new PlatformFilesClient({ apiUrl: 'https://api.test', token: async () => `fresh${++tokens}`, fetch: inline(async (url, init) => {
     calls.push({url, ...init})
     assert.equal(init.redirect, 'error')
     return calls.length === 1 ? json({error: 'FILE_EDIT_BUSY', message: 'Busy'}, 503, {'Retry-After':'2'}) : json(saved)
-  } })
+  }) })
   await assert.rejects(files.save(original, request), e => e instanceof PlatformFileError && e.code === 'FILE_EDIT_BUSY' && e.retryAfter === '2')
   assert.equal(calls.length, 1)
   assert.equal((await files.save(original, request)).file.file_ref, pin)
   assert.equal(calls[0].body, calls[1].body)
   assert.equal(JSON.parse(calls[1].body).edit.changes[0].value.value, '9007199254740993')
-  assert.deepEqual(calls.map(c=>c.headers.Authorization), ['Bearer fresh1', 'Bearer fresh2'])
+  assert.deepEqual(calls.map(c=>c.headers.Authorization), ['Bearer fresh2', 'Bearer fresh4']) // Each after its link request.
 })
 test('invalid saves fail before token/HTTP; newline reference is not exact', async () => {
   const files = new PlatformFilesClient({apiUrl:'https://api.test', token:()=>assert.fail('auth called'), fetch:()=>assert.fail('HTTP called')})
@@ -34,7 +38,70 @@ test('invalid saves fail before token/HTTP; newline reference is not exact', asy
 })
 test('wrong family, hash, generation or unknown response field is rejected', async () => {
   const bodies = [{...saved,original_file_ref:`file:${'c'.repeat(64)}`},{...saved,version:2},{...saved,unexpected:'private'}, {...saved,file:{...saved.file,content_sha256:'c'.repeat(64)}}]
-  for (const body of bodies) await assert.rejects(client(async()=>json(body)).save(original,request),TypeError)
+  for (const body of bodies) await assert.rejects(client(inline(async()=>json(body))).save(original,request),/inconsistent file version|another save generation|invalid FileVersion/)
+})
+// Platform with signed storage links, and the storage they point to.
+function staging({ refusals = 0 } = {}) {
+  const state = { api: [], puts: [], links: 0 }
+  state.files = new PlatformFilesClient({ apiUrl: 'https://api.test', token: 'fixture',
+    fetch: async (url, init) => {
+      state.api.push({ url: String(url), ...init })
+      const body = JSON.parse(init.body)
+      if (String(url).endsWith('/edit-uploads')) {
+        state.links++
+        state.linkRequest = body
+        return json({ url: `https://storage.test/staged?X-Amz-Signature=secret${state.links}`, method: 'PUT',
+          headers: { 'content-type': 'application/json', 'x-amz-checksum-sha256': 'checksum' }, size_bytes: body.size_bytes, expires_at: '2026-11-19T12:15:00.000Z' })
+      }
+      state.saved = body
+      return json(saved)
+    },
+    storageFetch: async (url, init) => {
+      state.puts.push({ url, ...init })
+      assert.equal(init.headers.Authorization, undefined) // API credentials never reach storage.
+      assert.equal(init.credentials, 'omit')
+      assert.deepEqual(init.headers, { 'content-type': 'application/json', 'x-amz-checksum-sha256': 'checksum' })
+      return state.puts.length <= refusals ? new Response('<Error><Code>AccessDenied</Code></Error>', { status: 403 }) : new Response(null, { status: 200 })
+    } })
+  return state
+}
+test('a save puts its edit through a signed link and names it, so no file text crosses the API', async () => {
+  const state = staging()
+  assert.equal((await state.files.save(original, request)).file.file_ref, pin)
+  const staged = state.puts[0].body
+  assert.deepEqual(JSON.parse(new TextDecoder().decode(staged)), request.edit)
+  const upload = { size_bytes: staged.byteLength, content_sha256: createHash('sha256').update(staged).digest('hex') }
+  assert.deepEqual(state.linkRequest, { request_id: request.request_id, ...upload })
+  const { edit: _edit, ...metadata } = request
+  assert.deepEqual(state.saved, { ...metadata, edit_upload: upload })
+})
+test('putSigned takes a generated client link and refuses one signed for other bytes', async () => {
+  const puts = []
+  const body = new Blob(['part'])
+  const link = { url: 'https://storage.test/p?X-Amz-Signature=s', method: 'PUT', headers: { 'x-amz-checksum-sha256': 'c' }, sizeBytes: 4, expiresAt: '2026-11-19T12:15:00.000Z' }
+  await putSigned(async (url, init) => { puts.push({ url, ...init }); return new Response(null, { status: 200 }) }, async () => link, body)
+  assert.equal(puts.length, 1)
+  assert.equal(puts[0].body, body)
+  await assert.rejects(putSigned(async () => assert.fail('PUT'), async () => ({ ...link, sizeBytes: 5 }), body), /different file transfer/)
+})
+test('a Platform without edit links (before direct transfer) takes the edit inline; a caller cannot name a staged edit', async () => {
+  const calls = []
+  const files = client(async (url, init) => {
+    calls.push({ url: String(url), ...init })
+    return String(url).endsWith('/edit-uploads') ? json({ error: 'Not Found', message: 'Route not found' }, 404) : json(saved)
+  })
+  assert.equal((await files.save(original, request)).file.file_ref, pin)
+  assert.deepEqual(JSON.parse(calls.at(-1).body), request)
+  await assert.rejects(files.save(original, { ...request, edit_upload: { size_bytes: 1, content_sha256: 'a'.repeat(64) } }), /Pass the edit itself/)
+})
+test('a refused put asks for one new link, then fails without exposing it', async () => {
+  const once = staging({ refusals: 1 })
+  await once.files.save(original, request)
+  assert.equal(once.links, 2)
+  assert.match(once.puts[1].url, /secret2$/)
+  const twice = staging({ refusals: 2 })
+  await assert.rejects(twice.files.save(original, request), e => e instanceof StorageTransferError && e.status === 403 && !e.message.includes('secret'))
+  assert.equal(twice.saved, undefined)
 })
 test('grid keeps typed precision and content is a streamed ranged response', async () => {
   const files=client(async(url,init)=> {

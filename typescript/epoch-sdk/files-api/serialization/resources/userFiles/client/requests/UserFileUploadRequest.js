@@ -38,9 +38,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserFileUploadRequest = void 0;
 const core = __importStar(require("../../../../../core"));
+const UserFileUploadRequestTransfer_1 = require("../../types/UserFileUploadRequestTransfer");
 exports.UserFileUploadRequest = core.serialization.object({
     contentSha256: core.serialization.property("content_sha256", core.serialization.string()),
     mediaType: core.serialization.property("media_type", core.serialization.string()),
     name: core.serialization.string(),
     sizeBytes: core.serialization.property("size_bytes", core.serialization.number()),
+    transfer: UserFileUploadRequestTransfer_1.UserFileUploadRequestTransfer.optional(),
 });

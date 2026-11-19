@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import json
 from pathlib import Path
 
 import httpx
 import pytest
 
+from epoch_sdk import StorageTransferError
+from epoch_sdk._storage import StorageClient
 from epoch_sdk.platform_file_models import FileEditRequest
 from epoch_sdk.platform_files import PlatformFileError, PlatformFilesClient
 from epoch_sdk.research import EpochClient
@@ -22,10 +25,23 @@ GRID = json.loads((FIXTURES / "grid.json").read_text())
 ORIGINAL, PIN = VERSION["original_file_ref"], VERSION["file"]["file_ref"]
 
 
+def inline(transport):
+    """A Platform without signed storage links: the edit stays in the save request."""
+
+    def handler(request):
+        if request.url.path.endswith("/edit-uploads"):
+            return httpx.Response(
+                409, json={"error": "FILE_DIRECT_TRANSFER_UNAVAILABLE", "message": "Inline here"}
+            )
+        return transport(request)
+
+    return handler
+
+
 def test_save_uses_exact_numeric_text_and_retry_body_with_refreshed_auth():
     async def scenario():
         calls = []
-        tokens = iter(["first", "second"])
+        tokens = iter(["first", "first", "second", "second"])  # Link request, then save.
 
         def transport(request):
             calls.append(request)
@@ -39,7 +55,7 @@ def test_save_uses_exact_numeric_text_and_retry_body_with_refreshed_auth():
                 )
             return httpx.Response(200, json=VERSION)
 
-        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(inline(transport))) as http:
             client = PlatformFilesClient("https://api.test", token=lambda: next(tokens), http=http)
             with pytest.raises(PlatformFileError) as error:
                 await client.save(ORIGINAL, SAVE)
@@ -121,11 +137,133 @@ def test_invalid_wire_is_rejected_before_auth_or_transport(change):
 def test_response_identity_and_closed_schema_are_checked(body):
     async def scenario():
         async with httpx.AsyncClient(
-            transport=httpx.MockTransport(lambda _: httpx.Response(200, json=body))
+            transport=httpx.MockTransport(inline(lambda _: httpx.Response(200, json=body)))
         ) as http:
             client = PlatformFilesClient("https://api.test", token="fixture", http=http)
             with pytest.raises(ValueError):
                 await client.save(ORIGINAL, SAVE)
+
+    asyncio.run(scenario())
+
+
+class StagingPlatform:
+    """Platform with signed storage links, and the storage they point to."""
+
+    def __init__(self, refusals: int = 0, status: int = 403):
+        self.calls: list[httpx.Request] = []
+        self.puts: list[httpx.Request] = []
+        self.links = 0
+        self.refusals = refusals
+        self.status = status
+
+    def api(self, request):
+        self.calls.append(request)
+        body = json.loads(request.content)
+        if request.url.path == f"/api/v1/files/{ORIGINAL}/edit-uploads":
+            self.links += 1
+            self.request = body
+            return httpx.Response(200, json={
+                "url": f"https://storage.test/staged?X-Amz-Signature=secret{self.links}", "method": "PUT",
+                "headers": {"content-type": "application/json", "x-amz-checksum-sha256": "checksum"},
+                "size_bytes": body["size_bytes"], "expires_at": "2026-11-19T12:15:00.000Z",
+            })
+        assert request.url.path == f"/api/v1/files/{ORIGINAL}/versions"
+        self.saved = body
+        return httpx.Response(200, json=VERSION)
+
+    def storage(self, request):
+        self.puts.append(request)
+        assert "authorization" not in request.headers  # API credentials never reach storage.
+        assert request.headers["content-type"] == "application/json"
+        assert request.headers["x-amz-checksum-sha256"] == "checksum"
+        if len(self.puts) <= self.refusals:
+            return httpx.Response(self.status, text="<Error><Code>AccessDenied</Code></Error>")
+        return httpx.Response(200)
+
+
+def staged_client(monkeypatch, platform: StagingPlatform):
+    monkeypatch.setattr(
+        "epoch_sdk.platform_files.storage_client",
+        lambda: StorageClient(httpx.MockTransport(platform.storage)),
+    )
+    return httpx.AsyncClient(transport=httpx.MockTransport(platform.api))
+
+
+def test_save_puts_the_edit_through_a_signed_link_and_names_it(monkeypatch, caplog):
+    caplog.set_level("DEBUG")
+
+    async def scenario():
+        platform = StagingPlatform()
+        async with staged_client(monkeypatch, platform) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            result = await client.save(ORIGINAL, SAVE)
+        assert result.file.file_ref == PIN
+        staged = platform.puts[0].content
+        assert json.loads(staged) == SAVE["edit"]
+        upload = {"size_bytes": len(staged), "content_sha256": hashlib.sha256(staged).hexdigest()}
+        assert platform.request == {"request_id": SAVE["request_id"], **upload}
+        # The save carries only metadata: no file text passes through the API.
+        assert platform.saved == {**{k: v for k, v in SAVE.items() if k != "edit"}, "edit_upload": upload}
+        assert [r.headers["Authorization"] for r in platform.calls] == ["Bearer fixture"] * 2
+
+    asyncio.run(scenario())
+    assert "X-Amz-Signature" not in caplog.text  # A signed link is never logged.
+
+
+def test_a_storage_failure_other_than_a_refusal_fails_without_another_link(monkeypatch):
+    async def scenario():
+        async with staged_client(monkeypatch, platform := StagingPlatform(refusals=1, status=503)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            with pytest.raises(StorageTransferError) as error:
+                await client.save(ORIGINAL, SAVE)
+        assert error.value.status == 503 and platform.links == 1 and not hasattr(platform, "saved")
+
+    asyncio.run(scenario())
+
+
+def test_a_platform_without_edit_links_takes_the_edit_inline():
+    async def scenario():
+        calls = []
+
+        def transport(request):
+            calls.append(request)
+            if request.url.path.endswith("/edit-uploads"):  # Before direct transfer: no such route.
+                return httpx.Response(404, json={"error": "Not Found", "message": "Route not found"})
+            return httpx.Response(200, json=VERSION)
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            assert (await client.save(ORIGINAL, SAVE)).file.file_ref == PIN
+        assert json.loads(calls[-1].content) == SAVE
+
+    asyncio.run(scenario())
+
+
+def test_a_caller_cannot_name_a_staged_edit_itself():
+    async def scenario():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _: pytest.fail("HTTP"))) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            staged = {**SAVE, "edit_upload": {"size_bytes": 1, "content_sha256": "a" * 64}}
+            with pytest.raises(ValueError, match="Pass the edit itself"):
+                await client.save(ORIGINAL, staged)
+
+    asyncio.run(scenario())
+
+
+def test_a_refused_put_asks_for_one_new_link_then_fails_without_the_link(monkeypatch):
+    async def scenario():
+        async with staged_client(monkeypatch, platform := StagingPlatform(refusals=1)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            await client.save(ORIGINAL, SAVE)
+        assert platform.links == 2 and len(platform.puts) == 2
+        assert platform.puts[1].url.params["X-Amz-Signature"] == "secret2"
+
+        async with staged_client(monkeypatch, platform := StagingPlatform(refusals=2)) as http:
+            client = PlatformFilesClient("https://api.test", token="fixture", http=http)
+            with pytest.raises(StorageTransferError) as error:
+                await client.save(ORIGINAL, SAVE)
+        assert error.value.status == 403 and "secret" not in str(error.value)
+        assert platform.links == 2 and not hasattr(platform, "saved")
 
     asyncio.run(scenario())
 

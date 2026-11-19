@@ -5,6 +5,7 @@ import * as serializers from "../index";
 import * as EpochFiles from "../../api/index";
 import * as core from "../../core";
 import { UserFileStatus } from "./UserFileStatus";
+import { UserFileUploadSessionTransfer } from "./UserFileUploadSessionTransfer";
 export declare const UserFileUploadSession: core.serialization.ObjectSchema<serializers.UserFileUploadSession.Raw, EpochFiles.UserFileUploadSession>;
 export declare namespace UserFileUploadSession {
     interface Raw {
@@ -16,5 +17,6 @@ export declare namespace UserFileUploadSession {
         status: UserFileStatus.Raw;
         upload_id: string;
         upload_url: string;
+        transfer?: UserFileUploadSessionTransfer.Raw | null;
     }
 }
