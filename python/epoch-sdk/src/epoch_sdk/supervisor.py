@@ -48,7 +48,6 @@ from .dataset_reviews import (
 from .platform_files import PlatformFilesClient
 from .responses import (
     ResearchResponseContent,
-    ResponsePlanReference,
     ResponseReference,
     ResponseTablePage,
     SavedResearchResponse,
@@ -201,15 +200,12 @@ class SavedStudy(Closed):
     study_id: str
     source_execution_id: str
     thread_id: str | None = None
-    response_plan: ResponsePlanReference | None = None
     report_template: ExecutionReportReference | None = None
 
     @model_validator(mode="after")
     def one_output_program(self) -> SavedStudy:
-        if self.report_template is not None and (
-            self.response_plan is not None or self.report_template.model_extra
-        ):
-            raise ValueError("Choose one exact native report or historical response plan")
+        if self.report_template is not None and self.report_template.model_extra:
+            raise ValueError("Choose one exact native report")
         return self
 
 
@@ -1202,9 +1198,9 @@ class SupervisorClient:
         period: DatePeriodConfig,
         execution: ExecutionOptions | None = None,
     ) -> ChosenExecution:
-        if reference.response_plan is not None or reference.report_template is not None:
+        if reference.report_template is not None:
             raise ValueError(
-                "Use EpochClient.execute_saved for a prepared response plan so its "
+                "Use EpochClient.execute_saved for a prepared report so its "
                 "outputs are replayed and published with the new execution."
             )
         definition = await self.backend.studies_definitions.get_a_study_definition_by_id(

@@ -237,8 +237,9 @@ new original and its frozen report once, without a supervisor. The original job
 and report child have distinct IDs; response/presentation pins belong to the
 report. Native MCP replay uses `epoch_execute_extension` with `report_template`
 instead of `input_tables`. Period changes require captured permission; costs
-and declared original parameters remain captured. Historical response-plan
-read/replay remains an explicit compatibility path, not new authoring policy.
+and declared original parameters remain captured. Response-plan attachment,
+APIs and replay are retired (ENG-3105); existing saved answers remain readable
+directly without replay.
 
 The current package requires the normal generated native `>=3.3.0rc41,<4`
 package, including Backend-owned research-to-extension links and report replay.

@@ -225,12 +225,12 @@ class ExecutionExtensionClient:
         """
         if (request.input_tables is None) == (request.report_template is None):
             raise ValueError("Choose explicit input_tables or one verified report_template.")
-        if request.response_plan is not None:
-            raise ValueError("An extension declares outputs in EpochScript, without response_plan.")
         # Fern permits response extensions; the native request's outer shape
         # is closed. Never silently drop a misspelled request field here.
         if request.model_extra:
             raise ValueError("Unknown execution extension request fields.")
+        if "response_plan" in request.model_dump(mode="json", exclude_none=True):
+            raise ValueError("Response-plan execution is retired.")
         options: _ExecutionOptions = {}
         if request.execution_parameter_bindings is not None:
             options["execution_parameter_bindings"] = request.execution_parameter_bindings

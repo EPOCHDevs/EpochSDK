@@ -78,8 +78,9 @@ The main methods are:
   review/schema/result identity; native Save/decline is confirmed before graph
   delivery. See [shared dataset review](../../docs/dataset-review.md).
 - `execute(savedStudy, { operationId, period })`: run a retained study reference
-  or a completed research operation's reference. Source settings, report
-  templates and historical response plans retain their native semantics.
+  or a completed research operation's reference. Source settings and native
+  report templates retain their semantics. Response-plan options and replay
+  are retired (ENG-3105).
 - `status(operationId, { kind })`: read research or execution state. A published
   graph checkpoint may be attached to the same accepted request receipt; this
   never starts, resumes or reruns graph/engine work.

@@ -40,9 +40,6 @@ from .output_validation import (
 type InterpretedOutput = Annotated[JsonValueOutput | TextValue, Field(discriminator="type")]
 
 
-class ResponsePlanReference(Contract):
-    plan_id: Annotated[str, Field(pattern=r"^rpl_[0-9a-f]{64}$")]
-    version: Annotated[int, Field(ge=1)]
 
 
 class ResponseQualification(Contract):
@@ -90,7 +87,6 @@ class ResponseReference(Contract):
     version: Annotated[int, Field(ge=1)]
     primary_execution_id: NonBlank | None = None
     study_id: NonBlank | None = None
-    response_plan: ResponsePlanReference | None = None
     # Preserve the exact native attribution instead of duplicating its DTO or
     # confusing the original input execution with this derived answer's run.
     extension: ExecutionExtensionProvenance | None = None
@@ -98,13 +94,23 @@ class ResponseReference(Contract):
     # is paged independently so receipts do not consume the answer's budget.
     acquisition_provenance: AcquisitionProvenanceReference | None = None
     ai_text: AiTextSkipped | None = None
+    reuse_limitation: Literal["retired_response_plan"] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def saved_answer_legacy_attribution(cls, value: object) -> object:
+        # Read old immutable outputs without retaining a plan model or replay path.
+        if isinstance(value, dict) and "response_plan" in value:
+            saved={key: child for key, child in value.items() if key != "response_plan"}
+            if value["response_plan"] is not None:
+                saved["reuse_limitation"]="retired_response_plan"
+            return saved
+        return value
 
     @model_validator(mode="after")
     def paired_source(self) -> Self:
         if (self.primary_execution_id is None) != (self.study_id is None):
             raise ValueError("An execution-backed answer requires both execution and study")
-        if self.response_plan is not None and self.primary_execution_id is None:
-            raise ValueError("A planned answer requires its source execution")
         if self.extension is not None and (
             self.primary_execution_id != self.extension.execution_id
             or self.study_id != self.extension.study_id
@@ -121,8 +127,6 @@ class SavedResearchResponse(ResponseReference):
 
     @model_validator(mode="after")
     def table_sources(self) -> Self:
-        if self.content.qualifications and self.response_plan is None:
-            raise ValueError("Computed qualifications require their source-backed response plan")
         for value in self.content.outputs:
             if (
                 isinstance(value, TableValue)
