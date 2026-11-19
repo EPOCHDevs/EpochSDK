@@ -16,9 +16,11 @@ function pause(ms, signal) {
 
 /** Uses the caller's authenticated native clients. Credentials never enter workflow arguments. */
 export class EpochClient {
-  constructor({ backend, graph, assistantId = "epoch-ai", pollIntervalMs = 1000 }) {
+  constructor({ backend, graph, files, assistantId = "epoch-ai", pollIntervalMs = 1000 }) {
     invariant(backend && graph, "Provide authenticated StratifyX and LangGraph clients.")
     this.backend = backend
+    // Platform's Files and Space client (ENG-2819); dataset reviews read and decide through it.
+    this.files = files
     this.graph = graph
     this.assistantId = assistantId
     this.pollIntervalMs = Math.max(250, pollIntervalMs)

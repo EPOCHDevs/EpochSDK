@@ -4,6 +4,7 @@ import json
 import httpx
 from langgraph_sdk.client import LangGraphClient
 from stratifyx import AsyncStratifyX
+from epoch_sdk.files_api import AsyncEpochFiles
 from epoch_sdk.research import EpochClient
 from epoch_sdk.supervisor import SupervisorClient
 STUDY = {"name":"Saved fixture","description":"Explicit test data","source":"fixture source","data":{"assets":[]},"authoring_origin":"agent"}
@@ -83,5 +84,6 @@ class Service:
                 LangGraphClient(graph_http),
                 AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=backend_http),
                 document_http=graph_http,
+                files_api=AsyncEpochFiles(base_url="https://backend.invalid", token="fixture", httpx_client=backend_http),
             ))
 

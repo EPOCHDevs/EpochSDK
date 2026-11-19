@@ -5,7 +5,7 @@ import json
 
 import httpx
 from mcp import Client
-from stratifyx.types import DatasetBuildRequest, WebResearchRequest
+from epoch_sdk.files_api.types import DatasetBuildRequest, WebResearchRequest
 from native_service_fixture import Service
 from test_documents import NOW, PREPARATION, REQUEST
 

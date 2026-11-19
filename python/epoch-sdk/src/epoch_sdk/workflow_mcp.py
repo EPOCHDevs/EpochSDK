@@ -21,6 +21,7 @@ from stratifyx.core.api_error import ApiError
 
 from .contracts import ErrorResponse, OutputRequest, RunParameters
 from .errors import EpochError
+from .files_api.core.api_error import ApiError as FilesApiError
 from .research import (
     EpochClient,
     ExecutionAccepted,
@@ -163,7 +164,7 @@ def create_server(client: SupervisorClient | EpochClient) -> MCPServer:
             if preview.content.format != output_format:
                 raise ValueError("The draft resource has a different content format")
             return await epoch.download_dataset(draft_ref, expected_sha256=digest)
-        except (ApiError, httpx.HTTPError, ValueError):
+        except (ApiError, FilesApiError, httpx.HTTPError, ValueError):
             raise MCPError(
                 -32001,
                 "This draft content could not be authorized or verified. Reopen its exact review.",

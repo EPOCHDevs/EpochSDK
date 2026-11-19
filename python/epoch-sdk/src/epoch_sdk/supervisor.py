@@ -34,6 +34,7 @@ from stratifyx import (
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.job_list_item import JobListItem
 
+from ._files_client import files_client
 from .catalogue import CatalogueClient
 from .contracts import Contract, DomainError, NonBlank, ResetTime
 from .credentials import Token, http_clients
@@ -45,6 +46,7 @@ from .dataset_reviews import (
     DatasetWorkflowInterrupt,
     interrupt_adapter,
 )
+from .files_api import AsyncEpochFiles
 from .platform_files import PlatformFilesClient
 from .responses import (
     ResearchResponseContent,
@@ -359,7 +361,7 @@ class _State(BaseModel):
 
 
 def _header_from_auth_flow() -> str:
-    # AsyncSourcesClient writes "Bearer <this>"; with a provider, the auth flow replaces it.
+    # AsyncSourcesClient and AsyncEpochFiles write "Bearer <this>"; with a provider, the auth flow replaces it.
     return ""
 
 
@@ -441,6 +443,7 @@ class SupervisorClient:
         document_http: httpx.AsyncClient | None = None,
         platform_files: PlatformFilesClient | None = None,
         catalogue: CatalogueClient | None = None,
+        files_api: AsyncEpochFiles | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
@@ -450,6 +453,8 @@ class SupervisorClient:
         self.document_http = document_http
         self.platform_files = platform_files
         self.catalogue = catalogue
+        # Files and Space, generated from Platform's contract (ENG-2819).
+        self.files_api = files_api
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -509,6 +514,12 @@ class SupervisorClient:
             document_http=graph_http,
             platform_files=PlatformFilesClient(backend_url, token=fixed, http=backend_http),
             catalogue=CatalogueClient(platform_url or backend_url, token, http=backend_http),
+            # The API host routes Files and Space to Platform.
+            files_api=AsyncEpochFiles(
+                base_url=backend_url,
+                token=fixed if fixed is not None else _header_from_auth_flow,
+                httpx_client=backend_http,
+            ),
         )
         client._owned_http = [graph_http, backend_http]
         return client
@@ -822,7 +833,7 @@ class SupervisorClient:
             answer = responses[item.id]
             if not isinstance(answer, DatasetResultResponse) or answer.action == "edit":
                 continue
-            native = await self.backend.user_files.get_dataset_preparation(
+            native = await files_client(self).user_files.get_dataset_preparation(
                 answer.preparation_ref,
                 request_options={"max_retries": 0},
             )
@@ -850,7 +861,7 @@ class SupervisorClient:
                 action = "discard" if answer.action == "decline" else answer.action
                 if native.state.value == "save_failed" and answer.action != "decline":
                     action = "retry_save"
-                from stratifyx.types import DatasetBuildActionRequest
+                from .files_api.types import DatasetBuildActionRequest
 
                 decision = DatasetBuildActionRequest.model_validate(
                     {
@@ -861,7 +872,7 @@ class SupervisorClient:
                         "schema_sha256": answer.schema_sha256,
                     }
                 )
-                native = await self.backend.user_files.act_on_dataset_preparation(
+                native = await files_client(self).user_files.act_on_dataset_preparation(
                     answer.preparation_ref,
                     action=decision.action,
                     attempt=decision.attempt,
@@ -1087,7 +1098,7 @@ class SupervisorClient:
             if isinstance(payload, DatasetConfigureInterrupt):
                 result.append(item)
                 continue
-            operation = await self.backend.user_files.get_dataset_preparation(
+            operation = await files_client(self).user_files.get_dataset_preparation(
                 payload.operation.preparation_ref,
                 request_options={"max_retries": 0},
             )
@@ -1096,7 +1107,7 @@ class SupervisorClient:
                 if operation.preparation_ref in seen or len(seen) >= 32:
                     raise ValueError("Invalid dataset review replacement chain")
                 seen.add(operation.preparation_ref)
-                child = await self.backend.user_files.get_dataset_preparation(
+                child = await files_client(self).user_files.get_dataset_preparation(
                     operation.replaced_by,
                     request_options={"max_retries": 0},
                 )
@@ -1113,7 +1124,7 @@ class SupervisorClient:
                 "save_failed",
                 "saved",
             }:
-                preview = await self.backend.user_files.preview_saved_dataset(
+                preview = await files_client(self).user_files.preview_saved_dataset(
                     operation.draft_ref,
                     offset=0,
                     limit=5,

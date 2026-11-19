@@ -24,9 +24,13 @@ from document_read_acceptance import identity, loopback, token
 from pyarrow import ipc
 from pydantic import BaseModel, ConfigDict, Field
 from stratifyx._release import SDK_RELEASE
-from stratifyx.core.api_error import ApiError
-from stratifyx.types import DatasetBuild, DatasetBuildActionRequest, DatasetBuildRequest
+from stratifyx.core.api_error import ApiError as NativeApiError
+from epoch_sdk.files_api.core.api_error import ApiError as FilesApiError
+from epoch_sdk.files_api.types import DatasetBuild, DatasetBuildActionRequest, DatasetBuildRequest
 from epoch_sdk.research import EpochClient
+
+# Files and Space calls raise the Files client's error; the rest raise StratifyX's.
+ApiError = (NativeApiError, FilesApiError)
 type CaseName = Literal['table', 'json', 'text', 'scalar', 'no_match']
 
 class Case(BaseModel):
@@ -203,7 +207,7 @@ async def scenario(args, state: Evidence) -> None:
                             assert type(value['audited']) is bool
                     evidence_ref = saved.descriptor.evidence_ref
                     assert evidence_ref
-                    proof = await client.backend.user_files.get_dataset_evidence(evidence_ref, request_options={'max_retries': 0})
+                    proof = await client.files_api.user_files.get_dataset_evidence(evidence_ref, request_options={'max_retries': 0})
                     assert proof.source_sha256 == state.original_sha256 and proof.file_ref == state.file_ref
                     assert proof.citations and all((citation.quote and citation.page == 1 for citation in proof.citations))
                     assert proof.coverage.processed_pages == [1] and (not proof.coverage.unread_pages)

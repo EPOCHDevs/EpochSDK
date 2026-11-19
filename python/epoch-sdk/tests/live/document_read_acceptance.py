@@ -22,9 +22,13 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field
 from stratifyx._release import SDK_RELEASE
-from stratifyx.core.api_error import ApiError
-from stratifyx.types import DocumentContentPage, DocumentRead, DocumentSearchResponse, DocumentSourcePassage
+from stratifyx.core.api_error import ApiError as NativeApiError
+from epoch_sdk.files_api.core.api_error import ApiError as FilesApiError
+from epoch_sdk.files_api.types import DocumentContentPage, DocumentRead, DocumentSearchResponse, DocumentSourcePassage
 from epoch_sdk.research import EpochClient
+
+# Files and Space calls raise the Files client's error; the rest raise StratifyX's.
+ApiError = (NativeApiError, FilesApiError)
 
 class Evidence(BaseModel):
     model_config = ConfigDict(extra='forbid')

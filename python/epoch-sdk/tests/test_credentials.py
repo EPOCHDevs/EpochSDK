@@ -10,6 +10,8 @@ from epoch_sdk.credentials import BearerAuth
 from epoch_sdk.supervisor import SupervisorClient
 from stratifyx.core.api_error import ApiError
 
+from epoch_sdk.files_api.core.api_error import ApiError as FilesApiError
+
 GRAPH = "https://graph.test"
 BACKEND = "https://backend.test"
 
@@ -62,6 +64,13 @@ async def backend_get(client: SupervisorClient, request_id: str) -> None:
         await client.backend.sdk_requests.get_sdk_request(request_id)
 
 
+async def files_list(client: SupervisorClient) -> None:
+    # Platform's Files client shares the authenticated HTTP client (ENG-2819).
+    assert client.files_api is not None
+    with pytest.raises(FilesApiError):
+        await client.files_api.user_files.list_saved_datasets(request_options={"max_retries": 0})
+
+
 async def sources_list(client: SupervisorClient) -> None:
     assert client.source_connections is not None
     with pytest.raises(Exception):
@@ -79,11 +88,12 @@ def test_a_string_token_is_sent_as_before() -> None:
         client = connect("fixed-token", recorder)
         assert all(http.auth is None or not isinstance(http.auth, BearerAuth) for http in client._owned_http)
         await backend_get(client, "req-1")
+        await files_list(client)
         await sources_list(client)
         await graph_get(client, "thread-1")
         await client.aclose()
         assert {value for _, value in recorder.seen} == {"Bearer fixed-token"}
-        assert len(recorder.seen) == 3
+        assert len(recorder.seen) == 4
 
     asyncio.run(run())
 
@@ -94,17 +104,19 @@ def test_a_provider_is_read_for_every_request() -> None:
         token = Rotating("first")
         client = connect(token, recorder)
         await backend_get(client, "req-1")
+        await files_list(client)
         await sources_list(client)
         await graph_get(client, "thread-1")
         assert {value for _, value in recorder.seen} == {"Bearer first"}
 
         token.token = "second"
         await backend_get(client, "req-2")
+        await files_list(client)
         await sources_list(client)
         await graph_get(client, "thread-2")
         await client.aclose()
-        assert [value for _, value in recorder.seen[3:]] == ["Bearer second"] * 3
-        assert token.calls == 6
+        assert [value for _, value in recorder.seen[4:]] == ["Bearer second"] * 4
+        assert token.calls == 8
 
     asyncio.run(run())
 

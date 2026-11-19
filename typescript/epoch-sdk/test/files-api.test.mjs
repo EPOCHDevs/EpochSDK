@@ -50,3 +50,18 @@ test('a download that fails keeps its typed JSON error body', () =>
       return true;
     });
   }));
+
+test('an app can wrap the generated fetcher, as it does for its other API clients', async () => {
+  const { fetcher } = await import('@epochdevs/epoch-sdk/files-api/core/fetcher');
+  const seen = [];
+  const files = new EpochFilesClient({
+    environment: 'https://platform.test', token: 'unused',
+    // The app sets its own bearer and turns retries off, as the Portal does for StratifyX.
+    fetcher: (args) => { seen.push(args); return fetcher({ ...args, headers: { ...args.headers, Authorization: 'Bearer app' }, maxRetries: 0 }); },
+  });
+  await withFetch(() => [200, { items: [], next_cursor: null }], async (requests) => {
+    await files.userFiles.listSavedDatasets({ limit: 1 });
+    assert.equal(seen.length, 1);
+    assert.equal(requests[0].init.headers.Authorization, 'Bearer app');
+  });
+});

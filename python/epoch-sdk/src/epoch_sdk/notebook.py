@@ -12,10 +12,10 @@ import ipywidgets as widgets  # pyright: ignore[reportMissingTypeStubs]
 from IPython.display import HTML, JSON, display  # pyright: ignore[reportUnknownVariableType]
 from markdown_it import MarkdownIt
 from pydantic import JsonValue, TypeAdapter
-from stratifyx.types import DatasetSchemaChoice_Provided
 
 from .dataset_reviews import DatasetConfigureInterrupt, dataset_response
 from .errors import EpochError
+from .files_api.types import DatasetSchemaChoice_Provided
 from .output_validation import JsonValueOutput, TableValue
 from .presentation import ui_text
 from .research import EpochClient, ResearchCompleted

@@ -29,10 +29,15 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field
 from space_core_acceptance import chart_values, completed, native_options, native_execute, resource, saved
 from stratifyx import DataOption, DatePeriodConfig
-from stratifyx.core.api_error import ApiError
+from stratifyx.core.api_error import ApiError as NativeApiError
+from epoch_sdk.files_api.core.api_error import ApiError as FilesApiError
 from stratifyx.core.request_options import RequestOptions
-from stratifyx.types import DatasetPurpose, DatasetReviewRequest, DatasetReviewResponse, DatasetTableSchema, DataSourceColumn, JobListItem, SavedDataset, SpaceFolder, SpacePage, SpaceResourceRef, StructuredImportRequest, StructuredImportResult, UserFileDescriptor
+from stratifyx.types import JobListItem
+from epoch_sdk.files_api.types import DatasetPurpose, DatasetReviewRequest, DatasetReviewResponse, DatasetTableSchema, DataSourceColumn, SavedDataset, SpaceFolder, SpacePage, SpaceResourceRef, StructuredImportRequest, StructuredImportResult, UserFileDescriptor
 from epoch_sdk.research import EpochClient
+
+# Files and Space calls raise the Files client's error; the rest raise StratifyX's.
+ApiError = (NativeApiError, FilesApiError)
 NO_RETRY: RequestOptions = {'max_retries': 0}
 
 class _Scalar(Protocol):
@@ -148,11 +153,11 @@ async def preflight(state: State, bearer: str, path: Path) -> None:
     state.persist(path)
 
 async def import_source(client: EpochClient, state: State, path: Path, content: bytes, name: str) -> tuple[UserFileDescriptor, SavedDataset, bytes]:
-    pending = await client.backend.user_files.init_file_upload(name=name, media_type='text/csv', size_bytes=len(content), content_sha256=hashlib.sha256(content).hexdigest(), request_options=NO_RETRY)
+    pending = await client.files_api.user_files.init_file_upload(name=name, media_type='text/csv', size_bytes=len(content), content_sha256=hashlib.sha256(content).hexdigest(), request_options=NO_RETRY)
     state.files.append(pending.file_ref)
     state.persist(path)
     try:
-        await client.backend.user_files.complete_file_upload(pending.file_ref, upload_id=pending.upload_id, request_options=NO_RETRY)
+        await client.files_api.user_files.complete_file_upload(pending.file_ref, upload_id=pending.upload_id, request_options=NO_RETRY)
         raise AssertionError('Incomplete upload was published')
     except ApiError as error:
         assert error.status_code in {400, 409}

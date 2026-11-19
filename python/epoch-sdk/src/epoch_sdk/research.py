@@ -42,6 +42,7 @@ from .documents import DocumentClient
 from .errors import EpochError
 from .extensions import ExecutionExtensionClient
 from .files import FileClient
+from .files_api.core.api_error import ApiError as FilesApiError
 from .responses import ResponseTablePage, SavedResearchResponse
 from .sources import SourceClient
 from .supervisor import (
@@ -119,7 +120,7 @@ async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
         raise
     except ResearchError:
         raise
-    except (EpochError, ApiError, httpx.HTTPError, ValueError) as error:
+    except (EpochError, ApiError, FilesApiError, httpx.HTTPError, ValueError) as error:
         execution_id: str | None = None
         if isinstance(error, EpochError):
             detail = error.error
@@ -129,7 +130,7 @@ async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
         else:
             status = (
                 error.status_code
-                if isinstance(error, ApiError)
+                if isinstance(error, (ApiError, FilesApiError))
                 else (
                     error.response.status_code if isinstance(error, httpx.HTTPStatusError) else None
                 )
@@ -181,6 +182,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         self.document_http = supervisor.document_http
         self.source_connections = supervisor.source_connections
         self.platform_files = supervisor.platform_files
+        self.files_api = supervisor.files_api
 
     @classmethod
     def connect(

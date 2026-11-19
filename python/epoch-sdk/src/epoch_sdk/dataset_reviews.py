@@ -1,7 +1,7 @@
 """Closed SDK projection of EpochAI presentation/dataset_reviews.py.
 
-The projection is checked against the source-owned exported schema. Backend
-models and exact draft identities are imported from the versioned native SDK.
+The projection is checked against the source-owned exported schema. Platform's
+models and exact draft identities come from its generated Files client.
 """
 
 from __future__ import annotations
@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
-from stratifyx.types import DatasetBuild, DatasetBuildRequest, DatasetPreviewPage
+
+from .files_api.types import DatasetBuild, DatasetBuildRequest, DatasetPreviewPage
 
 
 class Closed(BaseModel):

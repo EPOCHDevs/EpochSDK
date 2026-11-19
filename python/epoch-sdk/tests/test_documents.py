@@ -11,7 +11,7 @@ import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 from mcp import Client
 from mcp.types import ResourceLink, TextResourceContents
-from stratifyx.types import DatasetBuildRequest
+from epoch_sdk.files_api.types import DatasetBuildRequest
 from native_service_fixture import Service
 
 from epoch_sdk.documents import CaptureDocumentRequest

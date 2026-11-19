@@ -8,9 +8,10 @@ import type { SdkContractRunRequest as RunSchema } from "@epoch/stratifyx/serial
 import type { SdkContractRunParameters as ParametersSchema } from "@epoch/stratifyx/serialization/types/SdkContractRunParameters.js"
 import type { ResearchResponseRecord as ResponseSchema } from "@epoch/stratifyx/serialization/types/ResearchResponseRecord.js"
 import type { SdkContractRunRequest as NativeRunRequest } from "@epoch/stratifyx/api/types/index.js"
-import type { DatasetBuild as BuildSchema } from "@epoch/stratifyx/serialization/types/DatasetBuild.js"
-import type { DatasetBuildRequest as BuildRequestSchema } from "@epoch/stratifyx/serialization/types/DatasetBuildRequest.js"
-import type { DatasetPreviewPage as PreviewSchema } from "@epoch/stratifyx/serialization/types/DatasetPreviewPage.js"
+import type { EpochFilesClient } from "./files-api/index.js"
+import type { DatasetBuild as BuildSchema } from "./files-api/serialization/types/DatasetBuild.js"
+import type { DatasetBuildRequest as BuildRequestSchema } from "./files-api/serialization/types/DatasetBuildRequest.js"
+import type { DatasetPreviewPage as PreviewSchema } from "./files-api/serialization/types/DatasetPreviewPage.js"
 
 export type RunRequest = Pick<RunSchema.Raw, "task" | "outputs" | "parameters"> & { context?: string[] }
 export type OutputDefinition = RunRequest["outputs"][number]
@@ -55,7 +56,8 @@ export type OperationState = Pending | NeedsInput | ResearchCompleted | Executio
 export interface ObserveOptions { wait?: boolean; signal?: AbortSignal; onStatus?: (state: OperationState) => void }
 export class EpochError extends Error { code: string; details: Record<string, unknown>; constructor(code: string, message: string, details?: Record<string, unknown>) }
 export class EpochClient {
-  constructor(options: { backend: StratifyXClient; graph: LangGraphClient; assistantId?: string; pollIntervalMs?: number })
+  /** files: Platform's Files and Space client (`@epochdevs/epoch-sdk/files-api`); dataset reviews need it. */
+  constructor(options: { backend: StratifyXClient; graph: LangGraphClient; files?: EpochFilesClient; assistantId?: string; pollIntervalMs?: number })
   run(request: RunRequest, options: ObserveOptions & { operationId: string; threadId?: string }): Promise<OperationState>
   resume(waiting: NeedsInput, responses: WorkflowResponses, options?: ObserveOptions): Promise<OperationState>
   status(operationId: string, options?: { kind?: "run" | "execute"; signal?: AbortSignal }): Promise<OperationState>
