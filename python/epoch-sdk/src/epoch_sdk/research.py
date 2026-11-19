@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import AsyncGenerator, AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Literal, TypedDict
@@ -106,6 +107,11 @@ class ResearchError(EpochError):
 
 
 type ResearchResult = ResearchAccepted | ResearchCompleted | NeedsInput | InProgress
+
+# A research is complete when the agent's turn that answers it has ended. A turn
+# that still shows as running this long after Backend recorded its outcome is
+# reported complete with the outputs that exist.
+TURN_END_LIMIT_MS = 15 * 60 * 1000
 
 
 @asynccontextmanager
@@ -518,7 +524,9 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             return None
         if answer is None:
             answer = await self.response(record.response_id, version=record.response_version)
-        if (answer.request_id != record.request_id or answer.response_id != record.response_id
+        # An accepted output revision publishes its answer under the edit's own request.
+        revised = record.output_revision is not None and record.output_revision.version > 1
+        if ((not revised and answer.request_id != record.request_id) or answer.response_id != record.response_id
                 or answer.version != record.response_version or answer.primary_execution_id != record.execution_id
                 or answer.study_id != record.request.study_id or answer.extension != provenance
                 or answer.thread_id != (record.request.thread_id or record.execution_id)):
@@ -756,7 +764,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 or record.error is not None
                 or record.native_execution_request_id is not None
             ):
-                return await self.research_status(record.request_id)
+                return await self._reattached(record.request_id, wait=wait)
             if record.runtime is None:
                 try:
                     handle = await self.supervisor.prepare_operation(record.request_id, thread_id)
@@ -792,7 +800,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 or record.error is not None
                 or record.native_execution_request_id is not None
             ):
-                return await self.research_status(record.request_id)
+                return await self._reattached(record.request_id, wait=wait)
             if record.graph_run_id is None and record.response_version is None:
                 try:
                     await self.supervisor.start_operation(self._handle(record), request.task)
@@ -807,7 +815,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                     or record.error is not None
                     or record.native_execution_request_id is not None
                 ):
-                    return await self.research_status(record.request_id)
+                    return await self._reattached(record.request_id, wait=wait)
                 if record.graph_run_id is None:
                     raise ValueError(
                         "The conversation is busy; this operation has not started a native run. Reattach when it is available."
@@ -817,9 +825,9 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 or record.error is not None
                 or record.native_execution_request_id is not None
             ):
-                return await self.research_status(record.request_id)
+                return await self._reattached(record.request_id, wait=wait)
             if not wait:
-                return await self.research_status(record.request_id)
+                return await self._reattached(record.request_id, wait=wait)
             return await self._finish(
                 record.request_id, await self.supervisor.join_operation(self._handle(record))
             )
@@ -893,7 +901,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                     )
                 )
             if record.response_version is not None:
-                return await self._completed(record)
+                return await self._settled(record)
             if record.native_execution_request_id is not None:
                 # Backend retains the admitted native operation independently
                 # of this client and of a later turn on the same conversation.
@@ -910,18 +918,79 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 await self.supervisor.status(self._handle(record)),
             )
 
+    async def _reattached(self, request_id: str, *, wait: bool) -> ResearchResult:
+        """A reattached operation's state; waiting follows a running turn to its end."""
+        result = await self.research_status(request_id)
+        if wait and isinstance(result, InProgress):
+            record = await self.backend.sdk_requests.get_sdk_request(
+                request_id, request_options={"max_retries": 0}
+            )
+            if record.response_version is not None and record.graph_run_id is not None:
+                # Backend recorded the outcome; the answer is final when the turn ends.
+                await self.supervisor.join_operation(self._handle(record))
+                return await self.research_status(request_id)
+        return result
+
+    async def _settled(self, record: SdkRequestRecord) -> ResearchCompleted | InProgress:
+        """A recorded outcome is the research's answer once the agent's turn has ended.
+
+        Backend records the outcome when the first run publishes, but the agent may still revise
+        that run's outputs in the same turn. Callers see the research as running until the turn
+        ends, then receive the final answer.
+        """
+        if await self._turn_running(record):
+            return InProgress(handle=self._handle(record))
+        return await self._completed(record)
+
+    async def _turn_running(self, record: SdkRequestRecord) -> bool:
+        if record.runtime is None or record.graph_run_id is None:
+            return False
+        if time.time() * 1000 - record.updated_at_ms >= TURN_END_LIMIT_MS:
+            # A turn that never ends: report the outputs that exist.
+            return False
+        try:
+            run = await self.supervisor.graph.runs.get(record.runtime.thread_id, record.graph_run_id)
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code == 404:
+                return False  # The run or its conversation is gone; its turn has ended.
+            raise
+        if (run.get("metadata") or {}).get("epoch_sdk_request_id") != record.request_id:
+            return False  # Not this research's turn; it cannot hold back the recorded outcome.
+        return run["status"] in {"pending", "running"}
+
     async def _completed(self, record: SdkRequestRecord) -> ResearchCompleted:
         if record.response_id is None or record.response_version is None:
             raise ValueError("The research request has no pinned answer")
-        response = await self.supervisor.response(
-            record.response_id, version=record.response_version
-        )
+        answer_id, answer_version = record.response_id, record.response_version
+        native: SdkExecutionRecord | None = None
+        revised = False
+        if record.native_execution_request_id is not None:
+            native = await self.backend.sdk_requests.get_sdk_execution_request(
+                record.native_execution_request_id, request_options={"max_retries": 0}
+            )
+            # Backend pins the original answer; the run's current accepted output revision is the
+            # answer the agent ended its turn with. A revision's answer has its own identity.
+            revised = native.output_revision is not None and native.output_revision.version > 1
+            if revised:
+                if native.response_id is None or native.response_version is None:
+                    raise EpochError(
+                        DomainError(
+                            code="OUTPUT_VALIDATION_FAILED",
+                            message="The run's final output revision has no answer for this query.",
+                            retryable=False,
+                        ),
+                        execution_id=record.current_execution_id,
+                    )
+                answer_id, answer_version = native.response_id, native.response_version
+        response = await self.supervisor.response(answer_id, version=answer_version)
         request = RunRequest.model_validate_json(
             record.request.model_dump_json(by_alias=True, exclude_unset=True)
         )
         if (
-            response.request_id != (record.native_execution_request_id or record.request_id)
-            or response.version != record.response_version
+            (not revised
+             and response.request_id != (record.native_execution_request_id or record.request_id))
+            or response.response_id != answer_id
+            or response.version != answer_version
             or record.runtime is None
             or response.thread_id != record.runtime.thread_id
             or response.primary_execution_id != record.current_execution_id
@@ -935,31 +1004,26 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 ),
                 execution_id=record.current_execution_id,
             )
-        native: SdkExecutionRecord | None = None
-        if record.native_execution_request_id is not None:
-            native = await self.backend.sdk_requests.get_sdk_execution_request(
-                record.native_execution_request_id, request_options={"max_retries": 0}
+        if native is not None and (
+            native.request_id != record.native_execution_request_id
+            or (
+                native.request.research_request_id is not None
+                and native.request.research_request_id != record.request_id
             )
-            if (
-                native.request_id != record.native_execution_request_id
-                or (
-                    native.request.research_request_id is not None
-                    and native.request.research_request_id != record.request_id
-                )
-                or native.request.thread_id != record.runtime.thread_id
-                or native.execution_id != record.current_execution_id
-                or native.response_phase is None
-                or native.response_phase.value != "outputs_recorded"
-                or native.error is not None
-                or native.response_id != response.response_id
-                or native.response_version != response.version
-                or native.extension_outputs is None
-                or native.extension_outputs.response_id != response.response_id
-                or native.extension_outputs.response_version != response.version
-                or native.extension_outputs.provenance != response.extension
-                or native.extension_outputs.provenance.additional_sources != native.request.additional_sources
-            ):
-                raise ValueError("The research answer differs from its original native operation")
+            or native.request.thread_id != record.runtime.thread_id
+            or native.execution_id != record.current_execution_id
+            or native.response_phase is None
+            or native.response_phase.value != "outputs_recorded"
+            or native.error is not None
+            or native.response_id != response.response_id
+            or native.response_version != response.version
+            or native.extension_outputs is None
+            or native.extension_outputs.response_id != response.response_id
+            or native.extension_outputs.response_version != response.version
+            or native.extension_outputs.provenance != response.extension
+            or native.extension_outputs.provenance.additional_sources != native.request.additional_sources
+        ):
+            raise ValueError("The research answer differs from its original native operation")
         reusable = None
         if native is not None and native.request.input_tables is None:
             if (record.source_execution_id is not None or native.request.source_execution_id
@@ -1067,7 +1131,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             request_options={"max_retries": 0},
         )
         if record.response_version is not None:
-            return await self._completed(record)
+            return await self._settled(record)
         if record.error is not None:
             return await self.research_status(request_id)
         if record.native_execution_request_id is not None:

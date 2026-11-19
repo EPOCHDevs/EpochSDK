@@ -48,8 +48,10 @@ computed outputs. Progress, questions and failures retain their own event paths.
 An answer has its own `response_id`, query `request_id`, `thread_id` and immutable
 revision `version`. It contains the requested named table, JSON and text parts.
 Separate queries can use the same execution without overwriting earlier answers.
-A completed SDK request pins its exact answer revision; later report changes or
-manual revisions do not replace that read.
+A completed SDK request returns the answer its turn ended with: the run's
+current accepted output revision once the agent's turn has ended. An output
+edit made in that turn replaces the first answer; callers never read the
+superseded one. The research reports `InProgress` until the turn ends.
 
 Execution-backed answers name their exact completed execution. A native report's
 answer points to the report execution; its provenance retains the original source.
