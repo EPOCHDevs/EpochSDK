@@ -105,9 +105,9 @@ request with `report_template` instead of `input_tables`.
 Original costs and declared parameter bindings remain captured. A new period
 requires the report's explicit captured `allow_period_override` permission;
 changing engine dates does not rewrite fixed SQL filters, fiscal labels or a
-frozen roster. Replaying an existing historical response plan remains supported
-through the explicit workflow API; new work uses native reports rather than
-creating another plan language. See [historical plan compatibility](response-plans.md).
+frozen roster. Response-plan attachment, APIs and replay are retired (ENG-3105).
+Existing saved answers remain directly readable without plan execution. See the
+[retired plan record](response-plans.md) for historical evidence.
 
 ## Persistence, reads and ownership
 

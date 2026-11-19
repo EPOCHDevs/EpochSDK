@@ -351,6 +351,6 @@ def test_first_study_report_retains_original_replay_and_survives_missing_optiona
                 assert result.reusable_study.source_execution_id == original_id
                 assert result.reusable_study.study_id == "original-study"
                 assert result.reusable_study.report_template.request_id == native["request_id"]
-                assert result.reusable_study.response_plan is None
+                assert "response_plan" not in result.reusable_study.model_dump()
             assert all(request.method == "GET" for request in calls)
     asyncio.run(scenario())

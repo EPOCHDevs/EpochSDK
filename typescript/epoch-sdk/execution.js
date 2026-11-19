@@ -31,10 +31,13 @@ export async function startExecution(client, reference, options) {
   }
   invariant(reference && typeof reference.studyId === "string" && reference.studyId && reference.sourceExecutionId,
     "Provide the reusable study reference from a completed research operation.", "VALIDATION_ERROR")
-  invariant(!(reference.reportTemplate && reference.responsePlan), "Choose one saved report or response plan.", "VALIDATION_ERROR")
+  invariant(!Object.hasOwn(reference, "responsePlan") && !Object.hasOwn(reference, "response_plan"),
+    "Response-plan execution is retired; use a supported saved study reference.", "VALIDATION_ERROR")
+  invariant(reference.reuseLimitation == null && reference.reuse_limitation == null,
+    "This saved answer does not provide a reusable study.", "NOT_REUSABLE")
   const parameters = parseParameters({ period: options.period, ...(options.execution ? { execution: options.execution } : {}) })
   let bindings
-  if (!reference.reportTemplate && !reference.responsePlan) {
+  if (!reference.reportTemplate) {
     let accepted
     try { accepted = await client.backend.sdkRequests.getSdkExecutionRequestByHandle(op, {}, opts(options.signal)) }
     catch (error) { if (statusCode(error) !== 404) throw error }
@@ -55,7 +58,6 @@ export async function startExecution(client, reference, options) {
       parameters,
       ...(reference.threadId ? { threadId: reference.threadId } : {}),
       ...(reference.reportTemplate ? { reportTemplate: reference.reportTemplate } : {}),
-      ...(reference.responsePlan ? { responsePlan: reference.responsePlan } : {}),
       ...(bindings ? { executionParameterBindings: bindings } : {}),
     }, opts(options.signal))
     invariant(record.request.operationId === op, "Backend returned another execution operation.")
@@ -86,7 +88,7 @@ function checkPublication(record, response) {
   if (response) invariant(response.requestId === record.requestId && response.primaryExecutionId === record.executionId &&
     response.studyId === record.request.studyId && response.threadId === (record.request.threadId ?? record.executionId) &&
     response.responseId === record.responseId && response.version === record.responseVersion &&
-    canonical(response.extension) === canonical(provenance) && !response.responsePlan,
+    canonical(response.extension) === canonical(provenance),
   "The saved answer differs from the native publication.", "OUTPUT_VALIDATION_FAILED")
 }
 
@@ -94,6 +96,7 @@ export async function executionStatus(client, op, { signal } = {}) {
   operationId(op)
   const record = await client.backend.sdkRequests.getSdkExecutionRequestByHandle(op, {}, opts(signal))
   invariant(record.request.operationId === op, "The execution handle returned another operation.")
+  invariant(record.request.responsePlan == null, "Response-plan execution is retired; read its saved answer directly.", "INVALID_STATE")
   throwNativeError(record)
   invariant(!["Failed", "Cancelled"].includes(record.executionStatus), "The prepared execution failed or was cancelled.", "EXECUTION_FAILED")
   invariant(record.responsePhase !== "failed", "The required outputs failed.", "OUTPUT_VALIDATION_FAILED")
@@ -105,7 +108,7 @@ export async function executionStatus(client, op, { signal } = {}) {
   invariant(job.id === record.executionId && job.definitionId === record.request.studyId,
     "The execution differs from its accepted saved study.")
   invariant(!["failed", "cancelled"].includes(job.status), job.errorReason || "The prepared execution failed.", "EXECUTION_FAILED")
-  if (job.status !== "completed" || ((record.request.responsePlan || record.request.reportTemplate || record.responsePhase) &&
+  if (job.status !== "completed" || ((record.request.reportTemplate || record.responsePhase) &&
     record.responsePhase !== "outputs_recorded")) return { ...pending, execution: job }
   let response
   let report
@@ -121,17 +124,11 @@ export async function executionStatus(client, op, { signal } = {}) {
       report.responseId === record.responseId && report.responseVersion === record.responseVersion,
     "The replay report differs from its captured source.", "OUTPUT_VALIDATION_FAILED")
     checkPublication(report, response)
-  } else if (record.request.responsePlan) {
-    invariant(response && response.requestId === record.requestId && response.primaryExecutionId === record.executionId &&
-      response.studyId === record.request.studyId && canonical(response.responsePlan) === canonical(record.request.responsePlan) &&
-      (!record.request.threadId || response.threadId === record.request.threadId),
-    "The saved response differs from the accepted plan.", "OUTPUT_VALIDATION_FAILED")
   } else if (record.responsePhase) checkPublication(record, response)
   return { status: "execution_selected", kind: "execute", operationId: op, requestId: record.requestId,
     execution: job, response, ...(report ? { report } : {}), reusableStudy: {
       studyId: record.request.studyId, sourceExecutionId: record.executionId,
       ...(record.request.threadId ? { threadId: record.request.threadId } : {}),
       ...(record.request.reportTemplate ? { reportTemplate: record.request.reportTemplate } : {}),
-      ...(record.request.responsePlan ? { responsePlan: record.request.responsePlan } : {}),
     } }
 }

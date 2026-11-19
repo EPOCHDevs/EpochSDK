@@ -79,12 +79,12 @@ export class EpochClient {
     operationId(id)
     const record = await this.backend.sdkRequests.getSdkExecutionRequestByHandle(id, {}, { maxRetries: 0, abortSignal: signal })
     const request = record.request
+    invariant(request.responsePlan == null, "Response-plan execution is retired; read its saved answer directly.", "INVALID_STATE")
     invariant(request.operationId === id && request.sourceExecutionId, "The handle returned another saved study execution.")
     return { reference: {
       studyId: request.studyId, sourceExecutionId: request.sourceExecutionId,
       ...(request.threadId ? { threadId: request.threadId } : {}),
       ...(request.reportTemplate ? { reportTemplate: request.reportTemplate } : {}),
-      ...(request.responsePlan ? { responsePlan: request.responsePlan } : {}),
     }, parameters: parametersToWire(request.parameters) }
   }
 

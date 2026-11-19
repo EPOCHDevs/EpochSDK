@@ -1,20 +1,13 @@
-# Historical response-plan compatibility
+# Retired response-plan design
 
-This document preserves the earlier plan API, mapping rules and acceptance
-history for existing saved plans and answers. Native plan read/replay and direct
-application APIs remain available; these are not the current model-facing
-authoring instructions. The former audit/publication tools described below are
-retired and must not be restored or invoked for new research.
+> ENG-3105 supersedes the executable response-plan design below at the
+> owner's request. Plan create/read/prepared-text routes, execution attachments,
+> replay and the plan-specific model endpoint are removed. This document retains
+> historical evidence, not an available API. Saved answers and their tables stay
+> readable directly from stored outputs without replay. New text belongs to the
+> study run graph. Native `report_template` replay is a separate retained feature.
 
-For new work, use the [native research flow](research-flow.md): execute the
-original when needed, author a saved-input EpochScript report with native
-SQL/transforms and declared response/dashboard sinks, then publish through that
-report's execution. Optional bounded cached `llm_call` produces text. Retain
-`SavedStudy.report_template` for native original-plus-report replay; no second
-plan language or supervisor publication step is needed. See the
-[current SDK/MCP interface](public-client-interface.md).
-
-## Retained plan contract and historical evidence
+## Historical contract and evidence
 
 Plans can include `qualifications` independently of their accepted answer parts.
 Each qualification has a unique name, a short description of its basis, and a
