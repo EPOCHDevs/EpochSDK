@@ -185,7 +185,7 @@ async function completed(client, record, signal) {
     }
   } else if (response.studyId && response.primaryExecutionId) {
     reusableStudy = { studyId: response.studyId, sourceExecutionId: response.primaryExecutionId,
-      threadId: record.runtime.threadId, ...(response.responsePlan ? { responsePlan: response.responsePlan } : {}) }
+      threadId: record.runtime.threadId }
   }
   return { status: "succeeded", kind: "run", requestId: record.requestId, operationId: record.operationId,
     response, ...(reusableStudy ? { reusableStudy } : {}) }
@@ -238,7 +238,7 @@ export async function researchStatus(client, op, { signal } = {}) {
     "The run ended without a saved answer for this request.", "OUTPUT_VALIDATION_FAILED")
   const response = await client.read(reference.response_id, { version: reference.version, signal })
   const wire = responseToWire(response)
-  for (const key of ["response_id", "request_id", "thread_id", "version", "primary_execution_id", "study_id", "response_plan", "extension"])
+  for (const key of ["response_id", "request_id", "thread_id", "version", "primary_execution_id", "study_id", "extension"])
     invariant(canonical(reference[key] ?? undefined) === canonical(wire[key] ?? undefined),
       "Published answer reference differs from storage.", "OUTPUT_VALIDATION_FAILED")
   try {

@@ -55,7 +55,7 @@ def saved_response():
     }
 
 
-def test_published_plan_reference_is_retained_on_the_reusable_study(monkeypatch):
+def test_historical_answer_remains_readable_without_reintroducing_a_plan_option(monkeypatch):
     import sys
 
     ordinary = saved_response
@@ -73,9 +73,9 @@ def test_published_plan_reference_is_retained_on_the_reusable_study(monkeypatch)
             result = await sdk.research(RunRequest.model_validate(REQUEST))
             assert isinstance(result, ResearchCompleted)
             assert result.reusable_study is not None
-            assert result.response.response_plan is not None
-            assert result.reusable_study.response_plan == result.response.response_plan
-            assert result.response.reference().response_plan == result.response.response_plan
+            assert "response_plan" not in result.response.to_wire()
+            assert "response_plan" not in result.reusable_study.model_dump()
+            assert "response_plan" not in result.response.reference().to_wire()
 
     asyncio.run(scenario())
 

@@ -32,7 +32,8 @@ def test_computed_qualifications_survive_saved_reads_outside_accepted_output_par
         "description": "Annual statement coverage of the selected cohort",
         "value": {"observed": 7, "expected": 8, "missing": ["unobserved_source"], "basis": None}}]
     saved = SavedResearchResponse.model_validate(value)
-    assert saved.to_wire() == value
+    expected = {key: child for key, child in value.items() if key != "response_plan"}
+    assert saved.to_wire() == expected
     assert saved.to_wire()["content"]["declarations"] == declarations
     assert saved.to_wire()["content"]["outputs"] == outputs
 
@@ -53,11 +54,11 @@ def test_qualification_payload_bounds_and_finite_values_are_checked(change):
     with pytest.raises(ValidationError, match=expected): SavedResearchResponse.model_validate(value)
 
 
-def test_qualifications_cannot_claim_computed_provenance_without_a_plan():
+def test_historical_qualifications_remain_readable_without_executable_plan_metadata():
     value = example()
     value["content"]["qualifications"] = [{"name": "coverage", "description": "Observed coverage", "value": {"observed": 7}}]
-    with pytest.raises(ValidationError, match="source-backed response plan"):
-        SavedResearchResponse.model_validate(value)
+    saved = SavedResearchResponse.model_validate(value)
+    assert saved.content.qualifications[0].name == "coverage"
 
 
 @pytest.mark.parametrize("change", ["json-type", "table-value", "column-meaning", "missing-part"])
@@ -89,7 +90,8 @@ def test_null_is_data_in_a_nullable_json_response() -> None:
 def test_reference_answers_keep_large_row_counts_and_reject_mismatched_execution() -> None:
     value = json.loads((ROOT / "contracts/research-response-reference.example.json").read_text())
     saved = SavedResearchResponse.model_validate(value)
-    assert saved.to_wire() == value
+    expected = {key: child for key, child in value.items() if key != "response_plan"}
+    assert saved.to_wire() == expected
     assert value["content"]["outputs"][0]["source"]["row_count"] == 25003
     assert "rows" not in saved.to_wire()["content"]["outputs"][0]
     value["content"]["outputs"][0]["source"]["execution_id"] = "another-execution"

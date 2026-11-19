@@ -180,6 +180,36 @@ test("research admission uses native models, durable run options, and one graph 
   assert.equal(h.graphCalls.filter(c => c[0] === "runs.create").length, 1)
 })
 
+test("historical saved answers remain readable without a reusable plan field", async () => {
+  const wire = JSON.parse(await readFile(new URL("../../../contracts/research-response.example.json", import.meta.url), "utf8"))
+  const parsed = native.serialization.ResearchResponseRecord.parseOrThrow(wire)
+  parsed.responsePlan = { planId: "rpl_" + "a".repeat(64), version: 1 }
+  assert.deepEqual(responseToWire(validateResponse(parsed)), wire)
+  assert.equal(Object.hasOwn(validateResponse(parsed), "responsePlan"), false)
+  assert.ok(parsed.responsePlan, "reading must not mutate the original object")
+})
+
+test("retired plan references fail before starting new work", async () => {
+  const h = harness()
+  for (const key of ["responsePlan", "response_plan"]) {
+    await assert.rejects(h.client.execute({ studyId: "study-1", sourceExecutionId: "source-1", [key]: null },
+      { operationId: "retired", period: { start: "2025-01-01" }, wait: false }), /retired/)
+  }
+  assert.deepEqual(h.calls, [])
+  assert.deepEqual(h.graphCalls, [])
+})
+
+test("an old server plan operation cannot become an ordinary reusable run", async () => {
+  const h = harness()
+  h.state.execution = { request_id: "execute-request", created_at_ms: 0, phase: "active", execution_id: "execution-1",
+    request: { operation_id: "retired", study_id: "study-1", source_execution_id: "source-1", parameters: {},
+      response_plan: { plan_id: "rpl_" + "a".repeat(64), version: 1 } } }
+  await assert.rejects(h.client.status("retired", { kind: "execute" }), /retired/)
+  await assert.rejects(h.client.readExecutionRequest("retired"), /retired/)
+  assert.ok(h.calls.every(c => c.method === "GET"))
+  assert.deepEqual(h.graphCalls, [])
+})
+
 test("deterministic thread identities match Python UUIDv5", async () => {
   assert.equal(await researchThreadId("req_11111111111111111111111111111111"), 'e5007dd1-72eb-5070-b662-9a4f50e9d3ee')
 })

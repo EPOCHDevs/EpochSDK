@@ -15,7 +15,6 @@ from stratifyx import (
     ExecutionParameterValue,
     ExecutionReportReference,
     SdkContractErrorResponse,
-    SdkContractResponsePlanReference,
     SdkContractRunParameters,
     SdkContractRunRequest,
     SdkExecutionRecord,
@@ -69,7 +68,6 @@ class _TaskOverrides(TypedDict, total=False):
 
 class _PreparedOutputOptions(TypedDict, total=False):
     thread_id: str
-    response_plan: SdkContractResponsePlanReference
     report_template: ExecutionReportReference
     execution_parameter_bindings: dict[str, ExecutionParameterValue]
 
@@ -429,7 +427,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             operation_id = "execute-" + uuid4().hex
         async with _boundary(None):
             bindings = None
-            if reference.response_plan is None and reference.report_template is None:
+            if reference.report_template is None:
                 accepted = None
                 if explicit_operation:
                     try:
@@ -460,8 +458,6 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 options: _PreparedOutputOptions = {}
                 if reference.thread_id is not None:
                     options["thread_id"] = reference.thread_id
-                if reference.response_plan is not None:
-                    options["response_plan"] = SdkContractResponsePlanReference.model_validate(reference.response_plan.to_wire())
                 if reference.report_template is not None:
                     options["report_template"] = reference.report_template
                 if bindings is not None:
@@ -500,8 +496,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
     ) -> SavedResearchResponse | None:
         """Verify a single ordinary calculation's exact native publication and optional answer."""
         outputs = record.extension_outputs
-        if (record.request.input_tables is not None or record.request.response_plan is not None
-                or record.request.report_template is not None or record.error is not None
+        if (record.request.input_tables is not None or record.request.report_template is not None or record.error is not None
                 or record.execution_status is None or record.execution_status.value != "Completed"
                 or record.response_phase is None or record.response_phase.value != "outputs_recorded"
                 or outputs is None):
@@ -524,7 +519,6 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         if (answer.request_id != record.request_id or answer.response_id != record.response_id
                 or answer.version != record.response_version or answer.primary_execution_id != record.execution_id
                 or answer.study_id != record.request.study_id or answer.extension != provenance
-                or answer.response_plan is not None
                 or answer.thread_id != (record.request.thread_id or record.execution_id)):
             raise ValueError("The ordinary answer differs from its exact native publication")
         return answer
@@ -565,6 +559,10 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
     async def _execution_operation(
         self, record: SdkExecutionRecord
     ) -> ChosenExecution | ExecutionAccepted:
+        # Older server/client pairs can still decode this removed option.
+        # An old plan operation must never become a new ordinary execution.
+        if "response_plan" in record.request.model_dump(mode="json", exclude_none=True):
+            raise ValueError("Response-plan execution is retired; read its saved answer directly")
         if record.error is not None:
             failure = ErrorResponse.model_validate_json(
                 record.error.model_dump_json(by_alias=True, exclude_unset=True)
@@ -591,7 +589,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             raise
         if job.id != record.execution_id or job.definition_id != record.request.study_id:
             raise ValueError("The native execution differs from its accepted operation")
-        if (record.request.response_plan is not None or record.request.report_template is not None
+        if (record.request.report_template is not None
                 or record.response_phase is not None) and (
             record.response_phase is None or record.response_phase.value != "outputs_recorded"
         ):
@@ -606,31 +604,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 thread_id=record.request.thread_id,
             ),
         )
-        if record.request.response_plan is not None:
-            if record.response_id is None or record.response_version is None:
-                raise ValueError("The completed execution plan has no pinned answer revision")
-            response = await self.response(record.response_id, version=record.response_version)
-            plan = record.request.response_plan
-            if (
-                response.request_id != record.request_id
-                or response.primary_execution_id != record.execution_id
-                or response.study_id != record.request.study_id
-                or response.response_plan is None
-                or response.response_plan.plan_id != plan.plan_id
-                or response.response_plan.version != plan.version
-                or (
-                    record.request.thread_id is not None
-                    and response.thread_id != record.request.thread_id
-                )
-            ):
-                raise ValueError(
-                    "The published execution answer differs from its exact admitted plan/source"
-                )
-            study = result.reusable_study.model_copy(
-                update={"response_plan": response.response_plan}
-            )
-            result = result.model_copy(update={"response": response, "reusable_study": study})
-        elif record.request.report_template is not None:
+        if record.request.report_template is not None:
             if record.report_request_id is None or record.report_request is None:
                 raise ValueError("The completed source has no exact frozen report operation")
             child = await self.backend.sdk_requests.get_sdk_execution_request(
@@ -639,8 +613,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             if (job.status.value != "completed" or child.request_id != record.report_request_id
                     or child.execution_id == record.execution_id
                     or child.request != record.report_request or child.request.input_tables is None
-                    or child.request.report_template is not None or child.request.response_plan is not None
-                    or child.request.research_request_id is not None
+                    or child.request.report_template is not None or child.request.research_request_id is not None
                     or child.request.source_execution_id != record.execution_id
                     or child.error is not None or child.extension_outputs is None
                     or child.response_phase is None or child.response_phase.value != "outputs_recorded"
@@ -664,8 +637,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 response = await self.response(record.response_id, version=record.response_version)
                 if (response.request_id != child.request_id or response.primary_execution_id != child.execution_id
                         or response.study_id != child.request.study_id or response.thread_id != (child.request.thread_id or child.execution_id)
-                        or response.extension != child.extension_outputs.provenance or response.response_plan is not None
-                        or response.response_id != child.extension_outputs.response_id
+                        or response.extension != child.extension_outputs.provenance or response.response_id != child.extension_outputs.response_id
                         or response.version != child.extension_outputs.response_version):
                     raise ValueError("The published report answer differs from its exact native output pins")
             study = result.reusable_study.model_copy(update={"report_template": record.request.report_template})
@@ -984,7 +956,6 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 or native.extension_outputs.response_version != response.version
                 or native.extension_outputs.provenance != response.extension
                 or native.extension_outputs.provenance.additional_sources != native.request.additional_sources
-                or response.response_plan is not None
             ):
                 raise ValueError("The research answer differs from its original native operation")
         reusable = None
@@ -1030,8 +1001,6 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 source_execution_id=response.primary_execution_id,
                 thread_id=record.runtime.thread_id,
             )
-            if response.response_plan is not None:
-                reusable = reusable.model_copy(update={"response_plan": response.response_plan})
         completed = ResearchCompleted(
             status="succeeded", request_id=record.request_id, response=response
         )

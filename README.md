@@ -78,8 +78,9 @@ in its conversation.
 `SavedStudy.report_template` retains prepared original-plus-report replay.
 Executing it runs a new original and its frozen report without a supervisor;
 source and report jobs remain separate. Refining a completed result instead uses
-explicit `input_tables` and never reruns that source. Historical response plans
-remain readable/replayable through the explicit workflow compatibility path.
+explicit `input_tables` and never reruns that source. Response-plan APIs,
+attachments and replay are retired (ENG-3105). Existing saved answers remain
+readable directly without replay.
 
 Saved answers contain named table, JSON and text parts with exact declarations
 and immutable revisions. Another query may reuse the same execution while

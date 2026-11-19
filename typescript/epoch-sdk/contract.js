@@ -81,7 +81,9 @@ export function validateRequest(request) {
 
 export const parseRequest = request => unwrap(SdkContractRunRequest.parse(validateRequest(request)))
 export const requestToWire = request => unwrap(SdkContractRunRequest.json(request))
-export const responseToWire = response => unwrap(ResearchResponseRecord.json(response))
+// Historical attribution is read-only metadata, never a reusable plan option.
+const savedAnswer = response => Object.fromEntries(Object.entries(response).filter(([key]) => key !== "responsePlan"))
+export const responseToWire = response => unwrap(ResearchResponseRecord.json(savedAnswer(response)))
 export const parametersToWire = parameters => unwrap(SdkContractRunParameters.json(parameters))
 export function parseParameters(parameters) {
   validate(parametersValidator, parameters)
@@ -134,13 +136,9 @@ export function validateResponse(response) {
   }
   invariant((wire.primary_execution_id === undefined) === (wire.study_id === undefined),
     "The answer has incomplete execution identity.", "OUTPUT_VALIDATION_FAILED")
-  invariant(!wire.response_plan || wire.primary_execution_id !== undefined,
-    "A response plan requires its source execution.", "OUTPUT_VALIDATION_FAILED")
-  invariant(!wire.content.qualifications?.length || !!wire.response_plan,
-    "Computed qualifications require their saved response plan.", "OUTPUT_VALIDATION_FAILED")
   if (wire.extension) invariant(wire.extension.execution_id === wire.primary_execution_id && wire.extension.study_id === wire.study_id,
     "The answer differs from its native output provenance.", "OUTPUT_VALIDATION_FAILED")
-  return response
+  return savedAnswer(response)
 }
 
 export function operationId(value) {

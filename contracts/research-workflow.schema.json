@@ -202,27 +202,6 @@
         }
       ]
     },
-    "ResponsePlanReference": {
-      "additionalProperties": false,
-      "properties": {
-        "plan_id": {
-          "pattern": "^rpl_[0-9a-f]{64}$",
-          "title": "Plan Id",
-          "type": "string"
-        },
-        "version": {
-          "minimum": 1,
-          "title": "Version",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "plan_id",
-        "version"
-      ],
-      "title": "ResponsePlanReference",
-      "type": "object"
-    },
     "SavedStudy": {
       "additionalProperties": false,
       "properties": {
@@ -230,17 +209,6 @@
           "anyOf": [
             {
               "$ref": "#/$defs/ExecutionReportReference"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "response_plan": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ResponsePlanReference"
             },
             {
               "type": "null"
