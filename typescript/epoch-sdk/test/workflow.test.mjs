@@ -210,6 +210,8 @@ test("an old server plan operation cannot become an ordinary reusable run", asyn
       response_plan: { plan_id: "rpl_" + "a".repeat(64), version: 1 } } }
   await assert.rejects(h.client.status("retired", { kind: "execute" }), /retired/)
   await assert.rejects(h.client.readExecutionRequest("retired"), /retired/)
+  await assert.rejects(h.client.execute({ studyId: "study-1", sourceExecutionId: "source-1" },
+    { operationId: "retired", period: { start: "2025-01-01" }, wait: false }), /retired/)
   assert.ok(h.calls.every(c => c.method === "GET"))
   assert.deepEqual(h.graphCalls, [])
 })

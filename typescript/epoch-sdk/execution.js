@@ -3,6 +3,11 @@ import { canonical, EpochError, invariant, operationId, parseParameters, statusC
 
 const opts = signal => ({ maxRetries: 0, abortSignal: signal })
 
+export function assertOrdinaryExecutionRequest(request) {
+  invariant(request.responsePlan == null && request.response_plan == null,
+    "Response-plan execution is retired; read its saved answer directly.", "INVALID_STATE")
+}
+
 export async function ordinarySource(client, reference, signal, inferStudy = false) {
   invariant(reference.sourceExecutionId, "A saved study needs its exact source execution.", "NOT_REUSABLE")
   const job = await client.backend.studiesExecutions.getExecutionById(reference.sourceExecutionId, {}, opts(signal))
@@ -43,6 +48,7 @@ export async function startExecution(client, reference, options) {
     catch (error) { if (statusCode(error) !== 404) throw error }
     if (accepted) {
       invariant(accepted.request.operationId === op, "The execution handle differs from the requested operation.")
+      assertOrdinaryExecutionRequest(accepted.request)
       parameters.execution ??= accepted.request.parameters.execution
       bindings = accepted.request.executionParameterBindings
     } else {
@@ -96,7 +102,7 @@ export async function executionStatus(client, op, { signal } = {}) {
   operationId(op)
   const record = await client.backend.sdkRequests.getSdkExecutionRequestByHandle(op, {}, opts(signal))
   invariant(record.request.operationId === op, "The execution handle returned another operation.")
-  invariant(record.request.responsePlan == null, "Response-plan execution is retired; read its saved answer directly.", "INVALID_STATE")
+  assertOrdinaryExecutionRequest(record.request)
   throwNativeError(record)
   invariant(!["Failed", "Cancelled"].includes(record.executionStatus), "The prepared execution failed or was cancelled.", "EXECUTION_FAILED")
   invariant(record.responsePhase !== "failed", "The required outputs failed.", "OUTPUT_VALIDATION_FAILED")
