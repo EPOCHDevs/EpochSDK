@@ -14,7 +14,7 @@ dependencies = [
   "referencing>=0.36,<1",
   "httpx>=0.28,<1",
   "stratifyx>=3.3.0rc96,<4",
-  "epoch-source-connections>=0.1.0a3,<0.2",
+  "epoch-source-connections>=0.1.0a5,<0.2",
 ]
 
 [project.urls]
