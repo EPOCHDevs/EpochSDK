@@ -14,6 +14,7 @@ from langgraph_sdk.client import LangGraphClient
 from stratifyx import AsyncStratifyX, DatePeriodConfig
 from stratifyx.core.api_error import ApiError
 
+from epoch_sdk.contracts import DomainError
 from epoch_sdk.supervisor import (
     Answer,
     Answers,
@@ -331,6 +332,121 @@ def test_checkpoint_null_normalization_keeps_required_and_paired_source_validati
         async with clients([{"published_response": reference}]) as (client, _, _):
             with pytest.raises(ValueError):
                 await client.run("A brief explanation")
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("code", ["EXECUTION_FAILED", "OUTPUT_VALIDATION_FAILED"])
+def test_checkpoint_default_error_metadata_preserves_the_actual_failure(code) -> None:
+    error = DomainError(code=code, message="The requested output failed.", retryable=False)
+    checkpoint = error.model_dump(mode="json")
+    before = copy.deepcopy(checkpoint)
+
+    async def scenario() -> None:
+        async with clients([{"publication_error": checkpoint}]) as (
+            client,
+            graph_calls,
+            backend_calls,
+        ):
+            result = await client.run("Return the requested output")
+            assert isinstance(result, NoExecution) and result.publication_failed
+            assert result.publication_error == error
+            assert result.publication_error.to_wire() == error.to_wire()
+            assert result.reason == error.message
+            assert len([r for r in graph_calls if r.url.path.endswith("/runs/wait")]) == 1
+            assert not backend_calls
+
+    asyncio.run(scenario())
+    assert checkpoint == before  # Reading the projection never rewrites the checkpoint.
+    with pytest.raises(ValueError, match="Omit"):
+        DomainError.model_validate(checkpoint)  # Public wire remains omission-only.
+
+
+def test_old_error_checkpoint_allows_status_read_and_one_new_corrective_turn() -> None:
+    checkpoint = DomainError(
+        code="EXECUTION_FAILED", message="The earlier output failed.", retryable=False
+    ).model_dump(mode="json")
+    before = {"publication_error": checkpoint, "execution_ids": ["earlier"]}
+    original = copy.deepcopy(before)
+
+    async def scenario() -> None:
+        reply = {"messages": [{"type": "ai", "content": "Use the corrected declaration."}]}
+        async with clients([reply], before=before) as (client, graph_calls, backend_calls):
+            handle = await client.prepare(THREAD)
+            status = await client.status(handle)
+            assert isinstance(status, NoExecution) and status.publication_failed
+            assert status.publication_error is not None
+            assert status.publication_error.code == "EXECUTION_FAILED"
+            assert not [r for r in graph_calls if r.method == "POST"]
+
+            result = await client.submit(handle, "Correct the output declaration")
+            assert isinstance(result, NoExecution) and not result.publication_failed
+            assert result.reply == "Use the corrected declaration."
+            waits = [
+                json.loads(r.content) for r in graph_calls if r.url.path.endswith("/runs/wait")
+            ]
+            assert len(waits) == 1
+            assert waits[0]["input"]["messages"][0]["content"] == (
+                "Correct the output declaration"
+            )
+            assert not backend_calls
+
+    asyncio.run(scenario())
+    assert before == original
+
+
+def test_checkpoint_error_preserves_non_null_usage_metadata() -> None:
+    error = DomainError(
+        code="USAGE_LIMIT_REACHED",
+        message="Weekly allowance reached.",
+        retryable=False,
+        meter="study_ai",
+        resets_at="2099-11-23T00:00:00Z",
+    )
+
+    async def scenario() -> None:
+        async with clients([{"publication_error": error.model_dump(mode="json")}]) as (
+            client,
+            _,
+            backend_calls,
+        ):
+            result = await client.run("Read the allowance refusal")
+            assert isinstance(result, NoExecution) and result.publication_failed
+            assert result.publication_error == error
+            assert result.publication_error.to_wire() == error.to_wire()
+            assert not backend_calls
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        {"code": None},
+        {"message": None},
+        {"retryable": None},
+        {"meter": "unknown"},
+        {"meter": False},
+        {"resets_at": "2099-11-23T00:00:00"},
+        {"unexpected_metadata": None},
+        {"code": "USAGE_LIMIT_REACHED"},
+        {"code": "USAGE_LIMIT_REACHED", "meter": "assistant"},
+        {"code": "USAGE_LIMIT_REACHED", "resets_at": "2099-11-23T00:00:00Z"},
+    ],
+)
+def test_checkpoint_error_normalization_keeps_invalid_error_metadata_rejected(invalid) -> None:
+    checkpoint = {
+        **DomainError(
+            code="EXECUTION_FAILED", message="The output failed.", retryable=False
+        ).model_dump(mode="json"),
+        **invalid,
+    }
+
+    async def scenario() -> None:
+        async with clients([{"publication_error": checkpoint}]) as (client, _, backend_calls):
+            with pytest.raises(ValueError):
+                await client.run("Read the malformed error")
+            assert not backend_calls
 
     asyncio.run(scenario())
 
