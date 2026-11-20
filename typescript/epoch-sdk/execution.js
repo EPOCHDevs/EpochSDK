@@ -41,14 +41,16 @@ export async function startExecution(client, reference, options) {
   invariant(reference.reuseLimitation == null && reference.reuse_limitation == null,
     "This saved answer does not provide a reusable study.", "NOT_REUSABLE")
   const parameters = parseParameters({ period: options.period, ...(options.execution ? { execution: options.execution } : {}) })
+  let accepted
+  try { accepted = await client.backend.sdkRequests.getSdkExecutionRequestByHandle(op, {}, opts(options.signal)) }
+  catch (error) { if (statusCode(error) !== 404) throw error }
+  if (accepted) {
+    invariant(accepted.request.operationId === op, "The execution handle differs from the requested operation.")
+    assertOrdinaryExecutionRequest(accepted.request)
+  }
   let bindings
   if (!reference.reportTemplate) {
-    let accepted
-    try { accepted = await client.backend.sdkRequests.getSdkExecutionRequestByHandle(op, {}, opts(options.signal)) }
-    catch (error) { if (statusCode(error) !== 404) throw error }
     if (accepted) {
-      invariant(accepted.request.operationId === op, "The execution handle differs from the requested operation.")
-      assertOrdinaryExecutionRequest(accepted.request)
       parameters.execution ??= accepted.request.parameters.execution
       bindings = accepted.request.executionParameterBindings
     } else {
