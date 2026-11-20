@@ -46,6 +46,7 @@ from .dataset_reviews import (
     DatasetWorkflowInterrupt,
     interrupt_adapter,
 )
+from .errors import EpochError
 from .files_api import AsyncEpochFiles
 from .platform_files import PlatformFilesClient
 from .responses import (
@@ -968,7 +969,16 @@ class SupervisorClient:
                 run = await self.graph.runs.get(handle.thread_id, handle.run_id)
             except httpx.HTTPStatusError as error:
                 if error.response.status_code == 404:
-                    return InProgress(handle=handle)
+                    raise EpochError(
+                        DomainError(
+                            code="TEMPORARILY_UNAVAILABLE",
+                            message=(
+                                "The recorded graph run is unavailable; the accepted operation's "
+                                "outcome is unknown. Read the same request status later; do not resubmit."
+                            ),
+                            retryable=True,
+                        )
+                    ) from error
                 raise
             if (run["metadata"] or {}).get("epoch_sdk_request_id") != handle.request_id:
                 raise ValueError("The recorded native run belongs to another operation")
