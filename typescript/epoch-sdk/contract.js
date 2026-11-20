@@ -83,12 +83,14 @@ export const parseRequest = request => unwrap(SdkContractRunRequest.parse(valida
 export const requestToWire = request => unwrap(SdkContractRunRequest.json(request))
 // Historical attribution is read-only metadata, never a reusable plan option.
 const savedAnswer = response => {
-  const saved = Object.fromEntries(Object.entries(response).filter(([key]) => key !== "responsePlan"))
+  const saved = Object.fromEntries(Object.entries(response)
+    .filter(([key]) => key !== "responsePlan" && key !== "response_plan"))
   if (Object.hasOwn(saved, "reuse_limitation")) {
     saved.reuseLimitation = saved.reuse_limitation
     delete saved.reuse_limitation
   }
-  if (response.responsePlan != null) saved.reuseLimitation = "retired_response_plan"
+  // New native clients retain this removed wire member as an unknown snake-case key.
+  if (response.responsePlan != null || response.response_plan != null) saved.reuseLimitation = "retired_response_plan"
   return saved
 }
 export const responseToWire = response => {

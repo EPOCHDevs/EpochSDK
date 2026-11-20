@@ -2,7 +2,7 @@ export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
 export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
 import { invariant, validateResponse, requestToWire, parametersToWire, operationId } from "./contract.js"
 import { researchStatus, resumeResearch, startResearch } from "./research.js"
-import { executionStatus, ordinarySource, startExecution } from "./execution.js"
+import { assertOrdinaryExecutionRequest, executionStatus, ordinarySource, startExecution } from "./execution.js"
 export { EpochError, parseRequest, requestToWire, responseToWire, validateRequest, validateResponse } from "./contract.js"
 
 function pause(ms, signal) {
@@ -79,7 +79,7 @@ export class EpochClient {
     operationId(id)
     const record = await this.backend.sdkRequests.getSdkExecutionRequestByHandle(id, {}, { maxRetries: 0, abortSignal: signal })
     const request = record.request
-    invariant(request.responsePlan == null, "Response-plan execution is retired; read its saved answer directly.", "INVALID_STATE")
+    assertOrdinaryExecutionRequest(request)
     invariant(request.operationId === id && request.sourceExecutionId, "The handle returned another saved study execution.")
     return { reference: {
       studyId: request.studyId, sourceExecutionId: request.sourceExecutionId,

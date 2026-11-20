@@ -9,6 +9,7 @@ import asyncio
 import copy
 import json
 from pathlib import Path
+import re
 
 import httpx
 import pytest
@@ -38,20 +39,31 @@ def client(handler) -> AsyncEpochFiles:
     )
 
 
-def test_method_names_match_the_stratifyx_files_client():
-    import stratifyx.user_files.client as native
-
+def test_method_names_match_the_platform_files_contract():
     import epoch_sdk.files_api.user_files.client as generated
 
-    def methods(module) -> set[str]:
+    contract = json.loads(
+        (Path(__file__).resolve().parents[3] / "contracts/platform-files.openapi.json").read_text()
+    )
+    expected = {
+        re.sub(r"(?<!^)(?=[A-Z])", "_", operation["operationId"]).lower()
+        for path in contract["paths"].values()
+        for verb, operation in path.items()
+        if verb in {"get", "put", "post", "patch", "delete", "options", "head", "trace"}
+        and "UserFiles" in operation.get("tags", [])
+    }
+
+    def methods(client_type) -> set[str]:
         return {
             name
-            for name in dir(module.AsyncUserFilesClient)
+            for name in dir(client_type)
             if not name.startswith("_") and name != "with_raw_response"
         }
 
-    # Platform dropped the archive route (ENG-2810); everything else keeps its name.
-    assert methods(native) - methods(generated) == {"archive_user_file"}
+    # Files belongs to Platform; the retired native client is no longer a dependency.
+    assert expected and "archive_user_file" not in expected
+    assert methods(generated.UserFilesClient) == expected
+    assert methods(generated.AsyncUserFilesClient) == expected
 
 
 def test_saved_datasets_list_and_keeps_fields_platform_adds_later():
