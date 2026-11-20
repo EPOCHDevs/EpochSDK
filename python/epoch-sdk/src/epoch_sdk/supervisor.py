@@ -327,12 +327,16 @@ class _State(BaseModel):
             return None
         if isinstance(value, dict):
             raw = cast(dict[str, object], value)
+            # Native checkpoints include default null error metadata. Only this
+            # projection admits those defaults; the public error wire stays strict.
             optional = {
                 "gaps",
                 "questions",
                 "recommended_task",
                 "data_requirements",
                 "access_requirements",
+                "meter",
+                "resets_at",
             }
             value = {
                 key: item for key, item in raw.items() if key not in optional or item is not None
