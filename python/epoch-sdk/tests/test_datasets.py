@@ -10,7 +10,7 @@ from stratifyx import AsyncStratifyX
 from stratifyx.core.api_error import ApiError
 from epoch_sdk.datasets import DatasetClient
 from epoch_sdk.catalogue import CatalogueClient, CatalogueHTTPError
-from epoch_sdk.discovery_types import DiscoveryQuery
+from epoch_sdk.discovery_types import AssetPredicate, DiscoveryQuery, ScreenInput1
 FIXTURES=Path(__file__).parent/'fixtures/dataset_search'
 QUERY={"id":"company","query":"Apple","mode":"discover"}
 def fixture(name):return json.loads((FIXTURES/(name+'.response.json')).read_text())
@@ -103,13 +103,23 @@ def test_native_metadata_failures_are_not_retried(operation,status):
         assert len(calls)==1
     asyncio.run(run())
 
-def test_screen_keeps_the_complete_native_membership_definition():
+@pytest.mark.parametrize('typed_negation', [False, True])
+def test_screen_keeps_the_complete_native_membership_definition(typed_negation):
     async def run():
         native={'format':'epoch-universe-v1','universe_ref':'universe:'+'a'*64,'generation':'v1','created_at':'2026-11-17T00:00:00Z','status':'ready','asset_count':2,'matched':2,'definition':{'screen':{'ids':['AAPL-Stocks','MSFT-Stocks']}},'selection':{'selection_semantics':'StaticCatalog','requires_point_in_time_gate':False,'point_in_time_indexes':[]},'sample':[],'facets':{},'excluded_count':0,'exclusions':[]};calls=[]
-        def handle(request):calls.append(request);assert request.url.host=='platform.invalid';assert request.url.path.endswith('/assets/screen');return httpx.Response(200,json=native)
+        request={'kind':'saved','universe_ref':'owned-cohort'}
+        if typed_negation:
+            screen=AssetPredicate(asset_class=['Stocks']).model_copy(update={'not_':AssetPredicate(industry=['Shell_Companies'])})
+            request=ScreenInput1(kind='screen',screen=screen)
+        def handle(message):
+            calls.append(message);assert message.url.host=='platform.invalid';assert message.url.path.endswith('/assets/screen')
+            if typed_negation:
+                assert json.loads(message.content)['screen']['not']=={'industry':['Shell_Companies']}
+                assert 'not_' not in json.loads(message.content)['screen']
+            return httpx.Response(200,json=native)
         async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as http:
             client=DatasetClient();client.backend=AsyncStratifyX(base_url='https://backend.invalid',token='fixture',httpx_client=http);client.catalogue=CatalogueClient('https://platform.invalid','fixture',http=http)
-            result=await client.screen_assets({'kind':'saved','universe_ref':'owned-cohort'})
+            result=await client.screen_assets(request)
             assert result.model_dump(mode='json',by_alias=True,exclude_unset=True)==native
         assert len(calls)==1
     asyncio.run(run())

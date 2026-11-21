@@ -96,6 +96,9 @@ class CatalogueClient:
         if not requests and not saved_query:
             raise ValueError("A source need or saved query is required")
         request = DiscoveryInput(requests=list(requests), saved_query=saved_query, limit=limit, budget=budget)
+        # Frozen attributes can still hold mutated lists. Validate the actual wire
+        # shape so generated schema validators run again before any transport.
+        request = DiscoveryInput.model_validate_json(request.model_dump_json(exclude_none=True))
         content = await self._request("POST", "/api/v1/discovery/datasets/search",
                                       request.model_dump(mode="json", exclude_none=True), budget,
                                       timeout=SEARCH_TIMEOUT_SECONDS)
