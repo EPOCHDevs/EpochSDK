@@ -14,6 +14,7 @@ from pydantic import (
     StrictFloat,
     StrictInt,
     StrictStr,
+    constr,
 )
 
 from epoch_sdk.discovery_model import DiscoveryModel
@@ -733,11 +734,30 @@ class SearchFilters(DiscoveryModel):
     macrobond: Macrobond | None = None
 
 
+class DiscoveryPopulation1(DiscoveryModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    kind: Literal['assets']
+    asset_ids: list[
+        constr(pattern=r'^\S(?:[\s\S]*\S)?$', min_length=1, max_length=256, strict=True)
+    ] = Field(..., max_length=200, min_length=1)
+
+
+class DiscoveryPopulation2(DiscoveryModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    kind: Literal['universe']
+    universe_ref: constr(pattern=r'^universe:[a-f0-9]{64}$', strict=True)
+
+
 class NeedResult(DiscoveryModel):
     model_config = ConfigDict(
         extra='forbid',
     )
     id: StrictStr
+    population: DiscoveryPopulation1 | DiscoveryPopulation2 | None = None
     status: Status
     reason: Literal['low_relevance'] | None = None
     scope_issues: list[ScopeIssue] | None = Field(
@@ -906,6 +926,10 @@ class DiscoveryQuery(DiscoveryModel):
     filters: SearchFilters | None = None
     semantic: StrictBool | None = None
     cursor: StrictStr | None = None
+    population: DiscoveryPopulation1 | DiscoveryPopulation2 | None = Field(
+        default=None,
+        description='Requested population only; does not certify product coverage for its members.',
+    )
 
 
 class DiscoveryResult(DiscoveryModel):

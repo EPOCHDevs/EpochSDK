@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from epoch_sdk.catalogue import CatalogueClient
 from epoch_sdk.catalogue_types import CatalogueRequest, CatalogueResult
 from epoch_sdk.legacy_discovery_types import DiscoveryStoredQueryResponse
+from epoch_sdk.discovery_types import DiscoveryQuery, DiscoveryResult
 
 
 def test_actual_native_directory_entry_roundtrips_in_its_platform_envelope():
@@ -53,6 +54,31 @@ def test_frozen_platform_legacy_reader_keeps_exact_scalar_values_and_closed_shap
     assert value.model_dump(mode='json',by_alias=True,exclude_unset=True)==body
     with pytest.raises(ValidationError):
         DiscoveryStoredQueryResponse.model_validate({**body,'invented':True})
+
+
+@pytest.mark.parametrize('population', [{'kind':'assets','asset_ids':['asset-a','asset-b']},
+    {'kind':'universe','universe_ref':'universe:'+'a'*64}])
+def test_requested_population_roundtrips_exactly_through_client_and_need(population):
+    async def run():
+        request=DiscoveryQuery.model_validate({'id':'prices','query':'Daily prices','mode':'exact','population':population})
+        body={'format':'epoch-search-v4','session_id':'search:one','needs':[{'id':'prices','population':population,
+            'status':'no_match','candidates':[],'next_cursor':None,'completeness':'complete'}],
+            'candidates':[],'saved':[],'omitted':0}
+        def transport(message):
+            assert json.loads(message.content)['requests'][0]['population']==population
+            return httpx.Response(200,json=body)
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            result=await CatalogueClient('https://platform.invalid','owner-token',http=http).search_dataset([request])
+        assert result.model_dump(mode='json',exclude_unset=True)==body
+        assert DiscoveryResult.model_validate(body).needs[0].population is not None
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('population', [{'kind':'assets','asset_ids':[]}, {'kind':'assets','asset_ids':['asset-a'],'invented':True},
+    {'asset_ids':['asset-a']}, {'kind':'universe','universe_ref':'not-a-reference'}])
+def test_closed_requested_population_rejects_invalid_client_shapes(population):
+    with pytest.raises(ValidationError):
+        DiscoveryQuery.model_validate({'id':'one','query':'Prices','mode':'exact','population':population})
 
 
 @pytest.mark.parametrize('coverage', [None, {'status': 'unknown', 'discontinued': False},
