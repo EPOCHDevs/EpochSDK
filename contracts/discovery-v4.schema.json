@@ -111,6 +111,10 @@
         },
         "cursor": {
           "type": "string"
+        },
+        "population": {
+          "$ref": "#/definitions/DiscoveryPopulation",
+          "description": "Requested population only; does not certify product coverage for its members."
         }
       },
       "required": [
@@ -289,6 +293,60 @@
         "unknown"
       ]
     },
+    "DiscoveryPopulation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "assets"
+            },
+            "asset_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryAssetId"
+              },
+              "minItems": 1,
+              "maxItems": 200,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "kind",
+            "asset_ids"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "universe"
+            },
+            "universe_ref": {
+              "$ref": "#/definitions/DiscoveryUniverseRef"
+            }
+          },
+          "required": [
+            "kind",
+            "universe_ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DiscoveryAssetId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^\\S(?:[\\s\\S]*\\S)?$"
+    },
+    "DiscoveryUniverseRef": {
+      "type": "string",
+      "pattern": "^universe:[a-f0-9]{64}$"
+    },
     "IntegerCount": {
       "type": "integer"
     },
@@ -339,6 +397,9 @@
       "properties": {
         "id": {
           "type": "string"
+        },
+        "population": {
+          "$ref": "#/definitions/DiscoveryPopulation"
         },
         "status": {
           "type": "string",

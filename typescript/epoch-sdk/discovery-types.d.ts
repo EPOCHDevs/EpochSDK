@@ -3,7 +3,22 @@
 export type Provider = "TradingEconomics" | "Macrobond" | "FMP" | "Barchart" | "EpochCatalog";
 export type SourceKind = "asset" | "series" | "release" | "calendar";
 export type SupportState = "qualified" | "held" | "excluded" | "unknown";
+export type DiscoveryAssetId = string;
+export type DiscoveryUniverseRef = string;
 export type IntegerCount = number;
+export type DiscoveryPopulation =
+  | {
+      kind: "assets";
+      /**
+       * @minItems 1
+       * @maxItems 200
+       */
+      asset_ids: [DiscoveryAssetId, ...DiscoveryAssetId[]];
+    }
+  | {
+      kind: "universe";
+      universe_ref: DiscoveryUniverseRef;
+    };
 export type CompactCandidate = CandidateDetails | CandidateSummary;
 export type Json =
   | null
@@ -64,6 +79,22 @@ export interface DiscoveryQuery {
   filters?: SearchFilters;
   semantic?: boolean;
   cursor?: string;
+  /**
+   * Requested population only; does not certify product coverage for its members.
+   */
+  population?:
+    | {
+        kind: "assets";
+        /**
+         * @minItems 1
+         * @maxItems 200
+         */
+        asset_ids: [DiscoveryAssetId, ...DiscoveryAssetId[]];
+      }
+    | {
+        kind: "universe";
+        universe_ref: DiscoveryUniverseRef;
+      };
 }
 export interface SearchFilters {
   providers?: Provider[];
@@ -103,6 +134,7 @@ export interface DiscoveryResult {
 }
 export interface NeedResult {
   id: string;
+  population?: DiscoveryPopulation;
   status: "ok" | "no_match" | "incomplete" | "needs_detail" | "error";
   reason?: "low_relevance";
   /**
