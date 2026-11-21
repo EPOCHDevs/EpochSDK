@@ -75,10 +75,55 @@ def test_requested_population_roundtrips_exactly_through_client_and_need(populat
 
 
 @pytest.mark.parametrize('population', [{'kind':'assets','asset_ids':[]}, {'kind':'assets','asset_ids':['asset-a'],'invented':True},
+    {'kind':'assets','asset_ids':['asset-a','asset-a']},
     {'asset_ids':['asset-a']}, {'kind':'universe','universe_ref':'not-a-reference'}])
 def test_closed_requested_population_rejects_invalid_client_shapes(population):
     with pytest.raises(ValidationError):
         DiscoveryQuery.model_validate({'id':'one','query':'Prices','mode':'exact','population':population})
+
+
+def test_duplicate_population_echo_is_rejected_in_native_result_model():
+    with pytest.raises(ValidationError):
+        DiscoveryResult.model_validate({'format':'epoch-search-v4','session_id':'search:one',
+            'needs':[{'id':'one','population':{'kind':'assets','asset_ids':['asset-a','asset-a']},
+                      'status':'no_match','candidates':[],'next_cursor':None,'completeness':'complete'}],
+            'candidates':[],'saved':[],'omitted':0})
+
+
+def test_client_revalidates_mutated_nested_population_before_any_http():
+    async def run():
+        query=DiscoveryQuery.model_validate({'id':'one','query':'Prices','mode':'exact',
+            'population':{'kind':'assets','asset_ids':['asset-b','asset-a']}})
+        # Frozen model attributes do not freeze the contents of a list.
+        query.population.asset_ids.append('asset-a')
+        calls=[]
+        def transport(request):
+            calls.append(request)
+            raise AssertionError('Invalid population must not reach HTTP')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            with pytest.raises(ValidationError):
+                await CatalogueClient('https://platform.invalid','owner-token',http=http).search_dataset([query])
+        assert calls==[]
+    asyncio.run(run())
+
+
+def test_client_rejects_duplicate_echo_without_coercing_result_order():
+    async def run():
+        query=DiscoveryQuery.model_validate({'id':'one','query':'Prices','mode':'exact',
+            'population':{'kind':'assets','asset_ids':['asset-b','asset-a']}})
+        calls=[]
+        def transport(request):
+            calls.append(request)
+            assert json.loads(request.content)['requests'][0]['population']['asset_ids']==['asset-b','asset-a']
+            return httpx.Response(200,json={'format':'epoch-search-v4','session_id':'search:one',
+                'needs':[{'id':'one','population':{'kind':'assets','asset_ids':['asset-a','asset-a']},
+                          'status':'no_match','candidates':[],'next_cursor':None,'completeness':'complete'}],
+                'candidates':[],'saved':[],'omitted':0})
+        async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as http:
+            with pytest.raises(ValidationError):
+                await CatalogueClient('https://platform.invalid','owner-token',http=http).search_dataset([query])
+        assert len(calls)==1
+    asyncio.run(run())
 
 
 @pytest.mark.parametrize('coverage', [None, {'status': 'unknown', 'discontinued': False},
