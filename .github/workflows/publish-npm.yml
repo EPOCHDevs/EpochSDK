@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 10
     outputs:
       version: ${{ steps.version.outputs.version }}
+      dist_tag: ${{ steps.version.outputs.dist_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +40,11 @@ jobs:
           status=$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/@epochdevs%2fepoch-sdk/$version")
           if [ "$status" = 200 ]; then echo "@epochdevs/epoch-sdk $version is already on npm" >&2; exit 1; fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Prereleases are explicit dev/preview artifacts. Stable releases retain latest.
+          case "$version" in
+            *-*) echo "dist_tag=preview" >> "$GITHUB_OUTPUT" ;;
+            *) echo "dist_tag=latest" >> "$GITHUB_OUTPUT" ;;
+          esac
       - name: Pack
         run: |
           mkdir dist
@@ -68,7 +74,10 @@ jobs:
         with:
           name: epoch-sdk-npm
           path: dist/
-      # npm 11 refuses a prerelease without --tag. While every version is an alpha, each one is what
-      # `npm install @epochdevs/epoch-sdk` should get, so it takes latest; revisit at the first stable.
+      # npm requires an explicit channel for prereleases. Dev/alpha versions use
+      # preview; publishing them must not move the public stable/default channel.
       # ./ makes npm read a local file; "dist/<name>" is GitHub shorthand for a repository.
-      - run: npm publish ./dist/*.tgz --access public --tag latest
+      - name: Publish the selected release channel
+        env:
+          NPM_DIST_TAG: ${{ needs.pack.outputs.dist_tag }}
+        run: npm publish ./dist/*.tgz --access public --tag "$NPM_DIST_TAG"
