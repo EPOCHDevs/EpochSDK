@@ -45,16 +45,16 @@
       "AccessRequirement": {
         "additionalProperties": false,
         "properties": {
-          "permission": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Permission",
-            "type": "string"
-          },
           "source": {
             "minLength": 1,
             "pattern": "\\S",
             "title": "Source",
+            "type": "string"
+          },
+          "permission": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission",
             "type": "string"
           },
           "suggested_resolution": {
@@ -124,21 +124,11 @@
       "Column": {
         "additionalProperties": false,
         "properties": {
-          "description": {
-            "description": "Field meaning and calculation/time basis.",
-            "title": "Description",
-            "type": "string"
-          },
           "name": {
             "minLength": 1,
             "pattern": "\\S",
             "title": "Name",
             "type": "string"
-          },
-          "nullable": {
-            "default": false,
-            "title": "Nullable",
-            "type": "boolean"
           },
           "type": {
             "enum": [
@@ -152,9 +142,19 @@
             "title": "Type",
             "type": "string"
           },
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
           "unit": {
             "title": "Unit",
             "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4345,24 +4345,18 @@
           }
         ],
         "properties": {
-          "access_requirements": {
-            "items": {
-              "$ref": "#/components/schemas/AccessRequirement"
-            },
-            "minItems": 1,
-            "title": "Access Requirements",
-            "type": "array"
-          },
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
           },
-          "data_requirements": {
-            "items": {
-              "$ref": "#/components/schemas/DataRequirement"
-            },
-            "minItems": 1,
-            "title": "Data Requirements",
-            "type": "array"
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
           },
           "gaps": {
             "items": {
@@ -4371,20 +4365,6 @@
             "minItems": 1,
             "title": "Gaps",
             "type": "array"
-          },
-          "message": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Message",
-            "type": "string"
-          },
-          "meter": {
-            "enum": [
-              "assistant",
-              "study_ai"
-            ],
-            "title": "Meter",
-            "type": "string"
           },
           "questions": {
             "items": {
@@ -4400,15 +4380,35 @@
             "title": "Recommended Task",
             "type": "string"
           },
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
+          },
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
+          },
           "resets_at": {
             "format": "date-time",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
             "title": "Resets At",
             "type": "string"
-          },
-          "retryable": {
-            "title": "Retryable",
-            "type": "boolean"
           }
         },
         "required": [
@@ -4732,8 +4732,8 @@
         "additionalProperties": false,
         "properties": {
           "cash": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "commission": {
@@ -4837,6 +4837,12 @@
       "FreshFetchRequest": {
         "additionalProperties": false,
         "properties": {
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          },
           "context": {
             "items": {
               "minLength": 1,
@@ -4878,12 +4884,6 @@
             "minimum": 1,
             "title": "Page Size",
             "type": "integer"
-          },
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
           }
         },
         "required": [
@@ -4902,13 +4902,13 @@
             "type": "string"
           },
           "effective_from_ns": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "effective_to_ns": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "price_kind": {
@@ -4995,6 +4995,12 @@
       "IngestRequest": {
         "additionalProperties": false,
         "properties": {
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          },
           "context": {
             "items": {
               "minLength": 1,
@@ -5033,12 +5039,6 @@
             "minItems": 1,
             "title": "Outputs",
             "type": "array"
-          },
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
           }
         },
         "required": [
@@ -5051,23 +5051,23 @@
       "JsonOutputRequest": {
         "additionalProperties": false,
         "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
             "type": "string"
           },
-          "schema": {
-            "$ref": "#/components/schemas/JsonSchema"
+          "description": {
+            "title": "Description",
+            "type": "string"
           },
           "type": {
             "const": "json",
             "title": "Type",
             "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
           }
         },
         "required": [
@@ -18178,6 +18178,12 @@
           ]
         },
         "properties": {
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
+          },
           "options": {
             "items": {
               "minLength": 1,
@@ -18187,12 +18193,6 @@
             "minItems": 1,
             "title": "Options",
             "type": "array"
-          },
-          "question": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Question",
-            "type": "string"
           },
           "recommended_option": {
             "minLength": 1,
@@ -18210,11 +18210,6 @@
       "RefreshRequest": {
         "additionalProperties": false,
         "properties": {
-          "auto_ingest": {
-            "default": false,
-            "title": "Auto Ingest",
-            "type": "boolean"
-          },
           "context": {
             "items": {
               "minLength": 1,
@@ -18223,6 +18218,11 @@
             },
             "title": "Context",
             "type": "array"
+          },
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
           },
           "parameters": {
             "$ref": "#/components/schemas/RunParameters"
@@ -18245,12 +18245,26 @@
         "additionalProperties": false,
         "description": "Only the closed parameter types supported by native Backend execution.",
         "properties": {
+          "period": {
+            "additionalProperties": false,
+            "properties": {
+              "end": {
+                "format": "date",
+                "type": "string"
+              },
+              "start": {
+                "format": "date",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
           "execution": {
             "additionalProperties": false,
             "properties": {
               "cash": {
-                "maximum": 9223372036854776000,
-                "minimum": -9223372036854776000,
+                "maximum": 9223372036854775807,
+                "minimum": -9223372036854775808,
                 "type": "integer"
               },
               "commission": {
@@ -18588,13 +18602,13 @@
                           "type": "string"
                         },
                         "effective_from_ns": {
-                          "maximum": 9223372036854776000,
-                          "minimum": -9223372036854776000,
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
                           "type": "integer"
                         },
                         "effective_to_ns": {
-                          "maximum": 9223372036854776000,
-                          "minimum": -9223372036854776000,
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
                           "type": "integer"
                         },
                         "price_kind": {
@@ -18818,20 +18832,6 @@
             },
             "title": "epoch_stratifyx::ExecutionOptions",
             "type": "object"
-          },
-          "period": {
-            "additionalProperties": false,
-            "properties": {
-              "end": {
-                "format": "date",
-                "type": "string"
-              },
-              "start": {
-                "format": "date",
-                "type": "string"
-              }
-            },
-            "type": "object"
           }
         },
         "title": "RunParameters",
@@ -18846,10 +18846,11 @@
           ]
         },
         "properties": {
-          "auto_ingest": {
-            "default": false,
-            "title": "Auto Ingest",
-            "type": "boolean"
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
           },
           "context": {
             "items": {
@@ -18886,16 +18887,10 @@
             "title": "Outputs",
             "type": "array"
           },
-          "parameters": {
-            "$ref": "#/components/schemas/RunParameters",
-            "description": "Supported native overrides; resolve defaults before freezing the binding."
-          },
-          "source_execution_id": {
-            "description": "Resolve the exact study from this authorized Backend execution.",
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Source Execution Id",
-            "type": "string"
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
           },
           "study_id": {
             "description": "Execute this exact authorized study.",
@@ -18904,11 +18899,16 @@
             "title": "Study Id",
             "type": "string"
           },
-          "task": {
+          "source_execution_id": {
+            "description": "Resolve the exact study from this authorized Backend execution.",
             "minLength": 1,
             "pattern": "\\S",
-            "title": "Task",
+            "title": "Source Execution Id",
             "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
           }
         },
         "required": [
@@ -18953,14 +18953,19 @@
       "TableOutputRequest": {
         "additionalProperties": false,
         "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
             "type": "string"
           },
           "schema": {
@@ -18970,11 +18975,6 @@
             "minItems": 1,
             "title": "Schema",
             "type": "array"
-          },
-          "type": {
-            "const": "table",
-            "title": "Type",
-            "type": "string"
           }
         },
         "required": [
@@ -19135,8 +19135,25 @@
       "TextOutputRequest": {
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
             "type": "string"
           },
           "format": {
@@ -19146,23 +19163,6 @@
               "markdown"
             ],
             "title": "Format",
-            "type": "string"
-          },
-          "instructions": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Instructions",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 100,
-            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
-            "title": "Name",
-            "type": "string"
-          },
-          "type": {
-            "const": "text",
-            "title": "Type",
             "type": "string"
           }
         },

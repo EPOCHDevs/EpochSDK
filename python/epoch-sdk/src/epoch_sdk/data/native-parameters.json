@@ -236,8 +236,8 @@
       "additionalProperties": false,
       "properties": {
         "cash": {
-          "maximum": 9223372036854776000,
-          "minimum": -9223372036854776000,
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
           "type": "integer"
         },
         "commission": {
@@ -266,13 +266,13 @@
           "type": "string"
         },
         "effective_from_ns": {
-          "maximum": 9223372036854776000,
-          "minimum": -9223372036854776000,
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
           "type": "integer"
         },
         "effective_to_ns": {
-          "maximum": 9223372036854776000,
-          "minimum": -9223372036854776000,
+          "maximum": 9223372036854775807,
+          "minimum": -9223372036854775808,
           "type": "integer"
         },
         "price_kind": {
@@ -402,6 +402,6 @@
       ]
     }
   },
-  "sha256": "3fb05bb81a18d02c0c9571be1e32fe5baee077bd76d9380a364aa983371d6a81",
+  "sha256": "0a3077a88f25bb3c69eb839f238ca69ac46aaeee795f5687795cfb36df421b67",
   "source": "stratifyx_openapi.json#/components/schemas"
 }
