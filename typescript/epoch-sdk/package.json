@@ -79,7 +79,8 @@
     "platform-models.openapi.json",
     "models-api/",
     "platform-presentations.openapi.json",
-    "presentation-api/"
+    "presentation-api/",
+    "platform-research.openapi.json"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",

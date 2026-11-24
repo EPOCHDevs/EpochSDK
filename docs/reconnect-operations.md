@@ -24,7 +24,7 @@ result = await epoch.research_status(operation_id="screen-sp500")
 
 The result contains progress, pending questions, a recorded failure or the final saved answer. Questions retain their native LangGraph interrupt IDs and can be answered through `resume_research` or the conversation UI. A local cancellation stops observation; explicit native server cancellation is separate.
 
-Backend pins the first answer revision when the run publishes it, and the research completes when the agent's turn ends. Until then the result is `InProgress`, even though an outcome is recorded: the agent may still revise the run's outputs. Once the turn has ended (or its run or conversation is gone), the answer is the run's current accepted output revision, which is the first revision unless the agent revised it. A revision publishes its answer under its own `response_id`. A turn that still shows as running 15 minutes after the outcome was recorded completes with the outputs that exist. `research(..., operation_id=..., wait=True)` follows the turn to its end. The original client does not need to reach its completion callback.
+Platform pins the first answer revision when the run publishes it, and the research completes when the agent's turn ends. Until then the result is `InProgress`, even though an outcome is recorded: the agent may still revise the run's outputs. Once the turn has ended (or its run or conversation is gone), the answer is the run's current accepted output revision, which is the first revision unless the agent revised it. A revision publishes its answer under its own `response_id`. A turn that still shows as running 15 minutes after the outcome was recorded completes with the outputs that exist. `research(..., operation_id=..., wait=True)` follows the turn to its end. The original client does not need to reach its completion callback.
 
 ## Prepared execution
 
@@ -43,11 +43,11 @@ Backend admits one native execution and retains its execution ID before starting
 
 ## IDs and accepted inputs
 
-IDs contain 1–128 ASCII letters, digits, hyphens or underscores and start with a letter or digit. They are case-sensitive and scoped to the authenticated Backend owner. Research and execution use their respective API namespaces.
+IDs contain 1–128 ASCII letters, digits, hyphens or underscores and start with a letter or digit. They are case-sensitive and scoped to the authenticated owner. Research and execution use their respective API namespaces.
 
-Matching normalized inputs attach. Changing the task, requested outputs, context, parameters or launch settings returns `IDEMPOTENCY_CONFLICT` (native HTTP 409). Use a new ID for that new operation. Accepted inputs remain readable in the native operation record. The advanced `research` API retains its historical unkeyed behavior. Public `run` always creates a reconnectable session, generating an ID if omitted.
+Matching normalized inputs attach. Changing the task, requested outputs, context, parameters or launch settings returns `IDEMPOTENCY_CONFLICT` (native HTTP 409). Use a new ID for that new operation. Accepted research inputs remain readable in Platform; native execution records remain in Backend. The advanced `research` API retains its historical unkeyed behavior. Public `run` always creates a reconnectable session, generating an ID if omitted.
 
-The native LangGraph admission hook atomically records one graph run in Backend. Concurrent SDK submissions attach to that recorded run. Clarification resumes record their new native run ID without creating a new research operation. Reads select checkpoints belonging to that operation/run, rather than the newest conversation query.
+The native LangGraph admission hook atomically records one graph run in Platform. Concurrent SDK submissions attach to that recorded run. Clarification resumes record their new native run ID without creating a new research operation. Reads select checkpoints belonging to that operation/run, rather than the newest conversation query.
 
 ## Workflow MCP compatibility
 
@@ -64,3 +64,17 @@ public SDK operations. Omitting an ID on `run` generates one and still uses the
 shared session. See [the current interface](public-client-interface.md).
 
 Use the matching Backend, EpochAI admission hook and normally generated StratifyX SDK from this feature's linked PRs. This is healthy-service reconnect; automatic failed-run recovery, retry scheduling and retention remain ENG-2037 work.
+
+
+The direct `/v1/research` API is one-shot: complete the requested outputs or
+return structured `CLARIFICATION_REQUIRED`, `DATA_REQUIRED`, `ACCESS_REQUIRED`
+or another typed terminal failure. Terminal and workflow MCP remain interactive.
+Platform freezes this distinction at admission; callers cannot change it in a
+research body, header or reused operation ID. Full discovery stays enabled.
+
+`EpochClient.connect(platform_url=...)` selects Platform explicitly when the
+local services have separate origins. Otherwise the shared API origin routes
+`/api/v1/integration/requests*` to Platform. Backend's
+`/api/v1/integration/execution-requests*` endpoints keep native admission and
+output ownership. Deploy the route cutover and compatible service/SDK artifacts
+together; stop the old lifecycle writer before importing retained records.

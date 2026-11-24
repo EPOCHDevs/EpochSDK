@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import copy
 import json
@@ -116,7 +118,7 @@ async def clients(
         if path == "/api/v1/integration/requests" and request.method == "POST":
             accepted = json.loads(request.content)["request"]
             records.update(
-                {
+                {"interaction": "interactive",
                     "request_id": REQUEST_ID,
                     "version": 0,
                     "created_at_ms": 1,
@@ -229,7 +231,7 @@ async def clients(
         ) as graph_http,
         httpx.AsyncClient(transport=httpx.MockTransport(backend)) as backend_http,
     ):
-        supervisor = SupervisorClient(
+        supervisor = supervisor_with_research(
             LangGraphClient(graph_http),
             AsyncStratifyX(
                 base_url="https://backend.invalid", token="fixture", httpx_client=backend_http

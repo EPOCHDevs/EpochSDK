@@ -160,7 +160,7 @@ async def cancel_observer(task):
 
 async def record(observer: EpochClient, operation_id):
     try:
-        return await observer.backend.sdk_requests.get_sdk_request_by_handle(
+        return await observer.research_operations.get_sdk_request_by_handle(
             operation_id, request_options={"max_retries": 0}
         )
     except ApiError as error:

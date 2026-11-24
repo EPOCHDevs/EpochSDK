@@ -1,4 +1,6 @@
 """Generated-client transport controls for one authored ordinary study; no live services."""
+
+from platform_research_fixture import supervisor_with_research
 import asyncio
 from copy import deepcopy
 from datetime import date
@@ -45,7 +47,7 @@ def records():
             "response_id": "answer", "response_version": 1,
             "text": [{"producer_id": "llm_brief", "value": "Seven observations."}],
             "dashboard_prose": "Computed observations: 7."}}
-    research = {"request_id": RESEARCH, "operation_id": "question", "version": 3,
+    research = {"interaction": "interactive", "request_id": RESEARCH, "operation_id": "question", "version": 3,
         "created_at_ms": 1, "updated_at_ms": 2, "phase": "outputs_recorded",
         "request": {"task": "Measure observations", "outputs": declarations},
         "runtime": {"thread_id": "thread", "assistant_id": "epoch-ai",
@@ -69,7 +71,7 @@ def snapshot(identifier="ordinary"):
 
 
 def client(native_http, graph_http):
-    return EpochClient(SupervisorClient(LangGraphClient(graph_http), AsyncStratifyX(
+    return EpochClient(supervisor_with_research(LangGraphClient(graph_http), AsyncStratifyX(
         base_url="https://native.invalid", token="fixture", httpx_client=native_http)))
 
 

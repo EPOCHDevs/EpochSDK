@@ -1,4 +1,4 @@
-"""Project the existing Backend operation APIs into the shared OpenAPI contract.
+"""Project native execution and Platform research operation APIs into the shared OpenAPI contract.
 
 Native schema names are prefixed to keep historical illustrative /v1 models
 separate. This is a projection of existing service routes, not a new gateway.
@@ -39,7 +39,7 @@ def project(source: Path, contract: dict) -> dict:
     paths = {
         path: rewrite(operations)
         for path, operations in native["paths"].items()
-        if path.startswith(("/api/v1/integration/requests", "/api/v1/integration/execution-requests"))
+        if path.startswith(("/api/v1/integration/execution-requests", "/api/v1/integration/research-contracts/"))
         or path == "/api/v1/studies/executions/{executionId}/inputs"
         or path == "/api/v1/studies/executions/{executionId}/acquisition-provenance"
         or path == "/api/v1/agents/threads/{threadId}/studies/definitions"
@@ -67,9 +67,14 @@ def project(source: Path, contract: dict) -> dict:
             # different native DTOs/statuses. Never attach an operation-record
             # example to their responses or invent a second creation protocol.
             if response_ref not in {
-                PREFIX + "Native_SdkRequestRecord", PREFIX + "Native_SdkExecutionRecord"
+                PREFIX + "Native_SdkExecutionRecord"
             }:
-                example = extension_examples[operation["operationId"]]
+                example = extension_examples.get(operation["operationId"], {})
+                if operation["operationId"] == "inspectResearchContract":
+                    example = {"request": {"contract": {"request_id": "req_"+"1"*32, "version": 0,
+                        "request": {"task": "Explain", "outputs": [{"name": "answer", "type": "text", "instructions": "Explain"}]},
+                        "execution_open": True, "publication_open": False}, "references": {}},
+                        "response": {"delivered": False, "output_delivery_resumed": False}}
                 for container, name in (
                     (operation.get("requestBody", {}), "request"),
                     *[(body, "response") for code, body in operation.get("responses", {}).items()
@@ -83,29 +88,6 @@ def project(source: Path, contract: dict) -> dict:
                 " Readable operation IDs attach to the original accepted owner-scoped inputs; "
                 "changed inputs conflict with HTTP 409. See docs/reconnect-operations.md."
             )
-            research_input = {
-                "operation_id": "screen-sp500",
-                "launch": {"assistant_id": "epoch-ai"},
-                "request": {
-                    "task": "Explain the supplied sales data",
-                    "outputs": [
-                        {
-                            "name": "answer",
-                            "type": "text",
-                            "format": "markdown",
-                            "instructions": "Explain the findings concisely",
-                        }
-                    ],
-                },
-            }
-            research_record = {
-                **research_input,
-                "request_id": "req_" + "1" * 32,
-                "version": 0,
-                "created_at_ms": 1,
-                "updated_at_ms": 1,
-                "phase": "accepted",
-            }
             execution_input = {
                 "operation_id": "refresh-sp500-2025",
                 "study_id": "11111111-1111-4111-8111-111111111111",
@@ -119,26 +101,13 @@ def project(source: Path, contract: dict) -> dict:
                 "phase": "active",
                 "created_at_ms": 1,
             }
-            is_execution = "Execution" in operation["operationId"]
             operation["responses"]["200"]["content"]["application/json"]["examples"] = {
                 "acceptedOperation": {
-                    "value": execution_record if is_execution else research_record
+                    "value": execution_record
                 },
             }
             if "requestBody" in operation:
-                request_example = research_input
-                if is_execution:
-                    request_example = execution_input
-                elif operation["operationId"] == "updateSdkRequest":
-                    request_example = {
-                        "expected_version": 0,
-                        "runtime": {
-                            "thread_id": "44444444-4444-4444-8444-444444444444",
-                            "assistant_id": "epoch-ai",
-                            "execution_ids_before": [],
-                            "outcome_ids_before": [],
-                        },
-                    }
+                request_example = execution_input
                 operation["requestBody"]["content"]["application/json"]["examples"] = {
                     "acceptedInputs": {"value": request_example},
                 }
@@ -154,12 +123,28 @@ def project(source: Path, contract: dict) -> dict:
         "paths": sorted(paths),
         "schemas": sorted("Native_" + name for name in selected),
     }
+    platform_path = ROOT / "contracts/platform-research.openapi.json"
+    platform = json.loads(platform_path.read_text())
+    previous_platform = contract.get("x-epoch-platform-research-operations", {})
+    for path in previous_platform.get("paths", []): contract["paths"].pop(path, None)
+    for name in previous_platform.get("schemas", []): contract["components"]["schemas"].pop(name, None)
+    def platform_refs(value):
+        if isinstance(value, str) and value.startswith(PREFIX): return PREFIX + "Platform_" + value.removeprefix(PREFIX)
+        if isinstance(value, dict): return {key: platform_refs(field) for key, field in value.items()}
+        if isinstance(value, list): return [platform_refs(field) for field in value]
+        return value
+    platform_paths = platform_refs(platform["paths"])
+    for methods in platform_paths.values():
+        for operation in methods.values(): operation["security"] = [{"BearerAuth": []}]
+    contract["paths"].update(platform_paths)
+    platform_schemas = {"Platform_" + name: platform_refs(schema) for name, schema in platform["components"]["schemas"].items()}
+    contract["components"]["schemas"].update(platform_schemas)
+    contract["x-epoch-platform-research-operations"] = {"source": "EpochPlatform/contracts/research.openapi.json",
+        "sha256": hashlib.sha256(platform_path.read_bytes()).hexdigest(), "paths": sorted(platform_paths), "schemas": sorted(platform_schemas)}
     contract["info"]["description"] = (
-        "Shared language-neutral Epoch contracts. The /api/v1/integration routes are "
-        "projections of existing EpochBackend native operation APIs; their Native_ schema "
-        "names identify source-owned DTOs. The earlier illustrative /v1 proposals are "
-        "historical and do not assert a deployed gateway. Research uses the existing "
-        "checkpointed EpochAI supervisor; prepared and execution-input programs call Backend directly. "
+        "Shared language-neutral Epoch contracts. Platform owns research lifecycle under /api/v1/integration/requests; "
+        "Backend owns native execution admission, computational inspection and response artifacts. "
+        "Native_ and Platform_ names preserve each source-owned DTO. Public /v1 is defined by public-v1.openapi.json. "
         "See docs/research-flow.md and docs/reconnect-operations.md."
     )
     return contract

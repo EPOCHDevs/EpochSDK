@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import copy
 import json
@@ -233,7 +235,7 @@ async def clients(
         ) as graph_http,
         httpx.AsyncClient(transport=httpx.MockTransport(backend)) as backend_http,
     ):
-        client = SupervisorClient(
+        client = supervisor_with_research(
             LangGraphClient(graph_http),
             AsyncStratifyX(
                 base_url="https://backend.invalid",

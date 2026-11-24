@@ -1,3 +1,4 @@
+import { parseResearchFailure } from './research-operations.js'
 import { EpochError, canonical, invariant, normalizedDeclarations, operationId, parseRequest,
   requestToWire, responseToWire, statusCode, throwNativeError } from "./contract.js"
 import { datasetInterrupt, validateDatasetResponse, refreshDatasetInterrupts,
@@ -90,7 +91,7 @@ function runPayload(record) {
 }
 
 async function current(client, id, signal) {
-  const r = await client.backend.sdkRequests.getSdkRequest(id, {}, opts(signal))
+  const r = await client.researchOperations.getSdkRequest(id, {}, opts(signal))
   invariant(r.requestId === id, "Backend returned another research request.")
   return r
 }
@@ -100,7 +101,7 @@ export async function startResearch(client, request, options) {
   const native = parseRequest(request)
   let record
   try {
-    record = await client.backend.sdkRequests.createSdkRequest({ request: native, operationId: op,
+    record = await client.researchOperations.createSdkRequest({ request: native, operationId: op,
       launch: { assistantId: client.assistantId, ...(options.threadId ? { threadId: options.threadId } : {}) } }, opts(options.signal))
   } catch (error) {
     if (statusCode(error) === 409) throw new EpochError("IDEMPOTENCY_CONFLICT",
@@ -119,7 +120,7 @@ export async function startResearch(client, request, options) {
       "This conversation is waiting for input. Continue its existing operation.")
     const values = snapshot.values ?? {}
     try {
-      record = await client.backend.sdkRequests.updateSdkRequest(record.requestId, {
+      record = await client.researchOperations.updateSdkRequest(record.requestId, {
         expectedVersion: record.version,
         runtime: { threadId, assistantId: client.assistantId, executionIdsBefore: values.execution_ids ?? [],
           outcomeIdsBefore: Object.keys(values.next_action_outcomes ?? {}) },
@@ -192,9 +193,22 @@ async function completed(client, record, signal) {
     response, ...(reusableStudy ? { reusableStudy } : {}) }
 }
 
+async function failResearch(client, record, error, signal) {
+  try {
+    record = await client.researchOperations.updateSdkRequest(record.requestId, {
+      expectedVersion: record.version, error: parseResearchFailure({ error }),
+    }, opts(signal))
+  } catch (failure) {
+    if (statusCode(failure) !== 409) throw failure
+    record = await current(client, record.requestId, signal)
+  }
+  throwNativeError(record)
+  return active(record)
+}
+
 export async function researchStatus(client, op, { signal } = {}) {
   operationId(op)
-  let record = await client.backend.sdkRequests.getSdkRequestByHandle(op, {}, opts(signal))
+  let record = await client.researchOperations.getSdkRequestByHandle(op, {}, opts(signal))
   invariant(record.operationId === op, "The handle returned another operation.")
   throwNativeError(record)
   if (record.responseVersion !== undefined) return completed(client, record, signal)
@@ -207,7 +221,8 @@ export async function researchStatus(client, op, { signal } = {}) {
   catch (error) { if (statusCode(error) === 404) return active(record); throw error }
   invariant(run.metadata?.epoch_sdk_request_id === record.requestId, "The recorded run belongs to another request.")
   if (["pending", "running"].includes(run.status)) return active(record)
-  if (["error", "timeout"].includes(run.status)) throw new EpochError("EXECUTION_FAILED", "The research run failed.")
+  if (["error", "timeout"].includes(run.status)) return failResearch(client, record,
+    { code: 'EXECUTION_FAILED', message: 'The research run failed.', retryable: false }, signal)
   const history = await client.graph.threads.getHistory(h.threadId, { limit: 1,
     metadata: { epoch_sdk_request_id: record.requestId, epoch_sdk_run_id: record.graphRunId }, signal })
   invariant(history.length, "The run ended without a saved result checkpoint.")
@@ -225,6 +240,8 @@ export async function researchStatus(client, op, { signal } = {}) {
   invariant(!state.authority_turn_id || state.authority_turn_id === `user-turn:${record.requestId}`,
     "The checkpoint belongs to another research request.")
   const interrupts = snapshot.interrupts?.length ? snapshot.interrupts : state.__interrupt__ ?? []
+  if (interrupts.length && record.interaction === 'one_shot') return failResearch(client, record,
+    { code: 'EXECUTION_FAILED', message: 'One-shot research stopped at an unsupported input boundary.', retryable: false }, signal)
   if (interrupts.length) return { status: "needs_input", kind: "run", operationId: op,
     requestId: record.requestId, handle: h, interrupts: await refreshDatasetInterrupts(client, parseInterrupts(interrupts), signal) }
   // Completion may have been recorded while the graph was being observed.
@@ -232,8 +249,7 @@ export async function researchStatus(client, op, { signal } = {}) {
   throwNativeError(record)
   if (record.responseVersion !== undefined) return completed(client, record, signal)
   if (record.nativeExecutionRequestId || record.graphRunId !== h.runId) return active(record)
-  if (state.publication_error) throw new EpochError(state.publication_error.code ?? "OUTPUT_VALIDATION_FAILED",
-    state.publication_error.message ?? "The required outputs could not be saved.")
+  if (state.publication_error) return failResearch(client, record, state.publication_error, signal)
   const reference = state.published_response
   invariant(object(reference) && reference.request_id === record.requestId && reference.thread_id === h.threadId,
     "The run ended without a saved answer for this request.", "OUTPUT_VALIDATION_FAILED")
@@ -243,7 +259,7 @@ export async function researchStatus(client, op, { signal } = {}) {
     invariant(canonical(reference[key] ?? undefined) === canonical(wire[key] ?? undefined),
       "Published answer reference differs from storage.", "OUTPUT_VALIDATION_FAILED")
   try {
-    record = await client.backend.sdkRequests.updateSdkRequest(record.requestId, { expectedVersion: record.version,
+    record = await client.researchOperations.updateSdkRequest(record.requestId, { expectedVersion: record.version,
       responseId: response.responseId, responseVersion: response.version,
       ...(response.primaryExecutionId ? { currentExecutionId: response.primaryExecutionId } : {}) }, opts(signal))
   } catch (error) { if (statusCode(error) !== 409) throw error; record = await current(client, record.requestId, signal) }

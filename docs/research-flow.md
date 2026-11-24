@@ -165,3 +165,17 @@ a different answer. The illustrative combined `/v1/run` contract and historical
 acceptance records remain prior design/evidence, not extra deployed proxies or
 proof of a newer candidate. Automatic multi-study merging, recovery workers,
 retention and custom presentation remain separate work.
+
+
+The direct `/v1/research` API is one-shot: complete the requested outputs or
+return structured `CLARIFICATION_REQUIRED`, `DATA_REQUIRED`, `ACCESS_REQUIRED`
+or another typed terminal failure. Terminal and workflow MCP remain interactive.
+Platform freezes this distinction at admission; callers cannot change it in a
+research body, header or reused operation ID. Full discovery stays enabled.
+
+`EpochClient.connect(platform_url=...)` selects Platform explicitly when the
+local services have separate origins. Otherwise the shared API origin routes
+`/api/v1/integration/requests*` to Platform. Backend's
+`/api/v1/integration/execution-requests*` endpoints keep native admission and
+output ownership. Deploy the route cutover and compatible service/SDK artifacts
+together; stop the old lifecycle writer before importing retained records.

@@ -14,6 +14,11 @@ export interface Problem {
   request_id?: string | null
   meter?: "assistant" | "study_ai" | null
   resets_at?: string | null
+  gaps?: { description: string; field?: string }[] | null
+  questions?: { question: string; options?: string[]; recommended_option?: string }[] | null
+  recommended_task?: string | null
+  data_requirements?: { description: string; required_coverage?: string; suggested_resolution?: string }[] | null
+  access_requirements?: { source: string; permission: string; suggested_resolution?: string }[] | null
 }
 
 export declare class EpochApiError extends Error {
@@ -214,6 +219,7 @@ export declare class Epoch {
       context?: string[]
       outputs: Output[]
       threadId?: string
+      conversationKey?: string
       idempotencyKey?: string
     }): Promise<Research>
     get(researchId: string): Promise<Research>

@@ -377,8 +377,12 @@ def test_documented_wire_examples_agree_with_shared_contract() -> None:
                         elif schema.get("$ref") == "#/components/schemas/Acknowledgement":
                             Acknowledgement.model_validate(value)
     # Service projections preserve their OpenAPI without adding authored examples.
-    # test_documents checks captured wire fixtures against those service schemas.
-    projected_paths = set(document.get("x-epoch-document-operations", {}).get("paths", []))
+    # Document and research component tests cover the source-owned service APIs.
+    projected_paths = {
+        path
+        for source in ("x-epoch-document-operations", "x-epoch-platform-research-operations")
+        for path in document.get(source, {}).get("paths", [])
+    }
     assert projected_paths <= document["paths"].keys()
     assert {
         operation["operationId"]

@@ -254,3 +254,11 @@ test("new answer readers declare support for skipped text", async () => {
   await epoch.responses.get("rsp_1")
   assert.equal(calls[0].headers["Epoch-Features"], "ai-text-skipped-v1")
 })
+
+test('conversationKey is sent and rejects a competing threadId', async () => {
+  const { epoch, calls } = client(() => json(202, RESEARCH))
+  await epoch.research.create({ task: 'Explain', outputs: [{ name: 'answer', type: 'text', instructions: 'Explain' }], conversationKey: 'notebook-one' })
+  assert.equal(JSON.parse(calls[0].body).conversation_key, 'notebook-one')
+  assert.throws(() => epoch.research.create({ task: 'Explain', outputs: [], threadId: 'thread', conversationKey: 'notebook-one' }), /not both/)
+  assert.equal(calls.length, 1)
+})

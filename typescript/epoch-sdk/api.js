@@ -133,11 +133,13 @@ export class Epoch {
 
     this.research = {
       /** Starts research and returns at once. Follow it with wait, events or get. */
-      create: ({ task, context = [], outputs, threadId, idempotencyKey }) =>
-        this.request("POST", "/v1/research", {
-          json: { request: { task, ...(context.length ? { context } : {}), outputs }, ...(threadId ? { thread_id: threadId } : {}) },
+      create: ({ task, context = [], outputs, threadId, conversationKey, idempotencyKey }) => {
+        if (threadId && conversationKey) throw new Error("Pass threadId or conversationKey, not both")
+        return this.request("POST", "/v1/research", {
+          json: { request: { task, ...(context.length ? { context } : {}), outputs }, ...(threadId ? { thread_id: threadId } : {}), ...(conversationKey ? { conversation_key: conversationKey } : {}) },
           idempotencyKey,
-        }),
+        })
+      },
       /** The research now. Reading never starts or resumes work. */
       get: researchId => this.request("GET", `/v1/research/${path(researchId)}`),
       /**

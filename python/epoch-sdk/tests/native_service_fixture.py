@@ -1,4 +1,6 @@
 """Shared controlled native transport; no composable MCP or tools-graph server."""
+
+from platform_research_fixture import supervisor_with_research
 from contextlib import asynccontextmanager
 import json
 import httpx
@@ -80,7 +82,7 @@ class Service:
             ) as graph_http,
             httpx.AsyncClient(transport=httpx.MockTransport(self.backend)) as backend_http,
         ):
-            yield EpochClient(SupervisorClient(
+            yield EpochClient(supervisor_with_research(
                 LangGraphClient(graph_http),
                 AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=backend_http),
                 document_http=graph_http,

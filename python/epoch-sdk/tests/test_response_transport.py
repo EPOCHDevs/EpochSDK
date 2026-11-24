@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import json
 from contextlib import asynccontextmanager
@@ -66,7 +68,7 @@ async def clients(*, wrong_identity: bool = False, denied: bool = False, qualifi
         backend = AsyncStratifyX(
             base_url="https://backend.invalid", token="fixture", httpx_client=http
         )
-        yield SupervisorClient(LangGraphClient(graph_http), backend), calls
+        yield supervisor_with_research(LangGraphClient(graph_http), backend), calls
 
 
 def test_notebook_publication_and_read_use_the_generated_native_client() -> None:

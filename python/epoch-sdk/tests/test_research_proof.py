@@ -1,3 +1,5 @@
+
+from platform_research_fixture import supervisor_with_research
 import asyncio
 import importlib.util
 import json
@@ -58,7 +60,7 @@ def completed(case):
     return ResearchCompleted.model_validate(
         {
             "status": "succeeded",
-            "request_id": "request-one",
+            "request_id": "req_11111111111111111111111111111111",
             "reusable_study": {
                 "study_id": "study-one",
                 "source_execution_id": "execution-one",
@@ -66,7 +68,7 @@ def completed(case):
             },
             "response": {
                 "response_id": "rsp_" + "1" * 64,
-                "request_id": "request-one",
+                "request_id": "req_11111111111111111111111111111111",
                 "thread_id": "thread-one",
                 "primary_execution_id": "execution-one",
                 "study_id": "study-one",
@@ -269,12 +271,12 @@ def native_thread():
         "receipt_source": "production_policy",
     }
     return {
-        "sdk_request_id": "request-one",
-        "authority_turn_id": "user-turn:request-one",
+        "sdk_request_id": "req_11111111111111111111111111111111",
+        "authority_turn_id": "user-turn:req_11111111111111111111111111111111",
         "messages": [
             {"id": "earlier-task", "type": "human", "content": "Old task"},
             {"type": "ai", "tool_calls": [{"id": "old-call", "name": "discovery"}]},
-            {"id": "request-one", "type": "human", "content": "private-user-content"},
+            {"id": "req_11111111111111111111111111111111", "type": "human", "content": "private-user-content"},
             {
                 "type": "ai",
                 "response_metadata": {"epoch_model_call": policy},
@@ -324,7 +326,7 @@ def test_native_trace_records_current_calls_usage_and_chosen_execution(monkeypat
         ),
     )
     trace = asyncio.run(
-        proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "request-one")
+        proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "req_11111111111111111111111111111111")
     )
     result = completed(proof.load_case(CASE))
     proof.verify_trace(trace, result)
@@ -369,7 +371,7 @@ def test_native_trace_rejects_an_unrelated_current_user_turn(monkeypatch):
     )
     with pytest.raises(AssertionError, match="different current request"):
         asyncio.run(
-            proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "request-one")
+            proof.capture_trace("https://graph.invalid", "fixture", "thread-one", "req_11111111111111111111111111111111")
         )
 
 
@@ -396,7 +398,7 @@ def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
     versions = {1: copy.deepcopy(saved)}
     calls = []
     expected_thread = saved["thread_id"]
-    request_record = {
+    request_record = {"interaction": "interactive",
         "request_id": original.request_id,
         "version": 2,
         "created_at_ms": 1,
@@ -418,7 +420,7 @@ def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
         calls.append(request)
         assert request.headers["Authorization"] == "Bearer fixture"
         if request.method == "POST":
-            assert request.url.path == "/api/v1/research/requests/request-one/response"
+            assert request.url.path == "/api/v1/research/requests/req_11111111111111111111111111111111/response"
             body = json.loads(request.content)
             assert body["expected_version"] == 1
             assert body["thread_id"] == expected_thread
@@ -429,7 +431,7 @@ def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
                 updated["response_id"] = "rsp_" + "2" * 64
             versions[2] = updated
             return httpx.Response(200, json=updated)
-        if request.url.path == "/api/v1/integration/requests/request-one":
+        if request.url.path == "/api/v1/integration/requests/req_11111111111111111111111111111111":
             result = copy.deepcopy(request_record)
             if fault == "mutable-pin":
                 result["response_version"] = 2
@@ -451,7 +453,7 @@ def test_revision_proof_uses_native_clients_and_detects_broken_identity_or_pins(
             native = AsyncStratifyX(
                 base_url="https://backend.invalid", token="fixture", httpx_client=native_http
             )
-            supervisor = SupervisorClient(LangGraphClient(graph_http), native)
+            supervisor = supervisor_with_research(LangGraphClient(graph_http), native)
             client = EpochClient(supervisor)
 
             def connect(graph_url, backend_url, token):

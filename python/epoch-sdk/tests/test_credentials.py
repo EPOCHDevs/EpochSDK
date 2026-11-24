@@ -61,7 +61,7 @@ def connect(token, recorder: Recorder) -> SupervisorClient:
 
 async def backend_get(client: SupervisorClient, request_id: str) -> None:
     with pytest.raises(ApiError):
-        await client.backend.sdk_requests.get_sdk_request(request_id)
+        await client.backend.sdk_requests.get_sdk_execution_request(request_id)
 
 
 async def files_list(client: SupervisorClient) -> None:
@@ -140,7 +140,7 @@ def test_a_stream_keeps_running_when_the_token_rotates() -> None:
         assert [data["step"] for data in received if isinstance(data, dict)] == [0, 1, 2]
         assert recorder.header("/threads/thread-1/runs/run-1/stream") == "Bearer first"
         assert recorder.header("/threads/thread-1") == "Bearer second"
-        assert recorder.header("/api/v1/integration/requests/req-1") == "Bearer second"
+        assert recorder.header("/api/v1/integration/execution-requests/req-1") == "Bearer second"
 
     asyncio.run(run())
 
@@ -186,12 +186,12 @@ def test_a_provider_may_be_a_plain_function_and_must_return_a_token() -> None:
         client = connect(lambda: "plain", recorder)
         await backend_get(client, "req-1")
         await client.aclose()
-        assert recorder.seen == [("/api/v1/integration/requests/req-1", "Bearer plain")]
+        assert recorder.seen == [("/api/v1/integration/execution-requests/req-1", "Bearer plain")]
 
         for bad in ("", "two words", "line\nbreak"):
             broken = connect(Rotating(bad), Recorder())
             with pytest.raises(ValueError, match="non-empty token"):
-                await broken.backend.sdk_requests.get_sdk_request("req-1")
+                await broken.backend.sdk_requests.get_sdk_execution_request("req-1")
             await broken.aclose()
 
     asyncio.run(run())

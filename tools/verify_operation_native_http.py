@@ -9,6 +9,8 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
+import secrets
 import socket
 import subprocess
 import tempfile
@@ -16,19 +18,20 @@ import time
 from pathlib import Path
 
 import httpx
+from epoch_sdk.contracts import RunRequest, TableOutputRequest
+from epoch_sdk.output_validation import TableValue
+from epoch_sdk.research_operations import (
+    ResearchLaunch,
+    ResearchOperationsClient,
+    ResearchRuntime,
+)
+from epoch_sdk.responses import ResearchResponseContent, publish_response
 from stratifyx import (
     AsyncStratifyX,
-    SdkContractRunRequest,
     SdkContractRunParameters,
-    SdkResearchLaunch,
-    SdkRequestRuntime,
 )
 from stratifyx._release import SDK_RELEASE
 from stratifyx.core.api_error import ApiError
-
-from epoch_sdk.contracts import TableOutputRequest
-from epoch_sdk.output_validation import TableValue
-from epoch_sdk.responses import ResearchResponseContent, publish_response
 
 OPTIONS = {"max_retries": 0}
 
@@ -42,7 +45,7 @@ async def status(expected, call):
     raise AssertionError(f"Expected HTTP {expected}")
 
 
-async def verify(url: str):
+async def verify(url: str, platform_url: str):
     async with httpx.AsyncClient(timeout=10) as transport:
         owner = AsyncStratifyX(
             base_url=url, token="sdk-fixture-owner", httpx_client=transport
@@ -50,17 +53,19 @@ async def verify(url: str):
         other = AsyncStratifyX(
             base_url=url, token="sdk-fixture-other", httpx_client=transport
         )
+        research = ResearchOperationsClient(platform_url, 'sdk-fixture-owner', http=transport)
+        foreign_research = ResearchOperationsClient(platform_url, 'sdk-fixture-other', http=transport)
         declaration = TableOutputRequest(
             name="sales",
             type="table",
             schema=[{"name": "year", "type": "int64", "description": "Calendar year"}],
         )
-        request = SdkContractRunRequest.model_validate(
+        request = RunRequest.model_validate(
             {"task": "Compare sales", "outputs": [declaration.to_wire()]}
         )
-        launch = SdkResearchLaunch(assistant_id="epoch-ai")
+        launch = ResearchLaunch(assistant_id="epoch-ai")
 
-        async def admit(api=owner.sdk_requests, accepted=request):
+        async def admit(api=research, accepted=request):
             return await api.create_sdk_request(
                 request=accepted,
                 operation_id="screen-sp500",
@@ -71,26 +76,26 @@ async def verify(url: str):
         records = await asyncio.gather(*(admit() for _ in range(8)))
         record = records[0]
         assert all(item.request_id == record.request_id for item in records)
-        foreign = await admit(other.sdk_requests)
+        foreign = await admit(foreign_research)
         assert foreign.request_id != record.request_id
         await status(
             404,
-            other.sdk_requests.get_sdk_request(
+            foreign_research.get_sdk_request(
                 record.request_id, request_options=OPTIONS
             ),
         )
         await status(
             409,
             admit(
-                accepted=SdkContractRunRequest.model_validate(
+                accepted=RunRequest.model_validate(
                     {"task": "Changed task", "outputs": [declaration.to_wire()]}
                 )
             ),
         )
-        record = await owner.sdk_requests.update_sdk_request(
+        record = await research.update_sdk_request(
             record.request_id,
             expected_version=record.version,
-            runtime=SdkRequestRuntime(
+            runtime=ResearchRuntime(
                 thread_id="thread-one",
                 assistant_id="epoch-ai",
                 execution_ids_before=[],
@@ -98,13 +103,13 @@ async def verify(url: str):
             ),
             request_options=OPTIONS,
         )
-        record = await owner.sdk_requests.update_sdk_request(
+        record = await research.update_sdk_request(
             record.request_id,
             expected_version=record.version,
             graph_run_id="22222222-2222-4222-8222-222222222222",
             request_options=OPTIONS,
         )
-        reopened = await owner.sdk_requests.get_sdk_request_by_handle(
+        reopened = await research.get_sdk_request_by_handle(
             "screen-sp500", request_options=OPTIONS
         )
         assert reopened.graph_run_id == record.graph_run_id
@@ -129,7 +134,7 @@ async def verify(url: str):
             primary_execution_id="native-one",
         )
         # No EpochClient._finish. Publication itself stores the original pin.
-        pinned = await owner.sdk_requests.get_sdk_request_by_handle(
+        pinned = await research.get_sdk_request_by_handle(
             "screen-sp500", request_options=OPTIONS
         )
         assert pinned.response_id == first.response_id and pinned.response_version == 1
@@ -148,7 +153,7 @@ async def verify(url: str):
             thread_id="thread-one",
             primary_execution_id="native-one",
         )
-        pinned = await owner.sdk_requests.get_sdk_request_by_handle(
+        pinned = await research.get_sdk_request_by_handle(
             "screen-sp500", request_options=OPTIONS
         )
         assert pinned.response_id == first.response_id and pinned.response_version == 1
@@ -231,17 +236,29 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--platform-fixture", type=Path, required=True, help="EpochPlatform packages/research/tools/fixture.ts")
+    parser.add_argument("--node", type=Path, required=True, help="Node 24 interpreter")
     args = parser.parse_args()
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         port = listener.getsockname()[1]
     url = f"http://127.0.0.1:{port}"
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        platform_port = listener.getsockname()[1]
+    platform_url = f"http://127.0.0.1:{platform_port}"
+    bridge_env = {**os.environ, "EPOCH_RESEARCH_OPERATIONS_URL": platform_url,
+                  "EPOCH_RESEARCH_OPERATIONS_TOKEN": secrets.token_urlsafe(48)}
     with (
         tempfile.TemporaryDirectory(prefix="epoch-operations-") as temp,
         args.output.with_suffix(".log").open("w") as log,
     ):
+        native_root = Path(temp) / 'native'; native_root.mkdir()
+        platform_root = Path(temp) / 'platform'
+        platform = subprocess.Popen([str(args.node.resolve()), str(args.platform_fixture.resolve()),
+            str(platform_port), str(platform_root), url], env=bridge_env, stdout=log, stderr=log)
         process = subprocess.Popen(
-            [str(args.binary.resolve()), str(port), temp], stdout=log, stderr=log
+            [str(args.binary.resolve()), str(port), str(native_root)], env=bridge_env, stdout=log, stderr=log
         )
         try:
             deadline = time.monotonic() + 60
@@ -254,16 +271,18 @@ def main():
                         ).status_code
                         == 200
                     ):
-                        break
+                        probe = httpx.get(platform_url + '/api/v1/integration/requests/by-handle/readiness',
+                            headers={'Authorization': 'Bearer sdk-fixture-owner'}, timeout=1)
+                        if probe.status_code == 404: break
                 except httpx.HTTPError:
                     pass
                 if time.monotonic() > deadline:
                     raise TimeoutError("Native fixture readiness")
                 time.sleep(0.1)
-            result = asyncio.run(verify(url))
+            result = asyncio.run(verify(url, platform_url))
             result.update(
                 status="passed",
-                evidence="native HTTP and CAS component test",
+                evidence="paired Platform lifecycle and native HTTP/CAS component test",
                 real_analysis_proven=False,
                 binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
                 native_sdk=SDK_RELEASE,
@@ -272,7 +291,9 @@ def main():
             print(json.dumps(result, indent=2))
         finally:
             process.terminate()
+            platform.terminate()
             process.wait(timeout=15)
+            platform.wait(timeout=15)
 
 
 if __name__ == "__main__":
