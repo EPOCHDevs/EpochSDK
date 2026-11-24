@@ -541,7 +541,7 @@
         "additionalProperties": false,
         "properties": {
           "record_count": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -710,7 +710,7 @@
             "type": "string"
           },
           "edit_version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
