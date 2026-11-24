@@ -8,6 +8,19 @@ import { UsageLimitReached } from "./api.js"
 const opts = signal => ({ maxRetries: 0, abortSignal: signal })
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value)
 
+function checkpointError(error) {
+  invariant(object(error), 'The checkpoint error must be an object.')
+  const value = { ...error }
+  for (const name of ['gaps', 'questions', 'recommended_task', 'data_requirements', 'access_requirements', 'meter', 'resets_at'])
+    if (value[name] === null) delete value[name]
+  const nested = { gaps: ['field'], questions: ['options', 'recommended_option'],
+    data_requirements: ['required_coverage', 'suggested_resolution'], access_requirements: ['suggested_resolution'] }
+  for (const [name, optional] of Object.entries(nested)) if (Array.isArray(value[name]))
+    value[name] = value[name].map(row => object(row)
+      ? Object.fromEntries(Object.entries(row).filter(([key, item]) => !optional.includes(key) || item !== null)) : row)
+  return value
+}
+
 // Same UUIDv5 identity as Python's uuid5(NAMESPACE_URL, "epoch:research:" + request_id).
 export async function researchThreadId(requestId) {
   const ns = "6ba7b8119dad11d180b400c04fd430c8".match(/../g).map(x => parseInt(x, 16))
@@ -249,7 +262,7 @@ export async function researchStatus(client, op, { signal } = {}) {
   throwNativeError(record)
   if (record.responseVersion !== undefined) return completed(client, record, signal)
   if (record.nativeExecutionRequestId || record.graphRunId !== h.runId) return active(record)
-  if (state.publication_error) return failResearch(client, record, state.publication_error, signal)
+  if (state.publication_error) return failResearch(client, record, checkpointError(state.publication_error), signal)
   const reference = state.published_response
   invariant(object(reference) && reference.request_id === record.requestId && reference.thread_id === h.threadId,
     "The run ended without a saved answer for this request.", "OUTPUT_VALIDATION_FAILED")

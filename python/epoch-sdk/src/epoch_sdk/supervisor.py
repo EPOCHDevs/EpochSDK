@@ -340,9 +340,28 @@ class _State(BaseModel):
                 "meter",
                 "resets_at",
             }
-            value = {
+            projected = {
                 key: item for key, item in raw.items() if key not in optional or item is not None
             }
+            # Pydantic checkpoint serialization includes nested default nulls
+            # too. Strip only source-owned optional guidance fields; malformed
+            # required values and unknown keys still reach strict validation.
+            nested_optional = {
+                "gaps": {"field"},
+                "questions": {"options", "recommended_option"},
+                "data_requirements": {"required_coverage", "suggested_resolution"},
+                "access_requirements": {"suggested_resolution"},
+            }
+            for name, fields in nested_optional.items():
+                rows = projected.get(name)
+                if isinstance(rows, list):
+                    projected[name] = [
+                        {key: item for key, item in cast(dict[str, object], row).items()
+                         if key not in fields or item is not None}
+                        if isinstance(row, dict) else row
+                        for row in cast(list[object], rows)
+                    ]
+            value = projected
         return DomainError.model_validate(value)
 
     def reply(self) -> str:

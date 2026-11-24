@@ -89,6 +89,7 @@ function harness() {
         graphCalls.push(["history", id, options])
         return [{ values: { authority_turn_id: `user-turn:${state.record.request_id}`,
           ...(state.published ? { published_response: state.published } : {}),
+          ...(state.publicationError ? { publication_error: state.publicationError } : {}),
           ...(state.usageLimit ? { usage_limit: state.usageLimit } : {}) }, interrupts: copy(state.interrupts) }]
       },
     },
@@ -460,4 +461,19 @@ test('an unexpected one-shot pause persists a terminal Platform failure', async 
   const writes = h.calls.filter(call => call.method === 'PATCH' && call.body?.error).length
   await assert.rejects(h.client.status('no-ask'), error => error.code === 'EXECUTION_FAILED')
   assert.equal(h.calls.filter(call => call.method === 'PATCH' && call.body?.error).length, writes)
+})
+
+test('checkpoint clarification default nulls become omission-only terminal guidance', async () => {
+  const h = harness()
+  await h.client.run(request(), { operationId: 'missing-options', wait: false })
+  h.state.record.interaction = 'one_shot'; h.state.runStatus = 'success'
+  h.state.publicationError = { code: 'CLARIFICATION_REQUIRED', message: 'Neither option was supplied.', retryable: false,
+    gaps: [{ description: 'The options are missing.', field: null }],
+    questions: [{ question: 'Which options?', options: null, recommended_option: null }],
+    recommended_task: 'Provide both options.', data_requirements: null, access_requirements: null, meter: null, resets_at: null }
+  const before = copy(h.state.publicationError)
+  await assert.rejects(h.client.status('missing-options'), error => error.code === 'CLARIFICATION_REQUIRED')
+  assert.deepEqual(h.state.record.error.error.questions, [{ question: 'Which options?' }])
+  assert.deepEqual(h.state.record.error.error.gaps, [{ description: 'The options are missing.' }])
+  assert.deepEqual(h.state.publicationError, before)
 })

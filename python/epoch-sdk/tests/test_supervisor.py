@@ -338,10 +338,24 @@ def test_checkpoint_null_normalization_keeps_required_and_paired_source_validati
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("code", ["EXECUTION_FAILED", "OUTPUT_VALIDATION_FAILED"])
+@pytest.mark.parametrize("code", ["EXECUTION_FAILED", "OUTPUT_VALIDATION_FAILED", "CLARIFICATION_REQUIRED", "DATA_REQUIRED", "ACCESS_REQUIRED"])
 def test_checkpoint_default_error_metadata_preserves_the_actual_failure(code) -> None:
-    error = DomainError(code=code, message="The requested output failed.", retryable=False)
+    guidance = {
+        "CLARIFICATION_REQUIRED": {"gaps": [{"description": "The options are missing."}],
+            "questions": [{"question": "Which two options?"}], "recommended_task": "Provide both options."},
+        "DATA_REQUIRED": {"data_requirements": [{"description": "A reviewed dataset."}]},
+        "ACCESS_REQUIRED": {"access_requirements": [{"source": "Requested source", "permission": "read"}]},
+    }
+    error = DomainError.model_validate({"code": code, "message": "The requested output failed.",
+        "retryable": False, **guidance.get(code, {})})
     checkpoint = error.model_dump(mode="json")
+    optional = {"gaps": {"field"}, "questions": {"options", "recommended_option"},
+        "data_requirements": {"required_coverage", "suggested_resolution"},
+        "access_requirements": {"suggested_resolution"}}
+    for name, fields in optional.items():
+        for row in checkpoint.get(name) or []:
+            for field in fields:
+                row.setdefault(field, None)  # A checkpoint written by the earlier producer.
     before = copy.deepcopy(checkpoint)
 
     async def scenario() -> None:
@@ -431,6 +445,12 @@ def test_checkpoint_error_preserves_non_null_usage_metadata() -> None:
         {"meter": False},
         {"resets_at": "2099-11-23T00:00:00"},
         {"unexpected_metadata": None},
+        {"questions": [{"question": None, "options": None}]},
+        {"questions": [{"question": "Which?", "unexpected_metadata": None}]},
+        {"questions": [{"question": "Which?", "options": None, "recommended_option": "Unlisted"}]},
+        {"gaps": [{"description": None, "field": None}]},
+        {"data_requirements": [{"description": None, "suggested_resolution": None}]},
+        {"access_requirements": [{"source": None, "permission": "read", "suggested_resolution": None}]},
         {"code": "USAGE_LIMIT_REACHED"},
         {"code": "USAGE_LIMIT_REACHED", "meter": "assistant"},
         {"code": "USAGE_LIMIT_REACHED", "resets_at": "2099-11-23T00:00:00Z"},
