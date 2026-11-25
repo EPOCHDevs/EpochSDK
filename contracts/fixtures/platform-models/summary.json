@@ -1,0 +1,12 @@
+{
+  "model_ref": "model_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "name": "Owned OLS fixture",
+  "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "saved_at": 1795564800000,
+  "family": "OLS",
+  "producer_execution_id": "fixture-producer-run",
+  "producer_definition_id": "fixture-producer-study",
+  "producer_fit_name": "owned_ols",
+  "producer_config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "manifest_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+}
