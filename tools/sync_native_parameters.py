@@ -38,6 +38,16 @@ def project(path: Path) -> dict:
     add("DatePeriodConfig")
     add("ExecutionOptions")
     result = json.loads(json.dumps(selected).replace("#/components/schemas/", "#/$defs/"))
+    # These are non-null native model values. Optional use sites can widen a
+    # shared C++ component to object|null; the SDK's Contract instead requires
+    # omission of an unset optional field and rejects explicit null. Preserve
+    # that owner contract without changing any nested schema or native bound.
+    for name in ("DatePeriodConfig", "ExecutionOptions"):
+        kind = result[name].get("type")
+        if isinstance(kind, list) and len(kind) == 2 and set(kind) == {"object", "null"}:
+            result[name]["type"] = "object"
+        elif kind != "object":
+            raise ValueError(f"Unexpected native parameter owner type: {name}")
     return {
         "source": "stratifyx_openapi.json#/components/schemas",
         "sha256": hashlib.sha256(json.dumps(result, sort_keys=True).encode()).hexdigest(),
