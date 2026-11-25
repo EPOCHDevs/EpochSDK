@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "owner_user_id": "fixture-owner",
+  "model": {
+    "model_ref": "model_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "name": "Owned OLS fixture",
+    "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "saved_at": 1795564800000,
+    "family": "OLS",
+    "producer_execution_id": "fixture-producer-run",
+    "producer_definition_id": "fixture-producer-study",
+    "producer_fit_name": "owned_ols",
+    "producer_config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "artifact": {
+    "key": "owners/666978747572652d6f776e6572/saved-models/v1/artifacts/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "bytes": 1024
+  },
+  "producer": {
+    "key": "owners/666978747572652d6f776e6572/saved-models/v1/producers/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.json",
+    "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "bytes": 2048
+  }
+}

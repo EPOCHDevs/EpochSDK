@@ -2,10 +2,10 @@ name: Shared SDK contract
 
 on:
   pull_request:
-    paths: ['contracts/**', 'tools/**', 'fern-shares/**', 'python/epoch-sdk/**', 'typescript/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
+    paths: ['contracts/**', 'tools/**', 'fern-shares/**', 'fern-models/**', 'python/epoch-sdk/**', 'typescript/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
   push:
     branches: [main]
-    paths: ['contracts/**', 'tools/**', 'fern-shares/**', 'python/epoch-sdk/**', 'typescript/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
+    paths: ['contracts/**', 'tools/**', 'fern-shares/**', 'fern-models/**', 'python/epoch-sdk/**', 'typescript/epoch-sdk/**', 'examples/notebooks/**', '.github/workflows/contracts.yml']
 
 permissions:
   contents: read
@@ -28,6 +28,8 @@ jobs:
       - run: python tools/generate_files_api.py --check
       - run: python tools/sync_platform_shares_contract.py --check
       - run: python tools/generate_shares_api.py --check
+      - run: python tools/sync_platform_models_contract.py --check
+      - run: python tools/generate_models_api.py --check
       - run: python tools/sync_typescript_workflow_schemas.py --check
       - run: python tools/validate_saved_output_contract.py
       - run: python tools/validate_research_response_contract.py
@@ -51,5 +53,6 @@ jobs:
       # runs all Python and TypeScript tests with its exact generated packages.
       # These standalone clients need no private native package or credential.
       - run: npm install --ignore-scripts --package-lock=false --prefix typescript/epoch-sdk
-      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,files-api,shares-api,identity}.test.mjs
+      - run: node --test typescript/epoch-sdk/test/{api,discovery-presentation,discovery,files,files-api,shares-api,models-api,identity}.test.mjs
       - run: npm run --prefix typescript/epoch-sdk test:shares-types
+      - run: npm run --prefix typescript/epoch-sdk test:models-types

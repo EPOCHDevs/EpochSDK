@@ -1,0 +1,7 @@
+{
+  "request_id": "explicit-save-1",
+  "name": "Owned OLS fixture",
+  "execution_id": "fixture-producer-run",
+  "fit_name": "owned_ols",
+  "expected_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

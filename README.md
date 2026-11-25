@@ -101,6 +101,38 @@ a model-facing publication tool or the normal research finalization path. The
 current package requires generated StratifyX `>=3.3.0rc24,<4`; generated-client
 production and distribution remain with Backend.
 
+## Saved model API
+
+Saved models use Platform's source-owned contract, mirrored in
+`contracts/platform-models.openapi.json`. Native fitting leaves a temporary,
+execution-owned fit. An explicit Save copies that exact fit and its provenance;
+it does not execute the study again.
+
+```python
+from epoch_sdk.models_api import AsyncEpochModels
+
+models = AsyncEpochModels(base_url=api_url, token=bearer_token)
+saved = await models.save_model(
+    request_id="one-stable-save-intent", name="Demand forecast",
+    execution_id=producer_execution_id, fit_name=fit_name,
+    expected_digest=selected_digest,
+)
+facts = await models.read_model(saved.model_ref)
+# Carry both saved.model_ref and saved.manifest_sha256 into a native consumer.
+```
+
+TypeScript exports `EpochModelsClient` from `@epochdevs/epoch-sdk/models-api`,
+with `saveModel`, `listModels` and `readModel`. Use the API front door or the
+Platform endpoint. The saved identity, artifact digest and manifest hash are
+explicit pins; a missing object cannot select another fit. Native-owned detail
+objects remain opaque JSON, while the Platform summary and Save request are
+typed. Browsing and reading have no AI or numerical execution effects.
+
+The generated clients are built by `tools/generate_models_api.py` from the
+mirrored Platform contract using pinned Fern versions and source-derived
+normalization. The saved-model fixtures and mocked HTTP tests verify the wire
+contract; they do not establish live lifecycle acceptance.
+
 ## Development checks
 
 Shared checks need no native SDK or Backend checkout:
@@ -109,6 +141,8 @@ Shared checks need no native SDK or Backend checkout:
 python -m pip install 'jsonschema[format]>=4.23,<5' 'openapi-spec-validator>=0.7,<0.9'
 python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
+python tools/sync_platform_models_contract.py --check
+python tools/generate_models_api.py --check
 python tools/validate_saved_output_contract.py
 python tools/validate_research_response_contract.py
 python tools/validate_notebook_cases.py

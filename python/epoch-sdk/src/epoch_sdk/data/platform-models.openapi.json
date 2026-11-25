@@ -1,0 +1,846 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Epoch saved models",
+    "version": "1",
+    "description": "Platform-owned immutable saved models. Native fitting alone does not save a library resource. Cloud Save reads the exact Completed generation and native artifact directly from shared storage, without Backend HTTP. See docs/contracts/saved-models.md."
+  },
+  "x-epoch-contract-owner": "EpochPlatform",
+  "security": [
+    {
+      "user": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "user": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "SaveModelRequest": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "fit_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "expected_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "source_location": {
+            "type": "string",
+            "enum": [
+              "shared_personal_v1",
+              "server"
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "name",
+          "execution_id",
+          "fit_name",
+          "expected_digest"
+        ],
+        "additionalProperties": false
+      },
+      "CompleteModelSavesRequest": {
+        "type": "object",
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "source_location": {
+            "type": "string",
+            "enum": [
+              "shared_personal_v1",
+              "server"
+            ]
+          }
+        },
+        "required": [
+          "execution_id"
+        ],
+        "additionalProperties": false
+      },
+      "SavedModelSummary": {
+        "type": "object",
+        "properties": {
+          "model_ref": {
+            "type": "string",
+            "pattern": "^model_[0-9a-f]{64}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "saved_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "family": {
+            "type": "string"
+          },
+          "producer_execution_id": {
+            "type": "string"
+          },
+          "producer_definition_id": {
+            "type": "string"
+          },
+          "producer_fit_name": {
+            "type": "string"
+          },
+          "producer_config_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "model_ref",
+          "name",
+          "digest",
+          "saved_at",
+          "family",
+          "producer_execution_id",
+          "producer_definition_id",
+          "producer_fit_name",
+          "producer_config_sha256",
+          "manifest_sha256"
+        ],
+        "additionalProperties": false
+      },
+      "SavedModelPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "model_ref": {
+                  "type": "string",
+                  "pattern": "^model_[0-9a-f]{64}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                },
+                "saved_at": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "family": {
+                  "type": "string"
+                },
+                "producer_execution_id": {
+                  "type": "string"
+                },
+                "producer_definition_id": {
+                  "type": "string"
+                },
+                "producer_fit_name": {
+                  "type": "string"
+                },
+                "producer_config_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "manifest_sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "model_ref",
+                "name",
+                "digest",
+                "saved_at",
+                "family",
+                "producer_execution_id",
+                "producer_definition_id",
+                "producer_fit_name",
+                "producer_config_sha256",
+                "manifest_sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next_cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "SavedModelFacts": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "object",
+            "properties": {
+              "model_ref": {
+                "type": "string",
+                "pattern": "^model_[0-9a-f]{64}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "saved_at": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "family": {
+                "type": "string"
+              },
+              "producer_execution_id": {
+                "type": "string"
+              },
+              "producer_definition_id": {
+                "type": "string"
+              },
+              "producer_fit_name": {
+                "type": "string"
+              },
+              "producer_config_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "manifest_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "model_ref",
+              "name",
+              "digest",
+              "saved_at",
+              "family",
+              "producer_execution_id",
+              "producer_definition_id",
+              "producer_fit_name",
+              "producer_config_sha256",
+              "manifest_sha256"
+            ],
+            "additionalProperties": false
+          },
+          "binding": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "manifest": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "producer": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "model",
+          "binding",
+          "manifest",
+          "producer"
+        ],
+        "additionalProperties": false
+      },
+      "SavedModelManifest": {
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "owner_user_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "object",
+            "properties": {
+              "model_ref": {
+                "type": "string",
+                "pattern": "^model_[0-9a-f]{64}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "saved_at": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "family": {
+                "type": "string"
+              },
+              "producer_execution_id": {
+                "type": "string"
+              },
+              "producer_definition_id": {
+                "type": "string"
+              },
+              "producer_fit_name": {
+                "type": "string"
+              },
+              "producer_config_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "model_ref",
+              "name",
+              "digest",
+              "saved_at",
+              "family",
+              "producer_execution_id",
+              "producer_definition_id",
+              "producer_fit_name",
+              "producer_config_sha256"
+            ],
+            "additionalProperties": false
+          },
+          "artifact": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "sha256",
+              "bytes"
+            ],
+            "additionalProperties": false
+          },
+          "producer": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "sha256",
+              "bytes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "schema_version",
+          "owner_user_id",
+          "model",
+          "artifact",
+          "producer"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error",
+          "message",
+          "timestamp"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/models": {
+      "post": {
+        "operationId": "saveModel",
+        "description": "Explicitly save one exact completed fit. request_id is owner-scoped: repeat it with identical facts after an uncertain response. Different facts conflict. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveModelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The exact saved model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedModelSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listModels",
+        "description": "A bounded page of explicitly saved, ready models, including those without folder placements. Cursors bind the authenticated owner.",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedModelPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/{model_ref}": {
+      "parameters": [
+        {
+          "name": "model_ref",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^model_[0-9a-f]{64}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "readModel",
+        "description": "Reauthorizes and verifies an immutable saved model and returns its native facts and pinned public producer script. Read-only: no AI, fit, execution or mutable-source fallback.",
+        "responses": {
+          "200": {
+            "description": "Exact saved facts and script",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedModelFacts"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/complete": {
+      "post": {
+        "operationId": "completeModelSaves",
+        "description": "Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteModelSavesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Models explicitly requested by the producer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedModelPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
