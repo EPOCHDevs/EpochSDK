@@ -4,6 +4,7 @@
 import * as serializers from "../../index";
 import * as EpochModels from "../../../api/index";
 import * as core from "../../../core";
+import { SaveModelRequestSourceLocation } from "../../types/SaveModelRequestSourceLocation";
 export declare const SaveModelRequest: core.serialization.Schema<serializers.SaveModelRequest.Raw, EpochModels.SaveModelRequest>;
 export declare namespace SaveModelRequest {
     interface Raw {
@@ -12,5 +13,6 @@ export declare namespace SaveModelRequest {
         execution_id: string;
         fit_name: string;
         expected_digest: string;
+        source_location?: SaveModelRequestSourceLocation.Raw | null;
     }
 }

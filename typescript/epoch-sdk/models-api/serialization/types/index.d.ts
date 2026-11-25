@@ -1,3 +1,5 @@
+export * from "./SaveModelRequestSourceLocation";
+export * from "./CompleteModelSavesRequestSourceLocation";
 export * from "./SavedModelSummary";
 export * from "./SavedModelPageItemsItem";
 export * from "./SavedModelPage";

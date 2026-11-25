@@ -33,6 +33,31 @@ def normalize(package_root: Path, typescript: Path, contract: Path) -> None:
     python.PACKAGE = "models_api"
     python.NATIVE_PREFIXES = tuple(sorted(roots))
     python.normalize(package_root, contract, lenient_responses=True)
+    # The shared normalizer restores object keys/constraints but represents
+    # request string enums as str. Preserve Models' finite source selection in
+    # both its static annotation and Pydantic validation.
+    for path in (package_root / 'models_api/types').glob('*.py'):
+        source = path.read_text()
+        lines = source.splitlines(keepends=True)
+        offsets = [0]
+        for line in lines: offsets.append(offsets[-1] + len(line))
+        edits = []
+        for node in ast.parse(source).body:
+            if not isinstance(node, ast.ClassDef) or node.name not in roots:
+                continue
+            schema = document['components']['schemas'][node.name]
+            for field in node.body:
+                if not isinstance(field, ast.AnnAssign) or not isinstance(field.target, ast.Name): continue
+                prop = schema.get('properties', {}).get(field.target.id, {})
+                values = prop.get('enum')
+                if not values: continue
+                literal = 'typing.Literal[' + ', '.join(repr(value) for value in values) + ']'
+                if field.target.id not in schema.get('required', []): literal = 'typing.Optional[' + literal + ']'
+                annotation = field.annotation
+                edits.append((offsets[annotation.lineno - 1] + annotation.col_offset,
+                    offsets[annotation.end_lineno - 1] + annotation.end_col_offset, literal))
+        for start, end, replacement in sorted(edits, reverse=True): source = source[:start] + replacement + source[end:]
+        if edits: path.write_text(source)
     operations = {}
     for item in document["paths"].values():
         for operation in item.values():
@@ -60,7 +85,7 @@ def normalize(package_root: Path, typescript: Path, contract: Path) -> None:
         start = offsets[body.lineno - 1] + body.col_offset
         end = offsets[body.end_lineno - 1] + body.end_col_offset
         replacements.append((start, end,
-            f'{operations[method.name]}.model_validate({text[start:end]}).model_dump(mode="json", exclude_none=True)'))
+            f'{operations[method.name]}.model_validate({{key: value for key, value in ({text[start:end]}).items() if value is not OMIT}}).model_dump(mode="json", exclude_none=True)'))
     if len(replacements) != len(operations) * 2:
         raise ValueError("Both sync and async raw request paths must be normalized")
     for start, end, replacement in sorted(replacements, reverse=True):

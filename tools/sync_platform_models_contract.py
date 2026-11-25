@@ -46,6 +46,7 @@ def main() -> None:
             raise SystemExit("Platform saved-model source receipt has drifted")
         for name, model in (
             ("save", "SaveModelRequest"),
+            ("complete", "CompleteModelSavesRequest"),
             ("summary", "SavedModelSummary"),
             ("page", "SavedModelPage"),
             ("facts", "SavedModelFacts"),

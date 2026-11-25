@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from epoch_sdk.models_api import AsyncEpochModels, EpochModels
 from epoch_sdk.models_api.errors import ServiceUnavailableError
-from epoch_sdk.models_api.types import SaveModelRequest
+from epoch_sdk.models_api.types import CompleteModelSavesRequest, SaveModelRequest
 
 FIXTURES = Path(__file__).resolve().parents[3] / "contracts/fixtures/platform-models"
 SAVE = json.loads((FIXTURES / "save.json").read_text())
@@ -90,3 +90,27 @@ def test_model_storage_unavailability_preserves_the_typed_error():
                 await client.read_model(SUMMARY["model_ref"], request_options={"max_retries": 0})
             assert failure.value.body.message == "Pinned model object is unavailable"
     asyncio.run(scenario())
+
+
+def test_explicit_server_save_and_authored_completion_keep_source_selection_closed():
+    complete = json.loads((FIXTURES / 'complete.json').read_text())
+    seen = []
+    def handler(request):
+        seen.append(request)
+        body = json.loads(request.content)
+        assert body['source_location'] == 'server'
+        if request.url.path == '/api/v1/models/complete':
+            assert body == complete
+            return httpx.Response(200, json={'items': [SUMMARY]})
+        assert body == {**SAVE, 'source_location': 'server'}
+        return httpx.Response(200, json=SUMMARY)
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
+        client = EpochModels(base_url='https://platform.test', token='fixture-token', httpx_client=http)
+        assert client.save_model(**{**SAVE, 'source_location': 'server'}).digest == SUMMARY['digest']
+        assert client.complete_model_saves(**complete).items[0].digest == SUMMARY['digest']
+        for kind in ('latest', 'fallback'):
+            with pytest.raises(ValidationError):
+                client.complete_model_saves(**{**complete, 'source_location': kind})
+            with pytest.raises(ValidationError):
+                CompleteModelSavesRequest.model_validate({**complete, 'source_location': kind})
+    assert len(seen) == 2

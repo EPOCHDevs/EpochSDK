@@ -6,6 +6,8 @@ import httpx
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from .core.request_options import RequestOptions
 from .raw_client import AsyncRawEpochModels, RawEpochModels
+from .types.complete_model_saves_request_source_location import CompleteModelSavesRequestSourceLocation
+from .types.save_model_request_source_location import SaveModelRequestSourceLocation
 from .types.saved_model_facts import SavedModelFacts
 from .types.saved_model_page import SavedModelPage
 from .types.saved_model_summary import SavedModelSummary
@@ -128,6 +130,7 @@ class EpochModels:
         execution_id: str,
         fit_name: str,
         expected_digest: str,
+        source_location: typing.Optional[SaveModelRequestSourceLocation] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SavedModelSummary:
         """
@@ -144,6 +147,8 @@ class EpochModels:
         fit_name : str
 
         expected_digest : str
+
+        source_location : typing.Optional[SaveModelRequestSourceLocation]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -175,6 +180,7 @@ class EpochModels:
             execution_id=execution_id,
             fit_name=fit_name,
             expected_digest=expected_digest,
+            source_location=source_location,
             request_options=request_options,
         )
         return _response.data
@@ -208,6 +214,47 @@ class EpochModels:
         )
         """
         _response = self._raw_client.read_model(model_ref, request_options=request_options)
+        return _response.data
+
+    def complete_model_saves(
+        self,
+        *,
+        execution_id: str,
+        source_location: typing.Optional[CompleteModelSavesRequestSourceLocation] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SavedModelPage:
+        """
+        Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
+
+        Parameters
+        ----------
+        execution_id : str
+
+        source_location : typing.Optional[CompleteModelSavesRequestSourceLocation]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SavedModelPage
+            Models explicitly requested by the producer
+
+        Examples
+        --------
+        from epoch_sdk.models_api import EpochModels
+
+        client = EpochModels(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+        client.complete_model_saves(
+            execution_id="execution_id",
+        )
+        """
+        _response = self._raw_client.complete_model_saves(
+            execution_id=execution_id, source_location=source_location, request_options=request_options
+        )
         return _response.data
 
 
@@ -333,6 +380,7 @@ class AsyncEpochModels:
         execution_id: str,
         fit_name: str,
         expected_digest: str,
+        source_location: typing.Optional[SaveModelRequestSourceLocation] = OMIT,
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SavedModelSummary:
         """
@@ -349,6 +397,8 @@ class AsyncEpochModels:
         fit_name : str
 
         expected_digest : str
+
+        source_location : typing.Optional[SaveModelRequestSourceLocation]
 
         request_options : typing.Optional[RequestOptions]
             Request-specific configuration.
@@ -388,6 +438,7 @@ class AsyncEpochModels:
             execution_id=execution_id,
             fit_name=fit_name,
             expected_digest=expected_digest,
+            source_location=source_location,
             request_options=request_options,
         )
         return _response.data
@@ -431,4 +482,53 @@ class AsyncEpochModels:
         asyncio.run(main())
         """
         _response = await self._raw_client.read_model(model_ref, request_options=request_options)
+        return _response.data
+
+    async def complete_model_saves(
+        self,
+        *,
+        execution_id: str,
+        source_location: typing.Optional[CompleteModelSavesRequestSourceLocation] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
+    ) -> SavedModelPage:
+        """
+        Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
+
+        Parameters
+        ----------
+        execution_id : str
+
+        source_location : typing.Optional[CompleteModelSavesRequestSourceLocation]
+
+        request_options : typing.Optional[RequestOptions]
+            Request-specific configuration.
+
+        Returns
+        -------
+        SavedModelPage
+            Models explicitly requested by the producer
+
+        Examples
+        --------
+        import asyncio
+
+        from epoch_sdk.models_api import AsyncEpochModels
+
+        client = AsyncEpochModels(
+            token="YOUR_TOKEN",
+            base_url="https://yourhost.com/path/to/api",
+        )
+
+
+        async def main() -> None:
+            await client.complete_model_saves(
+                execution_id="execution_id",
+            )
+
+
+        asyncio.run(main())
+        """
+        _response = await self._raw_client.complete_model_saves(
+            execution_id=execution_id, source_location=source_location, request_options=request_options
+        )
         return _response.data

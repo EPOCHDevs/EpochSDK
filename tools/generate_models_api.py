@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -69,9 +70,19 @@ def _generate() -> None:
                     "--openapi", str(CONTRACT), "--typescript", str(typescript)], check=True)
     for patch in ("lazy_imports", "record_keys", "error_bodies"):
         subprocess.run(["node", str(PATCHES / f"patch_fern_typescript_{patch}.mjs"), str(typescript)], check=True)
-    def has_enum(value):
-        return isinstance(value, dict) and ("enum" in value or any(has_enum(child) for child in value.values())) or isinstance(value, list) and any(has_enum(child) for child in value)
-    if has_enum(json.loads(CONTRACT.read_text())["components"]["schemas"]):
+    # The native patch deliberately fails when nothing was widened. Models has
+    # request-only storage enums, which must stay closed; use that same source
+    # analysis to invoke it only for response-reachable, non-discriminator enums.
+    spec = importlib.util.spec_from_file_location("model_enum_analysis", PATCHES / "patch_fern_python_forward_compatible_enums.py")
+    enum_patch = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(enum_patch)
+    enums, models, unions, references, responses = enum_patch.analyse(stage / "models_api")
+    if not responses:
+        raise ValueError("No model response types found in the generated client")
+    reachable = enum_patch.reachable(responses, references)
+    closed = enum_patch.discriminators(enums, models, unions)
+    if any(name in reachable and name not in closed and len(enum_patch.members(node)) >= 2
+           for name, (_, node) in enums.items()):
         subprocess.run([*python_patch, str(PATCHES / "patch_fern_python_forward_compatible_enums.py"), str(stage),
                         "--package", "models_api"], check=True)
 

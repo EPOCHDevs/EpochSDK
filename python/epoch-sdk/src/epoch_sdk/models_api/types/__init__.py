@@ -6,7 +6,9 @@ import typing
 from importlib import import_module
 
 if typing.TYPE_CHECKING:
+    from .complete_model_saves_request_source_location import CompleteModelSavesRequestSourceLocation
     from .error import Error
+    from .save_model_request_source_location import SaveModelRequestSourceLocation
     from .saved_model_facts import SavedModelFacts
     from .saved_model_facts_model import SavedModelFactsModel
     from .saved_model_manifest import SavedModelManifest
@@ -17,7 +19,9 @@ if typing.TYPE_CHECKING:
     from .saved_model_page_items_item import SavedModelPageItemsItem
     from .saved_model_summary import SavedModelSummary
 _dynamic_imports: typing.Dict[str, str] = {
+    "CompleteModelSavesRequestSourceLocation": ".complete_model_saves_request_source_location",
     "Error": ".error",
+    "SaveModelRequestSourceLocation": ".save_model_request_source_location",
     "SavedModelFacts": ".saved_model_facts",
     "SavedModelFactsModel": ".saved_model_facts_model",
     "SavedModelManifest": ".saved_model_manifest",
@@ -52,7 +56,9 @@ def __dir__():
 
 
 __all__ = [
+    "CompleteModelSavesRequestSourceLocation",
     "Error",
+    "SaveModelRequestSourceLocation",
     "SavedModelFacts",
     "SavedModelFactsModel",
     "SavedModelManifest",
@@ -66,6 +72,7 @@ __all__ = [
 
 # Source-owned Discovery component exports.
 if typing.TYPE_CHECKING:
+    from .complete_model_saves_request import CompleteModelSavesRequest
     from .save_model_request import SaveModelRequest
-_dynamic_imports.update({'SaveModelRequest': '.save_model_request'})
-__all__.extend(['SaveModelRequest'])
+_dynamic_imports.update({'CompleteModelSavesRequest': '.complete_model_saves_request', 'SaveModelRequest': '.save_model_request'})
+__all__.extend(['CompleteModelSavesRequest', 'SaveModelRequest'])

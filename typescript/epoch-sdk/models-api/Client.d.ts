@@ -89,5 +89,26 @@ export declare class EpochModelsClient {
      */
     readModel(modelRef: string, request?: EpochModels.ReadModelRequest, requestOptions?: EpochModelsClient.RequestOptions): core.HttpResponsePromise<EpochModels.SavedModelFacts>;
     private __readModel;
+    /**
+     * Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
+     *
+     * @param {EpochModels.CompleteModelSavesRequest} request
+     * @param {EpochModelsClient.RequestOptions} requestOptions - Request-specific configuration.
+     *
+     * @throws {@link EpochModels.BadRequestError}
+     * @throws {@link EpochModels.UnauthorizedError}
+     * @throws {@link EpochModels.ForbiddenError}
+     * @throws {@link EpochModels.NotFoundError}
+     * @throws {@link EpochModels.ConflictError}
+     * @throws {@link EpochModels.GoneError}
+     * @throws {@link EpochModels.ServiceUnavailableError}
+     *
+     * @example
+     *     await client.completeModelSaves({
+     *         executionId: "execution_id"
+     *     })
+     */
+    completeModelSaves(request: EpochModels.CompleteModelSavesRequest, requestOptions?: EpochModelsClient.RequestOptions): core.HttpResponsePromise<EpochModels.SavedModelPage>;
+    private __completeModelSaves;
     protected _getAuthorizationHeader(): Promise<string>;
 }

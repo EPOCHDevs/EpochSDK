@@ -38,14 +38,16 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SaveModelRequest = void 0;
 const core = __importStar(require("../../../core"));
+const SaveModelRequestSourceLocation_1 = require("../../types/SaveModelRequestSourceLocation");
 exports.SaveModelRequest = core.serialization.object({
     requestId: core.serialization.property("request_id", core.serialization.string()),
     name: core.serialization.string(),
     executionId: core.serialization.property("execution_id", core.serialization.string()),
     fitName: core.serialization.property("fit_name", core.serialization.string()),
     expectedDigest: core.serialization.property("expected_digest", core.serialization.string()),
+    sourceLocation: core.serialization.property("source_location", SaveModelRequestSourceLocation_1.SaveModelRequestSourceLocation.optional()),
 });
 
 // Platform saved-model outbound request validation.
 exports.SaveModelRequest = require("../../../core/sourceOwnedRequestSchema").sourceOwnedClosedRequest(exports.SaveModelRequest, [], true, true);
-exports.SaveModelRequest = require("../../../core/platformRequestSchema").platformRequestSchema(exports.SaveModelRequest, {"type": "object", "properties": {"request_id": {"type": "string", "minLength": 1, "maxLength": 128}, "name": {"type": "string", "minLength": 1, "maxLength": 255}, "execution_id": {"type": "string", "minLength": 1, "maxLength": 256}, "fit_name": {"type": "string", "minLength": 1, "maxLength": 128}, "expected_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}, "required": ["request_id", "name", "execution_id", "fit_name", "expected_digest"], "additionalProperties": false});
+exports.SaveModelRequest = require("../../../core/platformRequestSchema").platformRequestSchema(exports.SaveModelRequest, {"type": "object", "properties": {"request_id": {"type": "string", "minLength": 1, "maxLength": 128}, "name": {"type": "string", "minLength": 1, "maxLength": 255}, "execution_id": {"type": "string", "minLength": 1, "maxLength": 256}, "fit_name": {"type": "string", "minLength": 1, "maxLength": 128}, "expected_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "source_location": {"type": "string", "enum": ["shared_personal_v1", "server"]}}, "required": ["request_id", "name", "execution_id", "fit_name", "expected_digest"], "additionalProperties": false});

@@ -45,6 +45,13 @@
           "expected_digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "source_location": {
+            "type": "string",
+            "enum": [
+              "shared_personal_v1",
+              "server"
+            ]
           }
         },
         "required": [
@@ -53,6 +60,27 @@
           "execution_id",
           "fit_name",
           "expected_digest"
+        ],
+        "additionalProperties": false
+      },
+      "CompleteModelSavesRequest": {
+        "type": "object",
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "source_location": {
+            "type": "string",
+            "enum": [
+              "shared_personal_v1",
+              "server"
+            ]
+          }
+        },
+        "required": [
+          "execution_id"
         ],
         "additionalProperties": false
       },
@@ -639,6 +667,104 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SavedModelFacts"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ordinary Platform error envelope; unavailable storage is never absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/complete": {
+      "post": {
+        "operationId": "completeModelSaves",
+        "description": "Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteModelSavesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Models explicitly requested by the producer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedModelPage"
                 }
               }
             }

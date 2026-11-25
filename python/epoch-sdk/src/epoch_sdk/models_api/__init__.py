@@ -7,7 +7,9 @@ from importlib import import_module
 
 if typing.TYPE_CHECKING:
     from .types import (
+        CompleteModelSavesRequestSourceLocation,
         Error,
+        SaveModelRequestSourceLocation,
         SavedModelFacts,
         SavedModelFactsModel,
         SavedModelManifest,
@@ -31,12 +33,14 @@ if typing.TYPE_CHECKING:
 _dynamic_imports: typing.Dict[str, str] = {
     "AsyncEpochModels": ".client",
     "BadRequestError": ".errors",
+    "CompleteModelSavesRequestSourceLocation": ".types",
     "ConflictError": ".errors",
     "EpochModels": ".client",
     "Error": ".types",
     "ForbiddenError": ".errors",
     "GoneError": ".errors",
     "NotFoundError": ".errors",
+    "SaveModelRequestSourceLocation": ".types",
     "SavedModelFacts": ".types",
     "SavedModelFactsModel": ".types",
     "SavedModelManifest": ".types",
@@ -75,12 +79,14 @@ def __dir__():
 __all__ = [
     "AsyncEpochModels",
     "BadRequestError",
+    "CompleteModelSavesRequestSourceLocation",
     "ConflictError",
     "EpochModels",
     "Error",
     "ForbiddenError",
     "GoneError",
     "NotFoundError",
+    "SaveModelRequestSourceLocation",
     "SavedModelFacts",
     "SavedModelFactsModel",
     "SavedModelManifest",
@@ -96,6 +102,7 @@ __all__ = [
 
 # Source-owned Discovery component exports.
 if typing.TYPE_CHECKING:
+    from .types.complete_model_saves_request import CompleteModelSavesRequest
     from .types.save_model_request import SaveModelRequest
-_dynamic_imports.update({'SaveModelRequest': '.types'})
-__all__.extend(['SaveModelRequest'])
+_dynamic_imports.update({'CompleteModelSavesRequest': '.types', 'SaveModelRequest': '.types'})
+__all__.extend(['CompleteModelSavesRequest', 'SaveModelRequest'])
