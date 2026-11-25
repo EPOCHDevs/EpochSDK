@@ -3558,7 +3558,7 @@
             "$ref": "#/components/schemas/SourceRangeCapability"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "availability_axis",
@@ -3692,7 +3692,7 @@
             "title": "Unit"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "dtype",
@@ -3735,7 +3735,7 @@
             "$ref": "#/components/schemas/DataSourceCapabilities"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "data_type",
@@ -3776,7 +3776,7 @@
             "title": "Source Path"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -3824,7 +3824,7 @@
             "title": "Time Col"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -3839,7 +3839,7 @@
             "title": "Kind"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -3888,7 +3888,7 @@
             "title": "Transforms"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "columns"
@@ -3914,7 +3914,7 @@
             "title": "Tz"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -3929,7 +3929,7 @@
             "title": "Kind"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -3955,7 +3955,7 @@
             "title": "Format"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind"
@@ -4095,7 +4095,7 @@
             "title": "Web Read Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "acknowledged",
@@ -4148,7 +4148,7 @@
             "title": "Request Id"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "name",
@@ -4178,7 +4178,7 @@
             "title": "Schema Sha256"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "allowed_actions",
@@ -4213,7 +4213,7 @@
             "title": "Schema Sha256"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "attempt",
@@ -4469,7 +4469,7 @@
             "title": "Mode"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "mode"
@@ -4494,7 +4494,7 @@
             ]
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "mode"
@@ -4635,7 +4635,7 @@
             "title": "Dataset Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4655,7 +4655,7 @@
             "title": "File Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4675,7 +4675,7 @@
             "title": "Query"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4703,7 +4703,7 @@
             "title": "Result Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4725,7 +4725,7 @@
             "title": "Url"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4757,7 +4757,7 @@
             ]
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4778,7 +4778,7 @@
             "title": "Read Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -4891,7 +4891,7 @@
             }
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "enrichment",
@@ -5127,7 +5127,7 @@
             "title": "Unread Pages"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "processed_pages",
@@ -5447,7 +5447,7 @@
             "title": "Name"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "status",
@@ -5476,7 +5476,7 @@
             "title": "Name"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "status",
@@ -5501,7 +5501,7 @@
             "title": "Draft Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "status",
@@ -5609,7 +5609,7 @@
             "title": "Results"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "results"
@@ -5624,7 +5624,7 @@
             "title": "Mode"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "mode"
@@ -5639,7 +5639,7 @@
             "title": "Mode"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "mode"
@@ -5658,7 +5658,7 @@
             "title": "Json Schema Text"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "mode",
@@ -5753,7 +5753,7 @@
             ]
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "frame_schema",
@@ -5789,7 +5789,7 @@
             "title": "Source Timezone"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "assumed",
@@ -6695,6 +6695,41 @@
         ],
         "title": "FuturesTickSnapshotWorkingOrdersOnChange"
       },
+      "GeneratedTextFailure": {
+        "properties": {
+          "producer_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Producer Id"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "description": "A terminal model producer failure; native computation remains available."
+      },
       "Health": {
         "properties": {
           "status": {
@@ -6781,6 +6816,37 @@
       },
       "JsonValue": {},
       "JsonValueOutput": {
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
         "properties": {
           "name": {
             "type": "string",
@@ -6795,6 +6861,32 @@
           },
           "value": {
             "$ref": "#/components/schemas/JsonValue"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GeneratedTextFailure"
+                },
+                "type": "array",
+                "maxItems": 16,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Failures"
+          },
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -6892,7 +6984,7 @@
               }
             ],
             "title": "Conversation",
-            "description": "Opens the research's conversation in the Epoch Terminal, where questions the API cannot describe are answered."
+            "description": "Temporary conversation link for ongoing research and questions the API cannot describe. Null on completed or failed research; use the research and saved-response references for terminal results. Conversation history expires independently of saved results."
           },
           "response": {
             "anyOf": [
@@ -7573,6 +7665,20 @@
           "request": {
             "$ref": "#/components/schemas/RunRequest"
           },
+          "conversation_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Key",
+            "description": "Your own key for a conversation you want to continue. Requests with the same key share one conversation, kept for 30 minutes after each answer; after that the key starts a new one. Without a key, the conversation ends with its answer."
+          },
           "thread_id": {
             "anyOf": [
               {
@@ -7584,7 +7690,7 @@
               }
             ],
             "title": "Thread Id",
-            "description": "Continue an existing conversation; a new one is created when omitted."
+            "description": "Continue a conversation by its thread id while it still exists. Prefer conversation_key: without one, a conversation is removed a few minutes after its answer."
           }
         },
         "additionalProperties": false,
@@ -8954,7 +9060,7 @@
             "$ref": "#/components/schemas/SpaceResourceRef"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "resource"
@@ -8981,7 +9087,7 @@
             "title": "Ref"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "kind",
@@ -9038,9 +9144,25 @@
               }
             ],
             "title": "Sheet"
+          },
+          "sort_by": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 1,
+                "description": "The person's choice to sort rows by the reviewed time index (ENG-3100): exactly that index's name. Rows otherwise keep the file's order. Written and hashed only when non-empty."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort By"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "columns",
@@ -9108,7 +9230,7 @@
             "$ref": "#/components/schemas/DatasetPreviewPage"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "draft",
@@ -9578,6 +9700,16 @@
       },
       "UserFileDescriptor": {
         "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserFileDescriptorCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "content_sha256": {
             "anyOf": [
               {
@@ -9593,6 +9725,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "detected_media_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detected Media Type"
           },
           "error": {
             "anyOf": [
@@ -9637,6 +9780,15 @@
         ],
         "title": "UserFileDescriptor"
       },
+      "UserFileDescriptorCategory": {
+        "type": "string",
+        "enum": [
+          "dataset",
+          "document",
+          "other"
+        ],
+        "title": "UserFileDescriptorCategory"
+      },
       "UserFileStatus": {
         "type": "string",
         "enum": [
@@ -9675,7 +9827,7 @@
             "title": "Snapshot As Of"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "title": "WebContentOptions"
       },
@@ -9723,7 +9875,7 @@
             "title": "Query"
           }
         },
-        "additionalProperties": false,
+        "additionalProperties": true,
         "type": "object",
         "required": [
           "query"

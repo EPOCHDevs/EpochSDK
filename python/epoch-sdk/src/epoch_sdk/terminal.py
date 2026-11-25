@@ -287,7 +287,7 @@ class TerminalView:
             elif isinstance(part, JsonValueOutput):
                 self.console.print(
                     Panel(
-                        Text(json.dumps(part.value, ensure_ascii=False, indent=2)), title=part.name
+                        Text(part.unavailable_reason or json.dumps(part.value, ensure_ascii=False, indent=2)), title=part.name
                     )
                 )
             else:

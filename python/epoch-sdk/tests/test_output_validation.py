@@ -168,3 +168,22 @@ def test_json_values_obey_nested_local_schema_and_format() -> None:
 def test_untrusted_materialized_values_are_closed_and_finite(wire: object) -> None:
     with pytest.raises(ValidationError):
         OUTPUT_VALUES.validate_python(wire)
+
+
+def test_generated_json_unavailability_is_explicit_and_preserves_native_siblings() -> None:
+    declaration = JsonOutputRequest.model_validate({"name": "detail", "type": "json", "schema": {
+        "type": "object", "required": ["commentary"], "additionalProperties": False,
+        "properties": {"commentary": {"type": "string", "minLength": 1}}}})
+    native = JsonOutputRequest.model_validate({"name": "native", "type": "json", "schema": {"type": "integer"}})
+    count = JsonValueOutput(name="native", type="json", value=7)
+    failure = {"producer_id": "llm_words", "code": "text_timeout", "message": "Timed out"}
+    failed = JsonValueOutput.model_validate({"name": "detail", "type": "json", "value": None, "text_failures": [failure]})
+    assert validate_outputs([declaration, native], [failed, count]) == [failed, count]
+    assert failed.unavailable_reason == "text_timeout: Timed out"
+    assert count.unavailable_reason is None
+    with pytest.raises(EpochError):
+        validate_outputs([declaration], [JsonValueOutput(name="detail", type="json", value=None)])
+    for extra in [{"value": {}}, {"text_failures": []}, {"text_failures": [failure, failure]},
+                  {"text_failures": [{**failure, "code": "invented"}]}]:
+        with pytest.raises(ValidationError):
+            JsonValueOutput.model_validate({**failed.model_dump(exclude_none=True), **extra})

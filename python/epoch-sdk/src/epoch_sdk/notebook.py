@@ -122,7 +122,9 @@ async def _render_saved_answer(
                     )
         elif isinstance(part, JsonValueOutput):
             with output:
-                if isinstance(part.value, (dict, list)):
+                if part.unavailable_reason:
+                    display(HTML("<p>" + html.escape(part.unavailable_reason) + "</p>"))
+                elif isinstance(part.value, (dict, list)):
                     display(JSON(part.value, expanded=True))
                 else:
                     display(HTML("<pre>" + html.escape(json.dumps(part.value)) + "</pre>"))
