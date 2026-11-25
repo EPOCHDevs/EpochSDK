@@ -333,8 +333,8 @@
               "additionalProperties": false,
               "properties": {
                 "cash": {
-                  "maximum": 9223372036854776000,
-                  "minimum": -9223372036854776000,
+                  "maximum": 9223372036854775807,
+                  "minimum": -9223372036854775808,
                   "type": "integer"
                 },
                 "commission": {
@@ -672,13 +672,13 @@
                             "type": "string"
                           },
                           "effective_from_ns": {
-                            "maximum": 9223372036854776000,
-                            "minimum": -9223372036854776000,
+                            "maximum": 9223372036854775807,
+                            "minimum": -9223372036854775808,
                             "type": "integer"
                           },
                           "effective_to_ns": {
-                            "maximum": 9223372036854776000,
-                            "minimum": -9223372036854776000,
+                            "maximum": 9223372036854775807,
+                            "minimum": -9223372036854775808,
                             "type": "integer"
                           },
                           "price_kind": {
@@ -1560,7 +1560,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "39c91f06d66e1ef985a599db0f5fd195f0fd65fd8ee50879f3bba3a4718b6a7c",
+    "openapi.json": "d43d728b6602042c3a47af33f48207f7601d575b84f5fbbdf21a16ae4fe3358a",
     "research-response.schema.json": "72bdd5626f48e7ff6d0ff457b659f877953db1097c38bd3b68bf582a699abb3a"
   }
 }
