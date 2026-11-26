@@ -97,9 +97,42 @@ class TableValue(MaterializedOutput):
         return self
 
 
+class GeneratedTextFailure(Contract):
+    """A terminal model producer failure; native computation remains available."""
+    producer_id: str = Field(min_length=1)
+    code: Literal["text_timeout", "text_rate_limited", "text_transport", "text_invalid", "text_unavailable", "text_unconfirmed"]
+    message: str = Field(min_length=1)
+
+
 class JsonValueOutput(MaterializedOutput):
+    model_config = ConfigDict(json_schema_extra={
+        "if": {"anyOf": [
+            {"required": ["text_failures"], "properties": {"text_failures": {"type": "array"}}},
+            {"required": ["ai_text"], "properties": {"ai_text": {"type": "object"}}},
+        ]},
+        "then": {"properties": {"value": {"type": "null"}}},
+    })
     type: Literal["json"]
     value: JsonValue
+    text_failures: list[GeneratedTextFailure] | None = Field(default=None, min_length=1, max_length=16)
+    ai_text: AiTextSkipped | None = None
+
+    @model_validator(mode="after")
+    def unavailable_value(self) -> JsonValueOutput:
+        if self.text_failures is not None and (self.value is not None or
+                len({failure.producer_id for failure in self.text_failures}) != len(self.text_failures)):
+            raise ValueError("Unavailable generated JSON has a null value and distinct producer failures")
+        if self.ai_text is not None and self.value is not None:
+            raise ValueError("Skipped generated JSON has a null value")
+        return self
+
+    @property
+    def unavailable_reason(self) -> str | None:
+        if self.text_failures:
+            return "; ".join(f"{failure.code}: {failure.message}" for failure in self.text_failures)
+        if self.ai_text is not None:
+            return "AI generation was skipped because its usage limit was reached."
+        return None
 
     @field_validator("value")
     @classmethod
@@ -224,6 +257,10 @@ def validate_outputs(
                         f"Output {name}: row {index} violates its declared schema.", execution_id
                     )
         elif isinstance(declaration, JsonOutputRequest) and isinstance(value, JsonValueOutput):
+            if value.text_failures is not None or value.ai_text is not None:
+                # This is a typed unavailable outcome, not a value satisfying
+                # the successful result schema. Sibling native parts remain valid.
+                continue
             validator = Draft202012Validator(
                 declaration.json_schema,
                 registry=Registry(),

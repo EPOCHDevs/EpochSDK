@@ -1132,15 +1132,102 @@
           }
         ]
       },
+      "GeneratedTextFailure": {
+        "additionalProperties": false,
+        "description": "A terminal model producer failure; native computation remains available.",
+        "properties": {
+          "code": {
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "producer_id": {
+            "minLength": 1,
+            "title": "Producer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "type": "object"
+      },
       "JsonValue": {},
       "JsonValueOutput": {
         "additionalProperties": false,
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
         "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
             "type": "string"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/GeneratedTextFailure"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Failures"
           },
           "type": {
             "const": "json",
@@ -1156,6 +1243,13 @@
           "type",
           "value"
         ],
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
         "title": "JsonValueOutput",
         "type": "object"
       },
@@ -1561,6 +1655,6 @@
   },
   "source_sha256": {
     "openapi.json": "d43d728b6602042c3a47af33f48207f7601d575b84f5fbbdf21a16ae4fe3358a",
-    "research-response.schema.json": "72bdd5626f48e7ff6d0ff457b659f877953db1097c38bd3b68bf582a699abb3a"
+    "research-response.schema.json": "66b23cac5a6c7fb2c39436a67fbee130885da6b4bbdfe4078567eca2b5573431"
   }
 }
