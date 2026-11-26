@@ -128,11 +128,10 @@ class JsonValueOutput(MaterializedOutput):
 
     @property
     def unavailable_reason(self) -> str | None:
-        if self.text_failures:
-            return "; ".join(f"{failure.code}: {failure.message}" for failure in self.text_failures)
+        messages = [f"{failure.code}: {failure.message}" for failure in self.text_failures or []]
         if self.ai_text is not None:
-            return "AI generation was skipped because its usage limit was reached."
-        return None
+            messages.append("AI generation was skipped because its usage limit was reached.")
+        return "; ".join(messages) if messages else None
 
     @field_validator("value")
     @classmethod

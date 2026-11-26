@@ -66,13 +66,14 @@ def test_notebook_renders_escaped_basis_and_all_bound_facts(monkeypatch, mode):
 def unavailable_result(kind):
     wire=result().response.model_dump(mode='json',by_alias=True,exclude_none=True)
     detail={'name':'detail','type':'json','value':None}
-    if kind=='timeout':
+    if kind in {'timeout', 'mixed'}:
         detail['text_failures']=[{'producer_id':'llm_words','code':'text_timeout','message':'No <model> text'}]
-    else:
+    if kind in {'usage-skipped', 'mixed'}:
         detail['ai_text']={'status':'skipped','reason':'usage_limit','resets_at':'2099-11-23T00:00:00Z'}
     wire['content']={
         'declarations':[
-            {'name':'detail','type':'json','schema':{'type':'string','minLength':1}},
+            {'name':'detail','type':'json','schema':
+             {'type':'null'} if kind=='ordinary-null' else {'type':'string','minLength':1}},
             {'name':'count','type':'json','schema':{'type':'integer'}},
         ],
         'outputs':[detail,{'name':'count','type':'json','value':7}],
@@ -80,7 +81,7 @@ def unavailable_result(kind):
     return ResearchCompleted(request_id='request',response=SavedResearchResponse.model_validate(wire))
 
 
-@pytest.mark.parametrize('kind',['timeout','usage-skipped'])
+@pytest.mark.parametrize('kind',['timeout','usage-skipped','mixed','ordinary-null'])
 def test_terminal_displays_unavailable_generated_json_and_keeps_native_result(kind):
     pytest.importorskip('rich')
     pytest.importorskip('prompt_toolkit')
@@ -90,11 +91,15 @@ def test_terminal_displays_unavailable_generated_json_and_keeps_native_result(ki
     view=TerminalView(SimpleNamespace(operation_id='example'),console=Console(file=stream,width=100))
     asyncio.run(view._answer(unavailable_result(kind)))
     output=stream.getvalue()
-    assert ('text_timeout: No <model> text' if kind=='timeout' else 'usage limit was reached') in output
-    assert 'count' in output and '7' in output and 'null' not in output
+    if kind in {'timeout', 'mixed'}:
+        assert 'text_timeout: No <model> text' in output
+    if kind in {'usage-skipped', 'mixed'}:
+        assert 'AI generation was skipped because its usage limit was reached.' in output
+    assert 'count' in output and '7' in output
+    assert ('null' in output) == (kind=='ordinary-null')
 
 
-@pytest.mark.parametrize('kind',['timeout','usage-skipped'])
+@pytest.mark.parametrize('kind',['timeout','usage-skipped','mixed','ordinary-null'])
 @pytest.mark.parametrize('mode',['session','saved'])
 def test_notebook_displays_escaped_generation_failure_and_keeps_native_result(monkeypatch,kind,mode):
     pytest.importorskip('ipywidgets')
@@ -110,5 +115,10 @@ def test_notebook_displays_escaped_generation_failure_and_keeps_native_result(mo
     else:
         asyncio.run(notebook.display_answer(client,completed.response))
     html='\n'.join(str(item.data) for item in displayed if hasattr(item,'data'))
-    assert ('text_timeout: No &lt;model&gt; text' if kind=='timeout' else 'usage limit was reached') in html
-    assert '<pre>7</pre>' in html and '<pre>null</pre>' not in html
+    if kind in {'timeout', 'mixed'}:
+        assert 'text_timeout: No &lt;model&gt; text' in html
+        assert 'No <model> text' not in html
+    if kind in {'usage-skipped', 'mixed'}:
+        assert 'AI generation was skipped because its usage limit was reached.' in html
+    assert '<pre>7</pre>' in html
+    assert ('<pre>null</pre>' in html) == (kind=='ordinary-null')
