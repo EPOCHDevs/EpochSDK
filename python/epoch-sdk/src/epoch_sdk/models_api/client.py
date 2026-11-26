@@ -6,7 +6,6 @@ import httpx
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from .core.request_options import RequestOptions
 from .raw_client import AsyncRawEpochModels, RawEpochModels
-from .types.complete_model_saves_request_source_location import CompleteModelSavesRequestSourceLocation
 from .types.save_model_request_source_location import SaveModelRequestSourceLocation
 from .types.saved_model_facts import SavedModelFacts
 from .types.saved_model_page import SavedModelPage
@@ -134,13 +133,15 @@ class EpochModels:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SavedModelSummary:
         """
-        Explicitly save one exact completed fit. request_id is owner-scoped: repeat it with identical facts after an uncertain response. Different facts conflict. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
+        Explicitly save one exact completed fit. Identity is owner/execution/fit scoped: concurrent or retried calls return the first saved model and name, even with different request IDs or proposed names. A different digest or source location conflicts. Distinct fits remain distinct even when artifact bytes match. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
 
         Parameters
         ----------
         request_id : str
+            Client correlation key; saved identity is owner/execution/fit scoped.
 
         name : str
+            Proposed name for the first Save. Repeated saves return the original name without renaming.
 
         execution_id : str
 
@@ -214,47 +215,6 @@ class EpochModels:
         )
         """
         _response = self._raw_client.read_model(model_ref, request_options=request_options)
-        return _response.data
-
-    def complete_model_saves(
-        self,
-        *,
-        execution_id: str,
-        source_location: typing.Optional[CompleteModelSavesRequestSourceLocation] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SavedModelPage:
-        """
-        Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
-
-        Parameters
-        ----------
-        execution_id : str
-
-        source_location : typing.Optional[CompleteModelSavesRequestSourceLocation]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SavedModelPage
-            Models explicitly requested by the producer
-
-        Examples
-        --------
-        from epoch_sdk.models_api import EpochModels
-
-        client = EpochModels(
-            token="YOUR_TOKEN",
-            base_url="https://yourhost.com/path/to/api",
-        )
-        client.complete_model_saves(
-            execution_id="execution_id",
-        )
-        """
-        _response = self._raw_client.complete_model_saves(
-            execution_id=execution_id, source_location=source_location, request_options=request_options
-        )
         return _response.data
 
 
@@ -384,13 +344,15 @@ class AsyncEpochModels:
         request_options: typing.Optional[RequestOptions] = None,
     ) -> SavedModelSummary:
         """
-        Explicitly save one exact completed fit. request_id is owner-scoped: repeat it with identical facts after an uncertain response. Different facts conflict. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
+        Explicitly save one exact completed fit. Identity is owner/execution/fit scoped: concurrent or retried calls return the first saved model and name, even with different request IDs or proposed names. A different digest or source location conflicts. Distinct fits remain distinct even when artifact bytes match. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
 
         Parameters
         ----------
         request_id : str
+            Client correlation key; saved identity is owner/execution/fit scoped.
 
         name : str
+            Proposed name for the first Save. Repeated saves return the original name without renaming.
 
         execution_id : str
 
@@ -482,53 +444,4 @@ class AsyncEpochModels:
         asyncio.run(main())
         """
         _response = await self._raw_client.read_model(model_ref, request_options=request_options)
-        return _response.data
-
-    async def complete_model_saves(
-        self,
-        *,
-        execution_id: str,
-        source_location: typing.Optional[CompleteModelSavesRequestSourceLocation] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> SavedModelPage:
-        """
-        Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
-
-        Parameters
-        ----------
-        execution_id : str
-
-        source_location : typing.Optional[CompleteModelSavesRequestSourceLocation]
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        SavedModelPage
-            Models explicitly requested by the producer
-
-        Examples
-        --------
-        import asyncio
-
-        from epoch_sdk.models_api import AsyncEpochModels
-
-        client = AsyncEpochModels(
-            token="YOUR_TOKEN",
-            base_url="https://yourhost.com/path/to/api",
-        )
-
-
-        async def main() -> None:
-            await client.complete_model_saves(
-                execution_id="execution_id",
-            )
-
-
-        asyncio.run(main())
-        """
-        _response = await self._raw_client.complete_model_saves(
-            execution_id=execution_id, source_location=source_location, request_options=request_options
-        )
         return _response.data

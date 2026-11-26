@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from epoch_sdk.models_api import AsyncEpochModels, EpochModels
 from epoch_sdk.models_api.errors import ServiceUnavailableError
-from epoch_sdk.models_api.types import CompleteModelSavesRequest, SaveModelRequest
+from epoch_sdk.models_api.types import SaveModelRequest
 
 FIXTURES = Path(__file__).resolve().parents[3] / "contracts/fixtures/platform-models"
 SAVE = json.loads((FIXTURES / "save.json").read_text())
@@ -92,25 +92,23 @@ def test_model_storage_unavailability_preserves_the_typed_error():
     asyncio.run(scenario())
 
 
-def test_explicit_server_save_and_authored_completion_keep_source_selection_closed():
-    complete = json.loads((FIXTURES / 'complete.json').read_text())
+def test_explicit_server_save_keeps_source_selection_closed_and_completion_is_retired():
     seen = []
     def handler(request):
         seen.append(request)
         body = json.loads(request.content)
         assert body['source_location'] == 'server'
-        if request.url.path == '/api/v1/models/complete':
-            assert body == complete
-            return httpx.Response(200, json={'items': [SUMMARY]})
+        assert request.url.path == '/api/v1/models'
         assert body == {**SAVE, 'source_location': 'server'}
         return httpx.Response(200, json=SUMMARY)
     with httpx.Client(transport=httpx.MockTransport(handler)) as http:
         client = EpochModels(base_url='https://platform.test', token='fixture-token', httpx_client=http)
         assert client.save_model(**{**SAVE, 'source_location': 'server'}).digest == SUMMARY['digest']
-        assert client.complete_model_saves(**complete).items[0].digest == SUMMARY['digest']
+        assert not hasattr(client, 'complete_model_saves')
+        assert not hasattr(AsyncEpochModels, 'complete_model_saves')
         for kind in ('latest', 'fallback'):
             with pytest.raises(ValidationError):
-                client.complete_model_saves(**{**complete, 'source_location': kind})
+                client.save_model(**{**SAVE, 'source_location': kind})
             with pytest.raises(ValidationError):
-                CompleteModelSavesRequest.model_validate({**complete, 'source_location': kind})
-    assert len(seen) == 2
+                SaveModelRequest.model_validate({**SAVE, 'source_location': kind})
+    assert len(seen) == 1
