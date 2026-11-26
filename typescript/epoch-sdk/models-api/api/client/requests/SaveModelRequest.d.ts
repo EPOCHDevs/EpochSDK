@@ -13,7 +13,9 @@ import * as EpochModels from "../../index";
  *     }
  */
 export interface SaveModelRequest {
+    /** Client correlation key; saved identity is owner/execution/fit scoped. */
     requestId: string;
+    /** Proposed name for the first Save. Repeated saves return the original name without renaming. */
     name: string;
     executionId: string;
     fitName: string;

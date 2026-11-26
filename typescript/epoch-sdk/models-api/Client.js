@@ -189,7 +189,7 @@ class EpochModelsClient {
         });
     }
     /**
-     * Explicitly save one exact completed fit. request_id is owner-scoped: repeat it with identical facts after an uncertain response. Different facts conflict. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
+     * Explicitly save one exact completed fit. Identity is owner/execution/fit scoped: concurrent or retried calls return the first saved model and name, even with different request IDs or proposed names. A different digest or source location conflicts. Distinct fits remain distinct even when artifact bytes match. The successful response is durable readiness after exact artifact/provenance copies; pending attempts remain outside the catalogue. No fitting or numerical execution occurs.
      *
      * @param {EpochModels.SaveModelRequest} request
      * @param {EpochModelsClient.RequestOptions} requestOptions - Request-specific configuration.
@@ -434,134 +434,6 @@ class EpochModelsClient {
                     });
                 case "timeout":
                     throw new errors.EpochModelsTimeoutError("Timeout exceeded when calling GET /api/v1/models/{model_ref}.");
-                case "unknown":
-                    throw new errors.EpochModelsError({
-                        message: _response.error.errorMessage,
-                        rawResponse: _response.rawResponse,
-                    });
-            }
-        });
-    }
-    /**
-     * Complete only explicit save_as intents from an owned completed native producer descriptor. Equal retries select the same saved identities. This never fits a model or saves unselected temporary fits. source_location=server explicitly selects the configured server export bridge with the caller credential.
-     *
-     * @param {EpochModels.CompleteModelSavesRequest} request
-     * @param {EpochModelsClient.RequestOptions} requestOptions - Request-specific configuration.
-     *
-     * @throws {@link EpochModels.BadRequestError}
-     * @throws {@link EpochModels.UnauthorizedError}
-     * @throws {@link EpochModels.ForbiddenError}
-     * @throws {@link EpochModels.NotFoundError}
-     * @throws {@link EpochModels.ConflictError}
-     * @throws {@link EpochModels.GoneError}
-     * @throws {@link EpochModels.ServiceUnavailableError}
-     *
-     * @example
-     *     await client.completeModelSaves({
-     *         executionId: "execution_id"
-     *     })
-     */
-    completeModelSaves(request, requestOptions) {
-        return core.HttpResponsePromise.fromPromise(this.__completeModelSaves(request, requestOptions));
-    }
-    __completeModelSaves(request, requestOptions) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
-            const _response = yield ((_a = this._options.fetcher) !== null && _a !== void 0 ? _a : core.fetcher)({
-                url: (0, url_join_1.default)((_b = (yield core.Supplier.get(this._options.baseUrl))) !== null && _b !== void 0 ? _b : (yield core.Supplier.get(this._options.environment)), "api/v1/models/complete"),
-                method: "POST",
-                headers: Object.assign({ Authorization: yield this._getAuthorizationHeader(), "X-Fern-Language": "JavaScript", "X-Fern-Runtime": core.RUNTIME.type, "X-Fern-Runtime-Version": core.RUNTIME.version }, requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.headers),
-                contentType: "application/json",
-                requestType: "json",
-                body: serializers.CompleteModelSavesRequest.jsonOrThrow(request, {
-                    unrecognizedObjectKeys: "passthrough",
-                    allowUnrecognizedUnionMembers: true,
-                    allowUnrecognizedEnumValues: true,
-                }),
-                timeoutMs: (requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.timeoutInSeconds) != null ? requestOptions.timeoutInSeconds * 1000 : 60000,
-                maxRetries: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.maxRetries,
-                withCredentials: true,
-                abortSignal: requestOptions === null || requestOptions === void 0 ? void 0 : requestOptions.abortSignal,
-            });
-            if (_response.ok) {
-                return {
-                    data: serializers.SavedModelPage.parseOrThrow(_response.body, {
-                        unrecognizedObjectKeys: "passthrough",
-                        allowUnrecognizedUnionMembers: true,
-                        allowUnrecognizedEnumValues: true,
-                        breadcrumbsPrefix: ["response"],
-                    }),
-                    rawResponse: _response.rawResponse,
-                };
-            }
-            if (_response.error.reason === "status-code") {
-                switch (_response.error.statusCode) {
-                    case 400:
-                        throw new EpochModels.BadRequestError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 401:
-                        throw new EpochModels.UnauthorizedError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 403:
-                        throw new EpochModels.ForbiddenError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 404:
-                        throw new EpochModels.NotFoundError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 409:
-                        throw new EpochModels.ConflictError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 410:
-                        throw new EpochModels.GoneError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    case 503:
-                        throw new EpochModels.ServiceUnavailableError(serializers.Error_.parseOrThrow(_response.error.body, {
-                            unrecognizedObjectKeys: "passthrough",
-                            allowUnrecognizedUnionMembers: true,
-                            allowUnrecognizedEnumValues: true,
-                            breadcrumbsPrefix: ["response"],
-                        }), _response.rawResponse);
-                    default:
-                        throw new errors.EpochModelsError({
-                            statusCode: _response.error.statusCode,
-                            body: _response.error.body,
-                            rawResponse: _response.rawResponse,
-                        });
-                }
-            }
-            switch (_response.error.reason) {
-                case "non-json":
-                    throw new errors.EpochModelsError({
-                        statusCode: _response.error.statusCode,
-                        body: _response.error.rawBody,
-                        rawResponse: _response.rawResponse,
-                    });
-                case "timeout":
-                    throw new errors.EpochModelsTimeoutError("Timeout exceeded when calling POST /api/v1/models/complete.");
                 case "unknown":
                     throw new errors.EpochModelsError({
                         message: _response.error.errorMessage,

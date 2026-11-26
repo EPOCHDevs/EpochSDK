@@ -69,20 +69,16 @@ test('unavailable model storage retains its typed error', () => withFetch(() => 
   });
 }));
 
-test('server selection and authored completion use closed Platform requests', () => withFetch((url, init) => {
+test('explicit server Save is closed and automatic completion is retired', () => withFetch((url, init) => {
   const body = JSON.parse(init.body);
   assert.equal(body.source_location, 'server');
-  if (new URL(url).pathname === '/api/v1/models/complete') {
-    assert.deepEqual(body, fixture('complete'));
-    return [200, { items: [summary] }];
-  }
+  assert.equal(new URL(url).pathname, '/api/v1/models');
   assert.deepEqual(body, { ...wire, source_location: 'server' });
   return [200, summary];
 }, async seen => {
   const models = client();
   await models.saveModel({ ...request, sourceLocation: 'server' }, { maxRetries: 0 });
-  const done = await models.completeModelSaves({ executionId: wire.execution_id, sourceLocation: 'server' }, { maxRetries: 0 });
-  assert.equal(done.items[0].digest, summary.digest);
-  await assert.rejects(models.completeModelSaves({ executionId: wire.execution_id, sourceLocation: 'fallback' }, { maxRetries: 0 }));
-  assert.equal(seen.length, 2);
+  assert.equal(typeof models.completeModelSaves, 'undefined');
+  await assert.rejects(models.saveModel({ ...request, sourceLocation: 'fallback' }, { maxRetries: 0 }));
+  assert.equal(seen.length, 1);
 }));
