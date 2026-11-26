@@ -1,0 +1,39 @@
+# Clients for Platform's presentation delivery contract (ENG-3250), generated with the same Fern
+# generator versions as EpochBackend's StratifyX SDK so method and type names match it.
+# Regenerate with `python tools/generate_presentation_api.py`; never edit the output by hand.
+api:
+  specs:
+    - openapi: openapi/platform-presentations.openapi.json
+default-group: local
+groups:
+  local:
+    generators:
+      - name: fernapi/fern-python-sdk
+        version: 4.46.6
+        output:
+          location: local-file-system
+          path: ../build/fern-presentations/python
+        config:
+          package_name: presentation_api
+          client_class_name: EpochPresentations
+          client:
+            exported_filename: client.py
+          pydantic_config:
+            version: v2
+            use_pydantic_field_aliases: true
+            # Responses keep fields Platform adds later, so a new response field never needs a
+            # lockstep client release.
+            extra_fields: allow
+            enum_type: python_enums
+      - name: fernapi/fern-typescript-node-sdk
+        version: 0.51.7
+        output:
+          location: local-file-system
+          path: ../build/fern-presentations/typescript
+        config:
+          namespaceExport: EpochPresentations
+          allowCustomFetcher: true
+          includeCredentialsOnCrossOriginRequests: true
+          useBrandedStringAliases: true
+          generateWireTests: false
+          allowExtraFields: true

@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "source": {
+    "execution_id": "fixture-run",
+    "definition_id": "fixture-definition",
+    "execution_category": "ALL",
+    "config_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "generation_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "schema_sha256": "4b7cac43fc145fa47d491fa736418e7f1710e0fc29f492b0504c46f04bdb4b52",
+    "prose_sha256": "0200e32db432a8e962a6755c19a9f9588de5fe84af740de83144f48d4e35d46a",
+    "run_output_manifest_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "response_sha256": "a73b17214e5af2436392f473d0c7143dd0ebab9b00c8fd4927d6ce4be2e04bef"
+  },
+  "retention": {
+    "state": "retained",
+    "reference": {
+      "execution_id": "fixture-run",
+      "publication_id": "pub_dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "catalog_revision": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "edit_version": 0
+    }
+  },
+  "content": {
+    "dashboard_json": "{\"charts\":[],\"tables\":[],\"schema\":{\"large\":9007199254740993,\"decimal\":0.1},\"schema_\":{\"still\":\"authored\"},\"nullable\":null,\"text\":\"Café 🌿\\nquoted \\\"words\\\" and \\\\ path\"}",
+    "canonical_prose_json": "{\"category\":\"ALL\",\"text\":\"Original final prose — 𐐀\",\"source\":null}",
+    "response_json": "{\"declarations\":[{\"name\":\"facts\",\"type\":\"json\",\"schema\":{\"type\":\"object\",\"additionalProperties\":true}}],\"outputs\":[{\"name\":\"facts\",\"type\":\"json\",\"value\":{\"int64\":9223372036854775807,\"decimal\":1.2300e2,\"future\":[null,{\"keep\":true}]}}]}"
+  },
+  "expires_epoch": 2000000000,
+  "artifacts": [
+    {
+      "category": "Overview",
+      "data_id": "chart_0",
+      "bytes": 128,
+      "url": "https://cdn.example.test/exact.arrow?signature=opaque%2Fvalue%2B"
+    }
+  ],
+  "response_tables": [
+    {
+      "table_id": "rqt_ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "execution_id": "fixture-run",
+      "query_name": "fixture_rows",
+      "schema_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "row_count": 2,
+      "field_ids": [
+        "asset",
+        "value"
+      ],
+      "parts": [
+        {
+          "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "offset": 0,
+          "rows": 2,
+          "bytes": 64,
+          "url": "https://personal.example.test/part?signature=opaque%2Fpart"
+        }
+      ]
+    }
+  ]
+}

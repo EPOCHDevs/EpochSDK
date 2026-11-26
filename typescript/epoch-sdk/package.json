@@ -53,6 +53,14 @@
     "./models-api/core/fetcher": {
       "types": "./models-api/core/fetcher/index.d.ts",
       "default": "./models-api/core/fetcher/index.js"
+    },
+    "./presentation-api": {
+      "types": "./presentation-api/index.d.ts",
+      "default": "./presentation-api/index.js"
+    },
+    "./presentation-api/core/fetcher": {
+      "types": "./presentation-api/core/fetcher/index.d.ts",
+      "default": "./presentation-api/core/fetcher/index.js"
     }
   },
   "files": [
@@ -69,13 +77,16 @@
     "platform-shares.openapi.json",
     "shares-api/",
     "platform-models.openapi.json",
-    "models-api/"
+    "models-api/",
+    "platform-presentations.openapi.json",
+    "presentation-api/"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "generate:discovery": "node generate-discovery.mjs",
     "test:shares-types": "tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext test/types/shares-api.ts",
-    "test:models-types": "tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext test/types/models-api.ts"
+    "test:models-types": "tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext test/types/models-api.ts",
+    "test:presentation-types": "tsc --noEmit --strict --skipLibCheck --target ES2022 --module NodeNext --moduleResolution NodeNext test/types/presentation-api.ts"
   },
   "dependencies": {
     "ajv": "8.17.1",
