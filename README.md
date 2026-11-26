@@ -133,6 +133,40 @@ mirrored Platform contract using pinned Fern versions and source-derived
 normalization. The saved-model fixtures and mocked HTTP tests verify the wire
 contract; they do not establish live lifecycle acceptance.
 
+## Platform presentation delivery
+
+Platform final presentation delivery has its own generated client; it does not
+belong to Native OpenAPI or execute a study:
+
+```python
+from epoch_sdk.presentation_api import AsyncEpochPresentations
+
+presentations = AsyncEpochPresentations(base_url=platform_url, token=bearer_token)
+delivery = await presentations.read_final_presentation_delivery(
+    execution_id, execution_category="ALL", request_options={"max_retries": 0},
+)
+# delivery.content.dashboard_json and canonical_prose_json are original JSON
+# document strings; response_json is a document string or an explicit None.
+```
+
+TypeScript exports `EpochPresentationsClient` and the `EpochPresentations`
+namespace from `@epochdevs/epoch-sdk/presentation-api`. Its method is
+`readFinalPresentationDelivery(executionId, {executionCategory: "ALL"})`.
+The request may carry the exact `expectedSource`, actual `retainedReference`,
+and a shorter `maxExpiresEpoch`. Pending retention is not a permanent reference.
+The SDK preserves raw documents without parsing their authored numbers; use the
+consumer's verified lossless domain codec at its rendering boundary. Keep signed
+artifact access/expiry in memory; persist only the consumer's approved source,
+retained reference and exact raw documents. The client never downloads Arrow,
+recomputes or replaces a missing source. HTTP 425 remains a typed error with
+`Retry-After`; the caller owns any bounded same-pin waiting policy.
+
+`tools/sync_platform_presentations_contract.py` mirrors the exact Platform export
+and its source revision/digest receipt. `tools/generate_presentation_api.py` uses
+the same pinned Fern generators and source-derived normalization as Models.
+The mock wire tests verify clients and raw string fidelity; they do not establish
+live Platform/GDS/Portal acceptance or authorize a package release.
+
 ## Development checks
 
 Shared checks need no native SDK or Backend checkout:
@@ -143,6 +177,8 @@ python tools/validate_contract.py
 python tools/sync_native_parameters.py --check
 python tools/sync_platform_models_contract.py --check
 python tools/generate_models_api.py --check
+python tools/sync_platform_presentations_contract.py --check
+python tools/generate_presentation_api.py --check
 python tools/validate_saved_output_contract.py
 python tools/validate_research_response_contract.py
 python tools/validate_notebook_cases.py

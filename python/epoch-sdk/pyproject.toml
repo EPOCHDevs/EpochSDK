@@ -47,11 +47,11 @@ markers = ["live_discovery: opt-in real Backend and registered MCP acceptance", 
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-# Generated from Platform contracts by tools/generate_files_api.py , tools/generate_shares_api.py and tools/generate_models_api.py.
-extend-exclude = ["src/epoch_sdk/files_api", "src/epoch_sdk/shares_api", "src/epoch_sdk/models_api"]
+# Generated from Platform contracts by tools/generate_{files,shares,models,presentation}_api.py.
+extend-exclude = ["src/epoch_sdk/files_api", "src/epoch_sdk/shares_api", "src/epoch_sdk/models_api", "src/epoch_sdk/presentation_api"]
 
 [tool.pyright]
 include = ["src"]
-exclude = ["src/epoch_sdk/files_api", "src/epoch_sdk/shares_api", "src/epoch_sdk/models_api"]
+exclude = ["src/epoch_sdk/files_api", "src/epoch_sdk/shares_api", "src/epoch_sdk/models_api", "src/epoch_sdk/presentation_api"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
