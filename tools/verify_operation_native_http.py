@@ -10,7 +10,6 @@ import asyncio
 import hashlib
 import json
 import os
-import secrets
 import socket
 import subprocess
 import tempfile
@@ -247,8 +246,9 @@ def main():
         listener.bind(("127.0.0.1", 0))
         platform_port = listener.getsockname()[1]
     platform_url = f"http://127.0.0.1:{platform_port}"
-    bridge_env = {**os.environ, "EPOCH_RESEARCH_OPERATIONS_URL": platform_url,
-                  "EPOCH_RESEARCH_OPERATIONS_TOKEN": secrets.token_urlsafe(48)}
+    # Platform judges research from the native fixture's stored records, read
+    # only; neither fixture calls the other.
+    bridge_env = dict(os.environ)
     with (
         tempfile.TemporaryDirectory(prefix="epoch-operations-") as temp,
         args.output.with_suffix(".log").open("w") as log,
@@ -256,7 +256,7 @@ def main():
         native_root = Path(temp) / 'native'; native_root.mkdir()
         platform_root = Path(temp) / 'platform'
         platform = subprocess.Popen([str(args.node.resolve()), str(args.platform_fixture.resolve()),
-            str(platform_port), str(platform_root), url], env=bridge_env, stdout=log, stderr=log)
+            str(platform_port), str(platform_root), str(native_root)], env=bridge_env, stdout=log, stderr=log)
         process = subprocess.Popen(
             [str(args.binary.resolve()), str(port), str(native_root)], env=bridge_env, stdout=log, stderr=log
         )

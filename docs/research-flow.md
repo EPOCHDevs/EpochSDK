@@ -134,14 +134,18 @@ Current native routes:
 
 | Owner | Surface |
 | --- | --- |
-| Backend | POST/GET/PATCH `/api/v1/integration/requests[/{requestId}]` |
-| Backend | GET `/api/v1/integration/requests/by-handle/{operationId}` |
+| Platform | POST/GET/PATCH `/api/v1/integration/requests[/{requestId}]` |
+| Platform | GET `/api/v1/integration/requests/by-handle/{operationId}` |
 | Backend | POST/GET `/api/v1/integration/execution-requests[/{requestId}]` and GET `by-handle/{operationId}` |
 | Backend | POST `/api/v1/research/requests/{requestId}/response` |
 | Backend | GET `/api/v1/research/responses/{responseId}?version=...` |
 | Backend | POST `/api/v1/studies/executions/{executionId}/response-tables` |
 | LangGraph | Native state, run/wait and interrupt/resume |
 | EpochSDK/MCP | Wrap native LangGraph and generated StratifyX clients |
+
+Platform checks each research request against Backend's stored records itself,
+read only: the native run Backend admitted for the request, its job status, the
+study and the saved answer. Backend never calls Platform.
 
 The low-level native publication API remains available to direct application
 integrations. It is not a model-facing supervisor tool and is not invoked again

@@ -39,7 +39,7 @@ def project(source: Path, contract: dict) -> dict:
     paths = {
         path: rewrite(operations)
         for path, operations in native["paths"].items()
-        if path.startswith(("/api/v1/integration/execution-requests", "/api/v1/integration/research-contracts/"))
+        if path.startswith("/api/v1/integration/execution-requests")
         or path == "/api/v1/studies/executions/{executionId}/inputs"
         or path == "/api/v1/studies/executions/{executionId}/acquisition-provenance"
         or path == "/api/v1/agents/threads/{threadId}/studies/definitions"
@@ -70,11 +70,6 @@ def project(source: Path, contract: dict) -> dict:
                 PREFIX + "Native_SdkExecutionRecord"
             }:
                 example = extension_examples.get(operation["operationId"], {})
-                if operation["operationId"] == "inspectResearchContract":
-                    example = {"request": {"contract": {"request_id": "req_"+"1"*32, "version": 0,
-                        "request": {"task": "Explain", "outputs": [{"name": "answer", "type": "text", "instructions": "Explain"}]},
-                        "execution_open": True, "publication_open": False}, "references": {}},
-                        "response": {"delivered": False, "output_delivery_resumed": False}}
                 for container, name in (
                     (operation.get("requestBody", {}), "request"),
                     *[(body, "response") for code, body in operation.get("responses", {}).items()
@@ -143,7 +138,8 @@ def project(source: Path, contract: dict) -> dict:
         "sha256": hashlib.sha256(platform_path.read_bytes()).hexdigest(), "paths": sorted(platform_paths), "schemas": sorted(platform_schemas)}
     contract["info"]["description"] = (
         "Shared language-neutral Epoch contracts. Platform owns research lifecycle under /api/v1/integration/requests; "
-        "Backend owns native execution admission, computational inspection and response artifacts. "
+        "Backend owns native execution admission and response artifacts; Platform checks research against Backend's "
+        "stored records itself. "
         "Native_ and Platform_ names preserve each source-owned DTO. Public /v1 is defined by public-v1.openapi.json. "
         "See docs/research-flow.md and docs/reconnect-operations.md."
     )

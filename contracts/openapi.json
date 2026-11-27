@@ -45,16 +45,16 @@
       "AccessRequirement": {
         "additionalProperties": false,
         "properties": {
-          "source": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Source",
-            "type": "string"
-          },
           "permission": {
             "minLength": 1,
             "pattern": "\\S",
             "title": "Permission",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source",
             "type": "string"
           },
           "suggested_resolution": {
@@ -124,11 +124,21 @@
       "Column": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
           "name": {
             "minLength": 1,
             "pattern": "\\S",
             "title": "Name",
             "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
           },
           "type": {
             "enum": [
@@ -142,19 +152,9 @@
             "title": "Type",
             "type": "string"
           },
-          "description": {
-            "description": "Field meaning and calculation/time basis.",
-            "title": "Description",
-            "type": "string"
-          },
           "unit": {
             "title": "Unit",
             "type": "string"
-          },
-          "nullable": {
-            "default": false,
-            "title": "Nullable",
-            "type": "boolean"
           }
         },
         "required": [
@@ -4345,18 +4345,24 @@
           }
         ],
         "properties": {
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
           },
-          "message": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Message",
-            "type": "string"
-          },
-          "retryable": {
-            "title": "Retryable",
-            "type": "boolean"
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
           },
           "gaps": {
             "items": {
@@ -4365,6 +4371,20 @@
             "minItems": 1,
             "title": "Gaps",
             "type": "array"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
           },
           "questions": {
             "items": {
@@ -4380,35 +4400,15 @@
             "title": "Recommended Task",
             "type": "string"
           },
-          "data_requirements": {
-            "items": {
-              "$ref": "#/components/schemas/DataRequirement"
-            },
-            "minItems": 1,
-            "title": "Data Requirements",
-            "type": "array"
-          },
-          "access_requirements": {
-            "items": {
-              "$ref": "#/components/schemas/AccessRequirement"
-            },
-            "minItems": 1,
-            "title": "Access Requirements",
-            "type": "array"
-          },
-          "meter": {
-            "enum": [
-              "assistant",
-              "study_ai"
-            ],
-            "title": "Meter",
-            "type": "string"
-          },
           "resets_at": {
             "format": "date-time",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
             "title": "Resets At",
             "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4837,12 +4837,6 @@
       "FreshFetchRequest": {
         "additionalProperties": false,
         "properties": {
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
-          },
           "context": {
             "items": {
               "minLength": 1,
@@ -4884,6 +4878,12 @@
             "minimum": 1,
             "title": "Page Size",
             "type": "integer"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
           }
         },
         "required": [
@@ -4995,12 +4995,6 @@
       "IngestRequest": {
         "additionalProperties": false,
         "properties": {
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
-          },
           "context": {
             "items": {
               "minLength": 1,
@@ -5039,6 +5033,12 @@
             "minItems": 1,
             "title": "Outputs",
             "type": "array"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
           }
         },
         "required": [
@@ -5051,23 +5051,23 @@
       "JsonOutputRequest": {
         "additionalProperties": false,
         "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
             "type": "string"
           },
-          "description": {
-            "title": "Description",
-            "type": "string"
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
           },
           "type": {
             "const": "json",
             "title": "Type",
             "type": "string"
-          },
-          "schema": {
-            "$ref": "#/components/schemas/JsonSchema"
           }
         },
         "required": [
@@ -8351,12 +8351,12 @@
         "additionalProperties": false,
         "properties": {
           "next_offset": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
           "offset": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -8404,7 +8404,7 @@
         "additionalProperties": false,
         "properties": {
           "record_count": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -9201,13 +9201,13 @@
             "type": "number"
           },
           "ipo_shares_max": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "ipo_shares_min": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "is_actively_trading": {
@@ -9221,8 +9221,8 @@
             ]
           },
           "max_assets": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "not": {
@@ -9462,7 +9462,7 @@
         "additionalProperties": false,
         "properties": {
           "category_index": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -9967,8 +9967,8 @@
             "type": "string"
           },
           "seed": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "streaming": {
@@ -10077,6 +10077,104 @@
         "type": "object",
         "x-native-schema-name": "CommentarySource"
       },
+      "Native_CommentaryWebContext": {
+        "additionalProperties": false,
+        "properties": {
+          "queries": {
+            "items": {
+              "$ref": "#/components/schemas/Native_CommentaryWebSearch"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "queries"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-native-schema-name": "CommentaryWebContext"
+      },
+      "Native_CommentaryWebSearch": {
+        "additionalProperties": false,
+        "properties": {
+          "error_code": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "receipt_sha256": {
+            "type": "string"
+          },
+          "retrieved_at": {
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_CommentaryWebSource"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Native_CommentaryWebSearchStatus"
+          }
+        },
+        "required": [
+          "query",
+          "status",
+          "retrieved_at",
+          "sources"
+        ],
+        "type": "object",
+        "x-native-schema-name": "CommentaryWebSearch"
+      },
+      "Native_CommentaryWebSearchStatus": {
+        "enum": [
+          "complete",
+          "no_results",
+          "failed"
+        ],
+        "type": "string",
+        "x-native-schema-name": "CommentaryWebSearchStatus"
+      },
+      "Native_CommentaryWebSource": {
+        "additionalProperties": false,
+        "properties": {
+          "published_at": {
+            "type": "string"
+          },
+          "retrieved_at": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "url",
+          "title",
+          "text",
+          "retrieved_at",
+          "truncated"
+        ],
+        "type": "object",
+        "x-native-schema-name": "CommentaryWebSource"
+      },
       "Native_CommissionType": {
         "enum": [
           "FlatFee",
@@ -10098,7 +10196,7 @@
             "type": "string"
           },
           "col": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -10106,7 +10204,7 @@
             "type": "string"
           },
           "line": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -10653,8 +10751,8 @@
             "type": "string"
           },
           "duration_ms": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "error": {
@@ -10693,7 +10791,7 @@
             "type": "array"
           },
           "hit_count": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -11669,11 +11767,8 @@
             "$ref": "#/components/schemas/Native_ExecutionReportReference"
           },
           "research_request_id": {
-            "description": "Optional existing accepted research request. Backend confirms the owner/runtime link before starting this ordinary or saved-input execution; omit for standalone work.",
+            "description": "Optional accepted research request this ordinary or saved-input execution answers. Backend admits one native run per research request and refuses another; Platform checks the run against the request. Omit for standalone work.",
             "type": "string"
-          },
-          "response_plan": {
-            "$ref": "#/components/schemas/Native_SdkContract_ResponsePlanReference"
           },
           "source_execution_id": {
             "description": "Omit for an ordinary execution of the saved study. Saved-input mode requires the real completed source execution ID.",
@@ -11694,30 +11789,6 @@
         "title": "epoch_stratifyx::server::CreateSdkExecutionRequest",
         "type": "object",
         "x-native-schema-name": "CreateSdkExecutionRequest"
-      },
-      "Native_CreateSdkRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "launch": {
-            "$ref": "#/components/schemas/Native_SdkResearchLaunch"
-          },
-          "operation_id": {
-            "description": "Owner-scoped create-or-attach handle. Matching accepted inputs attach to the original operation; changed inputs return 409.",
-            "maxLength": 128,
-            "minLength": 1,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
-            "type": "string"
-          },
-          "request": {
-            "$ref": "#/components/schemas/Native_SdkContract_RunRequest"
-          }
-        },
-        "required": [
-          "request"
-        ],
-        "title": "epoch_stratifyx::server::CreateSdkRequest",
-        "type": "object",
-        "x-native-schema-name": "CreateSdkRequest"
       },
       "Native_DashStyle": {
         "enum": [
@@ -11816,7 +11887,7 @@
             "type": "string"
           },
           "context_version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           }
@@ -11938,7 +12009,7 @@
             "$ref": "#/components/schemas/Native_DashboardSchema"
           },
           "edit_version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -11979,7 +12050,7 @@
             "$ref": "#/components/schemas/Native_DashboardEditField"
           },
           "max_bytes": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -12104,7 +12175,10 @@
             "type": "string"
           }
         },
-        "type": "object",
+        "type": [
+          "object",
+          "null"
+        ],
         "x-native-schema-name": "DatePeriodConfig"
       },
       "Native_DescribeExecutionInputsRequest": {
@@ -12332,11 +12406,23 @@
           "ai_text": {
             "$ref": "#/components/schemas/Native_AiTextSkipped"
           },
+          "outputs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "producer_id": {
             "type": "string"
           },
           "value": {
             "type": "string"
+          },
+          "web_context": {
+            "$ref": "#/components/schemas/Native_CommentaryWebContext"
           }
         },
         "required": [
@@ -12491,12 +12577,15 @@
           "provenance": {
             "$ref": "#/components/schemas/Native_ExecutionExtensionProvenance"
           },
+          "response": {
+            "$ref": "#/components/schemas/Native_SdkContract_ResearchResponseContent"
+          },
           "response_id": {
             "type": "string"
           },
           "response_version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "text": {
@@ -12801,7 +12890,7 @@
             "type": "string"
           },
           "row_count": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -12827,8 +12916,8 @@
         "additionalProperties": false,
         "properties": {
           "cash": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "commission": {
@@ -12858,7 +12947,7 @@
             "type": "string"
           },
           "version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           }
@@ -12905,6 +12994,9 @@
               }
             ],
             "nullable": true
+          },
+          "description": {
+            "type": "string"
           },
           "label": {
             "type": "string"
@@ -12977,7 +13069,7 @@
             "type": "string"
           },
           "edit_version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -13069,13 +13161,13 @@
             "type": "string"
           },
           "effective_from_ns": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "effective_to_ns": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "price_kind": {
@@ -13281,7 +13373,7 @@
       },
       "Native_LineSeriesSpec": {
         "additionalProperties": false,
-        "description": "Series data and identity. Cosmetic fields that were previously on this struct (e.g. dataLabels visibility) are now rendered portal-side and are not part of the wire contract.",
+        "description": "Series data and identity, with an optional explicit display_name alias. Cosmetic fields that were previously on this struct (e.g. dataLabels visibility) are now rendered portal-side and are not part of the wire contract.",
         "properties": {
           "area": {
             "type": "boolean"
@@ -13300,6 +13392,13 @@
           },
           "dash_style": {
             "$ref": "#/components/schemas/Native_DashStyle"
+          },
+          "display_name": {
+            "description": "Explicit plain display alias for this line's legend and tooltip. The original name, series ID and coordinate member stay unchanged. Omission or null uses the native name/coordinate display. Not supported on identity-formatted or point-labelled series.",
+            "maxLength": 4096,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           },
           "id": {
             "type": "string"
@@ -13331,9 +13430,9 @@
           }
         },
         "required": [
-          "area",
           "id",
-          "name"
+          "name",
+          "area"
         ],
         "type": "object",
         "x-native-schema-name": "LineSeriesSpec"
@@ -13606,7 +13705,7 @@
         "properties": {
           "index": {
             "description": "Zero-based index in x_bands or reference_lines, selected by kind.",
-            "maximum": 9223372036854776000,
+            "maximum": 9223372036854775807,
             "minimum": 0,
             "type": "integer"
           },
@@ -13645,7 +13744,7 @@
           },
           "source_row": {
             "description": "Zero-based row in the immutable chart data generation; display projections must remap it explicitly.",
-            "maximum": 9223372036854776000,
+            "maximum": 9223372036854775807,
             "minimum": 0,
             "type": "integer"
           }
@@ -13709,6 +13808,15 @@
               "null"
             ]
           },
+          "output_schema": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_raw_json"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "policy": {
             "$ref": "#/components/schemas/Native_CommentaryPolicy"
           },
@@ -13718,6 +13826,15 @@
           "sources": {
             "items": {
               "$ref": "#/components/schemas/Native_BriefingSourceSchema"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "web_search_queries": {
+            "items": {
+              "type": "string"
             },
             "type": [
               "array",
@@ -13927,8 +14044,8 @@
             "type": "string"
           },
           "published_at_ms": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "request_id": {
@@ -13937,8 +14054,8 @@
           "response_id": {
             "type": "string"
           },
-          "response_plan": {
-            "$ref": "#/components/schemas/Native_SdkContract_ResponsePlanReference"
+          "reuse_limitation": {
+            "$ref": "#/components/schemas/Native_ResearchResponseReuseLimitation"
           },
           "study_id": {
             "type": "string"
@@ -13947,8 +14064,8 @@
             "type": "string"
           },
           "version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           }
         },
@@ -13963,6 +14080,13 @@
         "title": "epoch_stratifyx::server::ResearchResponseRecord",
         "type": "object",
         "x-native-schema-name": "ResearchResponseRecord"
+      },
+      "Native_ResearchResponseReuseLimitation": {
+        "enum": [
+          "retired_response_plan"
+        ],
+        "type": "string",
+        "x-native-schema-name": "ResearchResponseReuseLimitation"
       },
       "Native_ResearchResponseTableOrder": {
         "additionalProperties": false,
@@ -13988,7 +14112,8 @@
           "cell",
           "rows",
           "values",
-          "parameter"
+          "parameter",
+          "text"
         ],
         "type": "string",
         "x-native-schema-name": "ResponseBindingKind"
@@ -14411,6 +14536,42 @@
         "type": "object",
         "x-native-schema-name": "SdkContract_Gap"
       },
+      "Native_SdkContract_GeneratedTextFailure": {
+        "additionalProperties": false,
+        "description": "A terminal model producer failure; native computation remains available.",
+        "properties": {
+          "code": {
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "producer_id": {
+            "minLength": 1,
+            "title": "Producer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "type": "object",
+        "x-native-schema-name": "SdkContract_GeneratedTextFailure"
+      },
       "Native_SdkContract_JsonOutputRequest": {
         "additionalProperties": false,
         "properties": {
@@ -14455,12 +14616,64 @@
       },
       "Native_SdkContract_JsonValueOutput": {
         "additionalProperties": false,
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
         "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Native_SdkContract_AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
             "type": "string"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Native_SdkContract_GeneratedTextFailure"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Failures"
           },
           "type": {
             "const": "json",
@@ -14476,113 +14689,16 @@
           "type",
           "value"
         ],
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
         "title": "JsonValueOutput",
         "type": "object",
         "x-native-schema-name": "SdkContract_JsonValueOutput"
-      },
-      "Native_SdkContract_Manifest_JsonBinding": {
-        "additionalProperties": false,
-        "properties": {
-          "category": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          },
-          "markdown_id": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          },
-          "name": {
-            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
-          },
-          "type": {
-            "const": "json"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "category",
-          "markdown_id"
-        ],
-        "type": "object",
-        "x-native-schema-name": "SdkContract_Manifest_JsonBinding"
-      },
-      "Native_SdkContract_Manifest_NonBlank": {
-        "minLength": 1,
-        "pattern": "\\S",
-        "type": "string",
-        "x-native-schema-name": "SdkContract_Manifest_NonBlank"
-      },
-      "Native_SdkContract_Manifest_TableBinding": {
-        "additionalProperties": false,
-        "properties": {
-          "category": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          },
-          "field_ids": {
-            "items": {
-              "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-            },
-            "minItems": 1,
-            "type": "array"
-          },
-          "name": {
-            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
-          },
-          "table_index": {
-            "minimum": 0,
-            "type": "integer"
-          },
-          "type": {
-            "const": "table"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "category",
-          "table_index",
-          "field_ids"
-        ],
-        "type": "object",
-        "x-native-schema-name": "SdkContract_Manifest_TableBinding"
-      },
-      "Native_SdkContract_Manifest_TextBinding": {
-        "additionalProperties": false,
-        "properties": {
-          "category": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          },
-          "format": {
-            "enum": [
-              "plain",
-              "markdown"
-            ]
-          },
-          "markdown_id": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          },
-          "name": {
-            "$ref": "#/components/schemas/Native_SdkContract_OutputName"
-          },
-          "type": {
-            "const": "text"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "category",
-          "markdown_id",
-          "format"
-        ],
-        "type": "object",
-        "x-native-schema-name": "SdkContract_Manifest_TextBinding"
-      },
-      "Native_SdkContract_OutputName": {
-        "description": "Unique caller-selected name. Names are case-sensitive.",
-        "maxLength": 100,
-        "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
-        "type": "string",
-        "x-native-schema-name": "SdkContract_OutputName"
       },
       "Native_SdkContract_OutputValue": {
         "discriminator": {
@@ -14700,28 +14816,6 @@
         "type": "object",
         "x-native-schema-name": "SdkContract_ResearchResponseContent"
       },
-      "Native_SdkContract_ResponsePlanReference": {
-        "additionalProperties": false,
-        "properties": {
-          "plan_id": {
-            "pattern": "^rpl_[0-9a-f]{64}$",
-            "title": "Plan Id",
-            "type": "string"
-          },
-          "version": {
-            "minimum": 1,
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "plan_id",
-          "version"
-        ],
-        "title": "ResponsePlanReference",
-        "type": "object",
-        "x-native-schema-name": "SdkContract_ResponsePlanReference"
-      },
       "Native_SdkContract_ResponseQualification": {
         "additionalProperties": false,
         "description": "Computed answer qualifications, independent of accepted output parts.",
@@ -14766,145 +14860,6 @@
         "title": "RunParameters",
         "type": "object",
         "x-native-schema-name": "SdkContract_RunParameters"
-      },
-      "Native_SdkContract_RunRequest": {
-        "additionalProperties": false,
-        "not": {
-          "required": [
-            "study_id",
-            "source_execution_id"
-          ]
-        },
-        "properties": {
-          "auto_ingest": {
-            "default": false,
-            "title": "Auto Ingest",
-            "type": "boolean"
-          },
-          "context": {
-            "items": {
-              "minLength": 1,
-              "pattern": "\\S",
-              "type": "string"
-            },
-            "title": "Context",
-            "type": "array"
-          },
-          "outputs": {
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "json": "#/components/schemas/Native_SdkContract_JsonOutputRequest",
-                  "table": "#/components/schemas/Native_SdkContract_TableOutputRequest",
-                  "text": "#/components/schemas/Native_SdkContract_TextOutputRequest"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_TableOutputRequest"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_JsonOutputRequest"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_TextOutputRequest"
-                }
-              ]
-            },
-            "minItems": 1,
-            "title": "Outputs",
-            "type": "array"
-          },
-          "parameters": {
-            "$ref": "#/components/schemas/Native_SdkContract_RunParameters",
-            "description": "Supported native overrides; resolve defaults before freezing the binding."
-          },
-          "source_execution_id": {
-            "description": "Resolve the exact study from this authorized Backend execution.",
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Source Execution Id",
-            "type": "string"
-          },
-          "study_id": {
-            "description": "Execute this exact authorized study.",
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Study Id",
-            "type": "string"
-          },
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
-          }
-        },
-        "required": [
-          "task",
-          "outputs"
-        ],
-        "title": "RunRequest",
-        "type": "object",
-        "x-native-schema-name": "SdkContract_RunRequest"
-      },
-      "Native_SdkContract_SavedOutputManifest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "description": "A per-execution read receipt. The workflow/Backend owner must save its accepted declarations and exact artifact bindings; this is not another execution coordinator.",
-        "properties": {
-          "bindings": {
-            "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_TableBinding"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_JsonBinding"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_Manifest_TextBinding"
-                }
-              ]
-            },
-            "minItems": 1,
-            "type": "array"
-          },
-          "declarations": {
-            "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_TableOutputRequest"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_JsonOutputRequest"
-                },
-                {
-                  "$ref": "#/components/schemas/Native_SdkContract_TextOutputRequest"
-                }
-              ]
-            },
-            "minItems": 1,
-            "type": "array"
-          },
-          "execution_id": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank",
-            "description": "Exact native Backend execution id, never a public admission-attempt id."
-          },
-          "study_id": {
-            "$ref": "#/components/schemas/Native_SdkContract_Manifest_NonBlank"
-          }
-        },
-        "required": [
-          "execution_id",
-          "study_id",
-          "declarations",
-          "bindings"
-        ],
-        "title": "SavedOutputManifest",
-        "type": "object",
-        "x-native-schema-name": "SdkContract_SavedOutputManifest"
       },
       "Native_SdkContract_TableOrder": {
         "additionalProperties": false,
@@ -15213,8 +15168,8 @@
         "additionalProperties": false,
         "properties": {
           "created_at_ms": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "error": {
@@ -15257,8 +15212,8 @@
             "$ref": "#/components/schemas/Native_SdkRequestPhase"
           },
           "response_version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           }
         },
@@ -15288,137 +15243,11 @@
         "enum": [
           "accepted",
           "active",
-          "needs_input",
           "outputs_recorded",
           "failed"
         ],
         "type": "string",
         "x-native-schema-name": "SdkRequestPhase"
-      },
-      "Native_SdkRequestRecord": {
-        "additionalProperties": false,
-        "properties": {
-          "created_at_ms": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          },
-          "current_execution_id": {
-            "type": "string"
-          },
-          "error": {
-            "$ref": "#/components/schemas/Native_SdkContract_ErrorResponse"
-          },
-          "graph_run_id": {
-            "type": "string"
-          },
-          "launch": {
-            "$ref": "#/components/schemas/Native_SdkResearchLaunch"
-          },
-          "native_execution_request_id": {
-            "description": "Immutable owner-scoped native execution-operation request ID. Research completion adopts its original confirmed answer; this is not the execution job ID or graph run ID.",
-            "type": "string"
-          },
-          "operation_id": {
-            "type": "string"
-          },
-          "output_manifest": {
-            "$ref": "#/components/schemas/Native_SdkContract_SavedOutputManifest"
-          },
-          "phase": {
-            "$ref": "#/components/schemas/Native_SdkRequestPhase"
-          },
-          "request": {
-            "$ref": "#/components/schemas/Native_SdkContract_RunRequest"
-          },
-          "request_id": {
-            "type": "string"
-          },
-          "response_id": {
-            "type": "string"
-          },
-          "response_version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          },
-          "runtime": {
-            "$ref": "#/components/schemas/Native_SdkRequestRuntime"
-          },
-          "source_execution_id": {
-            "type": "string"
-          },
-          "updated_at_ms": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          },
-          "version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          }
-        },
-        "required": [
-          "request_id",
-          "version",
-          "created_at_ms",
-          "updated_at_ms",
-          "phase",
-          "request"
-        ],
-        "title": "epoch_stratifyx::server::SdkRequestRecord",
-        "type": "object",
-        "x-native-schema-name": "SdkRequestRecord"
-      },
-      "Native_SdkRequestRuntime": {
-        "additionalProperties": false,
-        "properties": {
-          "assistant_id": {
-            "type": "string"
-          },
-          "execution_ids_before": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "outcome_ids_before": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "thread_id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "thread_id",
-          "assistant_id",
-          "execution_ids_before",
-          "outcome_ids_before"
-        ],
-        "title": "epoch_stratifyx::server::SdkRequestRuntime",
-        "type": "object",
-        "x-native-schema-name": "SdkRequestRuntime"
-      },
-      "Native_SdkResearchLaunch": {
-        "additionalProperties": false,
-        "properties": {
-          "assistant_id": {
-            "type": "string"
-          },
-          "thread_id": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "assistant_id"
-        ],
-        "title": "epoch_stratifyx::server::SdkResearchLaunch",
-        "type": "object",
-        "x-native-schema-name": "SdkResearchLaunch"
       },
       "Native_SecurityType": {
         "enum": [
@@ -15784,7 +15613,7 @@
             "type": "string"
           },
           "rows": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -16516,8 +16345,8 @@
         "additionalProperties": false,
         "properties": {
           "cash": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "commission": {
@@ -16570,55 +16399,6 @@
         "type": "object",
         "x-native-schema-name": "TreemapLevelSpec"
       },
-      "Native_UpdateSdkRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "current_execution_id": {
-            "type": "string"
-          },
-          "error": {
-            "$ref": "#/components/schemas/Native_SdkContract_ErrorResponse"
-          },
-          "expected_version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          },
-          "graph_run_id": {
-            "type": "string"
-          },
-          "native_execution_request_id": {
-            "description": "Immutable owner-scoped native execution-operation request ID. Research completion adopts its original confirmed answer; this is not the execution job ID or graph run ID.",
-            "type": "string"
-          },
-          "output_manifest": {
-            "$ref": "#/components/schemas/Native_SdkContract_SavedOutputManifest"
-          },
-          "phase": {
-            "$ref": "#/components/schemas/Native_SdkRequestPhase"
-          },
-          "prior_graph_run_id": {
-            "type": "string"
-          },
-          "response_id": {
-            "type": "string"
-          },
-          "response_version": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
-            "type": "integer"
-          },
-          "runtime": {
-            "$ref": "#/components/schemas/Native_SdkRequestRuntime"
-          }
-        },
-        "required": [
-          "expected_version"
-        ],
-        "title": "epoch_stratifyx::server::UpdateSdkRequest",
-        "type": "object",
-        "x-native-schema-name": "UpdateSdkRequest"
-      },
       "Native_ValueNotation": {
         "enum": [
           "standard",
@@ -16661,7 +16441,7 @@
             "type": "string"
           },
           "cache_version": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -16982,8 +16762,8 @@
             "type": "number"
           },
           "colsize": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "display_value_dp": {
@@ -17008,8 +16788,8 @@
             "default": "Matrix"
           },
           "rowsize": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "value_field": {
@@ -17377,7 +17157,7 @@
             "$ref": "#/components/schemas/Native_epoch_tune__SchedulerConfig"
           },
           "seed": {
-            "maximum": 18446744073709552000,
+            "maximum": 18446744073709551615,
             "minimum": 0,
             "type": "integer"
           },
@@ -17590,13 +17370,13 @@
             "type": "number"
           },
           "ipo_shares_max": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "ipo_shares_min": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "is_actively_trading": {
@@ -17610,8 +17390,8 @@
             ]
           },
           "max_assets": {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "type": "integer"
           },
           "not": {
@@ -17943,8 +17723,8 @@
             "type": "boolean"
           },
           {
-            "maximum": 9223372036854776000,
-            "minimum": -9223372036854776000,
+            "maximum": 9223372036854775807,
+            "minimum": -9223372036854775808,
             "title": "int64_t",
             "type": "integer"
           },
@@ -18147,30 +17927,938 @@
         ],
         "type": "object"
       },
-      "Progress": {
+      "Platform_AccessRequirement": {
         "additionalProperties": false,
-        "description": "Phase is informational. No overall percentage or ETA is promised.",
         "properties": {
-          "message": {
+          "permission": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission",
             "type": "string"
           },
-          "phase": {
-            "enum": [
-              "planning",
-              "preparing_data",
-              "executing",
-              "validating_outputs",
-              "finalizing"
-            ],
+          "source": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
             "type": "string"
           }
         },
         "required": [
-          "phase"
+          "source",
+          "permission"
+        ],
+        "title": "AccessRequirement",
+        "type": "object"
+      },
+      "Platform_AiTextSkipped": {
+        "additionalProperties": false,
+        "description": "Completed computation whose new AI text was omitted without a model call.",
+        "properties": {
+          "reason": {
+            "const": "usage_limit",
+            "title": "Reason",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "status": {
+            "const": "skipped",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "title": "AiTextSkipped",
+        "type": "object"
+      },
+      "Platform_Cell": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "Platform_Column": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "int64",
+              "float64",
+              "boolean",
+              "date",
+              "datetime"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "Column",
+        "type": "object"
+      },
+      "Platform_CreateResearch": {
+        "additionalProperties": false,
+        "properties": {
+          "launch": {
+            "$ref": "#/components/schemas/Platform_ResearchLaunch"
+          },
+          "operation_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/Platform_RunRequest"
+          }
+        },
+        "required": [
+          "request"
         ],
         "type": "object"
       },
-      "Question": {
+      "Platform_DataRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "required_coverage": {
+            "title": "Required Coverage",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "DataRequirement",
+        "type": "object"
+      },
+      "Platform_Error": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "CLARIFICATION_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "gaps",
+                "questions",
+                "recommended_task"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "DATA_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "data_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "ACCESS_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "access_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "USAGE_LIMIT_REACHED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "meter",
+                "resets_at"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
+          "code": {
+            "$ref": "#/components/schemas/Platform_ErrorCode"
+          },
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Gap"
+            },
+            "minItems": 1,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "recommended_task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Task",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable"
+        ],
+        "title": "DomainError",
+        "type": "object"
+      },
+      "Platform_ErrorCode": {
+        "enum": [
+          "INVALID_REQUEST",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CLARIFICATION_REQUIRED",
+          "DATA_REQUIRED",
+          "ACCESS_REQUIRED",
+          "OUTPUT_VALIDATION_FAILED",
+          "EXECUTION_FAILED",
+          "EXECUTION_NOT_READY",
+          "INVALID_STATE",
+          "IDEMPOTENCY_CONFLICT",
+          "EVENT_CURSOR_EXPIRED",
+          "FETCH_CURSOR_EXPIRED",
+          "FETCH_LIMIT_EXCEEDED",
+          "RATE_LIMITED",
+          "USAGE_LIMIT_REACHED",
+          "TEMPORARILY_UNAVAILABLE",
+          "UPSTREAM_TIMEOUT"
+        ],
+        "type": "string"
+      },
+      "Platform_ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Platform_Error"
+          },
+          "execution_id": {
+            "description": "Existing/accepted execution this failure refers to; a failed fetch does not change its source status.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Platform_Gap": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Gap",
+        "type": "object"
+      },
+      "Platform_GeneratedTextFailure": {
+        "additionalProperties": false,
+        "description": "A terminal model producer failure; native computation remains available.",
+        "properties": {
+          "code": {
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "producer_id": {
+            "minLength": 1,
+            "title": "Producer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "type": "object"
+      },
+      "Platform_JsonOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/Platform_JsonSchema"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "JsonOutputRequest",
+        "type": "object"
+      },
+      "Platform_JsonSchema": {
+        "description": "A standard JSON Schema 2020-12 document, including description annotations. The service validates the schema itself. Only local references within this supplied schema are accepted; remote references are rejected. No custom schema keywords are required.",
+        "type": [
+          "object",
+          "boolean"
+        ]
+      },
+      "Platform_JsonValue": {},
+      "Platform_JsonValueOutput": {
+        "additionalProperties": false,
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
+        "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Platform_AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Platform_GeneratedTextFailure"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Failures"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Platform_JsonValue"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value"
+        ],
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
+        "title": "JsonValueOutput",
+        "type": "object"
+      },
+      "Platform_Manifest_JsonBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Platform_OutputName"
+          },
+          "type": {
+            "const": "json"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id"
+        ],
+        "type": "object"
+      },
+      "Platform_Manifest_NonBlank": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "Platform_Manifest_TableBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          },
+          "field_ids": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Platform_OutputName"
+          },
+          "table_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": {
+            "const": "table"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "table_index",
+          "field_ids"
+        ],
+        "type": "object"
+      },
+      "Platform_Manifest_TextBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ]
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/Platform_OutputName"
+          },
+          "type": {
+            "const": "text"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id",
+          "format"
+        ],
+        "type": "object"
+      },
+      "Platform_Native_AcquisitionProvenanceReference": {
+        "additionalProperties": false,
+        "properties": {
+          "record_count": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "record_count"
+        ],
+        "title": "epoch_stratifyx::AcquisitionProvenanceReference",
+        "type": "object",
+        "x-native-schema-name": "AcquisitionProvenanceReference"
+      },
+      "Platform_Native_ExecutionCommentaryPin": {
+        "additionalProperties": false,
+        "properties": {
+          "input_sha256": {
+            "type": "string"
+          },
+          "output_name": {
+            "type": "string"
+          },
+          "policy_sha256": {
+            "type": "string"
+          },
+          "result_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "output_name",
+          "input_sha256",
+          "result_sha256",
+          "policy_sha256"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionCommentaryPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionCommentaryPin"
+      },
+      "Platform_Native_ExecutionExtensionInputPin": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "type": "string"
+          },
+          "generation_sha256": {
+            "type": "string"
+          },
+          "relation_id": {
+            "type": "string"
+          },
+          "schema_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "generation_sha256",
+          "content_sha256",
+          "schema_sha256"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionExtensionInputPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionExtensionInputPin"
+      },
+      "Platform_Native_ExecutionExtensionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "base_presentation": {
+            "$ref": "#/components/schemas/Platform_Native_ExecutionPresentationPin"
+          },
+          "commentary": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Native_ExecutionCommentaryPin"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "compiled_schema_version": {
+            "$ref": "#/components/schemas/Platform_Native_uint32_t"
+          },
+          "config_sha256": {
+            "type": "string"
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "execution_parameter_bindings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Platform_Native_ExecutionParameterValue"
+            },
+            "type": "object"
+          },
+          "input_snapshot_sha256": {
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Native_ExecutionExtensionInputPin"
+            },
+            "type": "array"
+          },
+          "output_declarations_sha256": {
+            "type": "string"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "study_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_execution_id",
+          "execution_id",
+          "study_id",
+          "config_sha256",
+          "compiled_schema_version",
+          "input_snapshot_sha256",
+          "output_declarations_sha256",
+          "inputs",
+          "execution_parameter_bindings"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionExtensionProvenance",
+        "type": "object",
+        "x-native-schema-name": "ExecutionExtensionProvenance"
+      },
+      "Platform_Native_ExecutionParameterValue": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Platform_Native_IODataType"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "epoch_script::ExecutionParameterValue",
+        "type": "object",
+        "x-native-schema-name": "ExecutionParameterValue"
+      },
+      "Platform_Native_ExecutionPresentationPin": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_revision": {
+            "type": "string"
+          },
+          "edit_version": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "publication_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publication_id",
+          "catalog_revision",
+          "edit_version"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionPresentationPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionPresentationPin"
+      },
+      "Platform_Native_IODataType": {
+        "enum": [
+          "Decimal",
+          "Integer",
+          "Number",
+          "Boolean",
+          "String",
+          "Timestamp",
+          "Any",
+          "NumericTuple",
+          "StringTuple",
+          "BoolTuple",
+          "TimestampTuple",
+          "TupleAny",
+          "ScalarList",
+          "SeriesList",
+          "Date"
+        ],
+        "type": "string",
+        "x-native-schema-name": "IODataType"
+      },
+      "Platform_Native_NamedExecutionInputSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "alias",
+          "source_execution_id",
+          "tables"
+        ],
+        "title": "epoch_stratifyx::NamedExecutionInputSelection",
+        "type": "object",
+        "x-native-schema-name": "NamedExecutionInputSelection"
+      },
+      "Platform_Native_uint32_t": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer",
+        "x-native-schema-name": "uint32_t"
+      },
+      "Platform_OutputName": {
+        "description": "Unique caller-selected name. Names are case-sensitive.",
+        "maxLength": 100,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+        "type": "string"
+      },
+      "Platform_OutputValue": {
+        "discriminator": {
+          "mapping": {
+            "json": "#/components/schemas/Platform_JsonValueOutput",
+            "table": "#/components/schemas/Platform_TableValue",
+            "text": "#/components/schemas/Platform_TextValue"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Platform_TableValue"
+          },
+          {
+            "$ref": "#/components/schemas/Platform_JsonValueOutput"
+          },
+          {
+            "$ref": "#/components/schemas/Platform_TextValue"
+          }
+        ]
+      },
+      "Platform_PlatformError": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "timestamp": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "Platform_Question": {
         "additionalProperties": false,
         "dependentRequired": {
           "recommended_option": [
@@ -18178,12 +18866,6 @@
           ]
         },
         "properties": {
-          "question": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Question",
-            "type": "string"
-          },
           "options": {
             "items": {
               "minLength": 1,
@@ -18193,6 +18875,12 @@
             "minItems": 1,
             "title": "Options",
             "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
           },
           "recommended_option": {
             "minLength": 1,
@@ -18207,58 +18895,251 @@
         "title": "Question",
         "type": "object"
       },
-      "RefreshRequest": {
+      "Platform_ResearchLaunch": {
         "additionalProperties": false,
         "properties": {
-          "context": {
+          "assistant_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "thread_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assistant_id"
+        ],
+        "type": "object"
+      },
+      "Platform_ResearchRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at_ms": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "current_execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Platform_ErrorResponse"
+          },
+          "graph_run_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "interaction": {
+            "enum": [
+              "interactive",
+              "one_shot"
+            ],
+            "type": "string"
+          },
+          "launch": {
+            "$ref": "#/components/schemas/Platform_ResearchLaunch"
+          },
+          "native_execution_request_id": {
+            "pattern": "^req_[0-9a-f]{32}$",
+            "type": "string"
+          },
+          "operation_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/Platform_SavedOutputManifest"
+          },
+          "phase": {
+            "enum": [
+              "accepted",
+              "active",
+              "needs_input",
+              "outputs_recorded",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/Platform_RunRequest"
+          },
+          "request_id": {
+            "pattern": "^req_[0-9a-f]{32}$",
+            "type": "string"
+          },
+          "response_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "response_version": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/Platform_ResearchRuntime"
+          },
+          "source_execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "updated_at_ms": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "version": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "version",
+          "created_at_ms",
+          "updated_at_ms",
+          "phase",
+          "interaction",
+          "request"
+        ],
+        "type": "object"
+      },
+      "Platform_ResearchResponseContent": {
+        "additionalProperties": false,
+        "description": "Answer values or native table references; a preview is never a full table.",
+        "properties": {
+          "declarations": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/Platform_JsonOutputRequest",
+                  "table": "#/components/schemas/Platform_TableOutputRequest",
+                  "text": "#/components/schemas/Platform_TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Platform_TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Declarations",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_OutputValue"
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "qualifications": {
+            "description": "Required computed qualifications; these are not additional answer parts.",
+            "items": {
+              "$ref": "#/components/schemas/Platform_ResponseQualification"
+            },
+            "maxItems": 16,
+            "title": "Qualifications",
+            "type": "array"
+          }
+        },
+        "required": [
+          "declarations",
+          "outputs"
+        ],
+        "title": "ResearchResponseContent",
+        "type": "object"
+      },
+      "Platform_ResearchRuntime": {
+        "additionalProperties": false,
+        "properties": {
+          "assistant_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "execution_ids_before": {
             "items": {
               "minLength": 1,
               "pattern": "\\S",
               "type": "string"
             },
-            "title": "Context",
             "type": "array"
           },
-          "auto_ingest": {
-            "default": false,
-            "title": "Auto Ingest",
-            "type": "boolean"
+          "outcome_ids_before": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "type": "array"
           },
-          "parameters": {
-            "$ref": "#/components/schemas/RunParameters"
+          "thread_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
           }
         },
-        "title": "RefreshRequest",
+        "required": [
+          "thread_id",
+          "assistant_id",
+          "execution_ids_before",
+          "outcome_ids_before"
+        ],
         "type": "object"
       },
-      "Rows": {
-        "description": "Positional rows in exact schema column order. The server validates row width, types and nullability.",
-        "items": {
-          "items": {
-            "$ref": "#/components/schemas/Cell"
+      "Platform_ResponseQualification": {
+        "additionalProperties": false,
+        "description": "Computed answer qualifications, independent of accepted output parts.",
+        "properties": {
+          "description": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
           },
-          "type": "array"
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Platform_JsonValue"
+          }
         },
-        "type": "array"
+        "required": [
+          "name",
+          "description",
+          "value"
+        ],
+        "title": "ResponseQualification",
+        "type": "object"
       },
-      "RunParameters": {
+      "Platform_RunParameters": {
         "additionalProperties": false,
         "description": "Only the closed parameter types supported by native Backend execution.",
         "properties": {
-          "period": {
-            "additionalProperties": false,
-            "properties": {
-              "end": {
-                "format": "date",
-                "type": "string"
-              },
-              "start": {
-                "format": "date",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
           "execution": {
             "additionalProperties": false,
             "properties": {
@@ -18832,6 +19713,1276 @@
             },
             "title": "epoch_stratifyx::ExecutionOptions",
             "type": "object"
+          },
+          "period": {
+            "additionalProperties": false,
+            "properties": {
+              "end": {
+                "format": "date",
+                "type": "string"
+              },
+              "start": {
+                "format": "date",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "title": "RunParameters",
+        "type": "object"
+      },
+      "Platform_RunRequest": {
+        "additionalProperties": false,
+        "not": {
+          "required": [
+            "study_id",
+            "source_execution_id"
+          ]
+        },
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/Platform_JsonOutputRequest",
+                  "table": "#/components/schemas/Platform_TableOutputRequest",
+                  "text": "#/components/schemas/Platform_TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Platform_TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/Platform_RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
+          },
+          "source_execution_id": {
+            "description": "Resolve the exact study from this authorized Backend execution.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source Execution Id",
+            "type": "string"
+          },
+          "study_id": {
+            "description": "Execute this exact authorized study.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "outputs"
+        ],
+        "title": "RunRequest",
+        "type": "object"
+      },
+      "Platform_SavedOutputManifest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "A per-execution read receipt. The workflow/Backend owner must save its accepted declarations and exact artifact bindings; this is not another execution coordinator.",
+        "properties": {
+          "bindings": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Platform_Manifest_TableBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_Manifest_JsonBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_Manifest_TextBinding"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "declarations": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Platform_TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/Platform_TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank",
+            "description": "Exact native Backend execution id, never a public admission-attempt id."
+          },
+          "study_id": {
+            "$ref": "#/components/schemas/Platform_Manifest_NonBlank"
+          }
+        },
+        "required": [
+          "execution_id",
+          "study_id",
+          "declarations",
+          "bindings"
+        ],
+        "title": "SavedOutputManifest",
+        "type": "object"
+      },
+      "Platform_SavedResearchResponse": {
+        "additionalProperties": false,
+        "description": "A Backend-owned answer revision. One query can have many named parts.",
+        "properties": {
+          "acquisition_provenance": {
+            "$ref": "#/components/schemas/Platform_Native_AcquisitionProvenanceReference"
+          },
+          "ai_text": {
+            "$ref": "#/components/schemas/Platform_AiTextSkipped"
+          },
+          "content": {
+            "$ref": "#/components/schemas/Platform_ResearchResponseContent"
+          },
+          "extension": {
+            "$ref": "#/components/schemas/Platform_Native_ExecutionExtensionProvenance"
+          },
+          "primary_execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Primary Execution Id",
+            "type": "string"
+          },
+          "published_at_ms": {
+            "minimum": 0,
+            "title": "Published At Ms",
+            "type": "integer"
+          },
+          "request_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "response_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Response Id",
+            "type": "string"
+          },
+          "reuse_limitation": {
+            "const": "retired_response_plan",
+            "title": "Reuse Limitation",
+            "type": "string"
+          },
+          "study_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "response_id",
+          "request_id",
+          "thread_id",
+          "version",
+          "published_at_ms",
+          "content"
+        ],
+        "title": "SavedResearchResponse",
+        "type": "object"
+      },
+      "Platform_TableOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "descending": {
+            "default": false,
+            "title": "Descending",
+            "type": "boolean"
+          },
+          "field_id": {
+            "minLength": 1,
+            "title": "Field Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field_id"
+        ],
+        "title": "TableOrder",
+        "type": "object"
+      },
+      "Platform_TableOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Column"
+            },
+            "minItems": 1,
+            "title": "Schema",
+            "type": "array"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableOutputRequest",
+        "type": "object"
+      },
+      "Platform_TableReference": {
+        "additionalProperties": false,
+        "description": "A projection of one immutable execution relation, read in bounded pages.",
+        "properties": {
+          "execution_id": {
+            "minLength": 1,
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "field_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Field Ids",
+            "type": "array"
+          },
+          "order_by": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_TableOrder"
+            },
+            "title": "Order By",
+            "type": "array"
+          },
+          "row_count": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "table": {
+            "minLength": 1,
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id",
+          "table",
+          "field_ids",
+          "row_count"
+        ],
+        "title": "TableReference",
+        "type": "object"
+      },
+      "Platform_TableValue": {
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "source"
+              ]
+            },
+            "properties": {
+              "rows": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "rows"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "rows"
+              ]
+            },
+            "properties": {
+              "source": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "source"
+            ]
+          }
+        ],
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "$ref": "#/components/schemas/Platform_Cell"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rows"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Platform_Column"
+            },
+            "title": "Schema",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Platform_TableReference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableValue",
+        "type": "object"
+      },
+      "Platform_TextOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "format": {
+            "default": "plain",
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "instructions"
+        ],
+        "title": "TextOutputRequest",
+        "type": "object"
+      },
+      "Platform_TextValue": {
+        "additionalProperties": false,
+        "if": {
+          "properties": {
+            "ai_text": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ai_text"
+          ]
+        },
+        "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Platform_AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "format",
+          "value"
+        ],
+        "then": {
+          "properties": {
+            "value": {
+              "const": ""
+            }
+          }
+        },
+        "title": "TextValue",
+        "type": "object"
+      },
+      "Platform_UpdateResearch": {
+        "additionalProperties": false,
+        "properties": {
+          "current_execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Platform_ErrorResponse"
+          },
+          "expected_version": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graph_run_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "native_execution_request_id": {
+            "pattern": "^req_[0-9a-f]{32}$",
+            "type": "string"
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/Platform_SavedOutputManifest"
+          },
+          "phase": {
+            "enum": [
+              "active",
+              "needs_input"
+            ],
+            "type": "string"
+          },
+          "prior_graph_run_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "response_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "type": "string"
+          },
+          "response_version": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/Platform_ResearchRuntime"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "type": "object"
+      },
+      "Progress": {
+        "additionalProperties": false,
+        "description": "Phase is informational. No overall percentage or ETA is promised.",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "phase": {
+            "enum": [
+              "planning",
+              "preparing_data",
+              "executing",
+              "validating_outputs",
+              "finalizing"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase"
+        ],
+        "type": "object"
+      },
+      "Question": {
+        "additionalProperties": false,
+        "dependentRequired": {
+          "recommended_option": [
+            "options"
+          ]
+        },
+        "properties": {
+          "options": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
+          },
+          "recommended_option": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Option",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "RefreshRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters"
+          }
+        },
+        "title": "RefreshRequest",
+        "type": "object"
+      },
+      "Rows": {
+        "description": "Positional rows in exact schema column order. The server validates row width, types and nullability.",
+        "items": {
+          "items": {
+            "$ref": "#/components/schemas/Cell"
+          },
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "RunParameters": {
+        "additionalProperties": false,
+        "description": "Only the closed parameter types supported by native Backend execution.",
+        "properties": {
+          "execution": {
+            "additionalProperties": false,
+            "properties": {
+              "cash": {
+                "maximum": 9223372036854775807,
+                "minimum": -9223372036854775808,
+                "type": "integer"
+              },
+              "commission": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "currency": {
+                "enum": [
+                  "AED",
+                  "AFN",
+                  "ALL",
+                  "AMD",
+                  "ANG",
+                  "ARS",
+                  "AUD",
+                  "AWG",
+                  "BAM",
+                  "BBD",
+                  "BDT",
+                  "BGN",
+                  "BHD",
+                  "BIF",
+                  "BMD",
+                  "BND",
+                  "BOB",
+                  "BOC",
+                  "BRL",
+                  "BRP",
+                  "BSD",
+                  "BTN",
+                  "BWP",
+                  "BZD",
+                  "CAD",
+                  "CDF",
+                  "CHF",
+                  "CLP",
+                  "CNH",
+                  "CNY",
+                  "COP",
+                  "CRC",
+                  "CUP",
+                  "CVE",
+                  "CYP",
+                  "CZK",
+                  "DCN",
+                  "DJF",
+                  "DKK",
+                  "DOP",
+                  "DTR",
+                  "DZD",
+                  "ECB",
+                  "EGP",
+                  "ETB",
+                  "EUR",
+                  "FJD",
+                  "GBP",
+                  "GEL",
+                  "GHS",
+                  "GMD",
+                  "GNF",
+                  "GTQ",
+                  "GYD",
+                  "HKD",
+                  "HNL",
+                  "HRK",
+                  "HTG",
+                  "HUF",
+                  "HUY",
+                  "IDR",
+                  "ILS",
+                  "INR",
+                  "IQD",
+                  "IRR",
+                  "ISK",
+                  "JMD",
+                  "JOD",
+                  "JPY",
+                  "KES",
+                  "KGS",
+                  "KHR",
+                  "KMF",
+                  "KRW",
+                  "KWD",
+                  "KYD",
+                  "KZT",
+                  "LAK",
+                  "LBP",
+                  "LKR",
+                  "LRD",
+                  "LSL",
+                  "LTL",
+                  "LYD",
+                  "MAD",
+                  "MDL",
+                  "MGA",
+                  "MKD",
+                  "MMK",
+                  "MOP",
+                  "MTL",
+                  "MUR",
+                  "MVR",
+                  "MWK",
+                  "MXN",
+                  "MYR",
+                  "MZN",
+                  "NAD",
+                  "NGN",
+                  "NIO",
+                  "NOK",
+                  "NPR",
+                  "NZD",
+                  "OMR",
+                  "PAB",
+                  "PEN",
+                  "PGK",
+                  "PHP",
+                  "PKR",
+                  "PLN",
+                  "PYG",
+                  "QAR",
+                  "RON",
+                  "RSD",
+                  "RUB",
+                  "RWF",
+                  "SAR",
+                  "SCR",
+                  "SDG",
+                  "SEK",
+                  "SGD",
+                  "SHP",
+                  "SOS",
+                  "SSG",
+                  "SUS",
+                  "SVC",
+                  "SZL",
+                  "THB",
+                  "TJS",
+                  "TMT",
+                  "TND",
+                  "TRY",
+                  "TTD",
+                  "TWD",
+                  "TZS",
+                  "UAH",
+                  "UGX",
+                  "USD",
+                  "UYU",
+                  "UZS",
+                  "VES",
+                  "VND",
+                  "XAF",
+                  "XAG",
+                  "XAU",
+                  "XCD",
+                  "XDR",
+                  "XOF",
+                  "XPF",
+                  "YER",
+                  "ZAR",
+                  "ZMW"
+                ],
+                "type": "string"
+              },
+              "futures_tick_snapshot": {
+                "additionalProperties": false,
+                "properties": {
+                  "rules": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "asset_id": {
+                          "type": "string"
+                        },
+                        "contract": {
+                          "type": "string"
+                        },
+                        "effective_from_ns": {
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
+                          "type": "integer"
+                        },
+                        "effective_to_ns": {
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
+                          "type": "integer"
+                        },
+                        "price_kind": {
+                          "enum": [
+                            "Outright"
+                          ],
+                          "type": "string"
+                        },
+                        "source_sha256": {
+                          "type": "string"
+                        },
+                        "source_uri": {
+                          "type": "string"
+                        },
+                        "tick_size": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "asset_id",
+                        "contract",
+                        "effective_from_ns",
+                        "effective_to_ns",
+                        "price_kind",
+                        "source_sha256",
+                        "source_uri",
+                        "tick_size",
+                        "venue"
+                      ],
+                      "title": "epoch_bt::vectorized::FuturesTickRule",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "snapshot_id": {
+                    "type": "string"
+                  },
+                  "working_orders_on_change": {
+                    "enum": [
+                      "Reject",
+                      "CancelWorkingOrders"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rules",
+                  "snapshot_id",
+                  "working_orders_on_change"
+                ],
+                "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+                "type": "object"
+              },
+              "slippage": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased",
+                            "None"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased",
+                          "None"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased",
+                          "None"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased",
+                            "None"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "title": "epoch_stratifyx::ExecutionOptions",
+            "type": "object"
+          },
+          "period": {
+            "additionalProperties": false,
+            "properties": {
+              "end": {
+                "format": "date",
+                "type": "string"
+              },
+              "start": {
+                "format": "date",
+                "type": "string"
+              }
+            },
+            "type": "object"
           }
         },
         "title": "RunParameters",
@@ -18846,11 +20997,10 @@
           ]
         },
         "properties": {
-          "task": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Task",
-            "type": "string"
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
           },
           "context": {
             "items": {
@@ -18887,17 +21037,9 @@
             "title": "Outputs",
             "type": "array"
           },
-          "auto_ingest": {
-            "default": false,
-            "title": "Auto Ingest",
-            "type": "boolean"
-          },
-          "study_id": {
-            "description": "Execute this exact authorized study.",
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Study Id",
-            "type": "string"
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
           },
           "source_execution_id": {
             "description": "Resolve the exact study from this authorized Backend execution.",
@@ -18906,9 +21048,18 @@
             "title": "Source Execution Id",
             "type": "string"
           },
-          "parameters": {
-            "$ref": "#/components/schemas/RunParameters",
-            "description": "Supported native overrides; resolve defaults before freezing the binding."
+          "study_id": {
+            "description": "Execute this exact authorized study.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
           }
         },
         "required": [
@@ -18953,19 +21104,14 @@
       "TableOutputRequest": {
         "additionalProperties": false,
         "properties": {
-          "name": {
-            "maxLength": 100,
-            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
-            "title": "Name",
-            "type": "string"
-          },
           "description": {
             "title": "Description",
             "type": "string"
           },
-          "type": {
-            "const": "table",
-            "title": "Type",
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
             "type": "string"
           },
           "schema": {
@@ -18975,6 +21121,11 @@
             "minItems": 1,
             "title": "Schema",
             "type": "array"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
           }
         },
         "required": [
@@ -19135,25 +21286,8 @@
       "TextOutputRequest": {
         "additionalProperties": false,
         "properties": {
-          "name": {
-            "maxLength": 100,
-            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
-            "title": "Name",
-            "type": "string"
-          },
           "description": {
             "title": "Description",
-            "type": "string"
-          },
-          "type": {
-            "const": "text",
-            "title": "Type",
-            "type": "string"
-          },
-          "instructions": {
-            "minLength": 1,
-            "pattern": "\\S",
-            "title": "Instructions",
             "type": "string"
           },
           "format": {
@@ -19163,6 +21297,23 @@
               "markdown"
             ],
             "title": "Format",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
             "type": "string"
           }
         },
@@ -19264,7 +21415,7 @@
     }
   },
   "info": {
-    "description": "Shared language-neutral Epoch contracts. The /api/v1/integration routes are projections of existing EpochBackend native operation APIs; their Native_ schema names identify source-owned DTOs. The earlier illustrative /v1 proposals are historical and do not assert a deployed gateway. Research uses the existing checkpointed EpochAI supervisor; prepared and execution-input programs call Backend directly. See docs/research-flow.md and docs/reconnect-operations.md.",
+    "description": "Shared language-neutral Epoch contracts. Platform owns research lifecycle under /api/v1/integration/requests; Backend owns native execution admission and response artifacts; Platform checks research against Backend's stored records itself. Native_ and Platform_ names preserve each source-owned DTO. Public /v1 is defined by public-v1.openapi.json. See docs/research-flow.md and docs/reconnect-operations.md.",
     "title": "Epoch Integration API",
     "version": "0.9.0-draft"
   },
@@ -25888,35 +28039,12 @@
     },
     "/api/v1/integration/requests": {
       "post": {
-        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
         "operationId": "createSdkRequest",
-        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
-              "examples": {
-                "acceptedInputs": {
-                  "value": {
-                    "launch": {
-                      "assistant_id": "epoch-ai"
-                    },
-                    "operation_id": "screen-sp500",
-                    "request": {
-                      "outputs": [
-                        {
-                          "format": "markdown",
-                          "instructions": "Explain the findings concisely",
-                          "name": "answer",
-                          "type": "text"
-                        }
-                      ],
-                      "task": "Explain the supplied sales data"
-                    }
-                  }
-                }
-              },
               "schema": {
-                "$ref": "#/components/schemas/Native_CreateSdkRequest"
+                "$ref": "#/components/schemas/Platform_CreateResearch"
               }
             }
           },
@@ -25926,79 +28054,93 @@
           "200": {
             "content": {
               "application/json": {
-                "examples": {
-                  "acceptedOperation": {
-                    "value": {
-                      "created_at_ms": 1,
-                      "launch": {
-                        "assistant_id": "epoch-ai"
-                      },
-                      "operation_id": "screen-sp500",
-                      "phase": "accepted",
-                      "request": {
-                        "outputs": [
-                          {
-                            "format": "markdown",
-                            "instructions": "Explain the findings concisely",
-                            "name": "answer",
-                            "type": "text"
-                          }
-                        ],
-                        "task": "Explain the supplied sales data"
-                      },
-                      "request_id": "req_11111111111111111111111111111111",
-                      "updated_at_ms": 1,
-                      "version": 0
-                    }
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                  "$ref": "#/components/schemas/Platform_ResearchRecord"
                 }
               }
             },
-            "description": "Success"
+            "description": "Authoritative research operation"
           },
           "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Bad request"
+            "description": "Platform error envelope"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           }
         },
         "security": [
           {
             "BearerAuth": []
           }
-        ],
-        "servers": [
-          {
-            "url": "http://{host}:{port}",
-            "variables": {
-              "host": {
-                "default": "localhost",
-                "description": "StratifyX server host"
-              },
-              "port": {
-                "default": "9000",
-                "description": "StratifyX server port"
-              }
-            }
-          }
-        ],
-        "summary": "Store a validated SDK analysis request",
-        "tags": [
-          "SdkRequests"
         ]
       }
     },
     "/api/v1/integration/requests/by-handle/{operationId}": {
       "get": {
-        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
         "operationId": "getSdkRequestByHandle",
         "parameters": [
           {
@@ -26006,6 +28148,8 @@
             "name": "operationId",
             "required": true,
             "schema": {
+              "minLength": 1,
+              "pattern": "\\S",
               "type": "string"
             }
           }
@@ -26014,89 +28158,93 @@
           "200": {
             "content": {
               "application/json": {
-                "examples": {
-                  "acceptedOperation": {
-                    "value": {
-                      "created_at_ms": 1,
-                      "launch": {
-                        "assistant_id": "epoch-ai"
-                      },
-                      "operation_id": "screen-sp500",
-                      "phase": "accepted",
-                      "request": {
-                        "outputs": [
-                          {
-                            "format": "markdown",
-                            "instructions": "Explain the findings concisely",
-                            "name": "answer",
-                            "type": "text"
-                          }
-                        ],
-                        "task": "Explain the supplied sales data"
-                      },
-                      "request_id": "req_11111111111111111111111111111111",
-                      "updated_at_ms": 1,
-                      "version": 0
-                    }
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                  "$ref": "#/components/schemas/Platform_ResearchRecord"
                 }
               }
             },
-            "description": "Success"
+            "description": "Authoritative research operation"
           },
           "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Bad request"
+            "description": "Platform error envelope"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           },
           "404": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Not found"
+            "description": "Platform error envelope"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           }
         },
         "security": [
           {
             "BearerAuth": []
           }
-        ],
-        "servers": [
-          {
-            "url": "http://{host}:{port}",
-            "variables": {
-              "host": {
-                "default": "localhost",
-                "description": "StratifyX server host"
-              },
-              "port": {
-                "default": "9000",
-                "description": "StratifyX server port"
-              }
-            }
-          }
-        ],
-        "summary": "Attach to the owner's accepted research operation by readable handle",
-        "tags": [
-          "SdkRequests"
         ]
       }
     },
     "/api/v1/integration/requests/{requestId}": {
       "get": {
-        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
         "operationId": "getSdkRequest",
         "parameters": [
           {
@@ -26104,6 +28252,8 @@
             "name": "requestId",
             "required": true,
             "schema": {
+              "minLength": 1,
+              "pattern": "\\S",
               "type": "string"
             }
           }
@@ -26112,87 +28262,91 @@
           "200": {
             "content": {
               "application/json": {
-                "examples": {
-                  "acceptedOperation": {
-                    "value": {
-                      "created_at_ms": 1,
-                      "launch": {
-                        "assistant_id": "epoch-ai"
-                      },
-                      "operation_id": "screen-sp500",
-                      "phase": "accepted",
-                      "request": {
-                        "outputs": [
-                          {
-                            "format": "markdown",
-                            "instructions": "Explain the findings concisely",
-                            "name": "answer",
-                            "type": "text"
-                          }
-                        ],
-                        "task": "Explain the supplied sales data"
-                      },
-                      "request_id": "req_11111111111111111111111111111111",
-                      "updated_at_ms": 1,
-                      "version": 0
-                    }
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                  "$ref": "#/components/schemas/Platform_ResearchRecord"
                 }
               }
             },
-            "description": "Success"
+            "description": "Authoritative research operation"
           },
           "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Bad request"
+            "description": "Platform error envelope"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           },
           "404": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Not found"
+            "description": "Platform error envelope"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           }
         },
         "security": [
           {
             "BearerAuth": []
           }
-        ],
-        "servers": [
-          {
-            "url": "http://{host}:{port}",
-            "variables": {
-              "host": {
-                "default": "localhost",
-                "description": "StratifyX server host"
-              },
-              "port": {
-                "default": "9000",
-                "description": "StratifyX server port"
-              }
-            }
-          }
-        ],
-        "summary": "Read an owned SDK request and saved result mapping",
-        "tags": [
-          "SdkRequests"
         ]
       },
       "patch": {
-        "description": "Existing EpochBackend native API. Use the configured Backend origin. The owning service validates the exact caller/source contract. Readable operation IDs attach to the original accepted owner-scoped inputs; changed inputs conflict with HTTP 409. See docs/reconnect-operations.md.",
         "operationId": "updateSdkRequest",
         "parameters": [
           {
@@ -26200,6 +28354,8 @@
             "name": "requestId",
             "required": true,
             "schema": {
+              "minLength": 1,
+              "pattern": "\\S",
               "type": "string"
             }
           }
@@ -26207,21 +28363,8 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "examples": {
-                "acceptedInputs": {
-                  "value": {
-                    "expected_version": 0,
-                    "runtime": {
-                      "assistant_id": "epoch-ai",
-                      "execution_ids_before": [],
-                      "outcome_ids_before": [],
-                      "thread_id": "44444444-4444-4444-8444-444444444444"
-                    }
-                  }
-                }
-              },
               "schema": {
-                "$ref": "#/components/schemas/Native_UpdateSdkRequest"
+                "$ref": "#/components/schemas/Platform_UpdateResearch"
               }
             }
           },
@@ -26231,73 +28374,88 @@
           "200": {
             "content": {
               "application/json": {
-                "examples": {
-                  "acceptedOperation": {
-                    "value": {
-                      "created_at_ms": 1,
-                      "launch": {
-                        "assistant_id": "epoch-ai"
-                      },
-                      "operation_id": "screen-sp500",
-                      "phase": "accepted",
-                      "request": {
-                        "outputs": [
-                          {
-                            "format": "markdown",
-                            "instructions": "Explain the findings concisely",
-                            "name": "answer",
-                            "type": "text"
-                          }
-                        ],
-                        "task": "Explain the supplied sales data"
-                      },
-                      "request_id": "req_11111111111111111111111111111111",
-                      "updated_at_ms": 1,
-                      "version": 0
-                    }
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/Native_SdkRequestRecord"
+                  "$ref": "#/components/schemas/Platform_ResearchRecord"
                 }
               }
             },
-            "description": "Success"
+            "description": "Authoritative research operation"
           },
           "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Native_ErrorResponse"
+                  "$ref": "#/components/schemas/Platform_PlatformError"
                 }
               }
             },
-            "description": "Bad request"
+            "description": "Platform error envelope"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Platform_PlatformError"
+                }
+              }
+            },
+            "description": "Platform error envelope"
           }
         },
         "security": [
           {
             "BearerAuth": []
           }
-        ],
-        "servers": [
-          {
-            "url": "http://{host}:{port}",
-            "variables": {
-              "host": {
-                "default": "localhost",
-                "description": "StratifyX server host"
-              },
-              "port": {
-                "default": "9000",
-                "description": "StratifyX server port"
-              }
-            }
-          }
-        ],
-        "summary": "Record a client runtime or owned result reference",
-        "tags": [
-          "SdkRequests"
         ]
       }
     },
@@ -30407,9 +32565,6 @@
       "/api/v1/integration/execution-requests/by-handle/{operationId}",
       "/api/v1/integration/execution-requests/{requestId}",
       "/api/v1/integration/execution-requests/{requestId}/commentary/{outputName}",
-      "/api/v1/integration/requests",
-      "/api/v1/integration/requests/by-handle/{operationId}",
-      "/api/v1/integration/requests/{requestId}",
       "/api/v1/research/responses/{responseId}",
       "/api/v1/research/responses/{responseId}/acquisition-provenance",
       "/api/v1/studies/executions/{executionId}/acquisition-provenance",
@@ -30466,6 +32621,10 @@
       "Native_CommentaryNextStepPresentation",
       "Native_CommentaryPolicy",
       "Native_CommentarySource",
+      "Native_CommentaryWebContext",
+      "Native_CommentaryWebSearch",
+      "Native_CommentaryWebSearchStatus",
+      "Native_CommentaryWebSource",
       "Native_CommissionType",
       "Native_CompileDiagnosticRecord",
       "Native_CompileDiagnosticSeverity",
@@ -30516,7 +32675,6 @@
       "Native_Country",
       "Native_CountryCurrency",
       "Native_CreateSdkExecutionRequest",
-      "Native_CreateSdkRequest",
       "Native_DashStyle",
       "Native_DashboardContentRole",
       "Native_DashboardContentSchema",
@@ -30585,6 +32743,7 @@
       "Native_ReadResearchResponseTable",
       "Native_ReferenceLineSchema",
       "Native_ResearchResponseRecord",
+      "Native_ResearchResponseReuseLimitation",
       "Native_ResearchResponseTableOrder",
       "Native_ResponseBindingKind",
       "Native_ResponseEncoding",
@@ -30598,23 +32757,16 @@
       "Native_SdkContract_ErrorCode",
       "Native_SdkContract_ErrorResponse",
       "Native_SdkContract_Gap",
+      "Native_SdkContract_GeneratedTextFailure",
       "Native_SdkContract_JsonOutputRequest",
       "Native_SdkContract_JsonSchema",
       "Native_SdkContract_JsonValue",
       "Native_SdkContract_JsonValueOutput",
-      "Native_SdkContract_Manifest_JsonBinding",
-      "Native_SdkContract_Manifest_NonBlank",
-      "Native_SdkContract_Manifest_TableBinding",
-      "Native_SdkContract_Manifest_TextBinding",
-      "Native_SdkContract_OutputName",
       "Native_SdkContract_OutputValue",
       "Native_SdkContract_Question",
       "Native_SdkContract_ResearchResponseContent",
-      "Native_SdkContract_ResponsePlanReference",
       "Native_SdkContract_ResponseQualification",
       "Native_SdkContract_RunParameters",
-      "Native_SdkContract_RunRequest",
-      "Native_SdkContract_SavedOutputManifest",
       "Native_SdkContract_TableOrder",
       "Native_SdkContract_TableOutputRequest",
       "Native_SdkContract_TableReference",
@@ -30624,9 +32776,6 @@
       "Native_SdkExecutionRecord",
       "Native_SdkExecutionStatus",
       "Native_SdkRequestPhase",
-      "Native_SdkRequestRecord",
-      "Native_SdkRequestRuntime",
-      "Native_SdkResearchLaunch",
       "Native_SecurityType",
       "Native_SelectedContextSchema",
       "Native_SeriesRenderKind",
@@ -30658,7 +32807,6 @@
       "Native_TemplatedGenericFunction_SlippageType",
       "Native_TradingConfig",
       "Native_TreemapLevelSpec",
-      "Native_UpdateSdkRequest",
       "Native_ValueNotation",
       "Native_array_double_2",
       "Native_dataloader__SourceAcquisitionOrigin",
@@ -30701,8 +32849,67 @@
       "Native_variant_bool_int64_t_double_string",
       "Native_variant_epoch_tune__RangeSpace__epoch_tune__ChoiceSpace"
     ],
-    "sha256": "55d2d18eb365da84972f4aef236f9a0c9c63f03ae9c33ecd272e5d469ba855b8",
+    "sha256": "55772cfa476534d620bc02a44b08efcdb0b3b7e64bf097a9e3f494727a608642",
     "source": "EpochBackend/stratifyx_openapi.json"
+  },
+  "x-epoch-platform-research-operations": {
+    "paths": [
+      "/api/v1/integration/requests",
+      "/api/v1/integration/requests/by-handle/{operationId}",
+      "/api/v1/integration/requests/{requestId}"
+    ],
+    "schemas": [
+      "Platform_AccessRequirement",
+      "Platform_AiTextSkipped",
+      "Platform_Cell",
+      "Platform_Column",
+      "Platform_CreateResearch",
+      "Platform_DataRequirement",
+      "Platform_Error",
+      "Platform_ErrorCode",
+      "Platform_ErrorResponse",
+      "Platform_Gap",
+      "Platform_GeneratedTextFailure",
+      "Platform_JsonOutputRequest",
+      "Platform_JsonSchema",
+      "Platform_JsonValue",
+      "Platform_JsonValueOutput",
+      "Platform_Manifest_JsonBinding",
+      "Platform_Manifest_NonBlank",
+      "Platform_Manifest_TableBinding",
+      "Platform_Manifest_TextBinding",
+      "Platform_Native_AcquisitionProvenanceReference",
+      "Platform_Native_ExecutionCommentaryPin",
+      "Platform_Native_ExecutionExtensionInputPin",
+      "Platform_Native_ExecutionExtensionProvenance",
+      "Platform_Native_ExecutionParameterValue",
+      "Platform_Native_ExecutionPresentationPin",
+      "Platform_Native_IODataType",
+      "Platform_Native_NamedExecutionInputSelection",
+      "Platform_Native_uint32_t",
+      "Platform_OutputName",
+      "Platform_OutputValue",
+      "Platform_PlatformError",
+      "Platform_Question",
+      "Platform_ResearchLaunch",
+      "Platform_ResearchRecord",
+      "Platform_ResearchResponseContent",
+      "Platform_ResearchRuntime",
+      "Platform_ResponseQualification",
+      "Platform_RunParameters",
+      "Platform_RunRequest",
+      "Platform_SavedOutputManifest",
+      "Platform_SavedResearchResponse",
+      "Platform_TableOrder",
+      "Platform_TableOutputRequest",
+      "Platform_TableReference",
+      "Platform_TableValue",
+      "Platform_TextOutputRequest",
+      "Platform_TextValue",
+      "Platform_UpdateResearch"
+    ],
+    "sha256": "fd43f6b3623b89cb40af664d7b2ed0df43e9e16d7482f90f345b6c0e890777fe",
+    "source": "EpochPlatform/contracts/research.openapi.json"
   },
   "x-native-parameter-sha256": "caf22be0de27dc495082f87f578214e1a9e4739a4fc1a53b4bd02066d0c57e5c",
   "x-parameter-source": "contracts/native-parameters.json"

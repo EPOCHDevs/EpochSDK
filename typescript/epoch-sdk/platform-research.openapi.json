@@ -3,7 +3,7 @@
   "info": {
     "title": "Epoch Platform research operations",
     "version": "1",
-    "description": "Platform owns caller research lifecycle, immutable first-admission interaction policy, idempotency and terminal guidance. Native execution admission, computational contracts and response artifacts belong to Backend. The caller cannot supply interaction policy; only a verified delegated-token claim selects one_shot."
+    "description": "Platform owns caller research lifecycle, immutable first-admission interaction policy, idempotency and terminal guidance. Native execution admission, computational contracts and response artifacts belong to Backend; Platform checks research against Backend's stored records and Backend never calls Platform. The caller cannot supply interaction policy; only a verified delegated-token claim selects one_shot."
   },
   "x-epoch-contract-owner": "EpochPlatform",
   "components": {
@@ -380,6 +380,41 @@
         "title": "Gap",
         "type": "object"
       },
+      "GeneratedTextFailure": {
+        "additionalProperties": false,
+        "description": "A terminal model producer failure; native computation remains available.",
+        "properties": {
+          "code": {
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "producer_id": {
+            "minLength": 1,
+            "title": "Producer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "type": "object"
+      },
       "JsonOutputRequest": {
         "additionalProperties": false,
         "properties": {
@@ -420,12 +455,64 @@
       "JsonValue": {},
       "JsonValueOutput": {
         "additionalProperties": false,
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
         "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "name": {
             "maxLength": 100,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
             "title": "Name",
             "type": "string"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GeneratedTextFailure"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Failures"
           },
           "type": {
             "const": "json",
@@ -441,6 +528,13 @@
           "type",
           "value"
         ],
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
         "title": "JsonValueOutput",
         "type": "object"
       },
@@ -1517,10 +1611,7 @@
                 "type": "string"
               }
             },
-            "type": [
-              "object",
-              "null"
-            ]
+            "type": "object"
           }
         },
         "title": "RunParameters",

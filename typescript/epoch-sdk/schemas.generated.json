@@ -87,7 +87,7 @@
           "additionalProperties": false,
           "properties": {
             "record_count": {
-              "maximum": 18446744073709552000,
+              "maximum": 18446744073709551615,
               "minimum": 0,
               "type": "integer"
             },
@@ -256,7 +256,7 @@
               "type": "string"
             },
             "edit_version": {
-              "maximum": 18446744073709552000,
+              "maximum": 18446744073709551615,
               "minimum": 0,
               "type": "integer"
             },
@@ -1654,7 +1654,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "d43d728b6602042c3a47af33f48207f7601d575b84f5fbbdf21a16ae4fe3358a",
+    "openapi.json": "05cccc63991cb03934b6fc00852bc390e1d743193a96f1de47ef582de0ce0a89",
     "research-response.schema.json": "66b23cac5a6c7fb2c39436a67fbee130885da6b4bbdfe4078567eca2b5573431"
   }
 }
