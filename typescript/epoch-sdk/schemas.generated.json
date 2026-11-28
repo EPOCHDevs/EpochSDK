@@ -1654,7 +1654,7 @@
     "type": "object"
   },
   "source_sha256": {
-    "openapi.json": "05cccc63991cb03934b6fc00852bc390e1d743193a96f1de47ef582de0ce0a89",
+    "openapi.json": "4fd9536cfaca87fd378f01ac1e406c945c820657c37957581da925a3bc52a0e4",
     "research-response.schema.json": "66b23cac5a6c7fb2c39436a67fbee130885da6b4bbdfe4078567eca2b5573431"
   }
 }
