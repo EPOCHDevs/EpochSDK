@@ -132,7 +132,8 @@ class Service:
                 }
                 self.jobs += 1
             elif self.execution_record["request"] != body:
-                return httpx.Response(409, json={"message": "Changed execution"})
+                return httpx.Response(409, json={"error": "InvalidState", "message": "Changed execution",
+                    "timestamp": "2026-10-19T00:00:00Z"})
             return httpx.Response(200, json=self.execution_record)
         if path.startswith("/api/v1/integration/execution-requests/"):
             if self.execution_record is None:

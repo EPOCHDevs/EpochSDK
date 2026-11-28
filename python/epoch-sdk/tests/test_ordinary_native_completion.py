@@ -247,7 +247,8 @@ def test_same_operation_reconnect_uses_frozen_settings_when_the_original_is_unav
                 body = json.loads(request.content)
                 if mismatch:
                     assert body["parameters"]["period"]["end"] == "2025-12-31"
-                    return httpx.Response(409, json={"error": "InvalidState", "message": "Different accepted inputs"})
+                    return httpx.Response(409, json={"error": "InvalidState", "message": "Different accepted inputs",
+                        "timestamp": "2026-10-19T00:00:00Z"})
                 assert body == native["request"]
                 return httpx.Response(200, json=native)
             return httpx.Response(200, json=answer if "responses" in path else job())
