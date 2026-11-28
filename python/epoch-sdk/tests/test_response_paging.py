@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import json
 from contextlib import asynccontextmanager
@@ -65,7 +67,7 @@ async def clients(*, wrong_count=False, wrong_offset=False):
         httpx.AsyncClient(transport=httpx.MockTransport(no_graph)) as graph,
     ):
         yield (
-            SupervisorClient(
+            supervisor_with_research(
                 LangGraphClient(graph),
                 AsyncStratifyX(
                     base_url="https://backend.invalid", token="fixture", httpx_client=http

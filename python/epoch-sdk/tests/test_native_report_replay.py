@@ -4,6 +4,8 @@ These checks exercise transport and identity validation, not a live engine/model
 The child fixture originates in the native exporter; replay envelopes are controls.
 """
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import copy
 import json
@@ -105,7 +107,7 @@ def test_reconnect_preserves_separate_source_report_and_optional_answer_pins(ans
             native = AsyncStratifyX(
                 base_url="https://backend.invalid", token="fixture", httpx_client=http
             )
-            client = EpochClient(SupervisorClient(LangGraphClient(graph_http), native))
+            client = EpochClient(supervisor_with_research(LangGraphClient(graph_http), native))
             result = await client.execution_operation("source-with-report")
             assert isinstance(result, ChosenExecution)
             assert result.execution.id == "new-original" != result.report.execution_id
@@ -179,7 +181,7 @@ def test_report_read_rejects_corrupt_native_pins_including_dashboard_only(change
             ) as graph_http,
         ):
             client = EpochClient(
-                SupervisorClient(
+                supervisor_with_research(
                     LangGraphClient(graph_http),
                     AsyncStratifyX(
                         base_url="https://backend.invalid", token="fixture", httpx_client=http

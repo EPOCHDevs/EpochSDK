@@ -1,0 +1,2814 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Epoch Platform research operations",
+    "version": "1",
+    "description": "Platform owns caller research lifecycle, immutable first-admission interaction policy, idempotency and terminal guidance. Native execution admission, computational contracts and response artifacts belong to Backend; Platform checks research against Backend's stored records and Backend never calls Platform. The caller cannot supply interaction policy; only a verified delegated-token claim selects one_shot."
+  },
+  "x-epoch-contract-owner": "EpochPlatform",
+  "components": {
+    "securitySchemes": {
+      "user": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "AccessRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "permission": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "permission"
+        ],
+        "title": "AccessRequirement",
+        "type": "object"
+      },
+      "AiTextSkipped": {
+        "additionalProperties": false,
+        "description": "Completed computation whose new AI text was omitted without a model call.",
+        "properties": {
+          "reason": {
+            "const": "usage_limit",
+            "title": "Reason",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "status": {
+            "const": "skipped",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "resets_at"
+        ],
+        "title": "AiTextSkipped",
+        "type": "object"
+      },
+      "Cell": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "Column": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Field meaning and calculation/time basis.",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "nullable": {
+            "default": false,
+            "title": "Nullable",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "int64",
+              "float64",
+              "boolean",
+              "date",
+              "datetime"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "Column",
+        "type": "object"
+      },
+      "DataRequirement": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "required_coverage": {
+            "title": "Required Coverage",
+            "type": "string"
+          },
+          "suggested_resolution": {
+            "title": "Suggested Resolution",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "DataRequirement",
+        "type": "object"
+      },
+      "Error": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "CLARIFICATION_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "gaps",
+                "questions",
+                "recommended_task"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "DATA_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "data_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "ACCESS_REQUIRED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "required": [
+                "access_requirements"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "code": {
+                  "const": "USAGE_LIMIT_REACHED"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "then": {
+              "properties": {
+                "retryable": {
+                  "const": false
+                }
+              },
+              "required": [
+                "meter",
+                "resets_at"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "access_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/AccessRequirement"
+            },
+            "minItems": 1,
+            "title": "Access Requirements",
+            "type": "array"
+          },
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "data_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/DataRequirement"
+            },
+            "minItems": 1,
+            "title": "Data Requirements",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "minItems": 1,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "message": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Message",
+            "type": "string"
+          },
+          "meter": {
+            "enum": [
+              "assistant",
+              "study_ai"
+            ],
+            "title": "Meter",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "recommended_task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Task",
+            "type": "string"
+          },
+          "resets_at": {
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "title": "Resets At",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable"
+        ],
+        "title": "DomainError",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "INVALID_REQUEST",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CLARIFICATION_REQUIRED",
+          "DATA_REQUIRED",
+          "ACCESS_REQUIRED",
+          "OUTPUT_VALIDATION_FAILED",
+          "EXECUTION_FAILED",
+          "EXECUTION_NOT_READY",
+          "INVALID_STATE",
+          "IDEMPOTENCY_CONFLICT",
+          "EVENT_CURSOR_EXPIRED",
+          "FETCH_CURSOR_EXPIRED",
+          "FETCH_LIMIT_EXCEEDED",
+          "RATE_LIMITED",
+          "USAGE_LIMIT_REACHED",
+          "TEMPORARILY_UNAVAILABLE",
+          "UPSTREAM_TIMEOUT"
+        ],
+        "type": "string"
+      },
+      "ErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          },
+          "execution_id": {
+            "description": "Existing/accepted execution this failure refers to; a failed fetch does not change its source status.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Gap": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "title": "Gap",
+        "type": "object"
+      },
+      "GeneratedTextFailure": {
+        "additionalProperties": false,
+        "description": "A terminal model producer failure; native computation remains available.",
+        "properties": {
+          "code": {
+            "enum": [
+              "text_timeout",
+              "text_rate_limited",
+              "text_transport",
+              "text_invalid",
+              "text_unavailable",
+              "text_unconfirmed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "producer_id": {
+            "minLength": 1,
+            "title": "Producer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_id",
+          "code",
+          "message"
+        ],
+        "title": "GeneratedTextFailure",
+        "type": "object"
+      },
+      "JsonOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "$ref": "#/components/schemas/JsonSchema"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "JsonOutputRequest",
+        "type": "object"
+      },
+      "JsonSchema": {
+        "description": "A standard JSON Schema 2020-12 document, including description annotations. The service validates the schema itself. Only local references within this supplied schema are accepted; remote references are rejected. No custom schema keywords are required.",
+        "type": [
+          "object",
+          "boolean"
+        ]
+      },
+      "JsonValue": {},
+      "JsonValueOutput": {
+        "additionalProperties": false,
+        "if": {
+          "anyOf": [
+            {
+              "properties": {
+                "text_failures": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "text_failures"
+              ]
+            },
+            {
+              "properties": {
+                "ai_text": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ai_text"
+              ]
+            }
+          ]
+        },
+        "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "text_failures": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GeneratedTextFailure"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Failures"
+          },
+          "type": {
+            "const": "json",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "value"
+        ],
+        "then": {
+          "properties": {
+            "value": {
+              "type": "null"
+            }
+          }
+        },
+        "title": "JsonValueOutput",
+        "type": "object"
+      },
+      "Manifest_JsonBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/OutputName"
+          },
+          "type": {
+            "const": "json"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id"
+        ],
+        "type": "object"
+      },
+      "Manifest_NonBlank": {
+        "minLength": 1,
+        "pattern": "\\S",
+        "type": "string"
+      },
+      "Manifest_TableBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          },
+          "field_ids": {
+            "items": {
+              "$ref": "#/components/schemas/Manifest_NonBlank"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "$ref": "#/components/schemas/OutputName"
+          },
+          "table_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": {
+            "const": "table"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "table_index",
+          "field_ids"
+        ],
+        "type": "object"
+      },
+      "Manifest_TextBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ]
+          },
+          "markdown_id": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          },
+          "name": {
+            "$ref": "#/components/schemas/OutputName"
+          },
+          "type": {
+            "const": "text"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "category",
+          "markdown_id",
+          "format"
+        ],
+        "type": "object"
+      },
+      "Native_AcquisitionProvenanceReference": {
+        "additionalProperties": false,
+        "properties": {
+          "record_count": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "record_count"
+        ],
+        "title": "epoch_stratifyx::AcquisitionProvenanceReference",
+        "type": "object",
+        "x-native-schema-name": "AcquisitionProvenanceReference"
+      },
+      "Native_ExecutionCommentaryPin": {
+        "additionalProperties": false,
+        "properties": {
+          "input_sha256": {
+            "type": "string"
+          },
+          "output_name": {
+            "type": "string"
+          },
+          "policy_sha256": {
+            "type": "string"
+          },
+          "result_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "output_name",
+          "input_sha256",
+          "result_sha256",
+          "policy_sha256"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionCommentaryPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionCommentaryPin"
+      },
+      "Native_ExecutionExtensionInputPin": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "type": "string"
+          },
+          "generation_sha256": {
+            "type": "string"
+          },
+          "relation_id": {
+            "type": "string"
+          },
+          "schema_sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "generation_sha256",
+          "content_sha256",
+          "schema_sha256"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionExtensionInputPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionExtensionInputPin"
+      },
+      "Native_ExecutionExtensionProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "additional_sources": {
+            "items": {
+              "$ref": "#/components/schemas/Native_NamedExecutionInputSelection"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "base_presentation": {
+            "$ref": "#/components/schemas/Native_ExecutionPresentationPin"
+          },
+          "commentary": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ExecutionCommentaryPin"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "compiled_schema_version": {
+            "$ref": "#/components/schemas/Native_uint32_t"
+          },
+          "config_sha256": {
+            "type": "string"
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "execution_parameter_bindings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Native_ExecutionParameterValue"
+            },
+            "type": "object"
+          },
+          "input_snapshot_sha256": {
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/Native_ExecutionExtensionInputPin"
+            },
+            "type": "array"
+          },
+          "output_declarations_sha256": {
+            "type": "string"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "study_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_execution_id",
+          "execution_id",
+          "study_id",
+          "config_sha256",
+          "compiled_schema_version",
+          "input_snapshot_sha256",
+          "output_declarations_sha256",
+          "inputs",
+          "execution_parameter_bindings"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionExtensionProvenance",
+        "type": "object",
+        "x-native-schema-name": "ExecutionExtensionProvenance"
+      },
+      "Native_ExecutionParameterValue": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Native_IODataType"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "epoch_script::ExecutionParameterValue",
+        "type": "object",
+        "x-native-schema-name": "ExecutionParameterValue"
+      },
+      "Native_ExecutionPresentationPin": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_revision": {
+            "type": "string"
+          },
+          "edit_version": {
+            "maximum": 18446744073709551615,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "publication_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publication_id",
+          "catalog_revision",
+          "edit_version"
+        ],
+        "title": "epoch_stratifyx::server::ExecutionPresentationPin",
+        "type": "object",
+        "x-native-schema-name": "ExecutionPresentationPin"
+      },
+      "Native_IODataType": {
+        "enum": [
+          "Decimal",
+          "Integer",
+          "Number",
+          "Boolean",
+          "String",
+          "Timestamp",
+          "Any",
+          "NumericTuple",
+          "StringTuple",
+          "BoolTuple",
+          "TimestampTuple",
+          "TupleAny",
+          "ScalarList",
+          "SeriesList",
+          "Date"
+        ],
+        "type": "string",
+        "x-native-schema-name": "IODataType"
+      },
+      "Native_NamedExecutionInputSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "source_execution_id": {
+            "type": "string"
+          },
+          "tables": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "alias",
+          "source_execution_id",
+          "tables"
+        ],
+        "title": "epoch_stratifyx::NamedExecutionInputSelection",
+        "type": "object",
+        "x-native-schema-name": "NamedExecutionInputSelection"
+      },
+      "Native_uint32_t": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer",
+        "x-native-schema-name": "uint32_t"
+      },
+      "OutputName": {
+        "description": "Unique caller-selected name. Names are case-sensitive.",
+        "maxLength": 100,
+        "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+        "type": "string"
+      },
+      "OutputValue": {
+        "discriminator": {
+          "mapping": {
+            "json": "#/components/schemas/JsonValueOutput",
+            "table": "#/components/schemas/TableValue",
+            "text": "#/components/schemas/TextValue"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TableValue"
+          },
+          {
+            "$ref": "#/components/schemas/JsonValueOutput"
+          },
+          {
+            "$ref": "#/components/schemas/TextValue"
+          }
+        ]
+      },
+      "Question": {
+        "additionalProperties": false,
+        "dependentRequired": {
+          "recommended_option": [
+            "options"
+          ]
+        },
+        "properties": {
+          "options": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question",
+            "type": "string"
+          },
+          "recommended_option": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Option",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "ResearchResponseContent": {
+        "additionalProperties": false,
+        "description": "Answer values or native table references; a preview is never a full table.",
+        "properties": {
+          "declarations": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Declarations",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/OutputValue"
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "qualifications": {
+            "description": "Required computed qualifications; these are not additional answer parts.",
+            "items": {
+              "$ref": "#/components/schemas/ResponseQualification"
+            },
+            "maxItems": 16,
+            "title": "Qualifications",
+            "type": "array"
+          }
+        },
+        "required": [
+          "declarations",
+          "outputs"
+        ],
+        "title": "ResearchResponseContent",
+        "type": "object"
+      },
+      "ResponseQualification": {
+        "additionalProperties": false,
+        "description": "Computed answer qualifications, independent of accepted output parts.",
+        "properties": {
+          "description": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "value"
+        ],
+        "title": "ResponseQualification",
+        "type": "object"
+      },
+      "RunParameters": {
+        "additionalProperties": false,
+        "description": "Only the closed parameter types supported by native Backend execution.",
+        "properties": {
+          "execution": {
+            "additionalProperties": false,
+            "properties": {
+              "cash": {
+                "maximum": 9223372036854775807,
+                "minimum": -9223372036854775808,
+                "type": "integer"
+              },
+              "commission": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "FlatFee",
+                          "Percent",
+                          "Bps",
+                          "MakerTaker",
+                          "PerShare",
+                          "USEquity",
+                          "Futures",
+                          "Tiered"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "FlatFee",
+                            "Percent",
+                            "Bps",
+                            "MakerTaker",
+                            "PerShare",
+                            "USEquity",
+                            "Futures",
+                            "Tiered"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "currency": {
+                "enum": [
+                  "AED",
+                  "AFN",
+                  "ALL",
+                  "AMD",
+                  "ANG",
+                  "ARS",
+                  "AUD",
+                  "AWG",
+                  "BAM",
+                  "BBD",
+                  "BDT",
+                  "BGN",
+                  "BHD",
+                  "BIF",
+                  "BMD",
+                  "BND",
+                  "BOB",
+                  "BOC",
+                  "BRL",
+                  "BRP",
+                  "BSD",
+                  "BTN",
+                  "BWP",
+                  "BZD",
+                  "CAD",
+                  "CDF",
+                  "CHF",
+                  "CLP",
+                  "CNH",
+                  "CNY",
+                  "COP",
+                  "CRC",
+                  "CUP",
+                  "CVE",
+                  "CYP",
+                  "CZK",
+                  "DCN",
+                  "DJF",
+                  "DKK",
+                  "DOP",
+                  "DTR",
+                  "DZD",
+                  "ECB",
+                  "EGP",
+                  "ETB",
+                  "EUR",
+                  "FJD",
+                  "GBP",
+                  "GEL",
+                  "GHS",
+                  "GMD",
+                  "GNF",
+                  "GTQ",
+                  "GYD",
+                  "HKD",
+                  "HNL",
+                  "HRK",
+                  "HTG",
+                  "HUF",
+                  "HUY",
+                  "IDR",
+                  "ILS",
+                  "INR",
+                  "IQD",
+                  "IRR",
+                  "ISK",
+                  "JMD",
+                  "JOD",
+                  "JPY",
+                  "KES",
+                  "KGS",
+                  "KHR",
+                  "KMF",
+                  "KRW",
+                  "KWD",
+                  "KYD",
+                  "KZT",
+                  "LAK",
+                  "LBP",
+                  "LKR",
+                  "LRD",
+                  "LSL",
+                  "LTL",
+                  "LYD",
+                  "MAD",
+                  "MDL",
+                  "MGA",
+                  "MKD",
+                  "MMK",
+                  "MOP",
+                  "MTL",
+                  "MUR",
+                  "MVR",
+                  "MWK",
+                  "MXN",
+                  "MYR",
+                  "MZN",
+                  "NAD",
+                  "NGN",
+                  "NIO",
+                  "NOK",
+                  "NPR",
+                  "NZD",
+                  "OMR",
+                  "PAB",
+                  "PEN",
+                  "PGK",
+                  "PHP",
+                  "PKR",
+                  "PLN",
+                  "PYG",
+                  "QAR",
+                  "RON",
+                  "RSD",
+                  "RUB",
+                  "RWF",
+                  "SAR",
+                  "SCR",
+                  "SDG",
+                  "SEK",
+                  "SGD",
+                  "SHP",
+                  "SOS",
+                  "SSG",
+                  "SUS",
+                  "SVC",
+                  "SZL",
+                  "THB",
+                  "TJS",
+                  "TMT",
+                  "TND",
+                  "TRY",
+                  "TTD",
+                  "TWD",
+                  "TZS",
+                  "UAH",
+                  "UGX",
+                  "USD",
+                  "UYU",
+                  "UZS",
+                  "VES",
+                  "VND",
+                  "XAF",
+                  "XAG",
+                  "XAU",
+                  "XCD",
+                  "XDR",
+                  "XOF",
+                  "XPF",
+                  "YER",
+                  "ZAR",
+                  "ZMW"
+                ],
+                "type": "string"
+              },
+              "futures_tick_snapshot": {
+                "additionalProperties": false,
+                "properties": {
+                  "rules": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "asset_id": {
+                          "type": "string"
+                        },
+                        "contract": {
+                          "type": "string"
+                        },
+                        "effective_from_ns": {
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
+                          "type": "integer"
+                        },
+                        "effective_to_ns": {
+                          "maximum": 9223372036854775807,
+                          "minimum": -9223372036854775808,
+                          "type": "integer"
+                        },
+                        "price_kind": {
+                          "enum": [
+                            "Outright"
+                          ],
+                          "type": "string"
+                        },
+                        "source_sha256": {
+                          "type": "string"
+                        },
+                        "source_uri": {
+                          "type": "string"
+                        },
+                        "tick_size": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "asset_id",
+                        "contract",
+                        "effective_from_ns",
+                        "effective_to_ns",
+                        "price_kind",
+                        "source_sha256",
+                        "source_uri",
+                        "tick_size",
+                        "venue"
+                      ],
+                      "title": "epoch_bt::vectorized::FuturesTickRule",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "snapshot_id": {
+                    "type": "string"
+                  },
+                  "working_orders_on_change": {
+                    "enum": [
+                      "Reject",
+                      "CancelWorkingOrders"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rules",
+                  "snapshot_id",
+                  "working_orders_on_change"
+                ],
+                "title": "epoch_bt::vectorized::FuturesTickSnapshot",
+                "type": "object"
+              },
+              "slippage": {
+                "additionalProperties": false,
+                "properties": {
+                  "asset_class_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased",
+                            "None"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  "default_model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased",
+                          "None"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "model": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "args": {
+                        "additionalProperties": {
+                          "type": [
+                            "number",
+                            "string",
+                            "boolean",
+                            "object",
+                            "array",
+                            "null"
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      "type": {
+                        "enum": [
+                          "Bps",
+                          "Fixed",
+                          "Random",
+                          "VolumeImpact",
+                          "TickBased",
+                          "ParticipationRate",
+                          "SpreadBased",
+                          "None"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "symbol_overrides": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "additionalProperties": {
+                            "type": [
+                              "number",
+                              "string",
+                              "boolean",
+                              "object",
+                              "array",
+                              "null"
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": [
+                            "Bps",
+                            "Fixed",
+                            "Random",
+                            "VolumeImpact",
+                            "TickBased",
+                            "ParticipationRate",
+                            "SpreadBased",
+                            "None"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "args"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "title": "epoch_stratifyx::ExecutionOptions",
+            "type": "object"
+          },
+          "period": {
+            "additionalProperties": false,
+            "properties": {
+              "end": {
+                "format": "date",
+                "type": "string"
+              },
+              "start": {
+                "format": "date",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "title": "RunParameters",
+        "type": "object"
+      },
+      "RunRequest": {
+        "additionalProperties": false,
+        "not": {
+          "required": [
+            "study_id",
+            "source_execution_id"
+          ]
+        },
+        "properties": {
+          "auto_ingest": {
+            "default": false,
+            "title": "Auto Ingest",
+            "type": "boolean"
+          },
+          "context": {
+            "items": {
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "title": "Context",
+            "type": "array"
+          },
+          "outputs": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "json": "#/components/schemas/JsonOutputRequest",
+                  "table": "#/components/schemas/TableOutputRequest",
+                  "text": "#/components/schemas/TextOutputRequest"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Outputs",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/RunParameters",
+            "description": "Supported native overrides; resolve defaults before freezing the binding."
+          },
+          "source_execution_id": {
+            "description": "Resolve the exact study from this authorized Backend execution.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source Execution Id",
+            "type": "string"
+          },
+          "study_id": {
+            "description": "Execute this exact authorized study.",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "task": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "outputs"
+        ],
+        "title": "RunRequest",
+        "type": "object"
+      },
+      "SavedOutputManifest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "A per-execution read receipt. The workflow/Backend owner must save its accepted declarations and exact artifact bindings; this is not another execution coordinator.",
+        "properties": {
+          "bindings": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Manifest_TableBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Manifest_JsonBinding"
+                },
+                {
+                  "$ref": "#/components/schemas/Manifest_TextBinding"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "declarations": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TableOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/JsonOutputRequest"
+                },
+                {
+                  "$ref": "#/components/schemas/TextOutputRequest"
+                }
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "execution_id": {
+            "$ref": "#/components/schemas/Manifest_NonBlank",
+            "description": "Exact native Backend execution id, never a public admission-attempt id."
+          },
+          "study_id": {
+            "$ref": "#/components/schemas/Manifest_NonBlank"
+          }
+        },
+        "required": [
+          "execution_id",
+          "study_id",
+          "declarations",
+          "bindings"
+        ],
+        "title": "SavedOutputManifest",
+        "type": "object"
+      },
+      "SavedResearchResponse": {
+        "additionalProperties": false,
+        "description": "A Backend-owned answer revision. One query can have many named parts.",
+        "properties": {
+          "acquisition_provenance": {
+            "$ref": "#/components/schemas/Native_AcquisitionProvenanceReference"
+          },
+          "ai_text": {
+            "$ref": "#/components/schemas/AiTextSkipped"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResearchResponseContent"
+          },
+          "extension": {
+            "$ref": "#/components/schemas/Native_ExecutionExtensionProvenance"
+          },
+          "primary_execution_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Primary Execution Id",
+            "type": "string"
+          },
+          "published_at_ms": {
+            "minimum": 0,
+            "title": "Published At Ms",
+            "type": "integer"
+          },
+          "request_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "response_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Response Id",
+            "type": "string"
+          },
+          "reuse_limitation": {
+            "const": "retired_response_plan",
+            "title": "Reuse Limitation",
+            "type": "string"
+          },
+          "study_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Study Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "response_id",
+          "request_id",
+          "thread_id",
+          "version",
+          "published_at_ms",
+          "content"
+        ],
+        "title": "SavedResearchResponse",
+        "type": "object"
+      },
+      "TableOrder": {
+        "additionalProperties": false,
+        "properties": {
+          "descending": {
+            "default": false,
+            "title": "Descending",
+            "type": "boolean"
+          },
+          "field_id": {
+            "minLength": 1,
+            "title": "Field Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field_id"
+        ],
+        "title": "TableOrder",
+        "type": "object"
+      },
+      "TableOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "minItems": 1,
+            "title": "Schema",
+            "type": "array"
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableOutputRequest",
+        "type": "object"
+      },
+      "TableReference": {
+        "additionalProperties": false,
+        "description": "A projection of one immutable execution relation, read in bounded pages.",
+        "properties": {
+          "execution_id": {
+            "minLength": 1,
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "field_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Field Ids",
+            "type": "array"
+          },
+          "order_by": {
+            "items": {
+              "$ref": "#/components/schemas/TableOrder"
+            },
+            "title": "Order By",
+            "type": "array"
+          },
+          "row_count": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "table": {
+            "minLength": 1,
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id",
+          "table",
+          "field_ids",
+          "row_count"
+        ],
+        "title": "TableReference",
+        "type": "object"
+      },
+      "TableValue": {
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "source"
+              ]
+            },
+            "properties": {
+              "rows": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "rows"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "rows"
+              ]
+            },
+            "properties": {
+              "source": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "source"
+            ]
+          }
+        ],
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "$ref": "#/components/schemas/Cell"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rows"
+          },
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "title": "Schema",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TableReference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "type": {
+            "const": "table",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "schema"
+        ],
+        "title": "TableValue",
+        "type": "object"
+      },
+      "TextOutputRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "format": {
+            "default": "plain",
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "instructions": {
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Instructions",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "instructions"
+        ],
+        "title": "TextOutputRequest",
+        "type": "object"
+      },
+      "TextValue": {
+        "additionalProperties": false,
+        "if": {
+          "properties": {
+            "ai_text": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ai_text"
+          ]
+        },
+        "properties": {
+          "ai_text": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiTextSkipped"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "format": {
+            "enum": [
+              "plain",
+              "markdown"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "format",
+          "value"
+        ],
+        "then": {
+          "properties": {
+            "value": {
+              "const": ""
+            }
+          }
+        },
+        "title": "TextValue",
+        "type": "object"
+      },
+      "ResearchRuntime": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "assistant_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "execution_ids_before": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "outcome_ids_before": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        },
+        "required": [
+          "thread_id",
+          "assistant_id",
+          "execution_ids_before",
+          "outcome_ids_before"
+        ]
+      },
+      "ResearchLaunch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "assistant_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "thread_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "assistant_id"
+        ]
+      },
+      "ResearchRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^req_[0-9a-f]{32}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "created_at_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "updated_at_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "active",
+              "needs_input",
+              "outputs_recorded",
+              "failed"
+            ]
+          },
+          "interaction": {
+            "type": "string",
+            "enum": [
+              "interactive",
+              "one_shot"
+            ]
+          },
+          "request": {
+            "$ref": "#/components/schemas/RunRequest"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "launch": {
+            "$ref": "#/components/schemas/ResearchLaunch"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/ResearchRuntime"
+          },
+          "graph_run_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "current_execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "native_execution_request_id": {
+            "type": "string",
+            "pattern": "^req_[0-9a-f]{32}$"
+          },
+          "response_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "response_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/SavedOutputManifest"
+          },
+          "source_execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        },
+        "required": [
+          "request_id",
+          "version",
+          "created_at_ms",
+          "updated_at_ms",
+          "phase",
+          "interaction",
+          "request"
+        ]
+      },
+      "CreateResearch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/RunRequest"
+          },
+          "operation_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+          },
+          "launch": {
+            "$ref": "#/components/schemas/ResearchLaunch"
+          }
+        },
+        "required": [
+          "request"
+        ]
+      },
+      "UpdateResearch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/ResearchRuntime"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "active",
+              "needs_input"
+            ]
+          },
+          "graph_run_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "prior_graph_run_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "current_execution_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "native_execution_request_id": {
+            "type": "string",
+            "pattern": "^req_[0-9a-f]{32}$"
+          },
+          "response_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "response_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "output_manifest": {
+            "$ref": "#/components/schemas/SavedOutputManifest"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorResponse"
+          }
+        },
+        "required": [
+          "expected_version"
+        ]
+      },
+      "PlatformError": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "timestamp": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "timestamp"
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/integration/requests": {
+      "post": {
+        "operationId": "createSdkRequest",
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResearch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authoritative research operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/integration/requests/by-handle/{operationId}": {
+      "get": {
+        "operationId": "getSdkRequestByHandle",
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative research operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/integration/requests/{requestId}": {
+      "get": {
+        "operationId": "getSdkRequest",
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative research operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSdkRequest",
+        "security": [
+          {
+            "user": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResearch"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative research operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Platform error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

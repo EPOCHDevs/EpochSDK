@@ -1,5 +1,7 @@
 """Generated-client transport controls; native/provider acceptance is separate."""
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import copy
 import json
@@ -32,7 +34,7 @@ def records():
                     column.pop("nullable")
         if part["type"] == "text" and part.get("format") == "plain":
             part.pop("format")
-    research = {
+    research = {"interaction": "interactive",
         "request_id": RESEARCH_ID,
         "operation_id": "saved-order-review",
         "version": 3,
@@ -98,7 +100,7 @@ def test_research_reconnect_uses_only_backend_pins_and_never_the_latest_graph_tu
             ) as graph_http,
         ):
             client = EpochClient(
-                SupervisorClient(
+                supervisor_with_research(
                     LangGraphClient(graph_http),
                     AsyncStratifyX(
                         base_url="https://backend.invalid",
@@ -176,7 +178,7 @@ def test_adoption_does_not_relax_exact_native_answer_validation(change):
             ) as graph_http,
         ):
             client = EpochClient(
-                SupervisorClient(
+                supervisor_with_research(
                     LangGraphClient(graph_http),
                     AsyncStratifyX(
                         base_url="https://backend.invalid",
@@ -213,7 +215,7 @@ def test_supervisor_terminal_selection_accepts_the_linked_original_request_ident
                 base_url="https://graph.invalid", transport=httpx.MockTransport(graph)
             ) as graph_http,
         ):
-            supervisor = SupervisorClient(
+            supervisor = supervisor_with_research(
                 LangGraphClient(graph_http),
                 AsyncStratifyX(
                     base_url="https://backend.invalid", token="fixture", httpx_client=native_http
@@ -281,7 +283,7 @@ def test_concurrent_native_link_after_runtime_cas_conflict_never_starts_a_graph(
                 ),
             ) as graph_http,
         ):
-            supervisor = SupervisorClient(
+            supervisor = supervisor_with_research(
                 LangGraphClient(graph_http),
                 AsyncStratifyX(
                     base_url="https://backend.invalid", token="fixture", httpx_client=native_http
@@ -338,7 +340,7 @@ def test_first_study_report_retains_original_replay_and_survives_missing_optiona
         def graph(request):
             raise AssertionError("Saved research read must not run a supervisor")
         async with httpx.AsyncClient(transport=httpx.MockTransport(backend)) as http, httpx.AsyncClient(base_url="https://graph.invalid", transport=httpx.MockTransport(graph)) as graph_http:
-            client = EpochClient(SupervisorClient(LangGraphClient(graph_http), AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=http)))
+            client = EpochClient(supervisor_with_research(LangGraphClient(graph_http), AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=http)))
             if missing in {"denied", "wrong-identity"}:
                 with pytest.raises(EpochError):
                     await client.research_status(RESEARCH_ID)

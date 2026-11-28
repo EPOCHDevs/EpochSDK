@@ -49,6 +49,7 @@ from .dataset_reviews import (
 from .errors import EpochError
 from .files_api import AsyncEpochFiles
 from .platform_files import PlatformFilesClient
+from .research_operations import ResearchOperationsClient
 from .responses import (
     ResearchResponseContent,
     ResponseReference,
@@ -339,9 +340,28 @@ class _State(BaseModel):
                 "meter",
                 "resets_at",
             }
-            value = {
+            projected = {
                 key: item for key, item in raw.items() if key not in optional or item is not None
             }
+            # Pydantic checkpoint serialization includes nested default nulls
+            # too. Strip only source-owned optional guidance fields; malformed
+            # required values and unknown keys still reach strict validation.
+            nested_optional = {
+                "gaps": {"field"},
+                "questions": {"options", "recommended_option"},
+                "data_requirements": {"required_coverage", "suggested_resolution"},
+                "access_requirements": {"suggested_resolution"},
+            }
+            for name, fields in nested_optional.items():
+                rows = projected.get(name)
+                if isinstance(rows, list):
+                    projected[name] = [
+                        {key: item for key, item in cast(dict[str, object], row).items()
+                         if key not in fields or item is not None}
+                        if isinstance(row, dict) else row
+                        for row in cast(list[object], rows)
+                    ]
+            value = projected
         return DomainError.model_validate(value)
 
     def reply(self) -> str:
@@ -449,6 +469,7 @@ class SupervisorClient:
         platform_files: PlatformFilesClient | None = None,
         catalogue: CatalogueClient | None = None,
         files_api: AsyncEpochFiles | None = None,
+        research_operations: ResearchOperationsClient | None = None,
     ) -> None:
         self.graph = graph
         self.backend = backend
@@ -460,6 +481,7 @@ class SupervisorClient:
         self.catalogue = catalogue
         # Files and Space, generated from Platform's contract (ENG-2819).
         self.files_api = files_api
+        self._research_operations = research_operations
         self._owned_http: list[httpx.AsyncClient] = []
 
     @classmethod
@@ -518,6 +540,7 @@ class SupervisorClient:
             ),
             document_http=graph_http,
             platform_files=PlatformFilesClient(backend_url, token=fixed, http=backend_http),
+            research_operations=ResearchOperationsClient(platform_url or backend_url, token, http=backend_http),
             catalogue=CatalogueClient(platform_url or backend_url, token, http=backend_http),
             # The API host routes Files and Space to Platform.
             files_api=AsyncEpochFiles(
@@ -528,6 +551,12 @@ class SupervisorClient:
         )
         client._owned_http = [graph_http, backend_http]
         return client
+
+    @property
+    def research_operations(self) -> ResearchOperationsClient:
+        if self._research_operations is None:
+            raise ValueError("Pass Platform research_operations or use SupervisorClient.connect")
+        return self._research_operations
 
     async def aclose(self) -> None:
         for http in self._owned_http:
@@ -1056,7 +1085,7 @@ class SupervisorClient:
         ):
             return None
         try:
-            record = await self.backend.sdk_requests.get_sdk_request(
+            record = await self.research_operations.get_sdk_request(
                 identifier, request_options={"max_retries": 0}
             )
         except ApiError as error:

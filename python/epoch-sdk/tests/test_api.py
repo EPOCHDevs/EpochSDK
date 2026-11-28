@@ -498,3 +498,29 @@ def test_new_answer_readers_opt_in_to_skipped_text_metadata():
     epoch = client(lambda r: (seen.append(r), httpx.Response(200, json={}))[1])
     epoch.request("GET", "/v1/responses/rsp_1")
     assert seen[0].headers["Epoch-Features"] == "ai-text-skipped-v1"
+
+
+def test_one_shot_problem_preserves_corrected_request_guidance():
+    problem = api_module.Problem.model_validate({
+        'title': 'More context is required', 'status': 422, 'code': 'CLARIFICATION_REQUIRED', 'retryable': False,
+        'gaps': [{'description': 'Company and period', 'field': 'task'}],
+        'questions': [{'question': 'Which company and period?'}],
+        'recommended_task': 'Analyze Acme revenue in 2025',
+    })
+    error = EpochApiError(problem)
+    assert error.problem.gaps[0].field == 'task'
+    assert error.error.questions[0].question == 'Which company and period?'
+    assert error.error.recommended_task == 'Analyze Acme revenue in 2025'
+    assert not error.retryable
+
+
+def test_conversation_key_is_sent_and_cannot_be_combined_with_thread_id():
+    seen = []
+    def handler(request):
+        seen.append(json.loads(request.content)); return httpx.Response(202, json=RESEARCH)
+    epoch = client(handler)
+    epoch.research.create('Explain', outputs=[OUTPUT], conversation_key='notebook-one')
+    assert seen[0]['conversation_key'] == 'notebook-one'
+    with pytest.raises(ValueError, match='not both'):
+        epoch.research.create('Explain', outputs=[OUTPUT], conversation_key='notebook-one', thread_id='thread')
+    assert len(seen) == 1

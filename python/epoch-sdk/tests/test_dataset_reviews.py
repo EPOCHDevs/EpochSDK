@@ -6,6 +6,8 @@ not invoke an extraction provider or claim to reproduce its output.
 
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import json
 from contextlib import asynccontextmanager
@@ -140,7 +142,7 @@ async def harness(build=None):
             base_url="https://graph.test", transport=httpx.MockTransport(graph)
         ) as graph_http,
     ):
-        client = SupervisorClient(
+        client = supervisor_with_research(
             LangGraphClient(graph_http),
             AsyncStratifyX(
                 base_url="https://native.test", token="fixture", httpx_client=native_http

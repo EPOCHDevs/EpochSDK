@@ -229,7 +229,7 @@
           "Research"
         ],
         "summary": "Start research",
-        "description": "Accept a research request and start the Epoch supervisor on it. Returns at once; follow it with the events stream or by polling. The same Idempotency-Key with the same input attaches to the accepted research; different input returns 409. Without a key the server generates one.",
+        "description": "Accept a one-shot research request and start the Epoch supervisor on it. Research completes or fails with structured guidance; direct callers cannot opt into clarification questions. Returns at once; follow it with the events stream or by polling. The same Idempotency-Key with the same input attaches to the accepted research; different input returns 409. Without a key the server generates one.",
         "operationId": "createResearch",
         "security": [
           {
@@ -399,8 +399,8 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend POST /api/v1/integration/requests (createSdkRequest)",
-            "Backend PATCH /api/v1/integration/requests/{requestId} (updateSdkRequest)",
+            "Platform POST /api/v1/integration/requests (createSdkRequest)",
+            "Platform PATCH /api/v1/integration/requests/{requestId} (updateSdkRequest)",
             "EpochAI LangGraph threads.create and runs.create on assistant epoch-ai with stream_resumable=True"
           ],
           "sdk": "EpochClient.research(request, operation_id=..., thread_id=..., wait=False)"
@@ -640,7 +640,7 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Platform GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
             "Backend GET /api/v1/integration/execution-requests/{requestId} (getSdkExecutionRequest)",
             "Backend GET /api/v1/studies/executions/{executionId} and /study (the completed run and its study)",
             "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
@@ -648,7 +648,7 @@
           ],
           "sdk": "EpochClient.research_status(request_id)",
           "gaps": [
-            "Reading also records what it observes with Backend PATCH /api/v1/integration/requests/{requestId} (the phase of a question, the answer's pin), which needs the research scope. A read-only key sees a run in progress and its questions; it gets 403 for research that finished and is not yet recorded."
+            "Reading also records what it observes with Platform PATCH /api/v1/integration/requests/{requestId} (the phase of a question, the answer's pin), which needs the research scope. A read-only key sees a run in progress and its questions; it gets 403 for research that finished and is not yet recorded."
           ]
         }
       }
@@ -1156,7 +1156,7 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Platform GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
             "EpochAI LangGraph runs.create with Command(resume=...) on the same thread"
           ],
           "sdk": "EpochClient.resume_research(waiting, responses, wait=False)"
@@ -1343,7 +1343,7 @@
         ],
         "x-epoch-reuses": {
           "native": [
-            "Backend GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
+            "Platform GET /api/v1/integration/requests/{requestId} (getSdkRequest)",
             "Backend GET /api/v1/research/responses/{responseId} (getResearchResponse)",
             "Backend GET /api/v1/integration/execution-requests/by-handle/{operationId} (getSdkExecutionRequestByHandle)",
             "Backend GET /api/v1/studies/executions/{executionId}/study",
@@ -3136,6 +3136,33 @@
   },
   "components": {
     "schemas": {
+      "AccessRequirement": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Source"
+          },
+          "permission": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Permission"
+          },
+          "suggested_resolution": {
+            "type": "string",
+            "title": "Suggested Resolution"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "permission"
+        ],
+        "title": "AccessRequirement"
+      },
       "AcquisitionProvenanceReference": {
         "properties": {
           "record_count": {
@@ -3272,7 +3299,7 @@
           },
           "questions": {
             "items": {
-              "$ref": "#/components/schemas/Question"
+              "$ref": "#/components/schemas/agent_src__public_api__models__Question"
             },
             "type": "array",
             "minItems": 1,
@@ -3542,6 +3569,30 @@
           "Null"
         ],
         "title": "DataFoundation"
+      },
+      "DataRequirement": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description"
+          },
+          "required_coverage": {
+            "type": "string",
+            "title": "Required Coverage"
+          },
+          "suggested_resolution": {
+            "type": "string",
+            "title": "Suggested Resolution"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "title": "DataRequirement"
       },
       "DataSourceCapabilities": {
         "properties": {
@@ -6695,6 +6746,26 @@
         ],
         "title": "FuturesTickSnapshotWorkingOrdersOnChange"
       },
+      "Gap": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Description"
+          },
+          "field": {
+            "type": "string",
+            "title": "Field"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "title": "Gap"
+      },
       "GeneratedTextFailure": {
         "properties": {
           "producer_id": {
@@ -7318,6 +7389,73 @@
               }
             ],
             "title": "Resets At"
+          },
+          "gaps": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Gap"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gaps"
+          },
+          "questions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/epoch_sdk__contracts__Question"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questions"
+          },
+          "recommended_task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Task"
+          },
+          "data_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DataRequirement"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Requirements"
+          },
+          "access_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AccessRequirement"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Requirements"
           }
         },
         "additionalProperties": false,
@@ -7444,41 +7582,6 @@
         ],
         "title": "ProtectedResourceMetadata",
         "description": "OAuth 2.0 protected resource metadata (RFC 9728): where callers sign in for this API."
-      },
-      "Question": {
-        "properties": {
-          "question": {
-            "type": "string",
-            "title": "Question"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "description": "Why the choice matters."
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionOption"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Options"
-          },
-          "multi_select": {
-            "type": "boolean",
-            "title": "Multi Select",
-            "default": false
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "question",
-          "description",
-          "options"
-        ],
-        "title": "Question",
-        "description": "One decision, as the agent asks it (agent_src/common/ask_user.py's interrupt payload)."
       },
       "QuestionOption": {
         "properties": {
@@ -10114,6 +10217,78 @@
           "secret"
         ],
         "title": "WebhookWithSecret"
+      },
+      "agent_src__public_api__models__Question": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Why the choice matters."
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionOption"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Options"
+          },
+          "multi_select": {
+            "type": "boolean",
+            "title": "Multi Select",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question",
+          "description",
+          "options"
+        ],
+        "title": "Question",
+        "description": "One decision, as the agent asks it (agent_src/common/ask_user.py's interrupt payload)."
+      },
+      "epoch_sdk__contracts__Question": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Question"
+          },
+          "options": {
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Options"
+          },
+          "recommended_option": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Recommended Option"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "dependentRequired": {
+          "recommended_option": [
+            "options"
+          ]
+        },
+        "title": "Question"
       }
     },
     "securitySchemes": {

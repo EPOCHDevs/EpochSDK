@@ -4,6 +4,8 @@ The first page and answer revisions come from the C++ service. End-page and
 malformed variants are explicit synthetic paging controls, not acquisitions.
 """
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import copy
 import json
@@ -72,7 +74,7 @@ async def scenario(operation, *, client_kind="application", service=None):
     ):
         native = AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http)
         graph = LangGraphClient(graph_http)
-        client = EpochClient(SupervisorClient(graph, native, document_http=graph_http))
+        client = EpochClient(supervisor_with_research(graph, native, document_http=graph_http))
         await operation(client, service)
 
 

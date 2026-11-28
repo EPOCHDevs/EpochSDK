@@ -134,14 +134,18 @@ Current native routes:
 
 | Owner | Surface |
 | --- | --- |
-| Backend | POST/GET/PATCH `/api/v1/integration/requests[/{requestId}]` |
-| Backend | GET `/api/v1/integration/requests/by-handle/{operationId}` |
+| Platform | POST/GET/PATCH `/api/v1/integration/requests[/{requestId}]` |
+| Platform | GET `/api/v1/integration/requests/by-handle/{operationId}` |
 | Backend | POST/GET `/api/v1/integration/execution-requests[/{requestId}]` and GET `by-handle/{operationId}` |
 | Backend | POST `/api/v1/research/requests/{requestId}/response` |
 | Backend | GET `/api/v1/research/responses/{responseId}?version=...` |
 | Backend | POST `/api/v1/studies/executions/{executionId}/response-tables` |
 | LangGraph | Native state, run/wait and interrupt/resume |
 | EpochSDK/MCP | Wrap native LangGraph and generated StratifyX clients |
+
+Platform checks each research request against Backend's stored records itself,
+read only: the native run Backend admitted for the request, its job status, the
+study and the saved answer. Backend never calls Platform.
 
 The low-level native publication API remains available to direct application
 integrations. It is not a model-facing supervisor tool and is not invoked again
@@ -165,3 +169,17 @@ a different answer. The illustrative combined `/v1/run` contract and historical
 acceptance records remain prior design/evidence, not extra deployed proxies or
 proof of a newer candidate. Automatic multi-study merging, recovery workers,
 retention and custom presentation remain separate work.
+
+
+The direct `/v1/research` API is one-shot: complete the requested outputs or
+return structured `CLARIFICATION_REQUIRED`, `DATA_REQUIRED`, `ACCESS_REQUIRED`
+or another typed terminal failure. Terminal and workflow MCP remain interactive.
+Platform freezes this distinction at admission; callers cannot change it in a
+research body, header or reused operation ID. Full discovery stays enabled.
+
+`EpochClient.connect(platform_url=...)` selects Platform explicitly when the
+local services have separate origins. Otherwise the shared API origin routes
+`/api/v1/integration/requests*` to Platform. Backend's
+`/api/v1/integration/execution-requests*` endpoints keep native admission and
+output ownership. Deploy the route cutover and compatible service/SDK artifacts
+together; stop the old lifecycle writer before importing retained records.

@@ -15,14 +15,8 @@ from stratifyx import (
     ExecutionOptions,
     ExecutionParameterValue,
     ExecutionReportReference,
-    SdkContractErrorResponse,
     SdkContractRunParameters,
-    SdkContractRunRequest,
     SdkExecutionRecord,
-    SdkRequestPhase,
-    SdkRequestRecord,
-    SdkRequestRuntime,
-    SdkResearchLaunch,
 )
 from stratifyx.core.api_error import ApiError
 from stratifyx.types.error_response import ErrorResponse as NativeErrorResponse
@@ -44,6 +38,13 @@ from .errors import EpochError
 from .extensions import ExecutionExtensionClient
 from .files import FileClient
 from .files_api.core.api_error import ApiError as FilesApiError
+from .research_operations import (
+    ResearchLaunch,
+    ResearchOperationsClient,
+    ResearchPhase,
+    ResearchRecord,
+    ResearchRuntime,
+)
 from .responses import ResponseTablePage, SavedResearchResponse
 from .sources import SourceClient
 from .supervisor import (
@@ -176,7 +177,7 @@ async def _boundary(request_id: str | None) -> AsyncGenerator[None, None]:
 class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, ExecutionExtensionClient):
     """Research explicitly; prepared study execution remains a separate action.
 
-    Backend owns accepted requests and response revisions. LangGraph owns the
+    Platform owns accepted requests; Backend owns response artifacts. LangGraph owns the
     checkpointed conversation. A client instance owns neither an outcome cache
     nor a second thread store.
     """
@@ -189,6 +190,10 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         self.source_connections = supervisor.source_connections
         self.platform_files = supervisor.platform_files
         self.files_api = supervisor.files_api
+
+    @property
+    def research_operations(self) -> ResearchOperationsClient:
+        return self.supervisor.research_operations
 
     @classmethod
     def connect(
@@ -665,7 +670,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             raise EpochError(error.error, execution_id=execution_id) from error
 
     @staticmethod
-    def _handle(record: SdkRequestRecord) -> WorkflowHandle:
+    def _handle(record: ResearchRecord) -> WorkflowHandle:
         if record.runtime is None:
             raise ValueError("This research request has no supervisor runtime")
         return WorkflowHandle(
@@ -696,16 +701,16 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         if operation_id is not None:
             return await self._research_operation(request, operation_id, thread_id, wait=wait)
         async with _boundary(None):
-            record = await self.backend.sdk_requests.create_sdk_request(
-                request=SdkContractRunRequest.model_validate(request.to_wire()),
+            record = await self.research_operations.create_sdk_request(
+                request=RunRequest.model_validate(request.to_wire()),
                 request_options={"max_retries": 0},
             )
         async with _boundary(record.request_id):
             handle = await self.supervisor.prepare(thread_id, request_id=record.request_id)
-            await self.backend.sdk_requests.update_sdk_request(
+            await self.research_operations.update_sdk_request(
                 record.request_id,
                 expected_version=record.version,
-                runtime=SdkRequestRuntime(
+                runtime=ResearchRuntime(
                     thread_id=handle.thread_id,
                     assistant_id=handle.assistant_id,
                     execution_ids_before=handle.execution_ids_before,
@@ -730,15 +735,15 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             raise ValueError("Research builds a study; use execute_saved for prepared work")
         async with _boundary(None):
             launch = (
-                SdkResearchLaunch(assistant_id=self.supervisor.assistant_id)
+                ResearchLaunch(assistant_id=self.supervisor.assistant_id)
                 if thread_id is None
-                else SdkResearchLaunch(
+                else ResearchLaunch(
                     assistant_id=self.supervisor.assistant_id, thread_id=thread_id
                 )
             )
             try:
-                record = await self.backend.sdk_requests.create_sdk_request(
-                    request=SdkContractRunRequest.model_validate(
+                record = await self.research_operations.create_sdk_request(
+                    request=RunRequest.model_validate(
                         request.model_dump(mode="json", by_alias=True, exclude_none=True)
                     ),
                     operation_id=operation_id,
@@ -756,7 +761,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                     ) from error
                 raise
         async with _boundary(record.request_id):
-            record = await self.backend.sdk_requests.get_sdk_request(
+            record = await self.research_operations.get_sdk_request(
                 record.request_id, request_options={"max_retries": 0}
             )
             if (
@@ -771,17 +776,17 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 except ValueError:
                     # Another same-ID caller may already have reached a question
                     # after this caller read its admission response.
-                    record = await self.backend.sdk_requests.get_sdk_request(
+                    record = await self.research_operations.get_sdk_request(
                         record.request_id, request_options={"max_retries": 0}
                     )
                     if record.runtime is None:
                         raise
                 else:
                     try:
-                        record = await self.backend.sdk_requests.update_sdk_request(
+                        record = await self.research_operations.update_sdk_request(
                             record.request_id,
                             expected_version=record.version,
-                            runtime=SdkRequestRuntime(
+                            runtime=ResearchRuntime(
                                 thread_id=handle.thread_id,
                                 assistant_id=handle.assistant_id,
                                 execution_ids_before=handle.execution_ids_before,
@@ -792,7 +797,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                     except ApiError as error:
                         if error.status_code != 409:
                             raise
-                        record = await self.backend.sdk_requests.get_sdk_request(
+                        record = await self.research_operations.get_sdk_request(
                             record.request_id, request_options={"max_retries": 0}
                         )
             if (
@@ -807,7 +812,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 except httpx.HTTPStatusError as error:
                     if error.response.status_code != 409:
                         raise
-                record = await self.backend.sdk_requests.get_sdk_request(
+                record = await self.research_operations.get_sdk_request(
                     record.request_id, request_options={"max_retries": 0}
                 )
                 if (
@@ -840,7 +845,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         wait: bool = True,
     ) -> ResearchResult:
         async with _boundary(waiting.handle.request_id):
-            record = await self.backend.sdk_requests.get_sdk_request(
+            record = await self.research_operations.get_sdk_request(
                 waiting.handle.request_id,
                 request_options={"max_retries": 0},
             )
@@ -878,13 +883,13 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             raise ValueError("Provide either request_id or operation_id")
         async with _boundary(request_id):
             if operation_id is not None:
-                record = await self.backend.sdk_requests.get_sdk_request_by_handle(
+                record = await self.research_operations.get_sdk_request_by_handle(
                     operation_id, request_options={"max_retries": 0}
                 )
                 request_id = record.request_id
             else:
                 assert request_id is not None
-                record = await self.backend.sdk_requests.get_sdk_request(
+                record = await self.research_operations.get_sdk_request(
                     request_id, request_options={"max_retries": 0}
                 )
             if record.request_id != request_id:
@@ -922,7 +927,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         """A reattached operation's state; waiting follows a running turn to its end."""
         result = await self.research_status(request_id)
         if wait and isinstance(result, InProgress):
-            record = await self.backend.sdk_requests.get_sdk_request(
+            record = await self.research_operations.get_sdk_request(
                 request_id, request_options={"max_retries": 0}
             )
             if record.response_version is not None and record.graph_run_id is not None:
@@ -931,7 +936,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 return await self.research_status(request_id)
         return result
 
-    async def _settled(self, record: SdkRequestRecord) -> ResearchCompleted | InProgress:
+    async def _settled(self, record: ResearchRecord) -> ResearchCompleted | InProgress:
         """A recorded outcome is the research's answer once the agent's turn has ended.
 
         Backend records the outcome when the first run publishes, but the agent may still revise
@@ -942,7 +947,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             return InProgress(handle=self._handle(record))
         return await self._completed(record)
 
-    async def _turn_running(self, record: SdkRequestRecord) -> bool:
+    async def _turn_running(self, record: ResearchRecord) -> bool:
         if record.runtime is None or record.graph_run_id is None:
             return False
         if time.time() * 1000 - record.updated_at_ms >= TURN_END_LIMIT_MS:
@@ -958,7 +963,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             return False  # Not this research's turn; it cannot hold back the recorded outcome.
         return run["status"] in {"pending", "running"}
 
-    async def _completed(self, record: SdkRequestRecord) -> ResearchCompleted:
+    async def _completed(self, record: ResearchRecord) -> ResearchCompleted:
         if record.response_id is None or record.response_version is None:
             raise ValueError("The research request has no pinned answer")
         answer_id, answer_version = record.response_id, record.response_version
@@ -1081,7 +1086,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
 
     async def _fail(
         self,
-        record: SdkRequestRecord,
+        record: ResearchRecord,
         error: DomainError,
         execution_id: str | None = None,
     ) -> ResearchError:
@@ -1095,10 +1100,10 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         wire = ErrorResponse.model_validate(
             {key: value for key, value in failure.to_wire().items() if key != "request_id"}
         )
-        await self.backend.sdk_requests.update_sdk_request(
+        await self.research_operations.update_sdk_request(
             record.request_id,
             expected_version=record.version,
-            error=SdkContractErrorResponse.model_validate(wire.to_wire()),
+            error=ErrorResponse.model_validate(wire.to_wire()),
             request_options={"max_retries": 0},
         )
         return ResearchError(failure)
@@ -1109,7 +1114,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         except ApiError as error:
             if error.status_code != 409:
                 raise
-            current = await self.backend.sdk_requests.get_sdk_request(
+            current = await self.research_operations.get_sdk_request(
                 request_id, request_options={"max_retries": 0}
             )
             if current.operation_id is None:
@@ -1126,7 +1131,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
             return await self.research_status(request_id)
 
     async def _finish_once(self, request_id: str, outcome: SupervisorResult) -> ResearchResult:
-        record = await self.backend.sdk_requests.get_sdk_request(
+        record = await self.research_operations.get_sdk_request(
             request_id,
             request_options={"max_retries": 0},
         )
@@ -1143,11 +1148,14 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
         ):
             return await self.research_status(request_id)
         if isinstance(outcome, NeedsInput):
+            if record.interaction == "one_shot":
+                raise await self._fail(record, DomainError(code="EXECUTION_FAILED",
+                    message="One-shot research stopped at an unsupported input boundary.", retryable=False))
             if record.phase.value != "needs_input":
-                await self.backend.sdk_requests.update_sdk_request(
+                await self.research_operations.update_sdk_request(
                     request_id,
                     expected_version=record.version,
-                    phase=SdkRequestPhase.NEEDS_INPUT,
+                    phase=ResearchPhase.NEEDS_INPUT,
                     request_options={"max_retries": 0},
                 )
             return outcome
@@ -1202,7 +1210,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 ),
             )
         if response.primary_execution_id is None:
-            record = await self.backend.sdk_requests.update_sdk_request(
+            record = await self.research_operations.update_sdk_request(
                 request_id,
                 expected_version=record.version,
                 response_id=response.response_id,
@@ -1210,7 +1218,7 @@ class EpochClient(DatasetClient, FileClient, DocumentClient, SourceClient, Execu
                 request_options={"max_retries": 0},
             )
         else:
-            record = await self.backend.sdk_requests.update_sdk_request(
+            record = await self.research_operations.update_sdk_request(
                 request_id,
                 expected_version=record.version,
                 current_execution_id=response.primary_execution_id,

@@ -1,3 +1,4 @@
+export { ResearchOperationsClient, ResearchOperationsHTTPError } from './research-operations.js'
 export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
 export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
 import { invariant, validateResponse, requestToWire, parametersToWire, operationId } from "./contract.js"
@@ -16,14 +17,20 @@ function pause(ms, signal) {
 
 /** Uses the caller's authenticated native clients. Credentials never enter workflow arguments. */
 export class EpochClient {
-  constructor({ backend, graph, files, assistantId = "epoch-ai", pollIntervalMs = 1000 }) {
+  constructor({ backend, graph, files, researchOperations, assistantId = "epoch-ai", pollIntervalMs = 1000 }) {
     invariant(backend && graph, "Provide authenticated StratifyX and LangGraph clients.")
     this.backend = backend
+    this._researchOperations = researchOperations
     // Platform's Files and Space client (ENG-2819); dataset reviews read and decide through it.
     this.files = files
     this.graph = graph
     this.assistantId = assistantId
     this.pollIntervalMs = Math.max(250, pollIntervalMs)
+  }
+
+  get researchOperations() {
+    invariant(this._researchOperations, "Provide the authenticated Platform researchOperations client.")
+    return this._researchOperations
   }
 
   async observe(state, options = {}) {
@@ -70,7 +77,7 @@ export class EpochClient {
 
   async readRequest(id, { signal } = {}) {
     operationId(id)
-    const record = await this.backend.sdkRequests.getSdkRequestByHandle(id, {}, { maxRetries: 0, abortSignal: signal })
+    const record = await this.researchOperations.getSdkRequestByHandle(id, {}, { maxRetries: 0, abortSignal: signal })
     invariant(record.operationId === id, "The handle returned another research operation.")
     return requestToWire(record.request)
   }

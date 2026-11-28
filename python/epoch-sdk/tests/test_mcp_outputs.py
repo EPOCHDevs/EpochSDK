@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 
 import httpx
@@ -26,7 +28,7 @@ def test_sdk_manifest_reader_keeps_native_values_without_a_graph_call():
                 base_url="https://graph.invalid", transport=httpx.MockTransport(no_graph)
             ) as graph,
         ):
-            sdk = SupervisorClient(LangGraphClient(graph), backend)
+            sdk = supervisor_with_research(LangGraphClient(graph), backend)
             result = (await sdk.outputs(manifest())).to_wire()
             assert result["outputs"][0]["rows"] == [["9007199254740993", 12.5], ["2025", None]]
             assert (
@@ -81,7 +83,7 @@ def test_sdk_manifest_failure_retains_execution_identity():
             native_backend(schema=schema) as (backend, _),
             httpx.AsyncClient(base_url="https://graph.invalid") as graph,
         ):
-            sdk = SupervisorClient(LangGraphClient(graph), backend)
+            sdk = supervisor_with_research(LangGraphClient(graph), backend)
             with pytest.raises(EpochError) as failure:
                 await sdk.outputs(manifest())
             assert failure.value.error.code == "OUTPUT_VALIDATION_FAILED"

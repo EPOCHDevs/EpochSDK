@@ -45,6 +45,10 @@ ResetTime = Annotated[
 UsageMeter = Literal["assistant", "study_ai"]
 
 
+def _absent(value: object) -> bool:
+    return value is None
+
+
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, allow_inf_nan=False)
 
@@ -254,7 +258,7 @@ class RefreshRequest(Contract):
 
 class Gap(Contract):
     description: NonBlank
-    field: str | None = None
+    field: str | None = Field(default=None, exclude_if=_absent)
 
 
 class Question(Contract):
@@ -262,8 +266,8 @@ class Question(Contract):
         json_schema_extra={"dependentRequired": {"recommended_option": ["options"]}}
     )
     question: NonBlank
-    options: Annotated[list[NonBlank], Field(min_length=1)] | None = None
-    recommended_option: NonBlank | None = None
+    options: Annotated[list[NonBlank], Field(min_length=1)] | None = Field(default=None, exclude_if=_absent)
+    recommended_option: NonBlank | None = Field(default=None, exclude_if=_absent)
 
     @model_validator(mode="after")
     def suggestion_is_an_option(self) -> Self:
@@ -276,14 +280,14 @@ class Question(Contract):
 
 class DataRequirement(Contract):
     description: NonBlank
-    required_coverage: str | None = None
-    suggested_resolution: str | None = None
+    required_coverage: str | None = Field(default=None, exclude_if=_absent)
+    suggested_resolution: str | None = Field(default=None, exclude_if=_absent)
 
 
 class AccessRequirement(Contract):
     source: NonBlank
     permission: NonBlank
-    suggested_resolution: str | None = None
+    suggested_resolution: str | None = Field(default=None, exclude_if=_absent)
 
 
 type ErrorCode = Literal[

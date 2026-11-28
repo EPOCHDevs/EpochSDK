@@ -41,7 +41,17 @@ from pydantic import (
     WrapValidator,
 )
 
-from .contracts import DomainError, OutputRequest, ResetTime, RunRequest, UsageMeter
+from .contracts import (
+    AccessRequirement,
+    DataRequirement,
+    DomainError,
+    Gap,
+    OutputRequest,
+    ResetTime,
+    RunRequest,
+    UsageMeter,
+)
+from .contracts import Question as ClarificationQuestion
 from .errors import EpochError, usage_limit_message
 from .native_parameters import NativePeriod
 from .research_log import LogTarget, ResearchLog, research_log
@@ -68,13 +78,11 @@ class EpochApiError(EpochError):
         self.retry_after = retry_after
         message = problem.detail or problem.title or f"HTTP {problem.status}"
         # The API's own code, including codes newer than this client: never remapped.
-        guidance = {}
-        if problem.meter is not None:
-            guidance["meter"] = problem.meter
-        if problem.resets_at is not None:
-            guidance["resets_at"] = problem.resets_at
         super().__init__(DomainError.model_construct(
-            code=problem.code, message=message, retryable=problem.retryable, **guidance
+            code=problem.code, message=message, retryable=problem.retryable,
+            meter=problem.meter, resets_at=problem.resets_at, gaps=problem.gaps,
+            questions=problem.questions, recommended_task=problem.recommended_task,
+            data_requirements=problem.data_requirements, access_requirements=problem.access_requirements,
         ))
 
 
@@ -100,6 +108,11 @@ class Problem(_Reply):
     request_id: str | None = None
     meter: UsageMeter | None = None
     resets_at: ResetTime | None = None
+    gaps: list[Gap] | None = None
+    questions: list[ClarificationQuestion] | None = None
+    recommended_task: str | None = None
+    data_requirements: list[DataRequirement] | None = None
+    access_requirements: list[AccessRequirement] | None = None
 
 
 class UsageLimitReached(EpochApiError):
@@ -241,6 +254,7 @@ class ResearchApi(_Resource):
         context: Sequence[str] = (),
         outputs: Sequence[OutputRequest | Mapping[str, Any]] = (),
         thread_id: str | None = None,
+        conversation_key: str | None = None,
         idempotency_key: str | None = None,
     ) -> Research:
         """Starts research and returns at once. Follow it with wait, events or get."""
@@ -257,8 +271,12 @@ class ResearchApi(_Resource):
                 }
             ).to_wire()
         body: dict[str, Any] = {"request": request}
+        if thread_id is not None and conversation_key is not None:
+            raise ValueError("Pass thread_id or conversation_key, not both")
         if thread_id is not None:
             body["thread_id"] = thread_id
+        if conversation_key is not None:
+            body["conversation_key"] = conversation_key
         reply = self._client.request(
             "POST", "/v1/research", json=body, idempotency_key=idempotency_key
         )

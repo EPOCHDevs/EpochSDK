@@ -54,7 +54,7 @@ function harness() {
         if (JSON.stringify(state.record.request) !== JSON.stringify(body.request)) return { ok: false,
           error: { reason: "status-code", statusCode: 409, body: { message: "Changed inputs" } }, rawResponse: new Response(null, { status: 409 }) }
       } else state.record = { request_id: "req_11111111111111111111111111111111", version: 1,
-        created_at_ms: 0, updated_at_ms: 0, phase: "accepted", request: body.request,
+        created_at_ms: 0, updated_at_ms: 0, phase: "accepted", interaction: "interactive", request: body.request,
         operation_id: body.operation_id, launch: body.launch }
       return response(state.record, args)
     }
@@ -89,6 +89,7 @@ function harness() {
         graphCalls.push(["history", id, options])
         return [{ values: { authority_turn_id: `user-turn:${state.record.request_id}`,
           ...(state.published ? { published_response: state.published } : {}),
+          ...(state.publicationError ? { publication_error: state.publicationError } : {}),
           ...(state.usageLimit ? { usage_limit: state.usageLimit } : {}) }, interrupts: copy(state.interrupts) }]
       },
     },
@@ -104,7 +105,8 @@ function harness() {
         metadata: { epoch_sdk_request_id: state.wrongRequest ?? state.record.request_id } }),
     },
   }
-  const client = new EpochClient({ backend, graph, files, pollIntervalMs: 250 })
+  const researchOperations = new sdk.ResearchOperationsClient({ baseUrl: "https://platform.invalid", token: "fixture", fetcher })
+  const client = new EpochClient({ backend, graph, files, researchOperations, pollIntervalMs: 250 })
   return { client, backend, graph, calls, graphCalls, state, finish() {
     state.response = answer(state.record.request, state.record.runtime.thread_id)
     state.record.response_id = state.response.response_id
@@ -447,4 +449,31 @@ test("a normally ended quota turn raises guidance without a native failure write
   await assert.rejects(h.client.status("quota"), error => error instanceof UsageLimitReached && !error.retryable && error.meter === "assistant")
   assert.ok(h.calls.slice(before).every(call => call.method === "GET"))
   assert.equal(h.graphCalls.filter(call => call[0] === "runs.create").length, 1)
+})
+
+test('an unexpected one-shot pause persists a terminal Platform failure', async () => {
+  const h = harness()
+  await h.client.run(request(), { operationId: 'no-ask', wait: false })
+  h.state.record.interaction = 'one_shot'
+  h.state.runStatus = 'interrupted'; h.state.interrupts = [question()]
+  await assert.rejects(h.client.status('no-ask'), error => error.code === 'EXECUTION_FAILED')
+  assert.equal(h.state.record.error.error.code, 'EXECUTION_FAILED')
+  const writes = h.calls.filter(call => call.method === 'PATCH' && call.body?.error).length
+  await assert.rejects(h.client.status('no-ask'), error => error.code === 'EXECUTION_FAILED')
+  assert.equal(h.calls.filter(call => call.method === 'PATCH' && call.body?.error).length, writes)
+})
+
+test('checkpoint clarification default nulls become omission-only terminal guidance', async () => {
+  const h = harness()
+  await h.client.run(request(), { operationId: 'missing-options', wait: false })
+  h.state.record.interaction = 'one_shot'; h.state.runStatus = 'success'
+  h.state.publicationError = { code: 'CLARIFICATION_REQUIRED', message: 'Neither option was supplied.', retryable: false,
+    gaps: [{ description: 'The options are missing.', field: null }],
+    questions: [{ question: 'Which options?', options: null, recommended_option: null }],
+    recommended_task: 'Provide both options.', data_requirements: null, access_requirements: null, meter: null, resets_at: null }
+  const before = copy(h.state.publicationError)
+  await assert.rejects(h.client.status('missing-options'), error => error.code === 'CLARIFICATION_REQUIRED')
+  assert.deepEqual(h.state.record.error.error.questions, [{ question: 'Which options?' }])
+  assert.deepEqual(h.state.record.error.error.gaps, [{ description: 'The options are missing.' }])
+  assert.deepEqual(h.state.publicationError, before)
 })

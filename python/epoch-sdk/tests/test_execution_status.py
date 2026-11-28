@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from platform_research_fixture import supervisor_with_research
+
 import asyncio
 import json
 import sys
@@ -46,7 +48,7 @@ def test_native_execution_reads_keep_domain_failure_and_identity(status, returne
 
         async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
             sdk = EpochClient(
-                SupervisorClient(
+                supervisor_with_research(
                     LangGraphClient(http),
                     AsyncStratifyX(
                         base_url="https://backend.invalid", token="fixture", httpx_client=http

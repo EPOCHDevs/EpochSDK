@@ -3,6 +3,8 @@
 HTTP is controlled. The input metadata and authored source below are synthetic
 transport controls; no numerical, provider or live client acceptance is claimed.
 """
+
+from platform_research_fixture import supervisor_with_research
 import asyncio
 import copy
 import json
@@ -103,7 +105,7 @@ def test_both_clients_share_native_lifecycle_and_preserve_source_and_zero_edit_p
         ):
             native = AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http)
             graph = LangGraphClient(graph_http)
-            client = EpochClient(SupervisorClient(graph, native, document_http=graph_http))
+            client = EpochClient(supervisor_with_research(graph, native, document_http=graph_http))
             inputs = await client.extension_inputs("original", tables=["orders"])
             assert inputs.source.execution_id == "original"
             assert inputs.tables[0].fields[0].reference == "ExecutionTableOrders.Quantity"
@@ -201,7 +203,7 @@ def test_named_sources_cross_the_existing_catalog_save_and_execute_interfaces(in
             httpx.AsyncClient(base_url="https://graph.invalid",
                 transport=httpx.MockTransport(graph)) as graph_http,
         ):
-            client = EpochClient(SupervisorClient(LangGraphClient(graph_http),
+            client = EpochClient(supervisor_with_research(LangGraphClient(graph_http),
                 AsyncStratifyX(base_url="https://backend.invalid", token="fixture", httpx_client=native_http), document_http=graph_http))
             sources = [NamedExecutionInputSelection.model_validate(extra)]
             metadata = await client.extension_inputs("original", tables=["orders"], additional_sources=sources)

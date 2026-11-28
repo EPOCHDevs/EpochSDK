@@ -142,9 +142,9 @@ def test_missing_run_preserves_the_real_exception_boundary_and_original_cause(by
                 elif by == "operation":
                     await sdk.research_status(operation_id="recorded-run-status")
                 else:
-                    from stratifyx.types import SdkRequestRecord
+                    from epoch_sdk.research_operations import ResearchRecord
 
-                    await sdk.supervisor.status(sdk._handle(SdkRequestRecord.model_validate(service.record)))
+                    await sdk.supervisor.status(sdk._handle(ResearchRecord.model_validate(service.record)))
             error = caught.value.__cause__ if by in {"request", "operation"} else caught.value
             assert isinstance(error, EpochError)
             assert error.error.code == "TEMPORARILY_UNAVAILABLE"
@@ -158,13 +158,13 @@ def test_missing_run_preserves_the_real_exception_boundary_and_original_cause(by
 @pytest.mark.parametrize("status", ["error", "timeout"])
 def test_actual_terminal_graph_errors_remain_distinct_from_missing_runs(status):
     async def scenario():
-        from stratifyx.types import SdkRequestRecord
+        from epoch_sdk.research_operations import ResearchRecord
 
         service = MissingRunService()
         async with service.client() as sdk:
             await accepted(service, sdk)
             service.graph_status = status
-            result = await sdk.supervisor.status(sdk._handle(SdkRequestRecord.model_validate(service.record)))
+            result = await sdk.supervisor.status(sdk._handle(ResearchRecord.model_validate(service.record)))
             assert isinstance(result, NoExecution)
             assert result.reason == "The accepted native graph run failed."
             assert_read_only(service)

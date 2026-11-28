@@ -1,3 +1,5 @@
+export { ResearchOperationsClient, ResearchOperationsHTTPError } from './research-operations.js'
+import type { ResearchOperationsClient } from './research-operations.js'
 export type * from './discovery-types.js'
 export { CatalogueClient, CatalogueHTTPError } from './discovery.js'
 export { IdentityClient, IdentityHTTPError, parseAssetInformation, parseAssetLogos, parseCountryCatalog } from './identity.js'
@@ -57,7 +59,7 @@ export interface ObserveOptions { wait?: boolean; signal?: AbortSignal; onStatus
 export class EpochError extends Error { code: string; details: Record<string, unknown>; constructor(code: string, message: string, details?: Record<string, unknown>) }
 export class EpochClient {
   /** files: Platform's Files and Space client (`@epochdevs/epoch-sdk/files-api`); dataset reviews need it. */
-  constructor(options: { backend: StratifyXClient; graph: LangGraphClient; files?: EpochFilesClient; assistantId?: string; pollIntervalMs?: number })
+  constructor(options: { backend: StratifyXClient; graph: LangGraphClient; files?: EpochFilesClient; researchOperations?: ResearchOperationsClient; assistantId?: string; pollIntervalMs?: number })
   run(request: RunRequest, options: ObserveOptions & { operationId: string; threadId?: string }): Promise<OperationState>
   resume(waiting: NeedsInput, responses: WorkflowResponses, options?: ObserveOptions): Promise<OperationState>
   status(operationId: string, options?: { kind?: "run" | "execute"; signal?: AbortSignal }): Promise<OperationState>
